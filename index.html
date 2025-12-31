@@ -63,13 +63,49 @@
       letter-spacing:.2px;
       white-space:nowrap;
     }
+
+    /* Logo: CSS crescent + stars */
     .brand-badge{
-      width:34px;height:34px;border-radius:12px;
-      background: linear-gradient(135deg, rgba(59,130,246,.95), rgba(96,165,250,.55));
-      box-shadow: 0 10px 28px rgba(59,130,246,.25);
+      width:34px;height:34px;
+      position:relative;
+      border-radius:12px;
       border:1px solid rgba(255,255,255,.12);
+      background: radial-gradient(circle at 30% 25%, rgba(96,165,250,.22), rgba(7,10,18,.25));
+      box-shadow: 0 10px 28px rgba(59,130,246,.22);
+      overflow:hidden;
       flex:0 0 auto;
     }
+    .brand-badge::before{
+      content:"";
+      position:absolute;
+      inset:6px;
+      border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, rgba(190,230,255,.95), rgba(96,165,250,.55));
+      filter: drop-shadow(0 0 12px rgba(96,165,250,.55));
+      transform: translateX(-1px);
+    }
+    .brand-badge::after{
+      /* cut-out to form crescent */
+      content:"";
+      position:absolute;
+      width:22px;height:22px;
+      right:6px; top:6px;
+      border-radius:999px;
+      background: rgba(7,10,18,.92);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+      transform: rotate(10deg);
+    }
+    .brand-stars{
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 72% 30%, rgba(180,220,255,.9) 0 1px, transparent 2px),
+        radial-gradient(circle at 62% 52%, rgba(180,220,255,.8) 0 1px, transparent 2px),
+        radial-gradient(circle at 78% 62%, rgba(180,220,255,.7) 0 1px, transparent 2px);
+      opacity:.85;
+      pointer-events:none;
+    }
+
     .nav{
       display:flex; gap:10px; align-items:center;
       color: rgba(233,237,255,.78);
@@ -237,11 +273,6 @@
     }
     .social a:hover{background: rgba(255,255,255,.06)}
 
-    /* Hide duplicate pills on PC (optional) */
-    @media (min-width: 901px){
-      .pill{display:none;}
-    }
-
     /* Cards Gallery (Luna Fantasy) */
     .cards-grid{
       display:grid;
@@ -311,6 +342,43 @@
       font-weight:900;
     }
 
+    /* Story */
+    .story-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items:stretch;
+      margin-top: 14px;
+    }
+    .story-media{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      box-shadow: 0 18px 55px rgba(0,0,0,.25);
+      overflow:hidden;
+      min-height: 320px;
+    }
+    .story-media img{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit: cover;
+      filter: saturate(1.03) contrast(1.02);
+    }
+    .story-box{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      box-shadow: 0 18px 55px rgba(0,0,0,.25);
+      padding: 16px;
+    }
+    .story-p{
+      margin:0 0 10px;
+      line-height:2.05;
+      color: rgba(233,237,255,.80);
+      font-size: 14.5px;
+    }
+
     /* Characters */
     .characters-grid{
       display:grid;
@@ -363,6 +431,7 @@
       color: rgba(233,237,255,.75);
       line-height: 1.95;
     }
+    .mini-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
     .mini{
       display:inline-flex;
       align-items:center;
@@ -376,7 +445,6 @@
       text-decoration:none;
     }
     .mini:hover{background: rgba(255,255,255,.06)}
-    .mini-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
 
     /* Lightbox */
     .lightbox{
@@ -427,10 +495,13 @@
       .hero{min-height:auto}
       .cards-grid{ grid-template-columns: repeat(2, 1fr); }
       .characters-grid{grid-template-columns: repeat(2, 1fr);}
+      .story-grid{grid-template-columns: 1fr;}
+      .story-media{min-height: 220px;}
     }
     @media (min-width: 901px){
       .cards-grid{ grid-template-columns: repeat(6, 1fr); }
       .characters-grid{grid-template-columns: repeat(5, 1fr);}
+      .story-grid{grid-template-columns: 1fr 1fr;}
     }
   </style>
 </head>
@@ -439,7 +510,7 @@
   <div class="topbar">
     <div class="wrap topbar-inner">
       <div class="brand">
-        <div class="brand-badge"></div>
+        <div class="brand-badge"><span class="brand-stars"></span></div>
         <div>Luna Fantasy</div>
       </div>
 
@@ -469,9 +540,7 @@
                 <a class="btn" href="#overview">ابدأ هنا</a>
               </div>
 
-              <div class="note" style="margin-top:14px">
-                تابعنا على:
-              </div>
+              <div class="note" style="margin-top:14px">تابعنا على:</div>
               <div class="social" style="margin-top:10px">
                 <a href="https://www.instagram.com/luna.passage?igsh=dmVzdGtscWJ2cW91" target="_blank" rel="noopener">Instagram</a>
                 <a href="https://www.tiktok.com/@luna.passage?_r=1&_t=ZS-92gBHpRbSNT" target="_blank" rel="noopener">TikTok</a>
@@ -481,7 +550,7 @@
             <div class="hero-side">
               <div class="stat"><b>السيرفر</b><span>Lunarian</span></div>
               <div class="stat"><b>اللعبة</b><span>Luna Fantasy</span></div>
-              <div class="stat"><b>المحتوى</b><span>قصة · مجتمع · لعب أدوار</span></div>
+              <div class="stat"><b>المحتوى</b></span><span>قصة · مجتمع · لعب أدوار</span></div>
 
               <p class="note">
                 عالم واحد… قصص متعددة… وأكثر من 200 شخصية تُبنى وتظهر داخل الأحداث بوقتها.
@@ -517,21 +586,61 @@
       </div>
     </section>
 
+    <!-- STORY UPDATED + IMAGE -->
     <section id="story">
       <div class="wrap">
         <h2 class="section-title">قصة لونا</h2>
         <p class="section-sub">
-          هذا القسم بنطوره لاحقًا: ملخص مرتب، خطوط زمنية، ومقتطفات فخمة. الحين ركّزنا على تأسيس الموقع بشكل قوي.
+          هذه هي البداية… ومنها تبدأ “حرب الفوضى الكبرى” التي غيّرت مسار العالم.
         </p>
+
+        <div class="story-grid">
+          <div class="story-media">
+            <!-- غيّر الامتداد إلى .jpg إذا صورتك JPG -->
+            <img src="assets/story/champion.png" alt="Champion of Luna" loading="lazy">
+          </div>
+
+          <div class="story-box">
+            <p class="story-p">
+              كان هنالك عالم كبير جداً في جزيرة هلالية قمرية اسمه <b>«لونا»</b>، وفي لونا عاشت جميع الكائنات المعروفة والغير معروفة في سلام…
+              إلى أن أتى شخص اسمه <b>«إكسبايد»</b>، مخلوق هجين ما بين فصيل الأورك والغيلان، قوي جداً وضخم البنية.
+            </p>
+
+            <p class="story-p">
+              كان إكسبايد يستمد طاقته وقوته من العقل المدبر المظلم <b>«شوران»</b> الذي يتحكم بطاقة وقوة الفوضى الطاغية.
+              أرسل شوران جيشه إلى <b>«لونفور»</b> عاصمة لونا لينتزعوا الملك والسيطرة على لونا…
+              وبالفعل خرّ جميع فرسان لونا صرعى أمام إكسبايد الذي عُرف بعد ذلك بـ <b>«ملك الفوضى»</b>.
+            </p>
+
+            <p class="story-p">
+              ظلت لونا تحت حكم ملك الفوضى لمئات السنين… إلى أن أتى وافدون من كوكب الأرض وهم <b>«العقلين المدبرين»</b>.
+              حللوا ما يحصل في لونا وهم يجهلون هذا العالم، لكنهم قرروا البقاء والدفاع عن شعب لونا المضطهد.
+              ساهموا في بناء لونا من جديد ووضعوا خططاً للقضاء على ملك الفوضى…
+            </p>
+
+            <p class="story-p">
+              وبالفعل انتصروا على جيش الفوضى الكبير وتحررت لونا من طغيانهم،
+              وهُزم ملك الفوضى على يد بطل لونا <b>«بودا بان»</b>.
+              وعُرفت هذه الحرب باسم <b>«حرب الفوضى الكبرى»</b>.
+            </p>
+
+            <div class="rule-highlight">
+              لمعرفة المزيد عن حكايا لونا… انضم لنا في سيرفر لونا واصنع أسطورتك بنفسك.
+            </div>
+
+            <div class="cta-row" style="margin-top:12px">
+              <a class="btn btn-primary" href="https://discord.gg/lunarian" target="_blank" rel="noopener">انضم للديسكورد</a>
+              <a class="btn" href="#characters">شخصياتنا</a>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <section id="fantasy">
       <div class="wrap">
         <h2 class="section-title">لونا فانتسي</h2>
-        <p class="section-sub">
-          الكروت هنا مرتبة حسب الفئات. اضغط على أي كرت عشان يكبر.
-        </p>
+        <p class="section-sub">الكروت هنا مرتبة حسب الفئات. اضغط على أي كرت عشان يكبر.</p>
 
         <div class="cards-grid" aria-label="Luna Fantasy Cards">
           <button class="card-tile" data-full="assets/cards/common.png" aria-label="Common card">
@@ -586,12 +695,10 @@
             إما من الفئات السابقة أو فئات أخرى مثل <b>الأسطورية</b> و<b>السرية</b> و<b>الخاصة</b>.
           </p>
 
-          <div class="rule-highlight">
-            الفائز هو اللي يفوز بثلاث جولات من أصل خمسة.
-          </div>
+          <div class="rule-highlight">الفائز هو اللي يفوز بثلاث جولات من أصل خمسة.</div>
 
           <p class="game-p">
-            دمج الكروت متفاوت ومختلف احسب كروت خصمك وراقب الفئات اللي لعبها وقرر الكرت اللي بتلعبه بذكاء.
+            دمج الكروت متفاوت ومختلف — احسب كروت خصمك وراقب الفئات اللي لعبها وقرر الكرت اللي بتلعبه بذكاء.
           </p>
 
           <p class="game-p">
@@ -600,7 +707,6 @@
         </div>
       </div>
 
-      <!-- Lightbox -->
       <div class="lightbox" id="lightbox" aria-hidden="true">
         <div class="lightbox-backdrop" data-close="1"></div>
         <div class="lightbox-panel" role="dialog" aria-modal="true" aria-label="Card preview">
@@ -613,9 +719,8 @@
     <section id="characters">
       <div class="wrap">
         <h2 class="section-title">شخصياتنا</h2>
-
         <p class="section-sub">
-          عالم <b>Luna</b> مو مجرد قصة هو منظومة كاملة بأكثر من <b>200 شخصية</b> من جميع الأطياف، كلها تعيش داخل عالم واحد مترابط.
+          عالم <b>Luna</b> مو مجرد قصة — هو منظومة كاملة بأكثر من <b>200 شخصية</b> من جميع الأطياف، كلها تعيش داخل عالم واحد مترابط.
           بالبداية، هذه هي الواجهات الأساسية… ومع دخولك للسيرفر بتبدأ تكتشف البقية تدريجيًا داخل الأحداث واللعب وتقمّص الأدوار.
         </p>
 
