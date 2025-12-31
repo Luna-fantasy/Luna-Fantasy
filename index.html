@@ -18,7 +18,125 @@
       --shadow: 0 20px 70px rgba(0,0,0,.55);
       --radius: 18px;
       --max: 1100px;
-    }
+      /* Cards Gallery */
+.cards-grid{
+  display:grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap:12px;
+  margin-top:16px;
+}
+.card-tile{
+  position:relative;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  border-radius: 16px;
+  padding:10px;
+  cursor:pointer;
+  box-shadow: 0 18px 55px rgba(0,0,0,.25);
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+.card-tile:hover{
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+.card-tile img{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius: 12px;
+}
+
+.badge{
+  position:absolute;
+  top:10px;
+  left:10px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.5px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.25);
+  backdrop-filter: blur(10px);
+}
+.badge-common{ box-shadow: 0 0 20px rgba(0,255,153,.12); }
+.badge-rare{ box-shadow: 0 0 20px rgba(0,119,255,.14); }
+.badge-epic{ box-shadow: 0 0 20px rgba(176,102,255,.14); }
+.badge-unique{ box-shadow: 0 0 20px rgba(255,51,102,.14); }
+.badge-legendary{ box-shadow: 0 0 20px rgba(255,213,79,.14); }
+.badge-secret{ box-shadow: 0 0 20px rgba(255,0,0,.10); }
+
+.game-box{
+  margin-top:16px;
+  border-radius: 18px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  padding:16px;
+  box-shadow: 0 18px 55px rgba(0,0,0,.25);
+}
+.game-title{ margin:0 0 8px; font-size:18px; }
+.game-sub{ margin:14px 0 8px; font-size:15px; color: rgba(233,237,255,.92); }
+.game-p{ margin:0 0 10px; line-height:1.9; color: rgba(233,237,255,.78); }
+.game-list{ margin:0 0 12px; padding:0 18px 0 0; line-height:2; color: rgba(233,237,255,.80); }
+.rule-highlight{
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(59,130,246,.12);
+}
+
+/* Lightbox */
+.lightbox{
+  position:fixed;
+  inset:0;
+  display:none;
+  z-index:999;
+}
+.lightbox[aria-hidden="false"]{ display:block; }
+.lightbox-backdrop{
+  position:absolute; inset:0;
+  background: rgba(0,0,0,.70);
+  backdrop-filter: blur(6px);
+}
+.lightbox-panel{
+  position:relative;
+  width:min(92vw, 520px);
+  margin: 6vh auto 0;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(7,10,18,.75);
+  box-shadow: 0 30px 90px rgba(0,0,0,.60);
+  padding: 12px;
+}
+.lightbox-panel img{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius: 14px;
+}
+.lightbox-close{
+  position:absolute;
+  top:10px; left:10px;
+  width:40px; height:40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: rgba(233,237,255,.92);
+  font-size: 22px;
+  cursor:pointer;
+}
+
+/* Responsive */
+@media (max-width: 900px){
+  .cards-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 901px){
+  .cards-grid{ grid-template-columns: repeat(6, 1fr); }
+}
+
+    
 
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -387,33 +505,89 @@
       </div>
     </section>
 
-    <section id="fantasy">
-      <div class="wrap">
-        <h2 class="section-title">لونا فانتاسي</h2>
-        <p class="section-sub">
-          هذا القسم للأنشطة واللعب وتقمص الأدوار. نقدر نضيف قائمة مزايا/قوانين/طريقة الانضمام بشكل منظم.
-        </p>
-      </div>
-    </section>
+   <section id="fantasy">
+  <div class="wrap">
+    <h2 class="section-title">لونا فانتاسي</h2>
+    <p class="section-sub">
+      هنا شرح اللعبة الرسمي + عرض ترتيب الكروت. اضغط على أي كرت عشان يكبر.
+    </p>
 
-    <section id="characters">
-      <div class="wrap">
-        <h2 class="section-title">شخصياتنا</h2>
-        <p class="section-sub">
-          هنا نعرض الشخصيات. بكرة نسوي Grid بطاقات (Cards) مع صور وأسماء ووصف مختصر وزر “اقرأ المزيد”.
-        </p>
-      </div>
-    </section>
-  </main>
+    <!-- Cards Gallery -->
+    <div class="cards-grid" aria-label="Luna Fantasy Cards">
+      <button class="card-tile" data-full="assets/cards/common.png" aria-label="Common card">
+        <span class="badge badge-common">COMMON</span>
+        <img src="assets/cards/common.png" alt="Common card" loading="lazy">
+      </button>
 
-  <footer>
-    <div class="wrap footer-row">
-      <div>© Luna Fantasy</div>
-      <div class="social">
-        <a href="https://www.instagram.com/luna.passage?igsh=dmVzdGtscWJ2cW91" target="_blank" rel="noopener">Instagram</a>
-        <a href="https://www.tiktok.com/@luna.passage?_r=1&_t=ZS-92gBHpRbSNT" target="_blank" rel="noopener">TikTok</a>
-      </div>
+      <button class="card-tile" data-full="assets/cards/rare.png" aria-label="Rare card">
+        <span class="badge badge-rare">RARE</span>
+        <img src="assets/cards/rare.png" alt="Rare card" loading="lazy">
+      </button>
+
+      <button class="card-tile" data-full="assets/cards/epic.png" aria-label="Epic card">
+        <span class="badge badge-epic">EPIC</span>
+        <img src="assets/cards/epic.png" alt="Epic card" loading="lazy">
+      </button>
+
+      <button class="card-tile" data-full="assets/cards/unique.png" aria-label="Unique card">
+        <span class="badge badge-unique">UNIQUE</span>
+        <img src="assets/cards/unique.png" alt="Unique card" loading="lazy">
+      </button>
+
+      <button class="card-tile" data-full="assets/cards/legendary.png" aria-label="Legendary card">
+        <span class="badge badge-legendary">LEGENDARY</span>
+        <img src="assets/cards/legendary.png" alt="Legendary card" loading="lazy">
+      </button>
+
+      <button class="card-tile" data-full="assets/cards/secret.png" aria-label="Secret card">
+        <span class="badge badge-secret">SECRET</span>
+        <img src="assets/cards/secret.png" alt="Secret card" loading="lazy">
+      </button>
     </div>
-  </footer>
-</body>
-</html>
+
+    <!-- Game description -->
+    <div class="game-box">
+      <h3 class="game-title">ماهي لونا فانتاسي؟</h3>
+      <p class="game-p">
+        بكل بساطة هذه اللعبة من تصميمنا واختراعنا وهي لعبة جديدة كلياً غير منسوخة ولها طابعها الخاص وتعتمد على العقل وليس بقوة الكرت.
+      </p>
+
+      <h4 class="game-sub">طريقة اللعبة:</h4>
+      <p class="game-p">كل لاعب له خمس كروت، وأربعة منها إجبارية:</p>
+
+      <ul class="game-list">
+        <li><b>Common</b> كرت</li>
+        <li><b>Rare</b> كرت</li>
+        <li><b>Epic</b> كرت</li>
+        <li><b>Unique</b> كرت</li>
+      </ul>
+
+      <p class="game-p">
+        هذي الكروت الإجبارية لكل لاعب، ولكن الكرت الخامس راح يكون كرت عشوائي
+        إما من الفئات السابقة أو فئات أخرى مثل <b>الأسطورية</b> و<b>السرية</b> و<b>الخاصة</b>.
+      </p>
+
+      <div class="rule-highlight">
+        <b>الفائز هو اللي يفوز بثلاث جولات من أصل خمسة.</b>
+      </div>
+
+      <p class="game-p">
+        دمج الكروت متفاوت ومختلف — احسب كروت خصمك وراقب الفئات اللي لعبها وقرر الكرت اللي بتلعبه بذكاء.
+      </p>
+
+      <p class="game-p">
+        ترتيب الكروت: <b>Common</b> ثم <b>Rare</b> ثم <b>Epic</b> ثم <b>Unique</b> ثم <b>Legendary</b> وآخر شي <b>Secret</b>.
+      </p>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <div class="lightbox-backdrop" data-close="1"></div>
+    <div class="lightbox-panel" role="dialog" aria-modal="true" aria-label="Card preview">
+      <button class="lightbox-close" data-close="1" aria-label="إغلاق">×</button>
+      <img id="lightboxImg" alt="Card preview" />
+    </div>
+  </div>
+</section>
+
