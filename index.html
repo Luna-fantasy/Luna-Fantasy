@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Luna Fantasy</title>
   <meta name="description" content="لونا فانتاسي — عالم فانتازيا ضخم متكامل على منصة ديسكورد." />
-
   <style>
     :root{
       --bg:#070a12;
@@ -64,7 +63,7 @@
       white-space:nowrap;
     }
 
-    /* Clean SVG crescent logo (no black blob) */
+    /* Clean logo */
     .brand-badge{
       width:34px;height:34px;border-radius:12px;
       border:1px solid rgba(255,255,255,.12);
@@ -218,6 +217,7 @@
       max-width: 78ch;
     }
 
+    /* === FIX: Overview cards aligned === */
     .grid{
       display:grid;
       grid-template-columns: repeat(3, 1fr);
@@ -229,12 +229,13 @@
       background: rgba(255,255,255,.04);
       padding: 16px;
       box-shadow: 0 18px 55px rgba(0,0,0,.25);
+      display:flex;
+      flex-direction:column;
+      min-height: 170px;
     }
     .card h3{margin:0 0 8px; font-size: 15px}
-    .card p{margin:0; color: rgba(233,237,255,.72); font-size: 13.5px; line-height:1.85}
-
-    /* mini CTA inside cards */
-    .card-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+    .card p{margin:0; color: rgba(233,237,255,.72); font-size: 13.5px; line-height:1.85; flex:1;}
+    .card-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
     .mini-btn{
       display:inline-flex;
       align-items:center;
@@ -246,6 +247,7 @@
       border: 1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.04);
       text-decoration:none;
+      white-space:nowrap;
     }
     .mini-btn:hover{background: rgba(255,255,255,.06)}
 
@@ -350,7 +352,7 @@
       width:100%;
       height:100%;
       display:block;
-      object-fit: contain; /* shows full image */
+      object-fit: contain;
       background: rgba(7,10,18,.35);
     }
     .story-box{
@@ -617,7 +619,6 @@
       </div>
     </section>
 
-    <!-- STORY -->
     <section id="story">
       <div class="wrap">
         <h2 class="section-title">قصة لونا</h2>
@@ -625,7 +626,8 @@
 
         <div class="story-grid">
           <div class="story-media">
-            <img src="assets/story/champion.png" alt="Champion of Luna" loading="lazy">
+            <img src="assets/story/champion.png" alt="Champion of Luna" loading="lazy"
+                 onerror="this.onerror=null;this.style.display='none';">
           </div>
 
           <div class="story-box">
@@ -633,19 +635,16 @@
               كان هنالك عالم كبير جداً في جزيرة هلالية قمرية اسمه <b>«لونا»</b>، وفي لونا عاشت جميع الكائنات المعروفة والغير معروفة في سلام…
               إلى أن أتى شخص اسمه <b>«إكسبايد»</b>، مخلوق هجين ما بين فصيل الأورك والغيلان، قوي جداً وضخم البنية.
             </p>
-
             <p class="story-p">
               كان إكسبايد يستمد طاقته وقوته من العقل المدبر المظلم <b>«شوران»</b> الذي يتحكم بطاقة وقوة الفوضى الطاغية.
               أرسل شوران جيشه إلى <b>«لونفور»</b> عاصمة لونا لينتزعوا الملك والسيطرة على لونا…
               وبالفعل خرّ جميع فرسان لونا صرعى أمام إكسبايد الذي عُرف بعد ذلك بـ <b>«ملك الفوضى»</b>.
             </p>
-
             <p class="story-p">
               ظلت لونا تحت حكم ملك الفوضى لمئات السنين… إلى أن أتى وافدون من كوكب الأرض وهم <b>«العقلين المدبرين»</b>.
               حللوا ما يحصل في لونا وهم يجهلون هذا العالم، لكنهم قرروا البقاء والدفاع عن شعب لونا المضطهد.
               ساهموا في بناء لونا من جديد ووضعوا خططاً للقضاء على ملك الفوضى…
             </p>
-
             <p class="story-p">
               وبالفعل انتصروا على جيش الفوضى الكبير وتحررت لونا من طغيانهم،
               وهُزم ملك الفوضى على يد بطل لونا <b>«بودا بان»</b>.
@@ -665,7 +664,6 @@
       </div>
     </section>
 
-    <!-- LUNA FANTASY -->
     <section id="fantasy">
       <div class="wrap">
         <h2 class="section-title">لونا فانتسي</h2>
@@ -708,7 +706,6 @@
           <p class="game-p">
             بكل بساطة هذه اللعبة من تصميمنا واختراعنا وهي لعبة جديدة كلياً غير منسوخة ولها طابعها الخاص وتعتمد على العقل وليس بقوة الكرت.
           </p>
-
           <h4 class="game-sub">طريقة اللعبة:</h4>
           <p class="game-p">كل لاعب له خمس كروت، وأربعة منها إجبارية:</p>
 
@@ -745,7 +742,6 @@
       </div>
     </section>
 
-    <!-- CHARACTERS -->
     <section id="characters">
       <div class="wrap">
         <h2 class="section-title">شخصياتنا</h2>
@@ -758,7 +754,8 @@
           <div class="char-card">
             <div class="char-media">
               <span class="char-badge">الواجهة الأساسية</span>
-              <img src="assets/characters/mastermind.png" alt="Mastermind" loading="lazy">
+              <img src="assets/characters/mastermind.png" alt="Mastermind" loading="lazy"
+                   onerror="this.onerror=null;this.src='assets/characters/placeholder.png';">
             </div>
             <div class="char-body">
               <h3 class="char-title">Mastermind</h3>
@@ -769,7 +766,8 @@
           <div class="char-card">
             <div class="char-media">
               <span class="char-badge">الحُرّاس</span>
-              <img src="assets/characters/luna-sentinel.png" alt="Luna Sentinel" loading="lazy">
+              <img src="assets/characters/luna-sentinel.png" alt="Luna Sentinel" loading="lazy"
+                   onerror="this.onerror=null;this.src='assets/characters/placeholder.png';">
             </div>
             <div class="char-body">
               <h3 class="char-title">Luna Sentinel</h3>
@@ -780,16 +778,99 @@
           <div class="char-card">
             <div class="char-media">
               <span class="char-badge">الحُرّاس</span>
-              <img src="assets/characters/luna-guardian.png" alt="Luna Guardian" loading="lazy">
+              <img src="assets/characters/luna-guardian.png" alt="Luna Guardian" loading="lazy"
+                   onerror="this.onerror=null;this.src='assets/characters/placeholder.png';">
             </div>
             <div class="char-body">
               <h3 class="char-title">Luna Guardian</h3>
-              <p class="char-sub">حارس الأسرار والبوابات. صلابة لا تُساوم… وخطوة واحدة منه تغيّر مسار المعركة.</p>
+              <p class="char-sub">حارس الأسرار والبوابات… صلابة لا تُساوم.</p>
             </div>
           </div>
 
+          <!-- FIX: Luna Knight fallback prevents "disappearing card" -->
           <div class="char-card">
             <div class="char-media">
               <span class="char-badge">الفرسان</span>
-              <img src="assets/characters/luna-knight.png" alt="Luna Knight" loading
+              <img src="assets/characters/luna-knight.png" alt="Luna Knight" loading="lazy"
+                   onerror="this.onerror=null;this.src='assets/characters/placeholder.png';">
+            </div>
+            <div class="char-body">
+              <h3 class="char-title">Luna Knight</h3>
+              <p class="char-sub">فارس Luna… حضور ثقيل وقرار حاسم عند لحظة الحكم.</p>
+            </div>
+          </div>
 
+          <!-- FIX: Luna Noble fallback prevents "missing profile" -->
+          <div class="char-card">
+            <div class="char-media">
+              <span class="char-badge">النبلاء</span>
+              <img src="assets/characters/luna-noble.png" alt="Luna Noble" loading="lazy"
+                   onerror="this.onerror=null;this.src='assets/characters/placeholder.png';">
+            </div>
+            <div class="char-body">
+              <h3 class="char-title">Luna Noble</h3>
+              <p class="char-sub">النخبة… أسلوب راقٍ ونفوذ يترك أثره داخل العالم.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="hint">
+          <b>كيف تكتشف باقي الشخصيات؟</b><br/>
+          عند انضمامك إلى سيرفرنا على منصة الديسكورد، راح تبدأ تتعرّف على جميع الشخصيات تدريجيًا داخل القصة، الأحداث، وتقمّص الأدوار.
+          <div class="mini-row">
+            <a class="mini" href="https://discord.gg/lunarian" target="_blank" rel="noopener">انضم للديسكورد</a>
+            <a class="mini" href="https://www.instagram.com/luna.passage?igsh=dmVzdGtscWJ2cW91" target="_blank" rel="noopener">Instagram</a>
+            <a class="mini" href="https://www.tiktok.com/@luna.passage?_r=1&_t=ZS-92gBHpRbSNT" target="_blank" rel="noopener">TikTok</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap" style="padding:28px 0 40px; border-top:1px solid rgba(255,255,255,.08); color:rgba(233,237,255,.65); font-size:13px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div>© Luna Fantasy</div>
+        <div class="social">
+          <a href="https://www.instagram.com/luna.passage?igsh=dmVzdGtscWJ2cW91" target="_blank" rel="noopener">Instagram</a>
+          <a href="https://www.tiktok.com/@luna.passage?_r=1&_t=ZS-92gBHpRbSNT" target="_blank" rel="noopener">TikTok</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function(){
+      const lb = document.getElementById('lightbox');
+      const img = document.getElementById('lightboxImg');
+
+      function openLightbox(src){
+        img.src = src;
+        lb.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeLightbox(){
+        lb.setAttribute('aria-hidden', 'true');
+        img.src = '';
+        document.body.style.overflow = '';
+      }
+
+      document.querySelectorAll('.card-tile').forEach(btn=>{
+        btn.addEventListener('click', ()=> openLightbox(btn.dataset.full));
+      });
+
+      lb.addEventListener('click', (e)=>{
+        if(e.target && e.target.dataset && e.target.dataset.close === '1'){
+          closeLightbox();
+        }
+      });
+
+      document.addEventListener('keydown', (e)=>{
+        if(e.key === 'Escape' && lb.getAttribute('aria-hidden') === 'false'){
+          closeLightbox();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
