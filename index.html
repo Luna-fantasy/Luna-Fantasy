@@ -521,39 +521,51 @@
       <div class="brand">
         <div class="brand-badge" aria-hidden="true">
           <!-- CLEAN Crescent -->
-          <svg viewBox="0 0 64 64" class="brand-svg" role="img" aria-label="Luna Crescent">
-            <defs>
-              <radialGradient id="moonGlow" cx="30%" cy="30%" r="70%">
-                <stop offset="0%" stop-color="#E9F6FF" stop-opacity="1"/>
-                <stop offset="55%" stop-color="#79C8FF" stop-opacity="0.9"/>
-                <stop offset="100%" stop-color="#2A6BFF" stop-opacity="0.25"/>
-              </radialGradient>
-              <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="2.2" result="blur"/>
-                <feMerge>
-                  <feMergeNode in="blur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
+          <div class="brand-badge" aria-hidden="true">
+  <svg viewBox="0 0 64 64" class="brand-svg" role="img" aria-label="Luna Crescent">
+    <defs>
+      <radialGradient id="moonGrad" cx="28%" cy="28%" r="75%">
+        <stop offset="0%" stop-color="#F3FBFF"/>
+        <stop offset="55%" stop-color="#7AD0FF"/>
+        <stop offset="100%" stop-color="#2A6BFF" stop-opacity="0.25"/>
+      </radialGradient>
 
-            <!-- stars -->
-            <circle cx="46" cy="18" r="1.2" fill="#CFEAFF" opacity="0.9"/>
-            <circle cx="50" cy="26" r="1.0" fill="#CFEAFF" opacity="0.8"/>
-            <circle cx="42" cy="30" r="0.9" fill="#CFEAFF" opacity="0.75"/>
+      <filter id="moonGlow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="2.4" result="b"/>
+        <feMerge>
+          <feMergeNode in="b"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
 
-            <!-- crescent using evenodd: outer circle - inner circle (no black fill) -->
-            <path filter="url(#softGlow)" fill="url(#moonGlow)" fill-rule="evenodd"
-              d="M32 12
-                 A20 20 0 1 0 32 52
-                 A20 20 0 1 0 32 12 Z
-                 M40 16
-                 A16 16 0 1 1 40 48
-                 A16 16 0 1 1 40 16 Z" />
-          </svg>
-        </div>
-        <div>Luna Fantasy</div>
-      </div>
+    <!-- Stars -->
+    <circle cx="46" cy="18" r="1.2" fill="#CFEAFF" opacity="0.95"/>
+    <circle cx="52" cy="26" r="1.0" fill="#CFEAFF" opacity="0.85"/>
+    <circle cx="44" cy="31" r="0.9" fill="#CFEAFF" opacity="0.75"/>
+
+    <!-- Crescent (evenodd = outer circle minus inner circle) -->
+    <path filter="url(#moonGlow)"
+          fill="url(#moonGrad)"
+          fill-rule="evenodd"
+          d="
+            M30 12
+            A20 20 0 1 0 30 52
+            A20 20 0 1 0 30 12
+            Z
+
+            M40 14
+            A16 16 0 1 1 40 46
+            A16 16 0 1 1 40 14
+            Z
+          "/>
+
+    <!-- subtle rim -->
+    <path fill="none" stroke="rgba(233,246,255,0.55)" stroke-width="0.8"
+          d="M30 13.2 A18.8 18.8 0 1 0 30 50.8" opacity="0.6"/>
+  </svg>
+</div>
+
 
       <div class="nav">
         <a href="#overview">نظرة عامة</a>
