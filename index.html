@@ -64,7 +64,7 @@
       white-space:nowrap;
     }
 
-    /* NEW: Logo badge as SVG (no black square) */
+    /* Clean SVG crescent logo (no black blob) */
     .brand-badge{
       width:34px;height:34px;border-radius:12px;
       border:1px solid rgba(255,255,255,.12);
@@ -233,6 +233,22 @@
     .card h3{margin:0 0 8px; font-size: 15px}
     .card p{margin:0; color: rgba(233,237,255,.72); font-size: 13.5px; line-height:1.85}
 
+    /* mini CTA inside cards */
+    .card-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+    .mini-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      font-weight: 900;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      text-decoration:none;
+    }
+    .mini-btn:hover{background: rgba(255,255,255,.06)}
+
     /* Social */
     .social{display:flex; gap:10px; flex-wrap:wrap;}
     .social a{
@@ -314,7 +330,7 @@
       font-weight:900;
     }
 
-    /* Story (UPDATED: image contains fully) */
+    /* Story */
     .story-grid{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -334,7 +350,7 @@
       width:100%;
       height:100%;
       display:block;
-      object-fit: contain; /* IMPORTANT */
+      object-fit: contain; /* shows full image */
       background: rgba(7,10,18,.35);
     }
     .story-box{
@@ -485,15 +501,15 @@
         <div class="brand-badge" aria-hidden="true">
           <svg viewBox="0 0 64 64" class="brand-svg" role="img" aria-label="Luna Crescent">
             <defs>
-              <radialGradient id="moonGlow" cx="30%" cy="30%" r="70%">
-                <stop offset="0%" stop-color="#E9F6FF" stop-opacity="1"/>
-                <stop offset="55%" stop-color="#79C8FF" stop-opacity="0.85"/>
-                <stop offset="100%" stop-color="#2A6BFF" stop-opacity="0.15"/>
-              </radialGradient>
-              <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="2.2" result="blur"/>
+              <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#E9F6FF"/>
+                <stop offset="55%" stop-color="#7AD0FF"/>
+                <stop offset="100%" stop-color="#2A6BFF"/>
+              </linearGradient>
+              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2.2" result="b"/>
                 <feMerge>
-                  <feMergeNode in="blur"/>
+                  <feMergeNode in="b"/>
                   <feMergeNode in="SourceGraphic"/>
                 </feMerge>
               </filter>
@@ -503,10 +519,15 @@
             <circle cx="50" cy="26" r="1.0" fill="#CFEAFF" opacity="0.8"/>
             <circle cx="42" cy="30" r="0.9" fill="#CFEAFF" opacity="0.75"/>
 
-            <g filter="url(#softGlow)">
-              <circle cx="30" cy="32" r="20" fill="url(#moonGlow)"/>
-              <circle cx="39" cy="28" r="18" fill="rgba(7,10,18,0.92)"/>
-            </g>
+            <path filter="url(#glow)" fill="url(#cg)"
+              d="M38.8 14.2
+                 C30.6 14.2 24 20.8 24 29
+                 C24 37.2 30.6 43.8 38.8 43.8
+                 C33.7 46.2 27 44.6 22.9 40.5
+                 C18.2 35.8 18.2 28.2 22.9 23.5
+                 C27 19.4 33.7 17.8 38.8 20.2
+                 C36.2 18.1 34.6 16 34.6 14.2
+                 Z" />
           </svg>
         </div>
         <div>Luna Fantasy</div>
@@ -561,24 +582,36 @@
 
     <section id="overview">
       <div class="wrap">
-        <h2 class="section-title">مقدمة</h2>
+        <h2 class="section-title">ابدأ رحلتك إلى لونا</h2>
         <p class="section-sub">
-          هذا هو الموقع الرسمي لـ <b>Luna Fantasy</b>. هنا بنعرض القصة، نظام اللعبة، والكروت،
-          ومع الوقت راح يصير عندك مركز كامل لعالم Luna — مرتب، واضح، وفخم.
+          <b>أهلاً بك في Luna.</b><br/>
+          عالم هلالي قمري، قصته ممتدة، وشخصياته تتجاوز 200 شخصية.<br/>
+          ابدأ من القصة، تعلّم نظام اللعبة والكروت، ثم انضم واصنع أسطورتك داخل الديسكورد.
         </p>
 
         <div class="grid">
           <div class="card">
             <h3>قصة لونا</h3>
-            <p>مدخل رسمي للقصة… وسرد يربط الواقع بالخيال بطريقة متماسكة.</p>
+            <p>مدخل رسمي للقصة… ومنها تبدأ حرب الفوضى الكبرى.</p>
+            <div class="card-actions">
+              <a class="mini-btn" href="#story">اقرأ القصة</a>
+            </div>
           </div>
+
           <div class="card">
             <h3>لونا فانتسي</h3>
-            <p>شرح اللعبة + الكروت + طريقة اللعب، مع توسعات تدريجية داخل السيرفر.</p>
+            <p>شرح اللعبة + الكروت + طريقة اللعب… مع توسعات تدريجية داخل السيرفر.</p>
+            <div class="card-actions">
+              <a class="mini-btn" href="#fantasy">افتح النظام</a>
+            </div>
           </div>
+
           <div class="card">
             <h3>شخصياتنا</h3>
-            <p>الواجهات الأساسية أولاً… وبانضمامك بتكتشف باقي الشخصيات تدريجيًا داخل الأحداث.</p>
+            <p>الواجهات الأساسية أولاً… وبانضمامك بتكتشف باقي الشخصيات تدريجيًا.</p>
+            <div class="card-actions">
+              <a class="mini-btn" href="#characters">شاهد الشخصيات</a>
+            </div>
           </div>
         </div>
       </div>
@@ -588,9 +621,7 @@
     <section id="story">
       <div class="wrap">
         <h2 class="section-title">قصة لونا</h2>
-        <p class="section-sub">
-          هذه هي البداية… ومنها تبدأ “حرب الفوضى الكبرى” التي غيّرت مسار العالم.
-        </p>
+        <p class="section-sub">هذه هي البداية… ومنها تبدأ “حرب الفوضى الكبرى” التي غيّرت مسار العالم.</p>
 
         <div class="story-grid">
           <div class="story-media">
@@ -760,84 +791,5 @@
           <div class="char-card">
             <div class="char-media">
               <span class="char-badge">الفرسان</span>
-              <img src="assets/characters/luna-knight.png" alt="Luna Knight" loading="lazy">
-            </div>
-            <div class="char-body">
-              <h3 class="char-title">Luna Knight</h3>
-              <p class="char-sub">فارس Luna. حضور ثقيل، قرار حاسم، وسيف لا يرحم عند لحظة الحكم.</p>
-            </div>
-          </div>
+              <img src="assets/characters/luna-knight.png" alt="Luna Knight" loading
 
-          <div class="char-card">
-            <div class="char-media">
-              <span class="char-badge">النبلاء</span>
-              <img src="assets/characters/luna-noble.png" alt="Luna Noble" loading="lazy">
-            </div>
-            <div class="char-body">
-              <h3 class="char-title">Luna Noble</h3>
-              <p class="char-sub">النخبة. أسلوب راقٍ… لكن وراءه نفوذ، قواعد، ووزن اجتماعي داخل العالم.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="hint">
-          <b>كيف تكتشف باقي الشخصيات؟</b><br/>
-          عند انضمامك إلى سيرفرنا على منصة الديسكورد، راح تبدأ تتعرّف على جميع الشخصيات تدريجيًا داخل القصة، الأحداث، وتقمّص الأدوار.
-          كل شخصية لها مسارها، تفاعلها، وأثرها داخل عالم Luna.
-          <div class="mini-row">
-            <a class="mini" href="https://discord.gg/lunarian" target="_blank" rel="noopener">انضم للديسكورد</a>
-            <a class="mini" href="https://www.instagram.com/luna.passage?igsh=dmVzdGtscWJ2cW91" target="_blank" rel="noopener">Instagram</a>
-            <a class="mini" href="https://www.tiktok.com/@luna.passage?_r=1&_t=ZS-92gBHpRbSNT" target="_blank" rel="noopener">TikTok</a>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="wrap" style="padding:28px 0 40px; border-top:1px solid rgba(255,255,255,.08); color:rgba(233,237,255,.65); font-size:13px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-        <div>© Luna Fantasy</div>
-        <div class="social">
-          <a href="https://www.instagram.com/luna.passage?igsh=dmVzdGtscWJ2cW91" target="_blank" rel="noopener">Instagram</a>
-          <a href="https://www.tiktok.com/@luna.passage?_r=1&_t=ZS-92gBHpRbSNT" target="_blank" rel="noopener">TikTok</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    (function(){
-      const lb = document.getElementById('lightbox');
-      const img = document.getElementById('lightboxImg');
-
-      function openLightbox(src){
-        img.src = src;
-        lb.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-      }
-      function closeLightbox(){
-        lb.setAttribute('aria-hidden', 'true');
-        img.src = '';
-        document.body.style.overflow = '';
-      }
-
-      document.querySelectorAll('.card-tile').forEach(btn=>{
-        btn.addEventListener('click', ()=> openLightbox(btn.dataset.full));
-      });
-
-      lb.addEventListener('click', (e)=>{
-        if(e.target && e.target.dataset && e.target.dataset.close === '1'){
-          closeLightbox();
-        }
-      });
-
-      document.addEventListener('keydown', (e)=>{
-        if(e.key === 'Escape' && lb.getAttribute('aria-hidden') === 'false'){
-          closeLightbox();
-        }
-      });
-    })();
-  </script>
-</body>
-</html>
