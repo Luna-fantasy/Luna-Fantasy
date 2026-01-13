@@ -361,12 +361,25 @@ html[dir="rtl"] .chapter-nav-btn {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .page-header {
+  .story-hero {
     padding: 120px 20px 60px;
+    min-height: 40vh;
   }
 
-  .page-header h1 {
+  .story-hero-title {
     font-size: 2rem;
+  }
+
+  .story-hero-desc {
+    font-size: 1rem;
+  }
+
+  .story-container {
+    padding: 0 20px 60px;
+  }
+
+  .chapter {
+    margin-bottom: 60px;
   }
 
   .chapter-title {
@@ -374,6 +387,12 @@ html[dir="rtl"] .chapter-nav-btn {
   }
 
   .chapter-content p {
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+
+  .story-quote {
+    padding: 24px;
     font-size: 1rem;
   }
 
@@ -385,7 +404,23 @@ html[dir="rtl"] .chapter-nav-btn {
     font-size: 1.05rem;
   }
 
+  .timeline-break {
+    margin: 40px 0;
+  }
+
   .chapter-nav {
     flex-direction: column;
+  }
+
+  .chapter-nav-btn {
+    padding: 20px;
+  }
+
+  .coming-soon {
+    padding: 60px 24px;
+  }
+
+  .coming-soon h3 {
+    font-size: 1.25rem;
   }
 }
