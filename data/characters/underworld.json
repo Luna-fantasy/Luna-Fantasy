@@ -1,0 +1,106 @@
+[
+  {
+    "id": "gravemind",
+    "name": {
+      "en": "Gravemind",
+      "ar": "Gravemind"
+    },
+    "lore": {
+      "ar": "عقل المقابر وملك الموتى الصامت. يحرك العظام كما تحرك الريح الغبار. كل جيش يسقط، ينضم إليه.",
+      "en": "Mind of the graves and silent king of the dead. He moves bones as the wind moves dust. Every army that falls joins him."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Underworld/Gravemind.png"
+  },
+  {
+    "id": "monarch-abyss",
+    "name": {
+      "en": "Monarch Abyss",
+      "ar": "Monarch Abyss"
+    },
+    "lore": {
+      "ar": "ملك هيكلي يحكم ظلام الهاوية، حاكم مرعب لعالم الظلال وأرواح الضياع الجامحة.",
+      "en": "A skeletal king ruling the darkness of the abyss, a terrifying ruler of the shadow world and wild lost souls."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Underworld/Monarch%20Abyss.png"
+  },
+  {
+    "id": "phantom",
+    "name": {
+      "en": "Phantom",
+      "ar": "Phantom"
+    },
+    "lore": {
+      "ar": "ظل بلا جسد ثابت. يظهر ليقتل ويختفي. لا يترك أثرًا إلا الخوف.",
+      "en": "A shadow with no fixed body. Appears to kill and vanishes. Leaves no trace but fear."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Underworld/Phantom.png"
+  },
+  {
+    "id": "reaper",
+    "name": {
+      "en": "Reaper",
+      "ar": "Reaper"
+    },
+    "lore": {
+      "ar": "جامع الأرواح تحت ضوء القمر الصامت. لا يطارد… بل ينتظر اللحظة التي ينهار فيها الخصم. من يراه، يكون قد انتهى بالفعل.",
+      "en": "Collector of souls under the silent moonlight. He does not chase... but waits for the moment the opponent collapses. He who sees him is already finished."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Underworld/Reaper.png"
+  },
+  {
+    "id": "shadow-reign",
+    "name": {
+      "en": "Shadow Reign",
+      "ar": "Shadow Reign"
+    },
+    "lore": {
+      "ar": "شبح متلفع بالظلام والظلال، يمتلك قوى الليل ويحرس الأسرار الخفية.",
+      "en": "A ghost wrapped in darkness and shadows, possessing the powers of the night and guarding hidden secrets."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Underworld/Shadow%20Reign.png"
+  },
+  {
+    "id": "shape-shifter",
+    "name": {
+      "en": "Shape Shifter",
+      "ar": "Shape Shifter"
+    },
+    "lore": {
+      "ar": "كيان مظلم مغطى بالظلال، متحوّل جزئيًا، يتنقل بين الأشكال ويتلاشى بين الهويات، لا يُعرف له وجه ثابت ولا مصير واحد.",
+      "en": "A dark entity covered in shadows, partially transforming, shifting between forms and fading between identities; known by no fixed face nor single destiny."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Underworld/Shape%20Shifter.PNG"
+  },
+  {
+    "id": "specter",
+    "name": {
+      "en": "Specter",
+      "ar": "Specter"
+    },
+    "lore": {
+      "ar": "روح لم تُغلق صفحتها. يتحرك بين العالمين. رؤيته تعني أن الموت قريب.",
+      "en": "A spirit whose chapter was not closed. Moves between worlds. Seeing it means death is near."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Underworld/Specter.png"
+  },
+  {
+    "id": "wraith",
+    "name": {
+      "en": "Wraith",
+      "ar": "Wraith"
+    },
+    "lore": {
+      "ar": "بقايا روح رفضت الرحيل. لا تنتمي للحياة ولا للموت. ظهورها علامة اختلال.",
+      "en": "Remnants of a soul that refused to leave. Belongs neither to life nor death. Its appearance is a sign of imbalance."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Underworld/Wraith.png"
+  }
+]

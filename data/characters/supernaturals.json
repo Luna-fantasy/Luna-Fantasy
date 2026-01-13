@@ -1,0 +1,74 @@
+[
+  {
+    "id": "alpha-werewolf",
+    "name": {
+      "en": "Alpha Werewolf",
+      "ar": "Alpha Werewolf"
+    },
+    "lore": {
+      "ar": "قائد مستذئبين لا ينازع. أقوى وأشرس من جميع أبناء جنسه. عندما يعوي، تبدأ المذبحة."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Alpha%20Werewolf.png"
+  },
+  {
+    "id": "elder-vampire",
+    "name": {
+      "en": "Elder Vampire",
+      "ar": "Elder Vampire"
+    },
+    "lore": {
+      "ar": "سيد مصاصي الدماء منذ العصور الأولى. يتغذى على البشر ويأمر الظلال. إرادته قانون في الليل."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Elder%20Vampire.png"
+  },
+  {
+    "id": "lycan",
+    "name": {
+      "en": "Lycan",
+      "ar": "Lycan"
+    },
+    "lore": {
+      "ar": "إنسان مزقته لعنة القمر. قوته تتضاعف مع اكتماله. عقله يقاتل الوحش داخله."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Lycan.png"
+  },
+  {
+    "id": "vampire",
+    "name": {
+      "en": "Vampire",
+      "ar": "Vampire"
+    },
+    "lore": {
+      "ar": "سيد الليل والدم. يخطط قبل أن يهاجم. الخالد الذي لا ينسى."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Vampire.png"
+  },
+  {
+    "id": "werewolf",
+    "name": {
+      "en": "Werewolf",
+      "ar": "Werewolf"
+    },
+    "lore": {
+      "ar": "وحش القمر الكامل. لا يعرف الرحمة ولا السيطرة. ظهوره كارثة مؤكدة."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Werewolf.png"
+  },
+  {
+    "id": "witch",
+    "name": {
+      "en": "Witch",
+      "ar": "Witch"
+    },
+    "lore": {
+      "ar": "ساحرة ترى لونا كرقعة لعب. تتنبأ، وتغيّر، وتعبث. كل تعويذة لها ثمن."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Witch.png"
+  }
+]

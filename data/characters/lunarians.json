@@ -1,0 +1,522 @@
+[
+  {
+    "id": "arcanist",
+    "name": {
+      "en": "Arcanist",
+      "ar": "Arcanist"
+    },
+    "lore": {
+      "ar": "ساحر غارق في أسرار السحر القمري المحرّم. تعويذاته تستنزف الحياة وتشوّه الواقع. كل معرفة يكتسبها لها ثمن دموي.",
+      "en": "A mage drowning in the secrets of forbidden lunar magic. His spells drain life and distort reality. Every knowledge he gains has a bloody price."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Arcanist.png"
+  },
+  {
+    "id": "archer",
+    "name": {
+      "en": "Archer",
+      "ar": "Archer"
+    },
+    "lore": {
+      "ar": "عينه أسرع من السهم. لا يطلق إلا إذا أصاب. الليل صديقه.",
+      "en": "His eye is faster than the arrow. He does not shoot unless he hits. The night is his friend."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Archer.png"
+  },
+  {
+    "id": "assassin",
+    "name": {
+      "en": "Assassin",
+      "ar": "Assassin"
+    },
+    "lore": {
+      "ar": "نصل لونا الخفي. يُنفّذ قبل أن يُلاحظ. إذا سُمي الهدف، انتهى.",
+      "en": "Luna's hidden blade. Executes before being noticed. If the target is named, it is over."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Assassin.png"
+  },
+  {
+    "id": "avelle-adar",
+    "name": {
+      "en": "Avelle Adar",
+      "ar": "Avelle Adar"
+    },
+    "lore": {
+      "ar": "أڤيلً ادار وهو والد كورين أڤيل ، أفيل من فصيلة الايلف وهو فاحش الثراء ويملك بنك لونا المركزي وهو الصديق المقرب للعقلين المدبرين.",
+      "en": "Avelle Adar, father of Corin Avelle. Avelle is of the Elf race, extremely wealthy, owns the Central Bank of Luna, and is a close friend of the two Masterminds."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Avelle%20Adar.jpeg"
+  },
+  {
+    "id": "bard",
+    "name": {
+      "en": "Bard",
+      "ar": "Bard"
+    },
+    "lore": {
+      "ar": "يغني للتاريخ لا للجمهور. ألحانه تحفظ في ارجاء لونا. إن صمت، فقدت لونا قصة مثيرة.",
+      "en": "Sings for history, not the audience. His melodies are preserved throughout Luna. If he falls silent, Luna has lost an exciting story."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Bard.png"
+  },
+  {
+    "id": "blacksmith",
+    "name": {
+      "en": "Blacksmith",
+      "ar": "Blacksmith"
+    },
+    "lore": {
+      "ar": "يضرب الحديد بإيقاع القمر. سلاحه لا يخون حامله. كل قطعة تحمل اسمه.",
+      "en": "Strikes iron with the rhythm of the moon. His weapon does not betray its bearer. Every piece carries his name."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Blacksmith.png"
+  },
+  {
+    "id": "brimor",
+    "name": {
+      "en": "Brimor",
+      "ar": "Brimor"
+    },
+    "lore": {
+      "ar": "تاجر الألوان والأدوار. يمنح المكانة قبل القوة. وجوده يغير موازين المجتمع.",
+      "en": "Merchant of colors and roles. Grants status before power. His existence changes the scales of society."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Brimor.png"
+  },
+  {
+    "id": "broker-the-merchant",
+    "name": {
+      "en": "Broker ' The merchant '",
+      "ar": "Broker ' The merchant '"
+    },
+    "lore": {
+      "ar": "جر السوق السوداء في لونا. يعرف ثمن كل شيء… حتى الأرواح. ابتسامته تعني صفقة خاسرة لغيره.",
+      "en": "Runs the black market in Luna. Knows the price of everything... even souls. His smile means a losing deal for others."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Broker%20'%20The%20merchant%20'.png"
+  },
+  {
+    "id": "builder",
+    "name": {
+      "en": "Builder",
+      "ar": "Builder"
+    },
+    "lore": {
+      "ar": "يرفع الجدران حجرًا حجر. يعرف أين يجب أن يقف كل شيء. ما بناه، صمد أمام الزمن.",
+      "en": "Raises walls stone by stone. Knows where everything must stand. What he built withstood time."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Builder.png"
+  },
+  {
+    "id": "clown",
+    "name": {
+      "en": "Clown",
+      "ar": "Clown"
+    },
+    "lore": {
+      "ar": "وجه مرح وقلب مظلم. يضحك الناس لينسوا الخوف. لكن ضحكته الأخيرة ليست بريئة.",
+      "en": "A merry face and a dark heart. Makes people laugh to forget fear. But his last laugh is not innocent."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Clown.png"
+  },
+  {
+    "id": "cook",
+    "name": {
+      "en": "Cook",
+      "ar": "Cook"
+    },
+    "lore": {
+      "ar": "يطهو بما توفره لونا. طعامه يرمم الجسد والروح. ناره هادئة، وتأثيرها عميق.",
+      "en": "Cooks with what Luna provides. His food restores body and soul. His fire is quiet, and its effect is deep."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Cook.png"
+  },
+  {
+    "id": "corin-avelle",
+    "name": {
+      "en": "Corin Avelle",
+      "ar": "Corin Avelle"
+    },
+    "lore": {
+      "ar": "الخادم الذي يرى أكثر مما يُفترض. ولاؤه هادئ، لكنه مطلق. يعرف أسرار القصر أكثر من القصر نفسه.",
+      "en": "The servant who sees more than he is supposed to. His loyalty is quiet, but absolute. Knows the palace secrets more than the palace itself."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Corin%20Avelle.png"
+  },
+  {
+    "id": "dark-wizard",
+    "name": {
+      "en": "Dark Wizard",
+      "ar": "Dark Wizard"
+    },
+    "lore": {
+      "ar": "على خطى شوران يسعى بالتحكم بقوة الفوضى لكنه لا زال يحاول.",
+      "en": "Following in Shuran's footsteps, he seeks to control the power of Chaos but is still trying."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Dark%20Wizard.png"
+  },
+  {
+    "id": "druid",
+    "name": {
+      "en": "Druid",
+      "ar": "Druid"
+    },
+    "lore": {
+      "ar": "صوت الغابة تحت ضوء القمر. يسيطر على الحياة والنمو. غضبه يغيّر الطبيعة.",
+      "en": "Voice of the forest under the moonlight. Controls life and growth. His anger changes nature."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Druid.png"
+  },
+  {
+    "id": "executioner",
+    "name": {
+      "en": "Executioner",
+      "ar": "Executioner"
+    },
+    "lore": {
+      "ar": "ذراع الحكم الأخير في لونا. لا يسأل ولا يتردد. سقوط نصلِه يعني نهاية القصة.",
+      "en": "The arm of the final judgment in Luna. Does not ask and does not hesitate. The fall of his blade means the end of the story."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Executioner.png"
+  },
+  {
+    "id": "farmer",
+    "name": {
+      "en": "Farmer",
+      "ar": "Farmer"
+    },
+    "lore": {
+      "ar": "يزرع تحت القمر لا الشمس. أرضه تتنفس طاقة لونا. بدونه، يجوع الجميع.",
+      "en": "Plants under the moon, not the sun. His land breathes Luna's energy. Without him, everyone starves."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Farmer.png"
+  },
+  {
+    "id": "forager",
+    "name": {
+      "en": "Forager",
+      "ar": "Forager"
+    },
+    "lore": {
+      "ar": "جامع خيرات الغابة القمرية. يعرف أي نبتة تشفي وأيها تقتل. خطوته صامتة، وعينه حادة.",
+      "en": "Gatherer of the lunar forest's bounty. Knows which plant heals and which kills. His step is silent, and his eye is sharp."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Forager.png"
+  },
+  {
+    "id": "healer",
+    "name": {
+      "en": "Healer",
+      "ar": "Healer"
+    },
+    "lore": {
+      "ar": "يعيد التوازن حيث فشل السيف. يمس الجراح بطاقة القمر لا بيديه. بدونه، لا حرب تُكمل.",
+      "en": "Restores balance where the sword failed. Touches wounds with the energy of the Moon, not his hands. Without him, no war is completed."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Healer.png"
+  },
+  {
+    "id": "hunter",
+    "name": {
+      "en": "Hunter",
+      "ar": "Hunter"
+    },
+    "lore": {
+      "ar": "صياد الفريسة المختارة. يتبع أثر القمر لا الدم. لا يعود إلا منتصرًا.",
+      "en": "Hunter of the chosen prey. Follows the trail of the Moon, not blood. Returns only victorious."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Hunter.png"
+  },
+  {
+    "id": "kael-vendar",
+    "name": {
+      "en": "Kael Vendar",
+      "ar": "Kael Vendar"
+    },
+    "lore": {
+      "ar": "التاجر الرسمي للكروت في لونا. يوازن بين الندرة والنظام. منه تبدأ المجموعات، وعنده تُقاس القيم.",
+      "en": "The official card merchant in Luna. Balances scarcity and order. With him collections begin, and by him values are measured."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Kael%20Vendar.jpg"
+  },
+  {
+    "id": "king",
+    "name": {
+      "en": "King",
+      "ar": "King"
+    },
+    "lore": {
+      "ar": "ملك مهيب متوّج بالأحجار السماوية، يحكم بالقوة والفطنة تحت وهج القمر.",
+      "en": "A majestic king crowned with celestial stones, ruling with power and acumen under the glare of the Moon."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/King.png"
+  },
+  {
+    "id": "luna-alchemist",
+    "name": {
+      "en": "Luna Alchemist",
+      "ar": "Luna Alchemist"
+    },
+    "lore": {
+      "ar": "يمزج العلم بطقوس القمر. يعرف ما يشفي وما يفسد. خطأه لا يُغتفر.",
+      "en": "Mixes science with the rituals of the Moon. Knows what heals and what corrupts. His mistake is unforgivable."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Luna%20Alchemist.png"
+  },
+  {
+    "id": "luna-guard",
+    "name": {
+      "en": "Luna Guard",
+      "ar": "Luna Guard"
+    },
+    "lore": {
+      "ar": "حارس الشوارع تحت ضوء القمر. لا يُذكر اسمه، لكن يُحس بوجوده. إن رأيته، فالأمر تحت السيطرة.",
+      "en": "Guardian of the streets under the moonlight. His name is not mentioned, but his presence is felt. If you see him, the matter is under control."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Luna%20Guard.png"
+  },
+  {
+    "id": "lunarians",
+    "name": {
+      "en": "Lunarians",
+      "ar": "Lunarians"
+    },
+    "lore": {
+      "ar": "أبناء لونا الحقيقيون. ليسوا أبطالًا ولا ملوكًا، بل الأساس. إن سقطوا، سقط كل شيء.",
+      "en": "The true children of Luna. Not heroes or kings, but the foundation. If they fall, everything falls."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Lunarians.png"
+  },
+  {
+    "id": "master-thief",
+    "name": {
+      "en": "Master Thief",
+      "ar": "Master Thief"
+    },
+    "lore": {
+      "ar": "يسرق دون أن يترك أثرًا. لا ولاء له إلا للظل. ما يختفي بسببه، لا يُستعاد.",
+      "en": "Steals without leaving a trace. Has no loyalty except to the shadow. What disappears because of him is not recovered."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Master%20Thief.png"
+  },
+  {
+    "id": "meluna",
+    "name": {
+      "en": "Meluna",
+      "ar": "Meluna"
+    },
+    "lore": {
+      "ar": "ميلونا الشقيقة الكبرى لسيلونا ، وضعت متجر الاحجار الثمينه والنادرة في قلب العاصمة \" لونڤور \".",
+      "en": "Meluna, the elder sister of Seluna. Established the store of precious and rare stones in the heart of the capital 'Lunvor'."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Meluna.png"
+  },
+  {
+    "id": "midgets",
+    "name": {
+      "en": "Midgets",
+      "ar": "Midgets"
+    },
+    "lore": {
+      "ar": "شعب صغير بحضور كبير. يعيشون بين الظلال والبيوت الخفية. لا يُستهان بهم أبدًا.",
+      "en": "Small people with a large presence. Living between shadows and hidden houses. Never to be underestimated."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Midgets.png"
+  },
+  {
+    "id": "nebula-weaver",
+    "name": {
+      "en": "Nebula Weaver",
+      "ar": "Nebula Weaver"
+    },
+    "lore": {
+      "ar": "ساحر يتحكم بطاقة الظلال، ينسج طاقة سديمية بقوة مظلمة وبراعة سحرية عميقة.",
+      "en": "A mage controlling shadow energy, weaving nebula energy with dark power and deep magical prowess."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Nebula%20Weaver.png"
+  },
+  {
+    "id": "outcast",
+    "name": {
+      "en": "Outcast",
+      "ar": "Outcast"
+    },
+    "lore": {
+      "ar": "منبوذ اختاره القمر. يقاتل وحده ضد الجميع. نفيه جعله أقوى.",
+      "en": "An outcast chosen by the Moon. Fights alone against everyone. His exile made him stronger."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Outcast.png"
+  },
+  {
+    "id": "prince",
+    "name": {
+      "en": "Prince",
+      "ar": "Prince"
+    },
+    "lore": {
+      "ar": "ظل القمر قبل أن يصير حكمًا. يتعلم الصمت قبل القيادة. خطوته محسوبة، دائمًا.",
+      "en": "Shadow of the Moon before becoming a ruler. Learns silence before leadership. His step is calculated, always."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Prince.png"
+  },
+  {
+    "id": "princess",
+    "name": {
+      "en": "Princess",
+      "ar": "Princess"
+    },
+    "lore": {
+      "ar": "وريثة القمر بنعومة وقوة. قلبها رحيم، وقرارها حاسم. بوجودها، يهدأ القصر.",
+      "en": "Heiress of the Moon with softness and strength. Her heart is merciful, and her decision decisive. With her presence, the palace calms."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Princess.png"
+  },
+  {
+    "id": "seer",
+    "name": {
+      "en": "Seer",
+      "ar": "Seer"
+    },
+    "lore": {
+      "ar": "يرى ما لم يحدث بعد، ويتجاهل ما يحدث الآن. عيناه معلقتان بخيوط القدر القمري. كلماته تحذير، لا نصيحة.",
+      "en": "Sees what has not happened yet, and ignores what is happening now. His eyes are suspended by the threads of lunar fate. His words are a warning, not advice."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Seer.png"
+  },
+  {
+    "id": "seluna",
+    "name": {
+      "en": "Seluna",
+      "ar": "Seluna"
+    },
+    "lore": {
+      "ar": "تاجرة القمر الرحالة تأتي عند اكتمال البدر مره في الشهر، وتعود في كل شهر بأحجار نادره خاصه فيها وكرت محرم لا يباع الى لديها.",
+      "en": "The traveling Moon merchant who comes at the full moon once a month, and returns every month with rare stones of her own and a forbidden card sold only by her."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Seluna.png"
+  },
+  {
+    "id": "shuran-dark-mastermind",
+    "name": {
+      "en": "Shuran ' Dark Mastermind'",
+      "ar": "Shuran ' Dark Mastermind'"
+    },
+    "lore": {
+      "ar": "هو العقل الذي يرى لونا كشبكة لا كعالم. لا يحكم بالسيف ولا بالسحر، بل بالمعرفة والتخطيط البارد. كل حركة في لونا مرت أولًا عبر فكره.",
+      "en": "The mind that sees Luna as a network, not a world. Rules neither by sword nor magic, but by knowledge and cold planning. Every movement in Luna passed first through his thought."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Shuran%20'%20Dark%20Mastermind'.png"
+  },
+  {
+    "id": "thief",
+    "name": {
+      "en": "Thief",
+      "ar": "Thief"
+    },
+    "lore": {
+      "ar": "يسرق دون أن يترك أثرًا. لا ولاء له إلا للظل. ما يختفي بسببه، لا يُستعاد.",
+      "en": "Steals without leaving a trace. Has no loyalty except to the shadow. What disappears because of him is not recovered."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Thief.png"
+  },
+  {
+    "id": "villagers",
+    "name": {
+      "en": "Villagers",
+      "ar": "Villagers"
+    },
+    "lore": {
+      "ar": "النبض اليومي لعالم لونا. يعيشون تحت القمر دون أن يملكوه. ببقائهم، يبقى العالم حيًا.",
+      "en": "The daily pulse of Luna's world. Living under the moon without owning it. By their survival, the world remains alive."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Villagers.png"
+  },
+  {
+    "id": "whisper-queen",
+    "name": {
+      "en": "Whisper Queen",
+      "ar": "Whisper Queen"
+    },
+    "lore": {
+      "ar": "ملكة ظلال تتحدث بالهمس، تستخدم القوة القمرية للتأثير على العقول والسيطرة على ما لا يُرى.",
+      "en": "A shadow queen who speaks in whispers, using lunar power to influence minds and control the unseen."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Whisper%20Queen.png"
+  },
+  {
+    "id": "wizard",
+    "name": {
+      "en": "Wizard",
+      "ar": "Wizard"
+    },
+    "lore": {
+      "ar": "حامل طاقة لونا الخام. سحره ليس تعويذات، بل فهم عميق للقمر. يخطئ مرة واحدة… وتدفع مدينة الثمن.",
+      "en": "Bearer of raw Luna energy. His magic is not spells, but a deep understanding of the Moon. Mistakes once... and a city pays the price."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Wizard.png"
+  },
+  {
+    "id": "zoldar-the-moon-carver",
+    "name": {
+      "en": "Zoldar ' The Moon Carver '",
+      "ar": "Zoldar ' The Moon Carver '"
+    },
+    "lore": {
+      "ar": "قاطع القمر في ذروة قوته. قاد جيش لونا في حرب الفوضى الكبرى.",
+      "en": "The Moon Carver at the peak of his power. Led Luna's army in the Great Chaos War."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/Zoldar%20'%20The%20Moon%20Carver%20'.png"
+  },
+  {
+    "id": "trickster",
+    "name": {
+      "en": "trickster",
+      "ar": "trickster"
+    },
+    "lore": {
+      "ar": "حضور لا يُعرّف ولا يُنكر، لا يُرى كحقيقة كاملة بل كظل وعي يسبق الفهم، وجوده لا يفرض نفسه لكنه يغيّر كل ما يمر عبره، ومن يقترب منه لا يسمع إجابة… بل يفقد السؤال.",
+      "en": "A presence that cannot be defined, nor denied. Not seen as a complete truth, but as a shadow of awareness that precedes understanding. It does not impose itself, yet everything that passes through it is altered. Those who approach hear no answer… only the loss of the question."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Lunarians/trickster.png"
+  }
+]

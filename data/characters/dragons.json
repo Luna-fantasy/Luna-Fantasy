@@ -1,0 +1,93 @@
+[
+  {
+    "id": "ancient-dragon",
+    "name": {
+      "en": "Ancient Dragon",
+      "ar": "Ancient Dragon"
+    },
+    "lore": {
+      "ar": "ملك السماء القمرية. يحرس لونا من فوق. سقوطه يعني نهاية عصر.",
+      "en": "King of the Lunar Sky. Guards Luna from above. His fall means the end of an era."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Dragons/Ancient%20Dragon.png"
+  },
+  {
+    "id": "draconis",
+    "name": {
+      "en": "Draconis",
+      "ar": "Draconis"
+    },
+    "lore": {
+      "ar": "نسل التنين القمري. جلده مرآة للنجوم. غضبه نار سماوية.",
+      "en": "Offspring of the Lunar Dragon. His skin is a mirror of the stars. His anger is celestial fire."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Dragons/Draconis.png"
+  },
+  {
+    "id": "eclipse-dragon",
+    "name": {
+      "en": "Eclipse Dragon",
+      "ar": "Eclipse Dragon"
+    },
+    "lore": {
+      "ar": "تنين شرير من الظلام يظهر خلال الكسوف النادر. هيئته الظلية وعينه الحاقدة ترعب كل من يحدق به.",
+      "en": "An evil dragon from the darkness appearing during the rare eclipse. His shadowy form and hateful eye terrify all who gaze upon him."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Dragons/Eclipse%20Dragon.png"
+  },
+  {
+    "id": "hydra",
+    "name": {
+      "en": "Hydra",
+      "ar": "Hydra"
+    },
+    "lore": {
+      "ar": "تنين هائل بثلاثة رؤوس، يمتلك عيونًا ملتهبة وأنيابًا متعطشة، ويزدهر تحت قوة قمر الدم.",
+      "en": "A massive dragon with three heads, possessing flaming eyes and bloodthirsty fangs, thriving under the power of the Blood Moon."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Dragons/Hydra.png"
+  },
+  {
+    "id": "luna-dragon",
+    "name": {
+      "en": "Luna Dragon",
+      "ar": "Luna Dragon"
+    },
+    "lore": {
+      "ar": "ملك السماء القمرية. يحرس لونا من فوق. سقوطه يعني نهاية عصر.",
+      "en": "King of the Lunar Sky. Guards Luna from above. His fall means the end of an era."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Dragons/Luna%20Dragon.png"
+  },
+  {
+    "id": "moon-serpent",
+    "name": {
+      "en": "Moon Serpent",
+      "ar": "Moon Serpent"
+    },
+    "lore": {
+      "ar": "كائن أزلي يلتف حول قمم العالم. نَفَسه قمري يبتلع الضوء والظل. استيقاظه نذير كارثة.",
+      "en": "An eternal being wrapping around the peaks of the world. His breath is lunar, swallowing light and shadow. His awakening is a harbinger of disaster."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Dragons/Moon%20Serpent.png"
+  },
+  {
+    "id": "veil-serpent",
+    "name": {
+      "en": "Veil Serpent",
+      "ar": "Veil Serpent"
+    },
+    "lore": {
+      "ar": "أفعى طيفية وُلدت من ضباب القمر، مغطاة بضوء قمري أثيري، وتستخدم قوى غامضة من العوالم غير المرئية.",
+      "en": "A spectral serpent born of moon mist, covered in ethereal lunar light, using mysterious powers from unseen realms."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Dragons/Veil%20Serpent.png"
+  }
+]

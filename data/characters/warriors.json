@@ -1,0 +1,236 @@
+[
+  {
+    "id": "blademaster",
+    "name": {
+      "en": "Blademaster",
+      "ar": "Blademaster"
+    },
+    "lore": {
+      "ar": "الاخ الاصغر لزولدار ، لطالما كان يحلم ان يصبح جارديان مثل اخيه ولكن لم تتم الموافقة عليه.",
+      "en": "Zoldar's younger brother. He always dreamed of becoming a Guardian like his brother, but he was never approved."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Blademaster.png"
+  },
+  {
+    "id": "chaos-warlord",
+    "name": {
+      "en": "Chaos Warlord",
+      "ar": "Chaos Warlord"
+    },
+    "lore": {
+      "ar": "قائد جيش ملك الفوضى \" موڤارث \" والمقاتل الذي يُعتمد عليه في كل قتال، يقتلع رؤوس اعدائه بيديه العاريتين.",
+      "en": "The commander of the Chaos King Movarth's army and the fighter relied upon in every battle; he tears the heads of his enemies off with his bare hands."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Chaos%20Warlord.png"
+  },
+  {
+    "id": "dragon-slayer",
+    "name": {
+      "en": "Dragon Slayer",
+      "ar": "Dragon Slayer"
+    },
+    "lore": {
+      "ar": "صائد الأساطير المكسورة. دم التنانين صقل اسمه. لا يهاب وحشًا مهما علا.",
+      "en": "Hunter of broken legends. Dragon blood polished his name. He fears no beast, no matter how great."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Dragon%20Slayer.png"
+  },
+  {
+    "id": "exclipse-warrior",
+    "name": {
+      "en": "Exclipse Warrior",
+      "ar": "Exclipse Warrior"
+    },
+    "lore": {
+      "ar": "مقاتل لحظة الكسوف الأبدي. يجمع النور والظلام في ضربة واحدة. حين يقاتل، تختفي الفوارق.",
+      "en": "Fighter of the eternal eclipse moment. He combines light and darkness in a single strike. When he fights, differences vanish."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Exclipse%20Warrior.png"
+  },
+  {
+    "id": "grandmaster",
+    "name": {
+      "en": "Grandmaster",
+      "ar": "Grandmaster"
+    },
+    "lore": {
+      "ar": "بلغ نهاية الطريق القتالي. كل حركة محسوبة. يهزم خصمه قبل أن يبدأ القتال.",
+      "en": "He has reached the end of the martial path. Every move is calculated. He defeats his opponent before the fight even begins."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Grandmaster.png"
+  },
+  {
+    "id": "luneth-cavor",
+    "name": {
+      "en": "Luneth & Cavor",
+      "ar": "Luneth & Cavor"
+    },
+    "lore": {
+      "ar": "عقلان، جسد واحد في المعركة. هجوم متزامن لا يُصد. إذا رأيت أحدهما، الآخر خلفك.",
+      "en": "Two minds, one body in battle. A synchronized attack that cannot be blocked. If you see one, the other is behind you."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Luneth%20%26%20Cavor.png"
+  },
+  {
+    "id": "mad-crow",
+    "name": {
+      "en": "Mad Crow",
+      "ar": "Mad Crow"
+    },
+    "lore": {
+      "ar": "مقاتل فقد عقله للقمر. اللغة الوحيدة التي يعرفها العنف فقط. فوضاه محسوبة… بطريقته.",
+      "en": "A fighter who lost his mind to the moon. The only language he knows is violence. His chaos is calculated... in his own way."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Mad%20Crow.png"
+  },
+  {
+    "id": "monk",
+    "name": {
+      "en": "Monk",
+      "ar": "Monk"
+    },
+    "lore": {
+      "ar": "جسد منضبط بعقل صافٍ. قوته داخلية لا تُرى. يضرب حين يصبح الصمت كافيًا.",
+      "en": "A disciplined body with a clear mind. His power is internal and unseen. He strikes when silence becomes sufficient."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Monk.png"
+  },
+  {
+    "id": "moon-bender",
+    "name": {
+      "en": "Moon Bender",
+      "ar": "Moon Bender"
+    },
+    "lore": {
+      "ar": "مقاتل يُشكّل طاقة القمر بيديه العاريتين. كل ضربة تنحني لها الجاذبية والنية. قوته ليست في السلاح، بل في السيطرة المطلقة.",
+      "en": "A fighter who shapes the moon's energy with his bare hands. Gravity and intent bow to every strike. His power is not in weapons, but in absolute control."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Moon%20Bender.png"
+  },
+  {
+    "id": "moon-rider",
+    "name": {
+      "en": "Moon Rider",
+      "ar": "Moon Rider"
+    },
+    "lore": {
+      "ar": "فارس القمر، يمتطي وحشًا وُلد من الظلال. يظهر في المعارك المستحيلة حيث لا أمل بالبقاء. هجومه الخاطف يترك الخراب قبل أن يُرى.",
+      "en": "Knight of the Moon, riding a beast born of shadows. He appears in impossible battles where there is no hope of survival. His swift attack leaves ruin before he is seen."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Moon%20Rider.png"
+  },
+  {
+    "id": "movarth-chaos-king",
+    "name": {
+      "en": "Movarth 'Chaos King'",
+      "ar": "Movarth 'Chaos King'"
+    },
+    "lore": {
+      "ar": "ملك بلا قانون ولا عرش ثابت. يحكم بالفوضى لا بالأوامر. وجوده يكسر توازن العصور.",
+      "en": "A king with no law and no fixed throne. He rules by chaos, not orders. His existence breaks the balance of the ages."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Movarth%20'Chaos%20King'.png"
+  },
+  {
+    "id": "mysterious-warrior",
+    "name": {
+      "en": "Mysterious Warrior",
+      "ar": "Mysterious Warrior"
+    },
+    "lore": {
+      "ar": "هوية مخفية وقوة ظاهرة. يقاتل لأسباب لا يُفصح عنها. آثاره تُرى، واسمه لا.",
+      "en": "Hidden identity and visible power. He fights for undisclosed reasons. His traces are seen, but his name is not."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Mysterious%20Warrior.png"
+  },
+  {
+    "id": "pacifier",
+    "name": {
+      "en": "Pacifier",
+      "ar": "Pacifier"
+    },
+    "lore": {
+      "ar": "قاطع طريق في صحراء لونا. لا يلتزم بقواعد الشرف. لا يسرقك دون أن يقتلك.",
+      "en": "A bandit in the desert of Luna. He adheres to no rules of honor. He does not rob you without killing you."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Pacifier.png"
+  },
+  {
+    "id": "rune-breaker",
+    "name": {
+      "en": "Rune Breaker",
+      "ar": "Rune Breaker"
+    },
+    "lore": {
+      "ar": "كاسر الرون، وُلد ليحطم السحر لا ليستعمله. سيوفه تُمزّق التعويذات كما تُقطع الأجساد. حيث يفشل السحرة، يبدأ هو القتال الحقيقي.",
+      "en": "The Rune Breaker, born to shatter magic, not use it. His swords tear through spells as they cut through bodies. Where mages fail, his true fight begins."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Rune%20Breaker.png"
+  },
+  {
+    "id": "shadow",
+    "name": {
+      "en": "Shadow",
+      "ar": "Shadow"
+    },
+    "lore": {
+      "ar": "قاتل يتحرك بين ضربتين. لا يُرى إلا حين يكون الأوان قد فات. الظلام يعرف اسمه جيدًا.",
+      "en": "An assassin who moves between two strikes. Only seen when it is too late. Darkness knows his name well."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Shadow.png"
+  },
+  {
+    "id": "skull-crusher",
+    "name": {
+      "en": "Skull-Crusher",
+      "ar": "Skull-Crusher"
+    },
+    "lore": {
+      "ar": "جلاد لونا الصامت. سلاحه حكم نهائي. من يسقط أمامه لا يُذكر.",
+      "en": "Luna's silent executioner. His weapon is a final verdict. He who falls before him is not remembered."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Skull-Crusher.png"
+  },
+  {
+    "id": "solar-warrior",
+    "name": {
+      "en": "Solar Warrior",
+      "ar": "Solar Warrior"
+    },
+    "lore": {
+      "ar": "محارب الشمس في عالم القمر. ناره لا تنطفئ حتى في الظلام. يصطدم بلونا ولا ينكسر.",
+      "en": "Warrior of the Sun in the world of the Moon. His fire does not extinguish even in darkness. He collides with Luna and does not break."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Solar%20Warrior.png"
+  },
+  {
+    "id": "wanderer",
+    "name": {
+      "en": "Wanderer",
+      "ar": "Wanderer"
+    },
+    "lore": {
+      "ar": "مسافر بلا وجهة ثابتة. يعرف الطرق المنسية. حيث يمشي، تتغير القصص.",
+      "en": "A traveler with no fixed destination. He knows the forgotten paths. Where he walks, stories change."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Warriors/Wanderer.png"
+  }
+]

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "cave-monster",
+    "name": {
+      "en": "Cave Monster",
+      "ar": "Cave Monster"
+    },
+    "lore": {
+      "ar": "وحش الكهوف العميقة حيث لا يصل الضوء. قوته تسحق والعتمة تحميه. الدخول إلى منطقته خطأ قاتل."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Beasts/Cave%20Monster.png"
+  },
+  {
+    "id": "ghoul",
+    "name": {
+      "en": "Ghoul",
+      "ar": "Ghoul"
+    },
+    "lore": {
+      "ar": "كائن جائع بلا شبع. تحركه غريزة مظلمة. اقترابه نذير موت."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Beasts/Ghoul.png"
+  },
+  {
+    "id": "goblin",
+    "name": {
+      "en": "Goblin",
+      "ar": "Goblin"
+    },
+    "lore": {
+      "ar": "مخلوق ذكي أكثر مما يبدو. يعرف الأنفاق والصفقات القذرة. يبتسم قبل أن يخون."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Abyssal%20Colossus.png"
+  },
+  {
+    "id": "imp",
+    "name": {
+      "en": "Imp",
+      "ar": "Imp"
+    },
+    "lore": {
+      "ar": "كائن فوضوي من الأعماق. يستمتع بالأذى أكثر من الربح. تركه حيًا خطأ."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Beasts/Imp.png"
+  },
+  {
+    "id": "ogre",
+    "name": {
+      "en": "Ogre",
+      "ar": "Ogre"
+    },
+    "lore": {
+      "ar": "قوة غاشمة بلا ندم. يضحك وهو يسحق العظام. لا يفرق بين عدو أو حليف."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Beasts/Ogre.png"
+  },
+  {
+    "id": "orc",
+    "name": {
+      "en": "Orc",
+      "ar": "Orc"
+    },
+    "lore": {
+      "ar": "محارب شرس بروح قمرية مشوّهة. يحترم القوة فقط. في المعركة، لا يعرف التراجع."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Beasts/Orc.png"
+  },
+  {
+    "id": "saber-tooth",
+    "name": {
+      "en": "Saber-tooth",
+      "ar": "Saber-tooth"
+    },
+    "lore": {
+      "ar": "وحش الجبال المتجمدة. جوعه لا يُشبع وصوته يرعب. إذا ظهر، الدم يتجمد."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Beasts/Saber-tooth.png"
+  },
+  {
+    "id": "viper-claw",
+    "name": {
+      "en": "Viper Claw",
+      "ar": "Viper Claw"
+    },
+    "lore": {
+      "ar": "وحش القمر المخالب. يهجم بسرعة لا تُرى. إذا أصاب، لا ينجو أحد."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Beasts/Viper%20Claw.png"
+  },
+  {
+    "id": "yonko",
+    "name": {
+      "en": "Yonko",
+      "ar": "Yonko"
+    },
+    "lore": {
+      "ar": "قوة أسطورية. لا يحكم… بل يفرض. وجوده يغيّر موازين العالم."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Beasts/Yonko.png"
+  }
+]

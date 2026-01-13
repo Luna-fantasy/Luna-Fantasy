@@ -1,0 +1,171 @@
+[
+  {
+    "id": "blood-siren",
+    "name": {
+      "en": "Blood Siren",
+      "ar": "Blood Siren"
+    },
+    "lore": {
+      "ar": "حورية دموية مصاصّة للدماء، مغمورة بالظلام، تتغذى على الدم وتتحكم بالظلال بجاذبية شريرة.",
+      "en": "A bloody vampire siren, immersed in darkness, feeding on blood and controlling shadows with evil allure."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Blood%20Siren.png"
+  },
+  {
+    "id": "centaur",
+    "name": {
+      "en": "Centaur",
+      "ar": "Centaur"
+    },
+    "lore": {
+      "ar": "محارب الحكمة والمسير. يجمع القوة والانضباط. خطوته تحدد مصير الجيوش.",
+      "en": "Warrior of wisdom and the march. Combines strength and discipline. His step determines the fate of armies."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Centaur.png"
+  },
+  {
+    "id": "cerberus",
+    "name": {
+      "en": "Cerberus",
+      "ar": "Cerberus"
+    },
+    "lore": {
+      "ar": "حارس البوابات السفلية بثلاثة رؤوس لا تنام. يمنع الأحياء من العبور ويمنع الموتى من الهروب. نباحه إعلان أن لا عودة من هذا الطريق.",
+      "en": "Guardian of the lower gates with three sleepless heads. Prevents the living from crossing and the dead from escaping. His bark is a declaration that there is no return from this path."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Cerberus.png"
+  },
+  {
+    "id": "chimera",
+    "name": {
+      "en": "Chimera",
+      "ar": "Chimera"
+    },
+    "lore": {
+      "ar": "اندماج قوى لا يجب أن تجتمع. عقل واحد، ثلاث وحوش. الهروب منها مستحيل.",
+      "en": "A fusion of powers that should not meet. One mind, three monsters. Escape from it is impossible."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Chimera.png"
+  },
+  {
+    "id": "great-deer",
+    "name": {
+      "en": "Great Deer",
+      "ar": "Great Deer"
+    },
+    "lore": {
+      "ar": "مخلوق غامض من غابات القمر، يُعد الغزال العظيم حارسًا لسماء الليل، متوهجًا بطاقة أثيرية.",
+      "en": "A mysterious creature from the Moon forests, the Great Deer is considered a guardian of the night sky, glowing with ethereal energy."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Great%20Deer.png"
+  },
+  {
+    "id": "griffin",
+    "name": {
+      "en": "Griffin",
+      "ar": "Griffin"
+    },
+    "lore": {
+      "ar": "حارس السماء والحدود القمرية. يهاجم من الأعلى بلا إنذار. وجوده يعني أن الأرض محرّمة.",
+      "en": "Guardian of the sky and lunar borders. Attacks from above without warning. His presence means the ground is forbidden."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Griffin.png"
+  },
+  {
+    "id": "kraken",
+    "name": {
+      "en": "Kraken",
+      "ar": "Kraken"
+    },
+    "lore": {
+      "ar": "وحش الأعماق الذي لا يرى السماء. أذرعه تسحب السفن والرجال نحو العدم. حين يتحرك البحر، يكون هو السبب.",
+      "en": "Monster of the depths that never sees the sky. His arms drag ships and men into nothingness. When the sea moves, he is the cause."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Kraken.png"
+  },
+  {
+    "id": "medusa",
+    "name": {
+      "en": "Medusa",
+      "ar": "Medusa"
+    },
+    "lore": {
+      "ar": "نظرتها حكم لا يُستأنف. من يواجهها يفقد الزمن قبل الجسد. الحجر آخر ما يشعر به أعداؤها.",
+      "en": "Her gaze is a sentence without appeal. He who faces her loses time before the body. Stone is the last thing her enemies feel."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Medusa.png"
+  },
+  {
+    "id": "mermaid",
+    "name": {
+      "en": "Mermaid",
+      "ar": "Mermaid"
+    },
+    "lore": {
+      "ar": "حارسة الأعماق القمرية. صوتها هدوء… وسحر. من يثق بها، يختبر البحر.",
+      "en": "Guardian of the lunar depths. Her voice is calm... and magic. He who trusts her tests the sea."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Mermaid.png"
+  },
+  {
+    "id": "pegasus",
+    "name": {
+      "en": "Pegasus",
+      "ar": "Pegasus"
+    },
+    "lore": {
+      "ar": "جواد القمر المجنّح. لا يُركب إلا لمن اختاره القمر. مروره يترك السماء مضطربة.",
+      "en": "The winged horse of the Moon. Can only be ridden by one chosen by the Moon. His passing leaves the sky turbulent."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Pegasus.png"
+  },
+  {
+    "id": "phoenix",
+    "name": {
+      "en": "Phoenix",
+      "ar": "Phoenix"
+    },
+    "lore": {
+      "ar": "روح القمر المتجددة فوق لونا. تحترق لتولد أنقى. سقوطها ليس نهاية.",
+      "en": "The spirit of the Moon renewed above Luna. Burns to be born purer. Its fall is not an end."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Phoenix.png"
+  },
+  {
+    "id": "siren",
+    "name": {
+      "en": "Siren",
+      "ar": "Siren"
+    },
+    "lore": {
+      "ar": "صوتها نداء، ونظرتها غرق. تخدم القمر عبر البحر واللحن. من يسمعها، لا يعود كما كان.",
+      "en": "Her voice is a call, and her gaze is drowning. She serves the Moon through the sea and melody. He who hears her never returns as he was."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Siren.png"
+  },
+  {
+    "id": "sphinx",
+    "name": {
+      "en": "Sphinx",
+      "ar": "Sphinx"
+    },
+    "lore": {
+      "ar": "حارس الأسرار القديمة. يمتحن العقول قبل السيوف. خطأ واحد… والعقاب أبدي.",
+      "en": "Guardian of ancient secrets. Tests minds before swords. One mistake... and the punishment is eternal."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Sphinx.png"
+  }
+]

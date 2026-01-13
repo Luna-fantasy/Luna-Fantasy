@@ -1,0 +1,57 @@
+[
+  {
+    "id": "mastermind",
+    "name": { "en": "The Mastermind", "ar": "العقل المدبر" },
+    "lore": {
+      "en": "The one who pulls all the strings from the shadows. A strategic genius whose plans span decades. No one knows his true intentions, but all fear his influence.",
+      "ar": "هو العقل الذي يرى لونا كشبكة لا كعالم. لا يحكم بالسيف ولا بالسحر، بل بالمعرفة والتخطيط البارد. كل حركة في لونا مرت أولًا عبر فكره."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Main%20Characters/Mastermind.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "luna-sentinel",
+    "name": { "en": "Luna Sentinel", "ar": "حارس لونا" },
+    "lore": {
+      "en": "The unwavering guardian of Luna's borders. With unmatched vigilance and iron will, the Sentinel protects the realm from threats both seen and unseen.",
+      "ar": "الحارس الأعلى لعرش القمر. درعه عهد، وسيفه حكم لا يُرد. إن سقط، سقط معه توازن لونا."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Main%20Characters/Luna%20Sentinel.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "luna-guardian",
+    "name": { "en": "Luna Guardian", "ar": "الحارس" },
+    "lore": {
+      "en": "A protector of ancient secrets and keeper of forbidden knowledge. The Guardian stands as the last line of defense against the forces of chaos.",
+      "ar": "جدار لونا الصامت في أوقات الظلام. لا يتقدم ولا يتراجع، فقط يثبت. وجوده يعني أن العدو تأخر كثيرًا."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Main%20Characters/Luna%20Guardian.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "luna-knight",
+    "name": { "en": "Luna Knight", "ar": "الفارس" },
+    "lore": {
+      "en": "The blade of justice in Luna's darkest hours. A warrior of unparalleled skill, the Knight has sworn to protect the innocent at any cost.",
+      "ar": "فارس القمر في ساحات الدم والرماد. ينفذ الأوامر دون سؤال، ويحارب دون خوف. اسمه يُذكر حيث تنتهي المعارك."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Main%20Characters/Luna%20Knight.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "luna-noble",
+    "name": { "en": "Luna Noble", "ar": "النبيل" },
+    "lore": {
+      "en": "Born of royal blood and raised with destiny. The Noble carries the weight of tradition while forging a new path for Luna's future.",
+      "ar": "ولد في ظل القمر لا في القصور. سلطته تأتي من الولاء لا الدم. يمثل وجه لونا بين شعبها."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Main%20Characters/Luna%20Noble.png",
+    "isMainCharacter": true
+  }
+]

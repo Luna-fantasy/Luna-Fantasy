@@ -1,0 +1,194 @@
+[
+  {
+    "id": "astral-harbinger",
+    "name": {
+      "en": "Astral Harbinger",
+      "ar": "Astral Harbinger"
+    },
+    "lore": {
+      "ar": "الكائن الذي سقط من النجوم واستقر في لونا. يستدعي طاقة نجميه وقمرية بالقتال. ظهوره يعني أن ما سيحدث لا يمكن إيقافه."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Astral%20Harbinger.png"
+  },
+  {
+    "id": "baby-wisp",
+    "name": {
+      "en": "Baby Wisp",
+      "ar": "Baby Wisp"
+    },
+    "lore": {
+      "ar": "طاقة قمرية في بدايتها. فضولي، ضعيف، لكنه نقي. حمايته مسؤولية الجميع."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Baby%20Wisp.png"
+  },
+  {
+    "id": "dream-eater",
+    "name": {
+      "en": "Dream Eater",
+      "ar": "Dream Eater"
+    },
+    "lore": {
+      "ar": "كيان كابوسي يتغذى على الأحلام، يفترس في الظلال ويزرع الرعب في العقل النائم."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Dream%20Eater.png"
+  },
+  {
+    "id": "gatekeeper",
+    "name": {
+      "en": "Gatekeeper",
+      "ar": "Gatekeeper"
+    },
+    "lore": {
+      "ar": "حارس العبور بين العوالم. لا يُقنع ولا يُرشا. من يرفضه… لا يعود."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Gatekeeper.png"
+  },
+  {
+    "id": "harbinger",
+    "name": {
+      "en": "Harbinger",
+      "ar": "Harbinger"
+    },
+    "lore": {
+      "ar": "الكائن الغامض الذي يتغذى على ( ويسب ) كائنات الطاقه القمرية. لكل كائن ويسب يصطاده يزاد قوة. قوته غاشمه ولا يمكن التصدي له الا بالاسلحة القمرية."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Harbinger.png"
+  },
+  {
+    "id": "herald",
+    "name": {
+      "en": "Herald",
+      "ar": "Herald"
+    },
+    "lore": {
+      "ar": "صوت القمر حين يقرر أن يُسمع. لا يعلن إلا ما لا يمكن إيقافه. كلماته بداية، وقراراته نهاية."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Herald.png"
+  },
+  {
+    "id": "infernal-demon",
+    "name": {
+      "en": "Infernal Demon",
+      "ar": "Infernal Demon"
+    },
+    "lore": {
+      "ar": "شيطان اللهب الأزرق، نفيه القمر ولم يقتله. ناره تحرق الجسد والروح معًا. تحريره خطأ لا يُغتفر."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Infernal%20Demon.png"
+  },
+  {
+    "id": "jester",
+    "name": {
+      "en": "Jester",
+      "ar": "Jester"
+    },
+    "lore": {
+      "ar": "ضحكته تخفي أكثر مما تكشف. يعبث بالقوانين ليكشف حقيقتها. الفوضى سلاحه، والمرح قناعه."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Jester.png"
+  },
+  {
+    "id": "null-bringer",
+    "name": {
+      "en": "Null Bringer",
+      "ar": "Null Bringer"
+    },
+    "lore": {
+      "ar": "كائن يمحو كل ما يراه ، لا يميز أحد ابداً. طاقته تبتلع السحر، الزمن، والذاكرة. ما يسقط أمامه لا يُذكر حتى في الأساطير."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Null%20Bringer.png"
+  },
+  {
+    "id": "paradox-keeper",
+    "name": {
+      "en": "Paradox Keeper",
+      "ar": "Paradox Keeper"
+    },
+    "lore": {
+      "ar": "سيد التناقض، موجود ونقيضه في آن واحد. يلتوي حول الزمن كما يلتوي القمر بين النور والظل. مواجهته تعني فقدان العقل او الموت."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Paradox%20Keeper.png"
+  },
+  {
+    "id": "seraph",
+    "name": {
+      "en": "Seraph",
+      "ar": "Seraph"
+    },
+    "lore": {
+      "ar": "مبعوث القمر الأعلى، لا يُعرف ماهو ومن أي فصيل. أجنحته لا ترحم، وسيفه لا يتردد. نزوله يعني أن الميزان قد حُسم."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Seraph.png"
+  },
+  {
+    "id": "the-half-breed",
+    "name": {
+      "en": "The Half-Breed",
+      "ar": "The Half-Breed"
+    },
+    "lore": {
+      "ar": "مولود بين قوتين متعاديتين. يحمل لعنة ونعمة معًا. لا ينتمي… لكنه لا يُهزم."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/The%20Half-Breed.png"
+  },
+  {
+    "id": "thorns-queen",
+    "name": {
+      "en": "Thorns Queen",
+      "ar": "Thorns Queen"
+    },
+    "lore": {
+      "ar": "ملكة شريرة متشابكة مع الأشواك والورود، تحكم الظلال وتستمد قوتها من أحضان الطبيعة."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Thorns%20Queen.png"
+  },
+  {
+    "id": "umbra",
+    "name": {
+      "en": "Umbra",
+      "ar": "Umbra"
+    },
+    "lore": {
+      "ar": "تجسيد الظل القمري. يتحرك حيث ينكسر الضوء. وجوده يسبق الكارثة."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Umbra.png"
+  },
+  {
+    "id": "wishmaster",
+    "name": {
+      "en": "Wishmaster",
+      "ar": "Wishmaster"
+    },
+    "lore": {
+      "ar": "يحقق الأمنيات بثمن خفي. كلماته فخاخ مقنّعة. أمنيتك قد تكون نهايتك."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Wishmaster.png"
+  },
+  {
+    "id": "wisp",
+    "name": {
+      "en": "Wisp",
+      "ar": "Wisp"
+    },
+    "lore": {
+      "ar": "طيف صغير بطاقة قديمة. يرشد الضائعين دون أن يُرى. يظهر فقط لمن ما زال نقيًا."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Wisp.png"
+  }
+]

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="card_story_title">The Chronicles - Luna Fantasy</title>
+  <meta name="description" content="The official lore, timeline, and the beginning of the Great Chaos War.">
+  <meta name="theme-color" content="#030306">
+
+  <!-- Favicons -->
+  <link rel="icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/story.css">
+</head>
+<body>
+  <!-- Epic Background -->
+  <div class="epic-bg"></div>
+
+  <!-- Navigation -->
+  <div class="topbar">
+    <nav class="navbar-island">
+      <div class="brand">
+        <a href="index.html" style="display: flex; align-items: center; gap: 12px;">
+          <img src="assets/logo.png" class="brand-logo-img" alt="Luna Fantasy">
+          <span data-i18n="brand_name">Luna Fantasy</span>
+        </a>
+      </div>
+
+      <div class="nav">
+        <a href="index.html" class="nav-link" data-i18n="nav_home">Home</a>
+        <a href="story.html" class="nav-link active" data-i18n="nav_story">Story</a>
+        <a href="cards.html" class="nav-link" data-i18n="nav_game">Cards</a>
+        <a href="characters.html" class="nav-link" data-i18n="nav_chars">Characters</a>
+      </div>
+
+      <div class="actions-box">
+        <div class="lang-switcher">
+          <button class="lang-btn active" onclick="setLang('ar')" id="btn-ar">AR</button>
+          <button class="lang-btn" onclick="setLang('en')" id="btn-en">EN</button>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <div class="wrap">
+    <!-- Page Header -->
+    <header class="page-header">
+      <h1 data-i18n="card_story_title">The Chronicles</h1>
+      <p data-i18n="card_story_desc">The official lore, timeline, and the beginning of the Great Chaos War.</p>
+    </header>
+  </div>
+
+  <!-- Story Content -->
+  <div class="story-container">
+    <!-- Chapter 1 -->
+    <article class="chapter">
+      <header class="chapter-header">
+        <span class="chapter-number" data-i18n="chapter_1">Chapter One</span>
+        <h2 class="chapter-title" data-i18n="ch1_title">The Age of Peace</h2>
+      </header>
+
+      <div class="chapter-content">
+        <figure class="story-image">
+          <img src="assets/story/champion.png" alt="The Champion" loading="lazy">
+          <figcaption>The Golden Age of Luna</figcaption>
+        </figure>
+
+        <p data-i18n="ch1_p1">
+          Long ago, the crescent island of Luna stood as a beacon of hope and prosperity. Its knights were legendary, its mages unmatched, and its people lived in harmony under the watchful gaze of the Council of Elders.
+        </p>
+
+        <p data-i18n="ch1_p2">
+          For centuries, Luna flourished. Trade routes connected the island to distant lands, bringing wealth and knowledge. The Academy of Mystic Arts trained generations of powerful sorcerers, while the Order of the Crescent Shield defended the realm from any who would threaten its peace.
+        </p>
+
+        <div class="story-highlight">
+          <p data-i18n="ch1_quote">"In those golden days, we believed nothing could break us. We were wrong."</p>
+        </div>
+
+        <p data-i18n="ch1_p3">
+          But darkness was stirring in the shadows. In the forgotten depths beneath the island, an ancient power was awakening - one that would change the fate of Luna forever.
+        </p>
+      </div>
+    </article>
+
+    <div class="timeline-break">The Darkness Rises</div>
+
+    <!-- Chapter 2 -->
+    <article class="chapter">
+      <header class="chapter-header">
+        <span class="chapter-number" data-i18n="chapter_2">Chapter Two</span>
+        <h2 class="chapter-title" data-i18n="ch2_title">The Chaos War</h2>
+      </header>
+
+      <div class="chapter-content">
+        <p data-i18n="ch2_p1">
+          The arrival of <span class="character-mention">Movarth</span>, the King of Chaos, marked the end of Luna's golden age. With an army of corrupted souls and dark creatures, he swept across the island like a plague.
+        </p>
+
+        <p data-i18n="ch2_p2">
+          One by one, the great fortresses fell. The Order of the Crescent Shield fought valiantly, but they were no match for the overwhelming darkness. Within months, nearly half the island was consumed by chaos.
+        </p>
+
+        <div class="story-highlight">
+          <p data-i18n="ch2_quote">"When the King of Chaos smiled, even the bravest knights trembled."</p>
+        </div>
+
+        <p data-i18n="ch2_p3">
+          All seemed lost. The Council of Elders had fallen, the Academy was in ruins, and hope was fading. But in the darkest hour, two unlikely heroes would emerge to turn the tide of war.
+        </p>
+      </div>
+    </article>
+
+    <div class="timeline-break">Hope Returns</div>
+
+    <!-- Chapter 3 -->
+    <article class="chapter">
+      <header class="chapter-header">
+        <span class="chapter-number" data-i18n="chapter_3">Chapter Three</span>
+        <h2 class="chapter-title" data-i18n="ch3_title">The Two Masterminds</h2>
+      </header>
+
+      <div class="chapter-content">
+        <p data-i18n="ch3_p1">
+          From the ashes of defeat rose <span class="character-mention">Buddha Ban</span> and the mysterious figure known only as <span class="character-mention">The Mastermind</span>. Where others saw only despair, they saw opportunity.
+        </p>
+
+        <p data-i18n="ch3_p2">
+          Through cunning strategy, forbidden alliances, and sacrifices that would haunt them for generations, they orchestrated a counter-offensive that would become legend. The Battle of the Crescent Moon lasted for three days and three nights.
+        </p>
+
+        <div class="story-highlight">
+          <p data-i18n="ch3_quote">"Victory was not won by strength alone, but by those willing to play the longest game."</p>
+        </div>
+
+        <p data-i18n="ch3_p3">
+          When the dust settled, Movarth was sealed away in the depths from which he came. But the cost was immense. Luna would never be the same, and the two masterminds disappeared into legend, their true identities forever shrouded in mystery.
+        </p>
+      </div>
+    </article>
+
+    <!-- Coming Soon -->
+    <div class="coming-soon">
+      <h3 data-i18n="more_chapters">More Chapters Coming Soon</h3>
+      <p data-i18n="more_chapters_desc">The story of Luna is vast and ever-expanding. Join our Discord community to discover new chapters as they unfold.</p>
+      <a href="https://discord.gg/lunarian" target="_blank" class="btn btn-primary">
+        <svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z"/>
+        </svg>
+        <span data-i18n="btn_join">Join Discord</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="wrap">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-row">
+            <img src="assets/logo.png" alt="Luna Logo" class="footer-logo">
+            <h3 data-i18n="brand_name">Luna Fantasy</h3>
+          </div>
+          <p data-i18n="footer_desc">A premium roleplay experience on Discord. Join a community of writers, gamers, and dreamers.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4 data-i18n="footer_nav">Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+            <li><a href="story.html" data-i18n="nav_story">Story</a></li>
+            <li><a href="cards.html" data-i18n="nav_game">Cards</a></li>
+            <li><a href="characters.html" data-i18n="nav_chars">Characters</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 data-i18n="footer_social">Community</h4>
+          <ul class="footer-links">
+            <li>
+              <a href="https://discord.gg/lunarian" target="_blank">
+                <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z"/>
+                </svg>
+                Discord
+              </a>
+            </li>
+            <li>
+              <a href="https://www.instagram.com/luna.passage" target="_blank">
+                <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a href="https://www.tiktok.com/@luna.passage" target="_blank">TikTok</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span data-i18n="copyright">&copy; 2026 Luna Fantasy. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="assets/js/translations.js"></script>
+  <script src="assets/js/i18n.js"></script>
+  <script>
+    // Navbar scroll effect
+    window.addEventListener('scroll', () => {
+      const topbar = document.querySelector('.topbar');
+      if (window.scrollY > 100) {
+        topbar.classList.add('scrolled');
+      } else {
+        topbar.classList.remove('scrolled');
+      }
+    });
+  </script>
+</body>
+</html>

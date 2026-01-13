@@ -1,0 +1,184 @@
+[
+  {
+    "id": "battle-mage",
+    "name": {
+      "en": "Battle Mage",
+      "ar": "Battle Mage"
+    },
+    "lore": {
+      "ar": "محارب صاغ السحر سلاحًا. يضرب بالبرق كما بالسيف. وجوده يحوّل المعركة لعاصفة.",
+      "en": "A warrior who forged magic into a weapon. He strikes with lightning as with a sword. His presence turns the battle into a storm."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Battle%20Mage.png"
+  },
+  {
+    "id": "bloodforged-warlord",
+    "name": {
+      "en": "Bloodforged Warlord",
+      "ar": "Bloodforged Warlord"
+    },
+    "lore": {
+      "ar": "الفارس الذي وضع نفس ضحية لقوة الدم الطاغية. اصبح مسيراً بلعنة ولا يملك قراراً لنفسه.",
+      "en": "The knight who sacrificed himself to the overwhelming power of blood. He became driven by a curse and owns no decision for himself."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Bloodforged%20Warlord.png"
+  },
+  {
+    "id": "bod-aban-luna-champion",
+    "name": {
+      "en": "Bod Aban ' Luna Champion '",
+      "ar": "Bod Aban ' Luna Champion '"
+    },
+    "lore": {
+      "ar": "بودا بان السنتنل الذي ترقى بالقوة واستعار طاقة العقلين المدبرين لكي يهزم ملك الفوضى \" موڤارث \".",
+      "en": "Bod Aban, the Sentinel who rose through power and borrowed the energy of the two masterminds to defeat the Chaos King Movarth."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Bod%20Aban%20'%20Luna%20Champion%20'.png"
+  },
+  {
+    "id": "corrupted-sentinel",
+    "name": {
+      "en": "Corrupted Sentinel",
+      "ar": "Corrupted Sentinel"
+    },
+    "lore": {
+      "ar": "حارس سقط في قبضة السحر المظلم. سيفه المشقوق يحمل طاقة فاسدة. يقاتل لهدف لم يعد يتذكره.",
+      "en": "A guardian who fell into the grip of dark magic. His cracked sword carries corrupt energy. He fights for a goal he no longer remembers."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Corrupted%20Sentinel.png"
+  },
+  {
+    "id": "ethereal-knight",
+    "name": {
+      "en": "Ethereal Knight",
+      "ar": "Ethereal Knight"
+    },
+    "lore": {
+      "ar": "فارس طيفي يحمل نصلًا مشعًا، يحرس المملكة برشاقة خارقة وإصرار لا يتزعزع.",
+      "en": "A spectral knight wielding a radiant blade, guarding the kingdom with supernatural grace and unwavering determination."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Ethereal%20Knight.png"
+  },
+  {
+    "id": "la-luna-elva",
+    "name": {
+      "en": "La Luna Elva",
+      "ar": "La Luna Elva"
+    },
+    "lore": {
+      "ar": "سيف القمر المتجسد. حكمتها تسبق ضربتها. تقاتل باسم لونا لا باسم نفسها.",
+      "en": "The Moon Sword incarnate. Her wisdom precedes her strike. She fights in the name of Luna, not herself."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/La%20Luna%20Elva.png"
+  },
+  {
+    "id": "la-luna-eron",
+    "name": {
+      "en": "La Luna Eron",
+      "ar": "La Luna Eron"
+    },
+    "lore": {
+      "ar": "درع لونا الذي لا يسقط. يمشي بثقل الملوك وصمتهم. حين يقف، لا يُخترق.",
+      "en": "Luna's shield that does not fall. He walks with the weight and silence of kings. When he stands, he cannot be breached."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/La%20Luna%20Eron.png"
+  },
+  {
+    "id": "obsidian-sentinel",
+    "name": {
+      "en": "Obsidian Sentinel",
+      "ar": "Obsidian Sentinel"
+    },
+    "lore": {
+      "ar": "حارس من حجر أسود ويمين أبدي. لا ينام، لا يتكلم، ولا ينسى. إذا وقف في طريقك، فالطريق قد انتهى.",
+      "en": "A guardian of black stone and an eternal oath. He does not sleep, speak, or forget. If he stands in your way, the road has ended."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Obsidian%20Sentinel.png"
+  },
+  {
+    "id": "paladin",
+    "name": {
+      "en": "Paladin",
+      "ar": "Paladin"
+    },
+    "lore": {
+      "ar": "درع القمر وسيف عدالته. يحمي لونا دون تردد. سقوطه يعني سقوط الخط الأخير.",
+      "en": "The shield of the Moon and the sword of its justice. Protects Luna without hesitation. His fall means the fall of the last line."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Paladin.jpeg"
+  },
+  {
+    "id": "paragon-knight",
+    "name": {
+      "en": "Paragon Knight",
+      "ar": "Paragon Knight"
+    },
+    "lore": {
+      "ar": "فارس نبيل يرتدي درعًا لامعًا، يحفظ النظام ويُظهر شجاعة لا تتزعزع في وجه الشر.",
+      "en": "A noble knight in shining armor, upholding order and showing unwavering courage in the face of evil."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Paragon%20Knight.png"
+  },
+  {
+    "id": "prime-zoldar",
+    "name": {
+      "en": "Prime Zoldar",
+      "ar": "Prime Zoldar"
+    },
+    "lore": {
+      "ar": "قاطع القمر في ذروة قوته. قاد جيش لونا في حرب الفوضى الكبرى.",
+      "en": "The Moon Carver at the peak of his power. He led Luna's army in the Great Chaos War."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Prime%20Zoldar.png"
+  },
+  {
+    "id": "revenant",
+    "name": {
+      "en": "Revenant",
+      "ar": "Revenant"
+    },
+    "lore": {
+      "ar": "عاد من الموت بديْنٍ غير مسدّد. لا يتنفس ولا ينسى. سيفه يتحرك بإرادة الانتقام.",
+      "en": "Returned from death with an unpaid debt. He does not breathe and does not forget. His sword moves by the will of vengeance."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Revenant.png"
+  },
+  {
+    "id": "tidal-warden",
+    "name": {
+      "en": "Tidal Warden",
+      "ar": "Tidal Warden"
+    },
+    "lore": {
+      "ar": "فارس طيفي مغطّى بمياه غامضة، يحرس أسرار المملكة عبر المدّ وضوء القمر.",
+      "en": "A spectral knight covered in mysterious waters, guarding the kingdom's secrets through the tides and moonlight."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Tidal%20Warden.png"
+  },
+  {
+    "id": "warlord",
+    "name": {
+      "en": "Warlord",
+      "ar": "Warlord"
+    },
+    "lore": {
+      "ar": "قائد يولد من ساحة الحرب. يخطط ويقاتل بنفسه. أمره لا يُراجع.",
+      "en": "A commander born from the battlefield. He plans and fights himself. His command is not to be reviewed."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Knights/Warlord.png"
+  }
+]

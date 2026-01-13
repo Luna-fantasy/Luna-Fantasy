@@ -1,0 +1,249 @@
+[
+  {
+    "id": "alpha-direwolf",
+    "name": {
+      "en": "Alpha Direwolf",
+      "ar": "Alpha Direwolf"
+    },
+    "lore": {
+      "ar": "ذئب رهيب وضخم يتربص في الظلال ، يصطاد تحت وهج القمر. الاقوى بين فصيل ذئاب لونا.",
+      "en": "A terrible and huge wolf lurking in the shadows, hunting under the glare of the moon. The strongest of the Luna wolf pack."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Alpha%20Direwolf.png"
+  },
+  {
+    "id": "bunny",
+    "name": {
+      "en": "Bunny",
+      "ar": "Bunny"
+    },
+    "lore": {
+      "ar": "رمز البراءة القمرية. حساس للطاقة والاختلال. الهروب منه فأل سيئ.",
+      "en": "Symbol of lunar innocence. Sensitive to energy and imbalance. Fleeing from it is a bad omen."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Bunny.png"
+  },
+  {
+    "id": "cobra",
+    "name": {
+      "en": "Cobra",
+      "ar": "Cobra"
+    },
+    "lore": {
+      "ar": "حارس الشلالات القمرية. صبره أطول من عمر الفريسة. ضربته واحدة… وكافية.",
+      "en": "Guardian of the lunar waterfalls. His patience is longer than the prey's life. His strike is one... and sufficient."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Cobra.png"
+  },
+  {
+    "id": "deer",
+    "name": {
+      "en": "Deer",
+      "ar": "Deer"
+    },
+    "lore": {
+      "ar": "روح الغابة القمرية. حساس لأي خلل في التوازن. اصطياده نذير شؤم.",
+      "en": "Spirit of the lunar forest. Sensitive to any imbalance. Hunting it is a bad omen."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Deer.png"
+  },
+  {
+    "id": "direwolf",
+    "name": {
+      "en": "Direwolf",
+      "ar": "Direwolf"
+    },
+    "lore": {
+      "ar": "مفترس القمر الأعظم. يقود دون أوامر. عُواؤه إعلان حرب.",
+      "en": "The greatest predator of the Moon. Leads without orders. His howl is a declaration of war."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Direwolf.png"
+  },
+  {
+    "id": "great-sage",
+    "name": {
+      "en": "Great Sage",
+      "ar": "Great Sage"
+    },
+    "lore": {
+      "ar": "حكيم القمر الأكبر وحامل المعرفة القديمة. يرشد التائهين وسط الظلام. وجوده نور نادر في عالم لونا.",
+      "en": "The greatest sage of the Moon and bearer of ancient knowledge. Guides the lost amidst the darkness. His presence is a rare light in the world of Luna."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Great%20Sage.png"
+  },
+  {
+    "id": "hound",
+    "name": {
+      "en": "Hound",
+      "ar": "Hound"
+    },
+    "lore": {
+      "ar": "صياد القمر الأسود. يتبع الرائحة لا الرحمة. إذا بدأ المطاردة، لا يتوقف.",
+      "en": "Hunter of the Black Moon. Follows the scent, not mercy. If he starts the chase, he does not stop."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Hound.png"
+  },
+  {
+    "id": "lynx",
+    "name": {
+      "en": "Lynx",
+      "ar": "Lynx"
+    },
+    "lore": {
+      "ar": "صياد صامت بنظرة ثاقبة. يرى ما لا يُرى. لا يخطئ الفريسة.",
+      "en": "Silent hunter with a piercing gaze. Sees what is unseen. Does not miss the prey."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Lynx.png"
+  },
+  {
+    "id": "mooveil",
+    "name": {
+      "en": "Moon Viel",
+      "ar": "Moon Viel"
+    },
+    "lore": {
+      "ar": "كائن يسير بين الماء والظل. يحجب حضوره كما يحجب القمر نوره. من يراه، يكون قد اقترب أكثر من اللازم.",
+      "en": "A being walking between water and shadow. Veils his presence as the moon veils its light. He who sees him has approached closer than necessary."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Mooveil.png"
+  },
+  {
+    "id": "owl",
+    "name": {
+      "en": "Owl",
+      "ar": "Owl"
+    },
+    "lore": {
+      "ar": "عين الليل الحكيمة. يراقب دون تدخل. إن صرخ، فالخطر قريب.",
+      "en": "The wise eye of the night. Watches without interfering. If it screams, danger is near."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Owl.png"
+  },
+  {
+    "id": "panthera",
+    "name": {
+      "en": "Panthera",
+      "ar": "Panthera"
+    },
+    "lore": {
+      "ar": "صيّادة الليل تحت ظل القمر. خطوتها بلا صوت ونظرتها حكم. من تراها أولًا… لا تراها ثانية.",
+      "en": "Hunter of the night under the moon's shadow. Her step is soundless and her look is a verdict. Who sees her first... does not see her again."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Panthera.png"
+  },
+  {
+    "id": "peacock",
+    "name": {
+      "en": "Peacock",
+      "ar": "Peacock"
+    },
+    "lore": {
+      "ar": "جمال القمر المتباهي. ريشه يخفي قوة غير متوقعة. ينظر إليه الجميع… ولا يفهمه أحد.",
+      "en": "The showy beauty of the Moon. His feathers hide unexpected power. Everyone looks at him... and no one understands him."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Peacock.png"
+  },
+  {
+    "id": "pegasus",
+    "name": {
+      "en": "Pegasus",
+      "ar": "Pegasus"
+    },
+    "lore": {
+      "ar": "جواد القمر المجنّح. لا يُركب إلا لمن اختاره القمر. مروره يترك السماء مضطربة.",
+      "en": "The winged horse of the Moon. Can only be ridden by one chosen by the Moon. His passing leaves the sky turbulent."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Pegasus.png"
+  },
+  {
+    "id": "sage",
+    "name": {
+      "en": "Sage",
+      "ar": "Sage"
+    },
+    "lore": {
+      "ar": "حامل الحكمة التي لا تُقال علنًا. يعرف متى يتكلم ومتى يصمت. وجوده يمنع لونا من تكرار أخطائها.",
+      "en": "Bearer of wisdom not spoken publicly. Knows when to speak and when to be silent. His presence prevents Luna from repeating her mistakes."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Sage.png"
+  },
+  {
+    "id": "silver-beach-guardian",
+    "name": {
+      "en": "Silver Beach Guardian",
+      "ar": "Silver Beach Guardian"
+    },
+    "lore": {
+      "ar": "حارس الشواطئ الفضية في لونا، يشع نورًا ملكياً كمدافع صامد عن نقاء المملكة.",
+      "en": "Guardian of the silver beaches in Luna, radiating royal light as a steadfast defender of the kingdom's purity."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Silver%20Beach%20Guardian.png"
+  },
+  {
+    "id": "silver-bird",
+    "name": {
+      "en": "Silver Bird",
+      "ar": "Silver Bird"
+    },
+    "lore": {
+      "ar": "طائر نادر بلون القمر. ظهوره فأل لتغير قادم. لا يُرى إلا عند الصفاء التام.",
+      "en": "A rare bird the color of the moon. Its appearance is an omen of coming change. Only seen in total clarity."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Silver%20Bird.png"
+  },
+  {
+    "id": "toad",
+    "name": {
+      "en": "Toad",
+      "ar": "Toad"
+    },
+    "lore": {
+      "ar": "حارس البرك القديمة. يعرف أسرار الماء والسكوت. لا يبدو خطيرًا… حتى يفعل.",
+      "en": "Guardian of ancient ponds. Knows the secrets of water and silence. Does not seem dangerous... until he acts."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Toad.png"
+  },
+  {
+    "id": "umbreon",
+    "name": {
+      "en": "Umbreon",
+      "ar": "Umbreon"
+    },
+    "lore": {
+      "ar": "مخلوق الليل الصامت. يتحرك حيث يختفي الضوء. ظهوره يعني أن الظلال استيقظت.",
+      "en": "The silent creature of the night. Moves where the light disappears. His appearance means the shadows have awakened."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Umbreon.png"
+  },
+  {
+    "id": "vulmir",
+    "name": {
+      "en": "Vulmir",
+      "ar": "Vulmir"
+    },
+    "lore": {
+      "ar": "كيان قديم مرتبط بنبض القمر. لا يتكلم إلا عند الخلل العظيم. ظهوره علامة أن التوازن مهدد.",
+      "en": "Ancient entity linked to the pulse of the Moon. Does not speak except at the Great Imbalance. His appearance is a sign that the balance is threatened."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Moon%20Creatures/Vulmir.png"
+  }
+]

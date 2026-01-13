@@ -1,0 +1,110 @@
+[
+  {
+    "id": "abyssal-colossus",
+    "name": {
+      "en": "Abyssal Colossus",
+      "ar": "Abyssal Colossus"
+    },
+    "lore": {
+      "ar": "عملاق الأعماق الذي لم يُخلق ليُهزم. خطوته تبتلع الجبال وصمته يرعب البحر. إذا نهض، يتغيّر شكل العالم."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Abyssal%20Colossus.png"
+  },
+  {
+    "id": "cyclops",
+    "name": {
+      "en": "Cyclops",
+      "ar": "Cyclops"
+    },
+    "lore": {
+      "ar": "قوة بدائية بعين واحدة. يرى الحقيقة دون تزييف. غضبه يهدم المدن."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Cyclops.png"
+  },
+  {
+    "id": "dune-reaper",
+    "name": {
+      "en": "Dune Reaper",
+      "ar": "Dune Reaper"
+    },
+    "lore": {
+      "ar": "عقرب هائل يتخفّى في الصحارى، يضرب بمخالبه الحادة كالشفرات ولسعته السامة القاتلة."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Dune%20Reaper.png"
+  },
+  {
+    "id": "frost-titan",
+    "name": {
+      "en": "Frost Titan",
+      "ar": "Frost Titan"
+    },
+    "lore": {
+      "ar": "عملاق هائل مكوّن من جليد خالص، يشع قوة قارسة مع تشققات من طاقة برد متوهجة. يجسد القسوة الجليدية لليالي القمر."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Frost%20Titan.png"
+  },
+  {
+    "id": "giant",
+    "name": {
+      "en": "Giant",
+      "ar": "Giant"
+    },
+    "lore": {
+      "ar": "قوة الجبال حين تمشي. صبره طويل وغضبه مدمر. إذا تحرك، تغيّرت الأرض."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Giant.png"
+  },
+  {
+    "id": "golem",
+    "name": {
+      "en": "Golem",
+      "ar": "Golem"
+    },
+    "lore": {
+      "ar": "جسد من حجر وقلب من طاقة. أُوجد للحماية لا للكلام. إن تحرك، فالخطر عظيم."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Golem.png"
+  },
+  {
+    "id": "last-titan",
+    "name": {
+      "en": "Last Titan",
+      "ar": "Last Titan"
+    },
+    "lore": {
+      "ar": "بقايا عصر العمالقة. جسده مدينة وسيفه تاريخ. سقوطه يعني نهاية حقبة."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Last%20Titan.png"
+  },
+  {
+    "id": "minotaur",
+    "name": {
+      "en": "Minotaur",
+      "ar": "Minotaur"
+    },
+    "lore": {
+      "ar": "وحش المتاهة الذي لا يضل طريقه. يندفع نحو أعدائه بغضب لا يهدأ."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/Minotaur.png"
+  },
+  {
+    "id": "the-mercenary",
+    "name": {
+      "en": "The Mercenary",
+      "ar": "The Mercenary"
+    },
+    "lore": {
+      "ar": "سيف للإيجار… لكن بشروطه. يقاتل للذهب، ويبقى بالاختيار. من يدفع أقل، لا ينجو."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Colossals/The%20Mercenary.png"
+  }
+]

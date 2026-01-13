@@ -1,0 +1,54 @@
+[
+  {
+    "id": "all",
+    "name": { "en": "All Characters", "ar": "جميع الشخصيات" }
+  },
+  {
+    "id": "main",
+    "name": { "en": "Main Characters", "ar": "الشخصيات الرئيسية" }
+  },
+  {
+    "id": "lunarians",
+    "name": { "en": "Lunarians", "ar": "اللوناريون" }
+  },
+  {
+    "id": "knights",
+    "name": { "en": "Knights", "ar": "الفرسان" }
+  },
+  {
+    "id": "warriors",
+    "name": { "en": "Warriors", "ar": "المحاربون" }
+  },
+  {
+    "id": "dragons",
+    "name": { "en": "Dragons", "ar": "التنانين" }
+  },
+  {
+    "id": "beasts",
+    "name": { "en": "Beasts", "ar": "الوحوش" }
+  },
+  {
+    "id": "colossals",
+    "name": { "en": "Colossals", "ar": "العمالقة" }
+  },
+  {
+    "id": "moon-creatures",
+    "name": { "en": "Moon Creatures", "ar": "مخلوقات القمر" }
+  },
+  {
+    "id": "mythical-creatures",
+    "name": { "en": "Mythical Creatures", "ar": "المخلوقات الأسطورية" }
+  },
+  {
+    "id": "strange-being",
+    "name": { "en": "Strange Beings", "ar": "الكائنات الغريبة" }
+  },
+  {
+    "id": "supernaturals",
+    "name": { "en": "Supernaturals", "ar": "الخارقون" }
+  },
+  {
+    "id": "underworld",
+    "name": { "en": "Underworld", "ar": "العالم السفلي" }
+  }
+]

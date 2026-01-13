@@ -1,0 +1,542 @@
+/* ============================================
+   LUNA FANTASY - CARDS PAGE EPIC STYLES
+   ============================================ */
+
+/* Page Header */
+.page-header {
+  position: relative;
+  padding: 160px 0 80px;
+  text-align: center;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+}
+
+.page-header h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 900;
+  margin-bottom: 16px;
+  background: linear-gradient(180deg,
+    #ffffff 0%,
+    var(--accent-primary) 60%,
+    #8b5e0f 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 40px rgba(201, 162, 39, 0.3));
+}
+
+.page-header p {
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.8;
+  font-size: 1.1rem;
+}
+
+/* Rules & Info Boxes */
+.rules-box {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  margin: 40px 0 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.rules-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-secondary), transparent);
+}
+
+/* Intro Box - What are Luna Cards */
+.rules-box.intro-box {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.rules-box.intro-box::before {
+  background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+}
+
+.rules-box.intro-box h3 {
+  color: var(--accent-primary);
+  font-size: 1.75rem;
+}
+
+.rules-box h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: var(--accent-secondary);
+}
+
+.rules-box p {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.rules-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rules-list li {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 2;
+  padding-left: 24px;
+  position: relative;
+}
+
+.rules-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background: var(--accent-secondary);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--accent-secondary);
+}
+
+/* Filter Toolbar */
+.toolbar-container {
+  position: sticky;
+  top: 80px;
+  z-index: 90;
+  padding: 20px 0;
+  margin-bottom: 40px;
+}
+
+.filter-bar {
+  background: linear-gradient(135deg, rgba(12, 16, 24, 0.95), rgba(7, 10, 18, 0.98));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 100px;
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: fit-content;
+  margin: 0 auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 10px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.filter-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Rarity-specific hover effects */
+.filter-btn.rarity-common:hover {
+  color: var(--common);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.filter-btn.rarity-rare:hover {
+  color: var(--rare);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.filter-btn.rarity-epic:hover {
+  color: var(--epic);
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.filter-btn.rarity-unique:hover {
+  color: var(--unique);
+  background: rgba(244, 63, 94, 0.1);
+}
+
+.filter-btn.rarity-legendary:hover {
+  color: var(--legendary);
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.filter-btn.rarity-secret:hover {
+  color: var(--secret);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Rarity indicator dot */
+.filter-btn.rarity-common::before,
+.filter-btn.rarity-rare::before,
+.filter-btn.rarity-epic::before,
+.filter-btn.rarity-unique::before,
+.filter-btn.rarity-legendary::before,
+.filter-btn.rarity-secret::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-inline-end: 8px;
+  vertical-align: middle;
+  transition: box-shadow 0.3s;
+}
+
+.filter-btn.rarity-common::before { background: var(--common); }
+.filter-btn.rarity-rare::before { background: var(--rare); }
+.filter-btn.rarity-epic::before { background: var(--epic); }
+.filter-btn.rarity-unique::before { background: var(--unique); }
+.filter-btn.rarity-legendary::before { background: var(--legendary); }
+.filter-btn.rarity-secret::before { background: var(--secret); }
+
+.filter-btn.rarity-common:hover::before { box-shadow: 0 0 10px var(--common); }
+.filter-btn.rarity-rare:hover::before { box-shadow: 0 0 10px var(--rare); }
+.filter-btn.rarity-epic:hover::before { box-shadow: 0 0 10px var(--epic); }
+.filter-btn.rarity-unique:hover::before { box-shadow: 0 0 10px var(--unique); }
+.filter-btn.rarity-legendary:hover::before { box-shadow: 0 0 10px var(--legendary); }
+.filter-btn.rarity-secret:hover::before { box-shadow: 0 0 10px var(--secret); }
+
+.filter-btn.active {
+  color: var(--bg-void);
+  background: #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* Hide indicator dot when active (use rarity background instead) */
+.filter-btn.active::before {
+  display: none;
+}
+
+/* Rarity specific active states */
+.filter-btn[data-filter="common"].active {
+  background: linear-gradient(135deg, var(--common), #22c55e);
+  color: var(--bg-void);
+  box-shadow: 0 0 25px var(--common);
+}
+
+.filter-btn[data-filter="rare"].active {
+  background: linear-gradient(135deg, var(--rare), #2563eb);
+  color: #fff;
+  box-shadow: 0 0 25px var(--rare);
+}
+
+.filter-btn[data-filter="epic"].active {
+  background: linear-gradient(135deg, var(--epic), #7c3aed);
+  color: #fff;
+  box-shadow: 0 0 25px var(--epic);
+}
+
+.filter-btn[data-filter="unique"].active {
+  background: linear-gradient(135deg, var(--unique), #dc2626);
+  color: #fff;
+  box-shadow: 0 0 25px var(--unique);
+}
+
+.filter-btn[data-filter="legendary"].active {
+  background: linear-gradient(135deg, var(--legendary), #d97706);
+  color: var(--bg-void);
+  box-shadow: 0 0 25px var(--legendary);
+}
+
+.filter-btn[data-filter="secret"].active {
+  background: linear-gradient(135deg, var(--secret), #b91c1c);
+  color: #fff;
+  box-shadow: 0 0 25px var(--secret);
+}
+
+/* Cards Grid */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+  padding-bottom: 100px;
+}
+
+/* Card Item */
+.card-item {
+  position: relative;
+  aspect-ratio: 2/3;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s;
+  transform-origin: center bottom;
+  animation: cardReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(40px) rotateX(10deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotateX(0);
+  }
+}
+
+/* Stagger card animations */
+.card-item:nth-child(1) { animation-delay: 0.05s; }
+.card-item:nth-child(2) { animation-delay: 0.1s; }
+.card-item:nth-child(3) { animation-delay: 0.15s; }
+.card-item:nth-child(4) { animation-delay: 0.2s; }
+.card-item:nth-child(5) { animation-delay: 0.25s; }
+.card-item:nth-child(6) { animation-delay: 0.3s; }
+.card-item:nth-child(7) { animation-delay: 0.35s; }
+
+.card-item:hover {
+  transform: translateY(-15px) scale(1.03);
+  z-index: 10;
+}
+
+.card-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Rarity glow effects on hover */
+.card-item.common:hover img {
+  border-color: var(--common);
+  box-shadow: 0 0 40px var(--common), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.card-item.rare:hover img {
+  border-color: var(--rare);
+  box-shadow: 0 0 40px var(--rare), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.card-item.epic:hover img {
+  border-color: var(--epic);
+  box-shadow: 0 0 40px var(--epic), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.card-item.unique:hover img {
+  border-color: var(--unique);
+  box-shadow: 0 0 40px var(--unique), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.card-item.legendary:hover img {
+  border-color: var(--legendary);
+  box-shadow: 0 0 40px var(--legendary), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.card-item.secret:hover img {
+  border-color: var(--secret);
+  box-shadow: 0 0 40px var(--secret), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Hidden state for filtering */
+.card-item.hidden {
+  display: none;
+}
+
+/* Card info overlay */
+.card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 30px 16px 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.card-item:hover .card-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-name {
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Rarity Badge on Card */
+.card-rarity {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: 50px;
+  backdrop-filter: blur(10px);
+}
+
+.card-item.common .card-rarity {
+  background: rgba(74, 222, 128, 0.2);
+  color: var(--common);
+  border: 1px solid var(--common);
+}
+
+.card-item.rare .card-rarity {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--rare);
+  border: 1px solid var(--rare);
+}
+
+.card-item.epic .card-rarity {
+  background: rgba(168, 85, 247, 0.2);
+  color: var(--epic);
+  border: 1px solid var(--epic);
+}
+
+.card-item.unique .card-rarity {
+  background: rgba(244, 63, 94, 0.2);
+  color: var(--unique);
+  border: 1px solid var(--unique);
+}
+
+.card-item.legendary .card-rarity {
+  background: rgba(251, 191, 36, 0.2);
+  color: var(--legendary);
+  border: 1px solid var(--legendary);
+}
+
+.card-item.secret .card-rarity {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--secret);
+  border: 1px solid var(--secret);
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 3, 6, 0.95);
+  backdrop-filter: blur(20px);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.lightbox.active {
+  display: flex;
+  opacity: 1;
+}
+
+.lightbox img {
+  max-height: 85vh;
+  max-width: 90vw;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.8);
+  transform: scale(0.9);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lightbox.active img {
+  transform: scale(1);
+}
+
+.lb-close {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.lb-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+/* Mobile Tweaks */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 120px 20px 60px;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .rules-box {
+    padding: 24px;
+  }
+
+  .filter-bar {
+    border-radius: var(--radius-lg);
+    padding: 10px;
+  }
+
+  .filter-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .card-item {
+    border-radius: var(--radius-md);
+  }
+
+  .card-item img {
+    border-radius: var(--radius-md);
+  }
+
+  .lb-close {
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+  }
+}
