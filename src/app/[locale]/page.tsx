@@ -97,7 +97,7 @@ function HomeContent() {
                   width={500}
                   height={400}
                   loading="lazy"
-                />
+                /> 
               </div>
             </div>
             <div className="showcase-content">
