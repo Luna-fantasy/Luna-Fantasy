@@ -165,29 +165,31 @@
   "storyPage": {
     "title": "The Chronicles",
     "desc": "The official lore, timeline, and the beginning of the Great Chaos War.",
-    "chapter1": {
-      "label": "Chapter One",
-      "title": "The Age of Peace",
-      "p1": "Long ago, the crescent island of Luna stood as a beacon of hope and prosperity. Its knights were legendary, its mages unmatched, and its people lived in harmony under the watchful gaze of the Council of Elders.",
-      "p2": "For centuries, Luna flourished. Trade routes connected the island to distant lands, bringing wealth and knowledge. The Academy of Mystic Arts trained generations of powerful sorcerers, while the Order of the Crescent Shield defended the realm from any who would threaten its peace.",
-      "quote": "\"In those golden days, we believed nothing could break us. We were wrong.\"",
-      "p3": "But darkness was stirring in the shadows. In the forgotten depths beneath the island, an ancient power was awakening - one that would change the fate of Luna forever."
-    },
-    "chapter2": {
-      "label": "Chapter Two",
-      "title": "The Chaos War",
-      "p1": "The arrival of Movarth, the King of Chaos, marked the end of Luna's golden age. With an army of corrupted souls and dark creatures, he swept across the island like a plague.",
-      "p2": "One by one, the great fortresses fell. The Order of the Crescent Shield fought valiantly, but they were no match for the overwhelming darkness. Within months, nearly half the island was consumed by chaos.",
-      "quote": "\"When the King of Chaos smiled, even the bravest knights trembled.\"",
-      "p3": "All seemed lost. The Council of Elders had fallen, the Academy was in ruins, and hope was fading. But in the darkest hour, two unlikely heroes would emerge to turn the tide of war."
-    },
-    "chapter3": {
-      "label": "Chapter Three",
-      "title": "The Two Masterminds",
-      "p1": "From the ashes of defeat rose Buddha Ban and the mysterious figure known only as The Mastermind. Where others saw only despair, they saw opportunity.",
-      "p2": "Through cunning strategy, forbidden alliances, and sacrifices that would haunt them for generations, they orchestrated a counter-offensive that would become legend. The Battle of the Crescent Moon lasted for three days and three nights.",
-      "quote": "\"Victory was not won by strength alone, but by those willing to play the longest game.\"",
-      "p3": "When the dust settled, Movarth was sealed away in the depths from which he came. But the cost was immense. Luna would never be the same, and the two masterminds disappeared into legend, their true identities forever shrouded in mystery."
+    chapter1": {
+    "label": "Chapter One",
+    "title": "The World of Luna",
+    "p1": "There once existed a vast world upon a crescent-shaped lunar island known as Luna. All known and unknown beings lived there in peace and balance, untouched by fear or conflict.",
+    "p2": "Across the ages, Luna prospered. Its cities and strongholds stood firm, and its people lived securely within a stable order that knew nothing of tyranny or chaos.",
+    "quote": "\"Peace was not fragile… we simply believed it was eternal.\"",
+    "p3": "Yet in secrecy, dark forces moved in silence, waiting for the moment to descend upon this tranquil world."
+  },
+
+  "chapter2": {
+    "label": "Chapter Two",
+    "title": "Rise of the King of Chaos",
+    "p1": "Movarth emerged — a hybrid creature born of Orc and Ghoul blood, colossal in form and overwhelming in power. He drew his strength from the dark mastermind Shuran, the one who commanded the force of rampant chaos.",
+    "p2": "By Shuran’s command, the armies of chaos marched upon Lunvor, the capital of Luna. One by one, Luna’s knights fell before Movarth’s crushing might, and the great fortresses could not withstand the onslaught.",
+    "quote": "\"When Movarth stood upon the battlefield, courage broke before steel.\"",
+    "p3": "From that day forward, Movarth was known as the King of Chaos, and a dark era descended upon Luna unlike anything it had ever known."
+  },
+
+  "chapter3": {
+    "label": "Chapter Three",
+    "title": "The Two Masterminds",
+    "p1": "For hundreds of years, Luna remained under the rule of the King of Chaos, its people living in oppression and ruin — until visitors from Earth arrived, known as the Two Masterminds.",
+    "p2": "Though strangers to Luna, the masterminds chose to stay. They analyzed the chaos, rebuilt what had been destroyed, and devised precise plans to bring an end to Movarth and his armies.",
+    "quote": "\"We were not born of this world… but we refused to let it burn.\"",
+    "p3": "The final battle erupted, and the Two Masterminds and their allies triumphed over the armies of chaos. Movarth was defeated by Luna’s champion, Buddha Ban, and the conflict was forever recorded in history as the Great Chaos War."
     },
     "moreChapters": "More Chapters Coming Soon",
     "moreChaptersDesc": "The story of Luna is vast and ever-expanding. Join our Discord community to discover new chapters as they unfold."
