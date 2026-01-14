@@ -60,6 +60,9 @@ export function Navbar() {
           <Link href="/characters" className={`nav-link ${isActive('/characters') ? 'active' : ''}`}>
             {t('characters')}
           </Link>
+          <Link href="/bank" className={`nav-link ${isActive('/bank') ? 'active' : ''}`}>
+            {t('bank')}
+          </Link>
         </div>
 
         <div className="actions-box">

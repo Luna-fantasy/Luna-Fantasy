@@ -1,0 +1,54 @@
+{
+  "salary": {
+    "daily": {
+      "basePay": 3000,
+      "vipBonus": 2000,
+      "resetTimer": "24h"
+    },
+    "monthly": {
+      "amount": 35000,
+      "eligibleRoles": {
+        "staff": [
+          { "en": "Mastermind", "ar": "العقل المدبر" },
+          { "en": "Luna Sentinel", "ar": "حارس لونا" },
+          { "en": "Luna Guardian", "ar": "حامي لونا" },
+          { "en": "Luna Knight", "ar": "فارس لونا" },
+          { "en": "Luna Wizard", "ar": "ساحر لونا" },
+          { "en": "Luna Healer", "ar": "معالج لونا" }
+        ],
+        "special": [
+          { "role": { "en": "Luna Noble", "ar": "نبيل لونا" }, "command": null, "description": { "en": "Founders of Luna", "ar": "المؤسسين في عالم لونا" } },
+          { "role": { "en": "Trickster", "ar": "المحتال" }, "command": "/book", "description": { "en": "Full Cards collection", "ar": "مجموعة كاملة من البطاقات" } },
+          { "role": { "en": "Luna Chosen", "ar": "مختار لونا" }, "command": "/chest", "description": { "en": "Full Moonstones collection", "ar": "مجموعة كاملة من أحجار القمر" } }
+        ]
+      }
+    }
+  },
+  "loans": {
+    "interestRate": 20,
+    "vipInterestRate": 15,
+    "deadline": 7,
+    "tiers": [5000, 10000, 15000, 20000, 25000, 30000, 40000, 50000, 75000, 100000]
+  },
+  "trading": {
+    "maxLimit": 50000,
+    "winChance": 50,
+    "lossPenalty": 20,
+    "levelRequired": 1,
+    "cooldown": "4h"
+  },
+  "insurance": {
+    "theftProtection": {
+      "cost": 100000,
+      "effect": { "en": "Lifetime protection", "ar": "حماية مدى الحياة" }
+    }
+  },
+  "vip": {
+    "depositRequirement": 20000,
+    "benefits": [
+      { "icon": "coins", "text": { "en": "+2,000 Daily Bonus", "ar": "+2,000 مكافأة يومية" } },
+      { "icon": "percent", "text": { "en": "30% Interest on deposit (after 30 days)", "ar": "30% فائدة على الإيداع (بعد 30 يوم)" } },
+      { "icon": "discount", "text": { "en": "5% Interest discount on loans", "ar": "خصم 5% على فوائد القروض" } }
+    ]
+  }
+}

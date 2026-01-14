@@ -10,7 +10,8 @@
     "home": "Home",
     "story": "Story",
     "cards": "Luna Fantasy",
-    "characters": "Characters"
+    "characters": "Characters",
+    "bank": "Bank"
   },
   "hero": {
     "badge": "FANTASY UNIVERSE",
@@ -97,6 +98,69 @@
     "mastermindDesc": "The one who pulls all the strings from the shadows. A strategic genius whose plans span decades. No one knows his true intentions, but all fear his influence.",
     "ctaTitle": "Discover More Characters",
     "ctaDesc": "These are just the beginning. Over 200 unique characters await you in the Luna universe. Join our Discord to meet them all and create your own story."
+  },
+  "bankPage": {
+    "title": "Luna Bank",
+    "subtitle": "The financial system of Luna. Earn daily salaries, take loans, trade currencies, and become a premium client.",
+    "currency": "Lunari",
+    "cta": "Collect Your Salary on Discord",
+    "salary": {
+      "title": "Salary System",
+      "daily": {
+        "title": "Daily Salary",
+        "desc": "Claim your daily salary every 24 hours",
+        "basePay": "Base Pay",
+        "vipBonus": "VIP Bonus",
+        "vipNote": "Become a Premium Client for extra bonus!",
+        "resetTimer": "24h Reset",
+        "claimBtn": "Claim Salary"
+      },
+      "monthly": {
+        "title": "Monthly Salary",
+        "desc": "Exclusive for staff and special roles",
+        "amount": "Amount",
+        "staffRoles": "Luna Staff",
+        "specialRoles": "Special Roles",
+        "tip": "Use /book to check your cards and /chest to check your moonstones"
+      }
+    },
+    "loans": {
+      "title": "Loan System",
+      "desc": "Borrow Lunari and pay back within 7 days. VIP clients get reduced interest rates.",
+      "interest": "Standard Interest",
+      "vipInterest": "VIP Interest",
+      "deadline": "Repayment Deadline",
+      "days": "days",
+      "tiers": "Available Loan Amounts",
+      "actionBtn": "Take a Loan"
+    },
+    "trading": {
+      "title": "Trading",
+      "desc": "Risk your Lunari for a chance to win more. High risk, high reward!",
+      "warning": "Trading involves risk. You may lose 20% of your trade amount.",
+      "limit": "Max Trade",
+      "winChance": "Win Chance",
+      "lossPenalty": "Loss Penalty",
+      "requirements": "Requirements",
+      "level": "Level",
+      "cooldown": "Cooldown",
+      "actionBtn": "Start Trading"
+    },
+    "insurance": {
+      "title": "Services",
+      "theftProtection": "Theft Protection",
+      "theftDesc": "Protect your Lunari from thieves forever",
+      "cost": "Cost",
+      "effect": "Duration",
+      "actionBtn": "Get Protection"
+    },
+    "vip": {
+      "title": "Premium Client",
+      "desc": "Deposit Lunari to unlock exclusive benefits",
+      "howToJoin": "Minimum Deposit",
+      "benefits": "VIP Benefits",
+      "actionBtn": "Start Deposit"
+    }
   },
   "storyPage": {
     "title": "The Chronicles",
