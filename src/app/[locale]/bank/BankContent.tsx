@@ -89,7 +89,7 @@ export function BankContent({ data, locale }: BankContentProps) {
           <p className="bank-hero-desc">{t('subtitle')}</p>
           <div className="bank-hero-cta">
             <a
-              href="https://discord.gg/luna"
+              href="https://discord.gg/lunarian"
               target="_blank"
               rel="noopener noreferrer"
               className="cta-discord"
@@ -134,7 +134,7 @@ export function BankContent({ data, locale }: BankContentProps) {
                 </div>
                 <p className="vip-note">{t('salary.daily.vipNote')}</p>
                 <a
-                  href="https://discord.gg/luna"
+                  href="https://discord.gg/lunarian"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="section-action-btn"
@@ -228,7 +228,7 @@ export function BankContent({ data, locale }: BankContentProps) {
             </div>
 
             <a
-              href="https://discord.gg/luna"
+              href="https://discord.gg/lunarian"
               target="_blank"
               rel="noopener noreferrer"
               className="section-action-btn"
@@ -278,7 +278,7 @@ export function BankContent({ data, locale }: BankContentProps) {
             </div>
 
             <a
-              href="https://discord.gg/luna"
+              href="https://discord.gg/lunarian"
               target="_blank"
               rel="noopener noreferrer"
               className="section-action-btn"
@@ -311,7 +311,7 @@ export function BankContent({ data, locale }: BankContentProps) {
                   <span className="service-detail-value effect">{data.insurance.theftProtection.effect[locale]}</span>
                 </div>
                 <a
-                  href="https://discord.gg/luna"
+                  href="https://discord.gg/lunarian"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="section-action-btn small"
@@ -345,7 +345,7 @@ export function BankContent({ data, locale }: BankContentProps) {
                   ))}
                 </div>
                 <a
-                  href="https://discord.gg/luna"
+                  href="https://discord.gg/lunarian"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="section-action-btn small vip"
