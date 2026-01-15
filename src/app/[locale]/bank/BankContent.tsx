@@ -95,9 +95,9 @@ export function BankContent({ data, locale }: BankContentProps) {
           />
         </div>
         <div className="bank-hero-content">
-          <div className="bank-hero-badge">
+          {/* <div className="bank-hero-badge">
             <span>{t('title')}</span>
-          </div>
+          </div> */}
           <h1 className="bank-hero-title">{t('title')}</h1>
           <p className="bank-hero-desc">{t('subtitle')}</p>
           <div className="bank-hero-cta">
