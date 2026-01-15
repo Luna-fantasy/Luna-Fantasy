@@ -69,6 +69,7 @@
   {"id": "wisp", "name": {"en": "Wisp", "ar": "ويسب"}, "rarity": "epic", "imageUrl": "https://assets.luna-fantasy.com/cards/Epic/Wisp.png", "characterId": "wisp"},
   {"id": "wizard", "name": {"en": "Wizard", "ar": "الساحر"}, "rarity": "epic", "imageUrl": "https://assets.luna-fantasy.com/cards/Epic/Wizard.png", "characterId": "wizard"},
   {"id": "zoldar", "name": {"en": "Prime Zoldar", "ar": "زولدار الأول"}, "rarity": "epic", "imageUrl": "https://assets.luna-fantasy.com/cards/Epic/Zoldar.png", "characterId": "prime-zoldar"},
+  {"id": "druin", "name": {"en": "Luna Druin", "ar": "زولدار الأول"}, "rarity": "epic", "imageUrl": "https://assets.luna-fantasy.com/cards/Epic/Luna%20Druin.png", "characterId": "druin"},
 
   {"id": "centaur", "name": {"en": "Centaur", "ar": "القنطور"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Centaur.png", "characterId": "centaur"},
   {"id": "champion", "name": {"en": "Champion", "ar": "البطل"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Champion.png", "characterId": "bod-aban-luna-champion"},
@@ -90,7 +91,7 @@
   {"id": "shadow", "name": {"en": "Shadow", "ar": "الظل"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Shadow.png", "characterId": "shadow"},
   {"id": "skull-crusher", "name": {"en": "Skull-Crusher", "ar": "محطم الجماجم"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Skull-Crusher.png", "characterId": "skull-crusher"},
   {"id": "specter", "name": {"en": "Specter", "ar": "الطيف"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Specter.png", "characterId": "specter"},
-  {"id": "trickster", "name": {"en": "Trickster", "ar": "المحتال"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Trickster.png"},
+  {"id": "trickster", "name": {"en": "Trickster", "ar": "المحتال"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Trickster.png", "characterId": "trickster"},
   {"id": "twins", "name": {"en": "Luneth & Cavor", "ar": "لونيث وكافور"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Twins.png", "characterId": "luneth-cavor"},
   {"id": "vampire", "name": {"en": "Vampire", "ar": "مصاص الدماء"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Vampire.png", "characterId": "vampire"},
   {"id": "warlord", "name": {"en": "Warlord", "ar": "أمير الحرب"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Warlord.png", "characterId": "warlord"},
@@ -98,7 +99,7 @@
   {"id": "yonko", "name": {"en": "Yonko", "ar": "يونكو"}, "rarity": "unique", "imageUrl": "https://assets.luna-fantasy.com/cards/Unique/Yonko.png", "characterId": "yonko"},
 
   {"id": "abyssal-colossus", "name": {"en": "Abyss Colossus", "ar": "عملاق الهاوية"}, "rarity": "legendary", "imageUrl": "https://assets.luna-fantasy.com/cards/Legendary/Abyssal%20Colossus.png", "characterId": "abyssal-colossus"},
-  {"id": "astral-harbinger", "name": {"en": "Astral Bringer", "ar": "حامل النجوم"}, "rarity": "legendary", "imageUrl": "https://assets.luna-fantasy.com/cards/Legendary/Astral%20Harbinger.png", "characterId": "astral-bringer"},
+  {"id": "astral-harbinger", "name": {"en": "Astral Bringer", "ar": "حامل النجوم"}, "rarity": "legendary", "imageUrl": "https://assets.luna-fantasy.com/cards/Legendary/Astral%20Harbinger.png", "characterId": "astral-harbinger"},
   {"id": "bloodforged-warlord", "name": {"en": "Bloodforged Warlord", "ar": "أمير حرب الدم"}, "rarity": "legendary", "imageUrl": "https://assets.luna-fantasy.com/cards/Legendary/Bloodforged%20Warlord.png", "characterId": "bloodforged-warlord"},
   {"id": "chaos-king", "name": {"en": "Chaos King", "ar": "ملك الفوضى"}, "rarity": "legendary", "imageUrl": "https://assets.luna-fantasy.com/cards/Legendary/Chaos%20King.png", "characterId": "movarth-chaos-king"},
   {"id": "eclipse-warrior", "name": {"en": "Eclipse Warrior", "ar": "محارب الكسوف"}, "rarity": "legendary", "imageUrl": "https://assets.luna-fantasy.com/cards/Legendary/Eclipse%20Warrior.png", "characterId": "exclipse-warrior"},

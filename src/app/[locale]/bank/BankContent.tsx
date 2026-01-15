@@ -1,6 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import Image from 'next/image';
+import { Lightbox } from '@/components/Lightbox';
 
 interface LocalizedString {
   en: string;
@@ -76,11 +79,21 @@ const formatFullNumber = (num: number): string => {
 
 export function BankContent({ data, locale }: BankContentProps) {
   const t = useTranslations('bankPage');
+  const [isLoanImageOpen, setIsLoanImageOpen] = useState(false);
 
   return (
     <main>
       {/* Hero Section */}
       <section className="bank-hero">
+        <div className="bank-hero-bg">
+          <Image
+            src="/images/hero-bank.jpeg"
+            alt="Luna Bank"
+            fill
+            priority
+            className="bank-hero-bg-image"
+          />
+        </div>
         <div className="bank-hero-content">
           <div className="bank-hero-badge">
             <span>{t('title')}</span>
@@ -196,45 +209,62 @@ export function BankContent({ data, locale }: BankContentProps) {
           </section>
 
           {/* Loan Section */}
-          <section className="bank-section">
-            <div className="bank-section-header">
-              <div className="bank-section-icon loan-icon"></div>
-              <h2 className="bank-section-title">{t('loans.title')}</h2>
-            </div>
-            <p className="section-desc">{t('loans.desc')}</p>
+          <section className="bank-section loan-section-with-image">
+            <div className="loan-section-content">
+              <div className="bank-section-header">
+                <div className="bank-section-icon loan-icon"></div>
+                <h2 className="bank-section-title">{t('loans.title')}</h2>
+              </div>
+              <p className="section-desc">{t('loans.desc')}</p>
 
-            <div className="loan-overview">
-              <div className="loan-stat">
-                <div className="loan-stat-label">{t('loans.interest')}</div>
-                <div className="loan-stat-value interest">{data.loans.interestRate}%</div>
-              </div>
-              <div className="loan-stat">
-                <div className="loan-stat-label">{t('loans.vipInterest')}</div>
-                <div className="loan-stat-value vip">{data.loans.vipInterestRate}%</div>
-              </div>
-              <div className="loan-stat">
-                <div className="loan-stat-label">{t('loans.deadline')}</div>
-                <div className="loan-stat-value deadline">{data.loans.deadline} {t('loans.days')}</div>
-              </div>
-            </div>
-
-            <div className="loan-tiers-title">{t('loans.tiers')}</div>
-            <div className="loan-tiers-grid">
-              {data.loans.tiers.map((tier, index) => (
-                <div key={index} className="loan-tier">
-                  {formatNumber(tier)}
+              <div className="loan-overview">
+                <div className="loan-stat">
+                  <div className="loan-stat-label">{t('loans.interest')}</div>
+                  <div className="loan-stat-value interest">{data.loans.interestRate}%</div>
                 </div>
-              ))}
-            </div>
+                <div className="loan-stat">
+                  <div className="loan-stat-label">{t('loans.vipInterest')}</div>
+                  <div className="loan-stat-value vip">{data.loans.vipInterestRate}%</div>
+                </div>
+                <div className="loan-stat">
+                  <div className="loan-stat-label">{t('loans.deadline')}</div>
+                  <div className="loan-stat-value deadline">{data.loans.deadline} {t('loans.days')}</div>
+                </div>
+              </div>
 
-            <a
-              href="https://discord.gg/lunarian"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="section-action-btn"
+              <div className="loan-tiers-title">{t('loans.tiers')}</div>
+              <div className="loan-tiers-grid">
+                {data.loans.tiers.map((tier, index) => (
+                  <div key={index} className="loan-tier">
+                    {formatNumber(tier)}
+                  </div>
+                ))}
+              </div>
+
+              <a
+                href="https://discord.gg/lunarian"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="section-action-btn"
+              >
+                {t('loans.actionBtn')}
+              </a>
+            </div>
+            <div
+              className="loan-image-container"
+              onClick={() => setIsLoanImageOpen(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && setIsLoanImageOpen(true)}
             >
-              {t('loans.actionBtn')}
-            </a>
+              <Image
+                src="/images/loan_contract.png"
+                alt="Loan Contract"
+                width={300}
+                height={400}
+                className="loan-contract-image"
+              />
+            </div>
           </section>
 
           {/* Trading Section */}
@@ -357,6 +387,13 @@ export function BankContent({ data, locale }: BankContentProps) {
           </section>
         </div>
       </div>
+
+      <Lightbox
+        isOpen={isLoanImageOpen}
+        imageSrc="/images/loan_contract.png"
+        alt="Loan Contract"
+        onClose={() => setIsLoanImageOpen(false)}
+      />
     </main>
   );
 }

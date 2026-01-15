@@ -117,19 +117,6 @@
     "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Mermaid.png"
   },
   {
-    "id": "pegasus",
-    "name": {
-      "en": "Pegasus",
-      "ar": "Pegasus"
-    },
-    "lore": {
-      "ar": "جواد القمر المجنّح. لا يُركب إلا لمن اختاره القمر. مروره يترك السماء مضطربة.",
-      "en": "The winged horse of the Moon. Can only be ridden by one chosen by the Moon. His passing leaves the sky turbulent."
-    },
-    "faction": "mythical-creatures",
-    "imageUrl": "https://assets.luna-fantasy.com/characters/Mythical%20Creatures/Pegasus.png"
-  },
-  {
     "id": "phoenix",
     "name": {
       "en": "Phoenix",

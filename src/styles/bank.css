@@ -14,6 +14,28 @@
   overflow: hidden;
 }
 
+.bank-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.bank-hero-bg-image {
+  object-fit: cover;
+  opacity: 0.35;
+  filter: saturate(1.2);
+}
+
+.bank-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(3, 3, 6, 0.3) 0%, transparent 30%),
+    linear-gradient(0deg, var(--bg-primary) 0%, transparent 40%),
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(0, 212, 255, 0.12) 0%, transparent 60%);
+}
+
 .bank-hero::before {
   content: '';
   position: absolute;
@@ -426,6 +448,33 @@
 }
 
 /* Loan Section */
+.loan-section-with-image {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.loan-section-content {
+  flex: 1;
+}
+
+.loan-image-container {
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+}
+
+.loan-contract-image {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: var(--transition-smooth);
+}
+
+.loan-contract-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 48px rgba(0, 212, 255, 0.2);
+}
+
 .loan-overview {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -790,6 +839,23 @@
   .bank-hero {
     padding: 120px 20px 60px;
     min-height: 40vh;
+  }
+
+  .loan-section-with-image {
+    flex-direction: column;
+  }
+
+  .loan-image-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    order: -1;
+    margin-bottom: 20px;
+  }
+
+  .loan-contract-image {
+    max-width: 200px;
+    height: auto;
   }
 
   .bank-hero-title {
