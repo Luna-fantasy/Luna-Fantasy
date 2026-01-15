@@ -447,6 +447,10 @@ html[lang="ar"] .showcase-row:nth-child(even) .showcase-content {
   background: radial-gradient(ellipse at center, rgba(255, 77, 77, 0.3) 0%, transparent 70%);
 }
 
+.media-glow-gold-bank {
+  background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+}
+
 .showcase-media:hover .media-glow {
   opacity: 0.8;
 }
@@ -485,6 +489,12 @@ html[lang="ar"] .showcase-row:nth-child(even) .showcase-content {
   background: rgba(255, 77, 77, 0.15);
   color: var(--accent-fire);
   border: 1px solid rgba(255, 77, 77, 0.3);
+}
+
+.showcase-tag-gold-bank {
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
 .showcase-title {

@@ -97,7 +97,7 @@ function HomeContent() {
                   width={500}
                   height={400}
                   loading="lazy"
-                /> 
+                />
               </div>
             </div>
             <div className="showcase-content">
@@ -105,6 +105,29 @@ function HomeContent() {
               <h3 className="showcase-title">{showcase('charsTitle')}</h3>
               <p className="showcase-desc">{showcase('charsDesc')}</p>
               <Link href="/characters" className="btn btn-primary">{showcase('linkView')}</Link>
+            </div>
+          </div>
+
+          {/* Bank Showcase */}
+          <div className="showcase-row">
+            <div className="showcase-media">
+              <div className="media-glow media-glow-gold-bank"></div>
+              <div className="media-frame">
+                <Image
+                  src="/images/hero-bank.jpeg"
+                  alt="Luna Bank"
+                  width={500}
+                  height={400}
+                  loading="lazy"
+                  style={{ objectFit: 'cover', background: '#0a0c12' }}
+                />
+              </div>
+            </div>
+            <div className="showcase-content">
+              <span className="showcase-tag showcase-tag-gold-bank">{overview('tagBank')}</span>
+              <h3 className="showcase-title">{showcase('bankTitle')}</h3>
+              <p className="showcase-desc">{showcase('bankDesc')}</p>
+              <Link href="/bank" className="btn btn-primary">{showcase('linkBank')}</Link>
             </div>
           </div>
         </div>

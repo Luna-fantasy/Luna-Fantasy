@@ -34,6 +34,7 @@ export function Footer() {
               <li><Link href="/story">{nav('story')}</Link></li>
               <li><Link href="/cards">{nav('cards')}</Link></li>
               <li><Link href="/characters">{nav('characters')}</Link></li>
+              <li><Link href="/bank">{nav('bank')}</Link></li>
             </ul>
           </div>
 

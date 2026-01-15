@@ -31,7 +31,8 @@
     "subtitle": "Choose your path and discover the secrets of Luna.",
     "tagChapter": "Chapter One",
     "tagSystem": "Game System",
-    "tagHeroes": "Dive-in"
+    "tagHeroes": "Dive-in",
+    "tagBank": "Economy"
   },
   "showcase": {
     "storyTitle": "The Chronicles",
@@ -40,9 +41,12 @@
     "gameDesc": "An innovative strategic card system. Collect, compete, and conquer with your wit. Each player holds 5 cards, and the secret lies in timing and choosing the right tier (Common, Rare, Epic, Legendary).",
     "charsTitle": "Our Characters",
     "charsDesc": "Over 200 unique characters. From \"The Mastermind\" who pulls the strings, to the guardians and knights. Meet the main characters now, and discover the rest inside the Discord community.",
+    "bankTitle": "Luna Bank",
+    "bankDesc": "The financial heart of Luna. Earn daily salaries, take loans, trade currencies, and unlock exclusive VIP benefits. Manage your Lunari and build your fortune in the Luna universe.",
     "linkRead": "Read the Full Story",
     "linkCards": "View All Cards",
-    "linkView": "View Gallery"
+    "linkView": "View Gallery",
+    "linkBank": "Visit Bank"
   },
   "features": {
     "title": "Why Luna?",
