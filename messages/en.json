@@ -11,7 +11,8 @@
     "story": "Story",
     "cards": "Luna Fantasy",
     "characters": "Characters",
-    "bank": "Bank"
+    "bank": "Bank",
+    "partners": "Partners"
   },
   "hero": {
     "badge": "FANTASY UNIVERSE",
@@ -32,7 +33,8 @@
     "tagChapter": "Chapter One",
     "tagSystem": "Game System",
     "tagHeroes": "Dive-in",
-    "tagBank": "Economy"
+    "tagBank": "Economy",
+    "tagPartners": "Partners"
   },
   "showcase": {
     "storyTitle": "The Chronicles",
@@ -43,10 +45,13 @@
     "charsDesc": "Over 200 unique characters. From \"The Mastermind\" who pulls the strings, to the guardians and knights. Meet the main characters now, and discover the rest inside the Discord community.",
     "bankTitle": "Luna Bank",
     "bankDesc": "The financial heart of Luna. Earn daily salaries, take loans, trade currencies, and unlock exclusive VIP benefits. Manage your Lunari and build your fortune in the Luna universe.",
+    "partnersTitle": "Luna Partners",
+    "partnersDesc": "Meet the creative minds behind Luna. Our partners are talented creators, designers, and game studios who have contributed their expertise to build this extraordinary fantasy universe.",
     "linkRead": "Read the Full Story",
     "linkCards": "View All Cards",
     "linkView": "View Gallery",
-    "linkBank": "Visit Bank"
+    "linkBank": "Visit Bank",
+    "linkPartners": "Meet Our Partners"
   },
   "features": {
     "title": "Why Luna?",
@@ -231,5 +236,15 @@
     "navTitle": "Navigation",
     "socialTitle": "Community",
     "copyright": "© 2026 Luna. All rights reserved."
+  },
+  "partnersPage": {
+    "title": "Luna Partners",
+    "subtitle": "Meet the creative minds and talented teams who helped bring Luna to life. Together, we're building an extraordinary fantasy universe.",
+    "meetPartners": "Our Partners",
+    "meetPartnersDesc": "These incredible creators and studios have contributed their talents to shape the Luna experience.",
+    "visitWebsite": "Visit Website",
+    "ctaTitle": "Become a Partner",
+    "ctaDesc": "Interested in collaborating with Luna? Join our Discord community and let's create something amazing together.",
+    "ctaBtn": "Join Discord"
   }
 }

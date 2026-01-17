@@ -78,6 +78,9 @@ export function Navbar() {
             <Link href="/bank" className={`nav-link ${isActive('/bank') ? 'active' : ''}`}>
               {t('bank')}
             </Link>
+            <Link href="/partners" className={`nav-link ${isActive('/partners') ? 'active' : ''}`}>
+              {t('partners')}
+            </Link>
           </div>
 
           <div className="actions-box">
@@ -146,6 +149,9 @@ export function Navbar() {
           </Link>
           <Link href="/bank" className={`mobile-nav-link ${isActive('/bank') ? 'active' : ''}`} onClick={closeMobileMenu}>
             {t('bank')}
+          </Link>
+          <Link href="/partners" className={`mobile-nav-link ${isActive('/partners') ? 'active' : ''}`} onClick={closeMobileMenu}>
+            {t('partners')}
           </Link>
         </nav>
 

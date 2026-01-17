@@ -130,6 +130,29 @@ function HomeContent() {
               <Link href="/bank" className="btn btn-primary">{showcase('linkBank')}</Link>
             </div>
           </div>
+
+          {/* Partners Showcase */}
+          <div className="showcase-row">
+            <div className="showcase-media">
+              <div className="media-glow media-glow-partners"></div>
+              <div className="media-frame">
+                <Image
+                  src="/images/partners/partners-hero.png"
+                  alt="Luna Partners"
+                  width={500}
+                  height={400}
+                  loading="lazy"
+                  style={{ objectFit: 'cover', background: '#0a0c12' }}
+                />
+              </div>
+            </div>
+            <div className="showcase-content">
+              <span className="showcase-tag showcase-tag-partners">{overview('tagPartners')}</span>
+              <h3 className="showcase-title">{showcase('partnersTitle')}</h3>
+              <p className="showcase-desc">{showcase('partnersDesc')}</p>
+              <Link href="/partners" className="btn btn-primary">{showcase('linkPartners')}</Link>
+            </div>
+          </div>
         </div>
       </section>
 

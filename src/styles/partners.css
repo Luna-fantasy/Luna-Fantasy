@@ -1,0 +1,372 @@
+/* ============================================
+   LUNA PARTNERS PAGE STYLES
+   ============================================ */
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+.partners-hero {
+  position: relative;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 120px 24px 80px;
+}
+
+.partners-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.partners-hero-bg-image {
+  object-fit: cover;
+  opacity: 0.5;
+  filter: saturate(1.2) contrast(1.1);
+}
+
+.partners-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(3, 3, 6, 0.4) 0%, transparent 30%),
+    linear-gradient(0deg, var(--bg-void) 0%, transparent 50%),
+    radial-gradient(ellipse at center, transparent 30%, var(--bg-void) 100%);
+  z-index: -1;
+}
+
+.partners-hero-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.partners-hero-title {
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  background: linear-gradient(180deg,
+    #ffffff 0%,
+    #ffffff 20%,
+    var(--accent-secondary) 60%,
+    #5b21b6 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 60px rgba(139, 92, 246, 0.3));
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.partners-hero-desc {
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin-bottom: 32px;
+  animation: fadeInUp 0.8s ease-out 0.1s backwards;
+}
+
+/* ============================================
+   PARTNERS GRID SECTION
+   ============================================ */
+.partners-section {
+  padding: 80px 0 120px;
+  position: relative;
+}
+
+.partners-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 100px;
+  background: linear-gradient(180deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+}
+
+.partners-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.partners-header .section-title {
+  margin-bottom: 16px;
+}
+
+.partners-header .section-subtitle {
+  margin: 0 auto;
+}
+
+/* Partners Grid */
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 40px;
+}
+
+/* Partner Card */
+.partner-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: var(--transition-smooth);
+}
+
+.partner-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-secondary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.partner-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(139, 92, 246, 0.1);
+}
+
+.partner-card:hover::before {
+  opacity: 1;
+}
+
+/* Partner Logo */
+.partner-logo-container {
+  position: relative;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.partner-logo {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: contain;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+}
+
+.partner-card:hover .partner-logo {
+  transform: scale(1.08);
+}
+
+/* Partner Info */
+.partner-info {
+  padding: 28px 24px;
+}
+
+.partner-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.partner-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--accent-secondary);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 50px;
+  margin-bottom: 16px;
+}
+
+.partner-desc {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Social Links */
+.partner-socials {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  transition: var(--transition-smooth);
+}
+
+.social-link:hover {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+.social-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Website Link */
+.partner-website {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--radius-md);
+  transition: var(--transition-smooth);
+}
+
+.partner-website:hover {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+}
+
+.partner-website svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================
+   CTA SECTION
+   ============================================ */
+.partners-cta-section {
+  padding: 80px 0;
+  position: relative;
+  text-align: center;
+}
+
+.partners-cta-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-secondary), transparent);
+}
+
+.partners-cta-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.partners-cta-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  background: linear-gradient(180deg, #ffffff 30%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.partners-cta-desc {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+
+.partners-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #5865F2, #4752c4);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
+  transition: var(--transition-smooth);
+}
+
+.partners-cta-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(88, 101, 242, 0.5);
+}
+
+.partners-cta-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 1024px) {
+  .partners-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .partners-hero {
+    padding: 100px 20px 60px;
+    min-height: auto;
+  }
+
+  .partners-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .partner-card {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .partners-cta-title {
+    font-size: 1.5rem;
+  }
+}
