@@ -162,4 +162,49 @@
       "ar": "Thorns Queen"
     },
     "lore": {
-      "ar": "ملكة شريرة متشابكة مع الأشواك والورود، تحكم الظلال وتستمد قوتها من أحضان الط
+      "ar": "ملكة شريرة متشابكة مع الأشواك والورود، تحكم الظلال وتستمد قوتها من أحضان الطبيعة.",
+      "en": "A wicked queen entwined with thorns and roses, ruling the shadows and drawing her power from nature’s embrace."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Thorns%20Queen.png"
+  },
+  {
+    "id": "umbra",
+    "name": {
+      "en": "Umbra",
+      "ar": "Umbra"
+    },
+    "lore": {
+      "ar": "تجسيد الظل القمري. يتحرك حيث ينكسر الضوء. وجوده يسبق الكارثة.",
+      "en": "The embodiment of lunar shadow. It moves where light fractures. Its presence precedes catastrophe."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Umbra.png"
+  },
+  {
+    "id": "wishmaster",
+    "name": {
+      "en": "Wishmaster",
+      "ar": "Wishmaster"
+    },
+    "lore": {
+      "ar": "يحقق الأمنيات بثمن خفي. كلماته فخاخ مقنّعة. أمنيتك قد تكون نهايتك.",
+      "en": "He grants wishes for a hidden price. His words are disguised traps. Your wish may be your end."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Wishmaster.png"
+  },
+  {
+    "id": "wisp",
+    "name": {
+      "en": "Wisp",
+      "ar": "Wisp"
+    },
+    "lore": {
+      "ar": "طيف صغير بطاقة قديمة. يرشد الضائعين دون أن يُرى. يظهر فقط لمن ما زال نقيًا.",
+      "en": "A small wraith with ancient energy. It guides the lost without being seen. It appears only to those who remain pure."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Wisp.png"
+  }
+]
