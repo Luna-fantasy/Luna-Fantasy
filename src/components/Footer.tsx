@@ -51,7 +51,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://www.instagram.com/luna.passage" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.instagram.com/lunarian.app" target="_blank" rel="noopener noreferrer">
                   <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -61,7 +61,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://www.tiktok.com/@luna.passage" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.tiktok.com/@lunarian.app" target="_blank" rel="noopener noreferrer">
                   TikTok
                 </a>
               </li>
