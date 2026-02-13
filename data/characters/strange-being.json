@@ -6,7 +6,8 @@
       "ar": "Astral Harbinger"
     },
     "lore": {
-      "ar": "الكائن الذي سقط من النجوم واستقر في لونا. يستدعي طاقة نجميه وقمرية بالقتال. ظهوره يعني أن ما سيحدث لا يمكن إيقافه."
+      "ar": "الكائن الذي سقط من النجوم واستقر في لونا. يستدعي طاقة نجميه وقمرية بالقتال. ظهوره يعني أن ما سيحدث لا يمكن إيقافه.",
+      "en": "The entity that fell from the stars and settled in Luna. It summons stellar and lunar energy in battle. Its appearance means what is coming cannot be stopped."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Astral-Harbinger.png"
@@ -18,7 +19,8 @@
       "ar": "Baby Wisp"
     },
     "lore": {
-      "ar": "طاقة قمرية في بدايتها. فضولي، ضعيف، لكنه نقي. حمايته مسؤولية الجميع."
+      "ar": "طاقة قمرية في بدايتها. فضولي، ضعيف، لكنه نقي. حمايته مسؤولية الجميع.",
+      "en": "A lunar energy in its infancy. Curious, weak, but pure. Protecting it is everyone's responsibility."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Baby%20Wisp.png"
@@ -30,7 +32,8 @@
       "ar": "Dream Eater"
     },
     "lore": {
-      "ar": "كيان كابوسي يتغذى على الأحلام، يفترس في الظلال ويزرع الرعب في العقل النائم."
+      "ar": "كيان كابوسي يتغذى على الأحلام، يفترس في الظلال ويزرع الرعب في العقل النائم.",
+      "en": "A nightmarish entity that feeds on dreams, hunting in the shadows and planting terror in the sleeping mind."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Dream%20Eater.png"
@@ -42,7 +45,8 @@
       "ar": "Gatekeeper"
     },
     "lore": {
-      "ar": "حارس العبور بين العوالم. لا يُقنع ولا يُرشا. من يرفضه… لا يعود."
+      "ar": "حارس العبور بين العوالم. لا يُقنع ولا يُرشا. من يرفضه… لا يعود.",
+      "en": "Guardian of passage between worlds. It cannot be persuaded or bribed. Those it refuses... do not return."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Gatekeeper.png"
@@ -54,7 +58,8 @@
       "ar": "Harbinger"
     },
     "lore": {
-      "ar": "الكائن الغامض الذي يتغذى على ( ويسب ) كائنات الطاقه القمرية. لكل كائن ويسب يصطاده يزاد قوة. قوته غاشمه ولا يمكن التصدي له الا بالاسلحة القمرية."
+      "ar": "الكائن الغامض الذي يتغذى على ( ويسب ) كائنات الطاقه القمرية. لكل كائن ويسب يصطاده يزاد قوة. قوته غاشمه ولا يمكن التصدي له الا بالاسلحة القمرية.",
+      "en": "A mysterious entity that feeds on Wisps—beings of lunar energy. With every Wisp it hunts, it grows stronger. Its power is brutal, and it can only be opposed with lunar weapons."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Harbinger.png"
@@ -66,7 +71,8 @@
       "ar": "Herald"
     },
     "lore": {
-      "ar": "صوت القمر حين يقرر أن يُسمع. لا يعلن إلا ما لا يمكن إيقافه. كلماته بداية، وقراراته نهاية."
+      "ar": "صوت القمر حين يقرر أن يُسمع. لا يعلن إلا ما لا يمكن إيقافه. كلماته بداية، وقراراته نهاية.",
+      "en": "The voice of the moon when it decides to be heard. It announces only what cannot be stopped. Its words are a beginning, and its decisions are an end."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Herald.png"
@@ -78,7 +84,8 @@
       "ar": "Infernal Demon"
     },
     "lore": {
-      "ar": "شيطان اللهب الأزرق، نفيه القمر ولم يقتله. ناره تحرق الجسد والروح معًا. تحريره خطأ لا يُغتفر."
+      "ar": "شيطان اللهب الأزرق، نفيه القمر ولم يقتله. ناره تحرق الجسد والروح معًا. تحريره خطأ لا يُغتفر.",
+      "en": "The blue-flame demon—banished by the moon, not killed. Its fire burns body and soul together. Freeing it is an unforgivable mistake."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Infernal%20Demon.png"
@@ -90,7 +97,8 @@
       "ar": "Jester"
     },
     "lore": {
-      "ar": "ضحكته تخفي أكثر مما تكشف. يعبث بالقوانين ليكشف حقيقتها. الفوضى سلاحه، والمرح قناعه."
+      "ar": "ضحكته تخفي أكثر مما تكشف. يعبث بالقوانين ليكشف حقيقتها. الفوضى سلاحه، والمرح قناعه.",
+      "en": "Its laughter hides more than it reveals. It bends the laws to expose their truth. Chaos is its weapon, and joy is its mask."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Jester.png"
@@ -102,7 +110,8 @@
       "ar": "Null Bringer"
     },
     "lore": {
-      "ar": "كائن يمحو كل ما يراه ، لا يميز أحد ابداً. طاقته تبتلع السحر، الزمن، والذاكرة. ما يسقط أمامه لا يُذكر حتى في الأساطير."
+      "ar": "كائن يمحو كل ما يراه ، لا يميز أحد ابداً. طاقته تبتلع السحر، الزمن، والذاكرة. ما يسقط أمامه لا يُذكر حتى في الأساطير.",
+      "en": "An entity that erases everything it sees, showing no distinction to anyone. Its power devours magic, time, and memory. What falls before it is not remembered—even in legends."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Null%20Bringer.png"
@@ -114,7 +123,8 @@
       "ar": "Paradox Keeper"
     },
     "lore": {
-      "ar": "سيد التناقض، موجود ونقيضه في آن واحد. يلتوي حول الزمن كما يلتوي القمر بين النور والظل. مواجهته تعني فقدان العقل او الموت."
+      "ar": "سيد التناقض، موجود ونقيضه في آن واحد. يلتوي حول الزمن كما يلتوي القمر بين النور والظل. مواجهته تعني فقدان العقل او الموت.",
+      "en": "Master of contradiction—existing and its opposite at once. It twists around time as the moon twists between light and shadow. Facing it means losing your mind or dying."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Paradox%20Keeper.png"
@@ -126,7 +136,8 @@
       "ar": "Seraph"
     },
     "lore": {
-      "ar": "مبعوث القمر الأعلى، لا يُعرف ماهو ومن أي فصيل. أجنحته لا ترحم، وسيفه لا يتردد. نزوله يعني أن الميزان قد حُسم."
+      "ar": "مبعوث القمر الأعلى، لا يُعرف ماهو ومن أي فصيل. أجنحته لا ترحم، وسيفه لا يتردد. نزوله يعني أن الميزان قد حُسم.",
+      "en": "The emissary of the higher moon—unknown what it is or which faction it belongs to. Its wings show no mercy, and its sword does not hesitate. Its descent means the balance has been decided."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Seraph.png"
@@ -138,7 +149,8 @@
       "ar": "The Half-Breed"
     },
     "lore": {
-      "ar": "مولود بين قوتين متعاديتين. يحمل لعنة ونعمة معًا. لا ينتمي… لكنه لا يُهزم."
+      "ar": "مولود بين قوتين متعاديتين. يحمل لعنة ونعمة معًا. لا ينتمي… لكنه لا يُهزم.",
+      "en": "Born between two opposing forces. Carrying both a curse and a blessing. It belongs nowhere... yet it cannot be defeated."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/The%20Half-Breed.png"
@@ -150,7 +162,8 @@
       "ar": "Thorns Queen"
     },
     "lore": {
-      "ar": "ملكة شريرة متشابكة مع الأشواك والورود، تحكم الظلال وتستمد قوتها من أحضان الطبيعة."
+      "ar": "ملكة شريرة متشابكة مع الأشواك والورود، تحكم الظلال وتستمد قوتها من أحضان الطبيعة.",
+      "en": "A wicked queen entwined with thorns and roses, ruling the shadows and drawing her power from nature’s embrace."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Thorns%20Queen.png"
@@ -162,7 +175,8 @@
       "ar": "Umbra"
     },
     "lore": {
-      "ar": "تجسيد الظل القمري. يتحرك حيث ينكسر الضوء. وجوده يسبق الكارثة."
+      "ar": "تجسيد الظل القمري. يتحرك حيث ينكسر الضوء. وجوده يسبق الكارثة.",
+      "en": "The embodiment of lunar shadow. It moves where light fractures. Its presence precedes catastrophe."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Umbra.png"
@@ -174,7 +188,8 @@
       "ar": "Wishmaster"
     },
     "lore": {
-      "ar": "يحقق الأمنيات بثمن خفي. كلماته فخاخ مقنّعة. أمنيتك قد تكون نهايتك."
+      "ar": "يحقق الأمنيات بثمن خفي. كلماته فخاخ مقنّعة. أمنيتك قد تكون نهايتك.",
+      "en": "He grants wishes for a hidden price. His words are disguised traps. Your wish may be your end."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Wishmaster.png"
@@ -186,7 +201,8 @@
       "ar": "Wisp"
     },
     "lore": {
-      "ar": "طيف صغير بطاقة قديمة. يرشد الضائعين دون أن يُرى. يظهر فقط لمن ما زال نقيًا."
+      "ar": "طيف صغير بطاقة قديمة. يرشد الضائعين دون أن يُرى. يظهر فقط لمن ما زال نقيًا.",
+      "en": "A small wraith with ancient energy. It guides the lost without being seen. It appears only to those who remain pure."
     },
     "faction": "strange-being",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Strange%20Being/Wisp.png"

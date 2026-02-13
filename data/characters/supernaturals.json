@@ -6,7 +6,8 @@
       "ar": "Alpha Werewolf"
     },
     "lore": {
-      "ar": "قائد مستذئبين لا ينازع. أقوى وأشرس من جميع أبناء جنسه. عندما يعوي، تبدأ المذبحة."
+      "ar": "قائد مستذئبين لا ينازع. أقوى وأشرس من جميع أبناء جنسه. عندما يعوي، تبدأ المذبحة.",
+      "en": "The undisputed leader of all werewolves. Stronger and more savage than any of his kind. When he howls, the slaughter begins."
     },
     "faction": "supernaturals",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Alpha%20Werewolf.png"
@@ -18,7 +19,8 @@
       "ar": "Elder Vampire"
     },
     "lore": {
-      "ar": "سيد مصاصي الدماء منذ العصور الأولى. يتغذى على البشر ويأمر الظلال. إرادته قانون في الليل."
+      "ar": "سيد مصاصي الدماء منذ العصور الأولى. يتغذى على البشر ويأمر الظلال. إرادته قانون في الليل.",
+      "en": "The lord of vampires since the earliest ages. He feeds on humans and commands the shadows. His will is law in the night."
     },
     "faction": "supernaturals",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Elder%20Vampire.png"
@@ -30,7 +32,8 @@
       "ar": "Lycan"
     },
     "lore": {
-      "ar": "إنسان مزقته لعنة القمر. قوته تتضاعف مع اكتماله. عقله يقاتل الوحش داخله."
+      "ar": "إنسان مزقته لعنة القمر. قوته تتضاعف مع اكتماله. عقله يقاتل الوحش داخله.",
+      "en": "A human torn apart by the moon’s curse. His power multiplies as the moon reaches fullness. His mind battles the beast within."
     },
     "faction": "supernaturals",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Lycan.png"
@@ -42,7 +45,8 @@
       "ar": "Vampire"
     },
     "lore": {
-      "ar": "سيد الليل والدم. يخطط قبل أن يهاجم. الخالد الذي لا ينسى."
+      "ar": "سيد الليل والدم. يخطط قبل أن يهاجم. الخالد الذي لا ينسى.",
+      "en": "Master of night and blood. He plans before he strikes. The immortal who never forgets."
     },
     "faction": "supernaturals",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Vampire.png"
@@ -54,7 +58,8 @@
       "ar": "Werewolf"
     },
     "lore": {
-      "ar": "وحش القمر الكامل. لا يعرف الرحمة ولا السيطرة. ظهوره كارثة مؤكدة."
+      "ar": "وحش القمر الكامل. لا يعرف الرحمة ولا السيطرة. ظهوره كارثة مؤكدة.",
+      "en": "The beast of the full moon. It knows neither mercy nor control. Its appearance is a guaranteed catastrophe."
     },
     "faction": "supernaturals",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Werewolf.png"
@@ -66,7 +71,8 @@
       "ar": "Witch"
     },
     "lore": {
-      "ar": "ساحرة ترى لونا كرقعة لعب. تتنبأ، وتغيّر، وتعبث. كل تعويذة لها ثمن."
+      "ar": "ساحرة ترى لونا كرقعة لعب. تتنبأ، وتغيّر، وتعبث. كل تعويذة لها ثمن.",
+      "en": "A witch who sees Luna as a game board. She foretells, alters, and manipulates. Every spell comes at a price."
     },
     "faction": "supernaturals",
     "imageUrl": "https://assets.luna-fantasy.com/characters/Supernaturals/Witch.png"
