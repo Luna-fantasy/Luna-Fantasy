@@ -24,21 +24,36 @@ export async function generateMetadata({ params }: Props) {
     description: locale === 'ar'
       ? 'لونا — عالم فانتازيا ضخم متكامل على منصة ديسكورد.'
       : 'Luna - A massive integrated fantasy world on Discord with over 200 characters.',
-    keywords: 'Luna, Luna Fantasy, Discord roleplay, fantasy game, card game, RPG, roleplay community, fantasy world',
-    authors: [{ name: 'Luna' }],
+    keywords: 'Luna, Luna Fantasy, Discord roleplay, fantasy game, card game, RPG, roleplay community, fantasy world, Kuwait',
+    authors: [{ name: 'Buried Games Studio' }],
+    creator: 'Buried Games Studio',
+    publisher: 'Buried Games Studio',
+    metadataBase: new URL('https://lunarian.app'),
+    alternates: {
+      canonical: `https://lunarian.app/${locale}/`,
+      languages: {
+        en: 'https://lunarian.app/en/',
+        ar: 'https://lunarian.app/ar/',
+      },
+    },
     openGraph: {
       type: 'website',
-      url: 'https://luna-fantasy.com/',
+      siteName: 'Luna Fantasy',
+      url: `https://lunarian.app/${locale}/`,
       title: 'Luna - Epic Fantasy Universe',
-      description: 'A massive integrated fantasy world on Discord with over 200 characters.',
-      images: [{ url: 'https://luna-fantasy.com/images/og-image.png' }],
+      description: locale === 'ar'
+        ? 'لونا — عالم فانتازيا ضخم متكامل على منصة ديسكورد يضم أكثر من 200 شخصية.'
+        : 'A massive integrated fantasy world on Discord with over 200 characters.',
+      images: [{ url: 'https://lunarian.app/images/og-image.png', width: 1200, height: 630, alt: 'Luna Fantasy' }],
       locale: locale === 'ar' ? 'ar_SA' : 'en_US',
     },
     twitter: {
       card: 'summary_large_image',
       title: 'Luna - Epic Fantasy Universe',
-      description: 'A massive integrated fantasy world on Discord with over 200 characters.',
-      images: ['https://luna-fantasy.com/images/og-image.png'],
+      description: locale === 'ar'
+        ? 'لونا — عالم فانتازيا ضخم متكامل على منصة ديسكورد يضم أكثر من 200 شخصية.'
+        : 'A massive integrated fantasy world on Discord with over 200 characters.',
+      images: ['https://lunarian.app/images/og-image.png'],
     },
     icons: {
       icon: [

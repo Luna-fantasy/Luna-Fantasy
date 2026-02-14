@@ -9,9 +9,31 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const t = await getTranslations({ locale, namespace: 'cardsPage' });
   const showcase = await getTranslations({ locale, namespace: 'showcase' });
 
+  const title = `${showcase('gameTitle')} | Luna Fantasy`;
+  const description = t('subtitle');
+
   return {
-    title: `${showcase('gameTitle')} | Luna Fantasy`,
-    description: t('subtitle'),
+    title,
+    description,
+    alternates: {
+      canonical: `https://lunarian.app/${locale}/cards/`,
+      languages: { en: 'https://lunarian.app/en/cards/', ar: 'https://lunarian.app/ar/cards/' },
+    },
+    openGraph: {
+      type: 'website',
+      siteName: 'Luna Fantasy',
+      url: `https://lunarian.app/${locale}/cards/`,
+      title,
+      description,
+      images: [{ url: 'https://lunarian.app/images/og-image.png', width: 1200, height: 630, alt: 'Luna Fantasy Card Game' }],
+      locale: locale === 'ar' ? 'ar_SA' : 'en_US',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['https://lunarian.app/images/og-image.png'],
+    },
   };
 }
 

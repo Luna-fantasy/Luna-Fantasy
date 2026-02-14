@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://lunarian.app/en/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/" />
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/ar/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/" />
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/en/story/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/story/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/story/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/ar/story/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/story/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/story/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/en/characters/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/characters/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/characters/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/ar/characters/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/characters/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/characters/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/en/cards/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/cards/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/cards/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/ar/cards/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/cards/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/cards/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/en/bank/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/bank/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/bank/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/ar/bank/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/bank/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/bank/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/en/partners/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/partners/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/partners/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lunarian.app/ar/partners/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://lunarian.app/en/partners/" />
+    <xhtml:link rel="alternate" hreflang="ar" href="https://lunarian.app/ar/partners/" />
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+</urlset>
