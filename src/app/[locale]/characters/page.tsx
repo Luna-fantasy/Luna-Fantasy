@@ -16,9 +16,10 @@ import strangeBeing from '@/data/characters/strange-being.json';
 import supernaturals from '@/data/characters/supernaturals.json';
 import underworld from '@/data/characters/underworld.json';
 import factions from '@/data/factions.json';
-import cardsData from '@/data/cards.json';
-
+import { getCardCatalog } from '@/lib/cards';
 import type { Character, Faction, Card } from '@/types';
+
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -73,11 +74,13 @@ export default async function CharactersPage({ params }: { params: Promise<{ loc
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const cards = await getCardCatalog();
+
   return (
     <CharactersContent
       characters={allCharacters}
       factions={factions as Faction[]}
-      cards={cardsData as Card[]}
+      cards={cards as Card[]}
       locale={locale as 'en' | 'ar'}
     />
   );

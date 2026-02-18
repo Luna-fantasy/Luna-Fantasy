@@ -216,20 +216,20 @@ button {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 212, 255, 0.2);
-  padding: 12px 24px;
+  padding: 10px 20px;
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 20px;
   box-shadow:
     0 4px 30px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 0 60px rgba(0, 212, 255, 0.1);
   border-radius: var(--radius-lg);
   min-width: 600px;
-  max-width: 900px;
+  max-width: 1050px;
   justify-content: space-between;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Animated border glow */
@@ -250,6 +250,7 @@ button {
   opacity: 0;
   animation: borderGlow 4s linear infinite;
   transition: opacity 0.3s;
+  clip-path: inset(-2px);
 }
 
 .navbar-island:hover::before {
@@ -287,13 +288,13 @@ button {
 /* Navigation */
 .nav {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .nav-link {
   position: relative;
-  padding: 10px 18px;
-  font-size: 14px;
+  padding: 10px 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-secondary);
   border-radius: var(--radius-sm);
@@ -344,7 +345,7 @@ button {
 .actions-box {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 /* Language Switcher */
@@ -499,6 +500,7 @@ button {
   );
   opacity: 0;
   transition: opacity 0.3s;
+  pointer-events: none;
 }
 
 .card:hover {
@@ -772,6 +774,500 @@ footer::before {
 .delay-5 { animation-delay: 0.5s; }
 
 /* ============================================
+   NAVBAR AUTH
+   ============================================ */
+.auth-section {
+  display: flex;
+  align-items: center;
+}
+
+.btn-discord-login {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #5865F2;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-discord-login:hover {
+  background: #4752c4;
+  box-shadow: 0 0 20px rgba(88, 101, 242, 0.4);
+}
+
+.user-btn-wrap {
+  position: relative;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.user-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+  object-fit: cover;
+}
+
+.user-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
+  color: var(--accent-primary);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.98), rgba(12, 16, 24, 0.99));
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 100;
+  animation: fadeIn 0.15s ease-out;
+}
+
+html[dir="rtl"] .user-dropdown {
+  right: auto;
+  left: 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  color: var(--accent-primary);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.dropdown-signout:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 4px 0;
+}
+
+.auth-skeleton {
+  width: 80px;
+  height: 32px;
+  border-radius: 50px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Mobile Auth */
+.mobile-auth-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mobile-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.mobile-user-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mobile-discord-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  background: #5865F2;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.mobile-discord-login:hover {
+  background: #4752c4;
+}
+
+.mobile-signout-btn {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-family: inherit;
+  width: 100%;
+}
+
+.mobile-signout-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ============================================
+   GAMES DROPDOWN
+   ============================================ */
+.games-dropdown-wrap {
+  position: relative;
+}
+
+.games-dropdown-trigger {
+  position: relative;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+
+.games-dropdown-trigger::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), transparent);
+  opacity: 0;
+  transition: var(--transition-fast);
+}
+
+.games-dropdown-trigger:hover,
+.games-dropdown-trigger.active {
+  color: var(--accent-primary);
+}
+
+.games-dropdown-trigger:hover::before,
+.games-dropdown-trigger.active::before {
+  opacity: 1;
+}
+
+.games-dropdown-trigger::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 30px;
+  height: 2px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-primary);
+  border-radius: 2px;
+  transition: var(--transition-smooth);
+}
+
+.games-dropdown-trigger:hover::after,
+.games-dropdown-trigger.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.nav-link-chevron {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.games-dropdown-trigger:hover .nav-link-chevron,
+.games-dropdown-trigger.active .nav-link-chevron {
+  opacity: 1;
+}
+
+.nav-link-chevron.open {
+  transform: rotate(180deg);
+}
+
+.games-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 180px;
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.98), rgba(12, 16, 24, 0.99));
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 100;
+  animation: fadeIn 0.15s ease-out;
+}
+
+html[dir="rtl"] .games-dropdown {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.games-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.games-dropdown-item:hover {
+  color: var(--accent-primary);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.games-dropdown-item.active {
+  color: var(--accent-primary);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+/* Mobile Games Group */
+.mobile-games-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-games-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  width: 100%;
+  text-align: start;
+}
+
+.mobile-games-trigger:hover,
+.mobile-games-trigger.active {
+  color: var(--accent-primary);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.mobile-games-trigger .nav-link-chevron {
+  width: 14px;
+  height: 14px;
+}
+
+.mobile-games-sublinks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0 4px 16px;
+  margin-left: 12px;
+  border-left: 2px solid rgba(0, 212, 255, 0.2);
+}
+
+html[dir="rtl"] .mobile-games-sublinks {
+  padding: 4px 16px 4px 0;
+  margin-left: 0;
+  margin-right: 12px;
+  border-left: none;
+  border-right: 2px solid rgba(0, 212, 255, 0.2);
+}
+
+.mobile-games-sublinks .mobile-nav-link {
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.mobile-games-sublinks .mobile-nav-link::before {
+  display: none;
+}
+
+/* ============================================
+   SIGN OUT MODAL
+   ============================================ */
+.signout-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(3, 3, 6, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.signout-modal {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.95), rgba(12, 16, 24, 0.98));
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 36px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(0, 212, 255, 0.08);
+  animation: fadeInUp 0.2s ease-out;
+}
+
+.signout-modal-title {
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+html[lang="ar"] .signout-modal-title {
+  font-family: 'Cairo', sans-serif;
+}
+
+.signout-modal-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.signout-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.signout-modal-cancel {
+  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.signout-modal-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.signout-modal-confirm {
+  padding: 10px 24px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.signout-modal-confirm:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
+/* ============================================
    MOBILE SIDEBAR
    ============================================ */
 .mobile-menu-btn {
@@ -847,6 +1343,10 @@ footer::before {
 
   .mobile-menu-btn {
     display: flex;
+  }
+
+  .auth-section {
+    display: none;
   }
 
   .section {

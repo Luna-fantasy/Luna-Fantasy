@@ -9,10 +9,19 @@
   "nav": {
     "home": "Home",
     "story": "Story",
-    "cards": "Luna Fantasy",
+    "games": "Luna Games",
+    "lunaFantasy": "Luna Fantasy",
+    "grandFantasy": "Grand Fantasy",
+    "bumper": "Bumper",
     "characters": "Characters",
     "bank": "Bank",
-    "partners": "Partners"
+    "partners": "Partners",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signOutConfirmTitle": "Sign Out?",
+    "signOutConfirmDesc": "Are you sure you want to sign out of your account?",
+    "cancel": "Cancel",
+    "profile": "Profile"
   },
   "hero": {
     "badge": "FANTASY UNIVERSE",
@@ -237,6 +246,124 @@
     "socialTitle": "Community",
     "copyright": "© 2026 Luna. All rights reserved.",
     "builtBy": "Built by Buried Games Studio"
+  },
+  "auth": {
+    "badge": "LUNA UNIVERSE",
+    "welcomeTitle": "Welcome to Luna",
+    "welcomeDesc": "Sign in with your Discord account to access your profile, track your cards, and manage your Luna Bank.",
+    "discordBtn": "Sign in with Discord",
+    "or": "Or",
+    "guestLink": "Continue as guest"
+  },
+  "profilePage": {
+    "title": "Profile",
+    "memberSince": "Member since",
+    "stats": {
+      "cards": "Cards",
+      "stones": "Stones",
+      "lunari": "Lunari"
+    },
+    "comingSoon": "Coming Soon",
+    "accountDetails": "Account Details",
+    "discordId": "Discord ID",
+    "clickToCopy": "Click to copy",
+    "email": "Email",
+    "authMethod": "Signed in with",
+    "signOut": "Sign Out",
+    "signOutConfirmTitle": "Sign Out?",
+    "signOutConfirmDesc": "Are you sure you want to sign out of your account?",
+    "cancel": "Cancel",
+    "collection": {
+      "title": "Card Collection",
+      "empty": "No cards yet",
+      "lunaFantasy": "Luna Fantasy",
+      "grandFantasy": "Grand Fantasy",
+      "bumper": "Bumper"
+    },
+    "treasury": {
+      "title": "Treasury",
+      "lunari": "Lunari",
+      "stones": "Moon Stones",
+      "noStones": "No stones yet"
+    },
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "unique": "Unique",
+      "legendary": "Legendary",
+      "secret": "Secret",
+      "forbidden": "Forbidden",
+      "mythical": "Mythical"
+    },
+    "playerStats": {
+      "title": "Player Stats",
+      "level": "Level",
+      "xp": "XP",
+      "messages": "Messages",
+      "voiceTime": "Voice Hours",
+      "gameWins": "Game Wins",
+      "magicCards": "Magic Cards",
+      "lunaPairs": "Luna Pairs",
+      "grandFantasy": "Grand Fantasy",
+      "magicBot": "Magic Bot",
+      "wins": "wins",
+      "pvp": "PvP Record",
+      "pvpWins": "Wins",
+      "pvpLosses": "Losses",
+      "winRate": "Win Rate",
+      "noBattles": "No battles yet"
+    }
+  },
+  "grandFantasyPage": {
+    "heroTitle": "Grand Fantasy",
+    "heroSubtitle": "The Grand Card Game",
+    "subtitle": "Experience the grand-scale strategic card battles of the Luna universe. Same legendary deck, grander stakes.",
+    "whatTitle": "What is Grand Fantasy?",
+    "whatDesc": "Grand Fantasy is the amplified version of Luna Fantasy. Using the same iconic card deck, Grand Fantasy introduces larger-scale battles and deeper strategic layers for experienced players.",
+    "howTitle": "How to Play?",
+    "howDesc": "Grand Fantasy builds on Luna Fantasy's core mechanics with expanded rules. Master the deck, read your opponent, and claim victory in the grandest card battles of Luna.",
+    "rules": {
+      "rule1": "Each player holds 5 cards (Common, Rare, Epic, Unique + 1 Random).",
+      "rule2": "Grand Fantasy uses the same shared deck as Luna Fantasy with expanded battle rules.",
+      "rule3": "A player must win 5 rounds to claim victory.",
+      "rule4": "Strategic card swaps and timing are key to outsmarting your opponent."
+    },
+    "filters": {
+      "all": "All Cards",
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "unique": "Unique",
+      "legendary": "Legendary",
+      "secret": "Secret",
+      "mythical": "Mythical"
+    }
+  },
+  "bumperPage": {
+    "heroTitle": "Bumper",
+    "heroSubtitle": "The Quick Card Game",
+    "subtitle": "Fast-paced card clashes from the Luna universe. Same powerful deck, lightning-fast rounds.",
+    "whatTitle": "What is Bumper?",
+    "whatDesc": "Bumper is the fast-paced card game of the Luna universe. Using the same shared deck, Bumper delivers quick, intense rounds where every card counts and speed is everything.",
+    "howTitle": "How to Play?",
+    "howDesc": "Bumper strips card battles down to their core. Quick decisions, rapid rounds, and instant results. Perfect for players who love fast action.",
+    "rules": {
+      "rule1": "Each player holds 5 cards (Common, Rare, Epic, Unique + 1 Random).",
+      "rule2": "Bumper uses the same shared deck as Luna Fantasy with rapid-fire rules.",
+      "rule3": "A player must win 5 rounds to be the victor.",
+      "rule4": "Speed and instinct matter just as much as strategy in Bumper."
+    },
+    "filters": {
+      "all": "All Cards",
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "unique": "Unique",
+      "legendary": "Legendary",
+      "secret": "Secret",
+      "mythical": "Mythical"
+    }
   },
   "partnersPage": {
     "title": "Luna Partners",

@@ -6,16 +6,15 @@ import Image from 'next/image';
 import { Lightbox } from '@/components';
 import type { Card, CardRarity, Locale } from '@/types';
 
-interface CardsContentProps {
+interface GrandFantasyContentProps {
   cards: Card[];
   locale: Locale;
 }
 
 type FilterKey = 'all' | CardRarity;
 
-export function CardsContent({ cards, locale }: CardsContentProps) {
-  const t = useTranslations('cardsPage');
-  const showcase = useTranslations('showcase');
+export function GrandFantasyContent({ cards, locale }: GrandFantasyContentProps) {
+  const t = useTranslations('grandFantasyPage');
   const hero = useTranslations('hero');
 
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
@@ -25,38 +24,30 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
     ? cards
     : cards.filter(card => card.rarity === activeFilter);
 
-  // Group cards by rarity for display
-  const cardsByRarity = {
-    common: cards.filter(c => c.rarity === 'common'),
-    rare: cards.filter(c => c.rarity === 'rare'),
-    epic: cards.filter(c => c.rarity === 'epic'),
-    unique: cards.filter(c => c.rarity === 'unique'),
-    legendary: cards.filter(c => c.rarity === 'legendary'),
-    secret: cards.filter(c => c.rarity === 'secret'),
-    mythical: cards.filter(c => c.rarity === 'mythical'),
-  };
+  // Group cards by rarity — only rarities present in the data
+  const cardsByRarity: Partial<Record<CardRarity, Card[]>> = {};
+  for (const card of cards) {
+    if (!cardsByRarity[card.rarity]) cardsByRarity[card.rarity] = [];
+    cardsByRarity[card.rarity]!.push(card);
+  }
+
+  // Build filters and rarity order from what actually exists
+  const allRarities: CardRarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'mythical'];
+  const rarityOrder = allRarities.filter(r => cardsByRarity[r] && cardsByRarity[r]!.length > 0);
 
   const filters: { key: FilterKey; label: string }[] = [
     { key: 'all', label: t('filters.all') },
-    { key: 'common', label: t('filters.common') },
-    { key: 'rare', label: t('filters.rare') },
-    { key: 'epic', label: t('filters.epic') },
-    { key: 'unique', label: t('filters.unique') },
-    { key: 'legendary', label: t('filters.legendary') },
-    { key: 'secret', label: t('filters.secret') },
-    { key: 'mythical', label: t('filters.mythical') },
+    ...rarityOrder.map(r => ({ key: r as FilterKey, label: t(`filters.${r}`) })),
   ];
-
-  const rarityOrder: CardRarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'mythical'];
 
   return (
     <>
-      {/* Cards Hero */}
+      {/* Hero */}
       <section className="cards-hero">
         <div className="cards-hero-bg">
           <Image
             src="/images/luna-fantasy.png"
-            alt="Luna Fantasy Card Game"
+            alt="Grand Fantasy Card Game"
             fill
             priority
             className="cards-hero-bg-image"
@@ -77,7 +68,7 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
         </div>
       </section>
 
-      {/* What Are Luna Cards */}
+      {/* Info Section */}
       <section className="cards-info-section">
         <div className="wrap">
           <div className="cards-info-grid">
@@ -105,7 +96,6 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
       {/* Cards Gallery */}
       <section className="cards-gallery-section">
         <div className="wrap">
-          {/* Filters */}
           <div className="filter-bar">
             {filters.map(filter => (
               <button
@@ -123,13 +113,11 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
             ))}
           </div>
 
-          {/* Cards Display */}
           {activeFilter === 'all' ? (
-            // Grouped by rarity
             <div className="cards-by-rarity">
               {rarityOrder.map(rarity => {
                 const rarityCards = cardsByRarity[rarity];
-                if (rarityCards.length === 0) return null;
+                if (!rarityCards || rarityCards.length === 0) return null;
                 return (
                   <div key={rarity} className="rarity-section">
                     <div className="rarity-header">
@@ -170,7 +158,6 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
               })}
             </div>
           ) : (
-            // Single rarity grid
             <div className="cards-grid">
               {filteredCards.map(card => (
                 <div
@@ -200,7 +187,6 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
         </div>
       </section>
 
-      {/* Lightbox */}
       <Lightbox
         isOpen={!!lightboxImage}
         imageSrc={lightboxImage || ''}

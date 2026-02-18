@@ -1,0 +1,751 @@
+/* ============================================
+   PROFILE GAME DATA — Visual Sections
+   ============================================ */
+
+/* Widen container for game sections */
+.profile-container {
+  max-width: 720px;
+}
+
+/* ============================================
+   SHIMMER SKELETON
+   ============================================ */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  display: inline-block;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease infinite;
+  border-radius: 6px;
+}
+
+.skeleton-stat {
+  width: 32px;
+  height: 18px;
+}
+
+/* ============================================
+   LEVEL BADGE (header)
+   ============================================ */
+.profile-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent-primary);
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+
+/* ============================================
+   CARD COLLECTION SECTION
+   ============================================ */
+.profile-collection-card {
+  padding: 24px;
+}
+
+/* Game Tabs */
+.game-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.game-tab {
+  padding: 8px 16px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.game-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.game-tab.active {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: rgba(0, 212, 255, 0.4);
+  color: var(--accent-primary);
+}
+
+.game-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  font-weight: 800;
+  margin-inline-start: 6px;
+}
+
+.game-tab.active .game-tab-count {
+  background: rgba(0, 212, 255, 0.2);
+}
+
+/* Card Scroll Strip */
+.card-scroll-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.card-scroll-strip::-webkit-scrollbar {
+  height: 4px;
+}
+
+.card-scroll-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.card-scroll-strip::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+/* Mini Card */
+.mini-card {
+  flex-shrink: 0;
+  width: 120px;
+  scroll-snap-align: start;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.mini-card:hover {
+  transform: translateY(-4px);
+}
+
+.mini-card-image-wrap {
+  position: relative;
+  width: 120px;
+  height: 180px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  margin-bottom: 8px;
+}
+
+.mini-card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Rarity border colors */
+.mini-card-image-wrap.rarity-border-common { border-color: var(--common); }
+.mini-card-image-wrap.rarity-border-rare { border-color: var(--rare); }
+.mini-card-image-wrap.rarity-border-epic { border-color: var(--epic); }
+.mini-card-image-wrap.rarity-border-unique { border-color: var(--unique); }
+.mini-card-image-wrap.rarity-border-legendary { border-color: var(--legendary); }
+.mini-card-image-wrap.rarity-border-secret { border-color: var(--secret); }
+.mini-card-image-wrap.rarity-border-forbidden { border-color: #ff6600; }
+.mini-card-image-wrap.rarity-border-mythical { border-color: #ff00ff; }
+
+.mini-card:hover .mini-card-image-wrap.rarity-border-common { box-shadow: 0 0 16px rgba(74, 222, 128, 0.3); }
+.mini-card:hover .mini-card-image-wrap.rarity-border-rare { box-shadow: 0 0 16px rgba(59, 130, 246, 0.3); }
+.mini-card:hover .mini-card-image-wrap.rarity-border-epic { box-shadow: 0 0 16px rgba(168, 85, 247, 0.3); }
+.mini-card:hover .mini-card-image-wrap.rarity-border-unique { box-shadow: 0 0 16px rgba(244, 63, 94, 0.3); }
+.mini-card:hover .mini-card-image-wrap.rarity-border-legendary { box-shadow: 0 0 16px rgba(251, 191, 36, 0.3); }
+.mini-card:hover .mini-card-image-wrap.rarity-border-secret { box-shadow: 0 0 16px rgba(239, 68, 68, 0.3); }
+.mini-card:hover .mini-card-image-wrap.rarity-border-forbidden { box-shadow: 0 0 16px rgba(255, 102, 0, 0.3); }
+.mini-card:hover .mini-card-image-wrap.rarity-border-mythical { box-shadow: 0 0 16px rgba(255, 0, 255, 0.3); }
+
+/* Placeholder for broken images */
+.mini-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.mini-card-placeholder.rarity-bg-common { background: rgba(74, 222, 128, 0.1); color: var(--common); }
+.mini-card-placeholder.rarity-bg-rare { background: rgba(59, 130, 246, 0.1); color: var(--rare); }
+.mini-card-placeholder.rarity-bg-epic { background: rgba(168, 85, 247, 0.1); color: var(--epic); }
+.mini-card-placeholder.rarity-bg-unique { background: rgba(244, 63, 94, 0.1); color: var(--unique); }
+.mini-card-placeholder.rarity-bg-legendary { background: rgba(251, 191, 36, 0.1); color: var(--legendary); }
+.mini-card-placeholder.rarity-bg-secret { background: rgba(239, 68, 68, 0.1); color: var(--secret); }
+.mini-card-placeholder.rarity-bg-forbidden { background: rgba(255, 102, 0, 0.1); color: #ff6600; }
+.mini-card-placeholder.rarity-bg-mythical { background: rgba(255, 0, 255, 0.1); color: #ff00ff; }
+
+/* Mini card rarity badge */
+.mini-card-rarity {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 6px;
+  border-radius: 50px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+html[dir="rtl"] .mini-card-rarity {
+  right: auto;
+  left: 6px;
+}
+
+.mini-card-rarity.rarity-common { color: var(--common); background: rgba(74, 222, 128, 0.2); border: 1px solid rgba(74, 222, 128, 0.4); }
+.mini-card-rarity.rarity-rare { color: var(--rare); background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); }
+.mini-card-rarity.rarity-epic { color: var(--epic); background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); }
+.mini-card-rarity.rarity-unique { color: var(--unique); background: rgba(244, 63, 94, 0.2); border: 1px solid rgba(244, 63, 94, 0.4); }
+.mini-card-rarity.rarity-legendary { color: var(--legendary); background: rgba(251, 191, 36, 0.2); border: 1px solid rgba(251, 191, 36, 0.4); }
+.mini-card-rarity.rarity-secret { color: var(--secret); background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); }
+.mini-card-rarity.rarity-forbidden { color: #ff6600; background: rgba(255, 102, 0, 0.2); border: 1px solid rgba(255, 102, 0, 0.4); }
+.mini-card-rarity.rarity-mythical { color: #ff00ff; background: rgba(255, 0, 255, 0.2); border: 1px solid rgba(255, 0, 255, 0.4); }
+
+.mini-card-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.mini-card-attack {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Rarity Distribution Bar */
+.rarity-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rarity-bar-segment {
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.rarity-bar-segment.bar-common { background: var(--common); }
+.rarity-bar-segment.bar-rare { background: var(--rare); }
+.rarity-bar-segment.bar-epic { background: var(--epic); }
+.rarity-bar-segment.bar-unique { background: var(--unique); }
+.rarity-bar-segment.bar-legendary { background: var(--legendary); }
+.rarity-bar-segment.bar-secret { background: var(--secret); }
+.rarity-bar-segment.bar-forbidden { background: #ff6600; }
+.rarity-bar-segment.bar-mythical { background: #ff00ff; }
+
+/* Rarity Legend */
+.rarity-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rarity-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.rarity-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.rarity-legend-dot.dot-common { background: var(--common); }
+.rarity-legend-dot.dot-rare { background: var(--rare); }
+.rarity-legend-dot.dot-epic { background: var(--epic); }
+.rarity-legend-dot.dot-unique { background: var(--unique); }
+.rarity-legend-dot.dot-legendary { background: var(--legendary); }
+.rarity-legend-dot.dot-secret { background: var(--secret); }
+.rarity-legend-dot.dot-forbidden { background: #ff6600; }
+.rarity-legend-dot.dot-mythical { background: #ff00ff; }
+
+/* Empty State */
+.collection-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.collection-empty-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.4;
+}
+
+/* ============================================
+   TREASURY SECTION
+   ============================================ */
+.profile-treasury-card {
+  padding: 24px;
+}
+
+.treasury-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Lunari Box */
+.treasury-lunari {
+  position: relative;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.06), rgba(255, 165, 0, 0.03));
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  overflow: hidden;
+}
+
+.treasury-lunari::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.08), transparent);
+  animation: shimmer-gold 3s ease infinite;
+}
+
+@keyframes shimmer-gold {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+.treasury-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.treasury-lunari-value {
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  background: linear-gradient(180deg, #ffd700 0%, #ff8c00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+html[lang="ar"] .treasury-lunari-value {
+  font-family: 'Cairo', sans-serif;
+}
+
+/* Stones Box */
+.treasury-stones {
+  padding: 20px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(168, 85, 247, 0.03));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.stones-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stone-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  animation: stone-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes stone-glow {
+  0% { box-shadow: 0 0 6px rgba(139, 92, 246, 0.2); }
+  100% { box-shadow: 0 0 16px rgba(139, 92, 246, 0.5); }
+}
+
+.stone-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.6);
+}
+
+.treasury-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ============================================
+   PLAYER STATS SECTION
+   ============================================ */
+.profile-stats-card {
+  padding: 24px;
+}
+
+/* Level Display */
+.stats-level-section {
+  margin-bottom: 24px;
+}
+
+.stats-level-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.stats-level-number {
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 2rem;
+  font-weight: 900;
+  background: linear-gradient(180deg, #ffffff 20%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+
+html[lang="ar"] .stats-level-number {
+  font-family: 'Cairo', sans-serif;
+}
+
+.stats-level-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+/* XP Progress Bar */
+.xp-progress-wrap {
+  margin-bottom: 12px;
+}
+
+.xp-progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.xp-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  transition: width 0.6s ease;
+}
+
+.xp-progress-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Stats Meta (messages + voice) */
+.stats-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stats-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.stats-meta-item svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Game Wins */
+.stats-game-wins {
+  margin-bottom: 24px;
+}
+
+.stats-subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.game-wins-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.game-win-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.game-win-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.game-win-icon.magic-cards { background: rgba(0, 212, 255, 0.1); }
+.game-win-icon.luna-pairs { background: rgba(139, 92, 246, 0.1); }
+.game-win-icon.grand-fantasy { background: rgba(251, 191, 36, 0.1); }
+.game-win-icon.magic-bot { background: rgba(74, 222, 128, 0.1); }
+
+.game-win-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.game-win-count {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.game-win-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* PvP Record */
+.stats-pvp {
+  margin-bottom: 0;
+}
+
+.pvp-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.pvp-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pvp-value {
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.pvp-value.pvp-wins { color: #22c55e; }
+.pvp-value.pvp-losses { color: #ef4444; }
+
+.pvp-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.pvp-separator {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.pvp-winrate {
+  margin-inline-start: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pvp-winrate-value {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--accent-primary);
+  line-height: 1.2;
+}
+
+.pvp-winrate-bar {
+  width: 80px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.pvp-winrate-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #22c55e, var(--accent-primary));
+  transition: width 0.6s ease;
+}
+
+.pvp-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Divider between stat sections */
+.stats-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 20px 0;
+}
+
+/* ============================================
+   LIGHTBOX
+   ============================================ */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.lightbox-content {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+}
+
+.lightbox-caption {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 520px) {
+  .profile-container {
+    max-width: 100%;
+  }
+
+  .treasury-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .game-wins-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mini-card {
+    width: 100px;
+  }
+
+  .mini-card-image-wrap {
+    width: 100px;
+    height: 150px;
+  }
+
+  .profile-collection-card,
+  .profile-treasury-card,
+  .profile-stats-card {
+    padding: 20px 16px;
+  }
+
+  .stats-level-number {
+    font-size: 1.5rem;
+  }
+
+  .treasury-lunari-value {
+    font-size: 1.25rem;
+  }
+
+  .stone-thumb {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ============================================
+   RTL
+   ============================================ */
+html[dir="rtl"] .card-scroll-strip {
+  direction: rtl;
+}
+
+html[lang="ar"] .profile-section-title,
+html[lang="ar"] .stats-subtitle,
+html[lang="ar"] .treasury-label,
+html[lang="ar"] .stats-level-label {
+  font-family: 'Cairo', sans-serif;
+}

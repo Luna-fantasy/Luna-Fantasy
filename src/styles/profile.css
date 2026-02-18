@@ -1,0 +1,404 @@
+/* ============================================
+   PROFILE PAGE — Scalable Card Layout
+   ============================================ */
+.profile-page {
+  min-height: 100vh;
+  padding: 120px 24px 80px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.profile-container {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Shared Card Base */
+.profile-card {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.85), rgba(12, 16, 24, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ============================================
+   HEADER CARD — Banner + Avatar + Identity + Stats
+   ============================================ */
+.profile-header-card {
+  overflow: hidden;
+}
+
+/* Banner */
+.profile-banner {
+  position: relative;
+  height: 120px;
+  background: linear-gradient(135deg, #0c1018 0%, #111822 100%);
+}
+
+.profile-banner-glow {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 200px;
+  background: radial-gradient(ellipse, rgba(0, 212, 255, 0.2), rgba(139, 92, 246, 0.08) 50%, transparent 70%);
+  pointer-events: none;
+}
+
+.profile-banner-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Avatar */
+.profile-avatar-section {
+  display: flex;
+  justify-content: center;
+  margin-top: -48px;
+  position: relative;
+  z-index: 2;
+}
+
+.profile-avatar-ring {
+  position: relative;
+  padding: 4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  box-shadow:
+    0 0 30px rgba(0, 212, 255, 0.3),
+    0 0 60px rgba(0, 212, 255, 0.1);
+}
+
+.profile-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 4px solid var(--bg-deep);
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
+  color: var(--accent-primary);
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.profile-status-dot {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 3px solid var(--bg-deep);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+}
+
+/* Identity */
+.profile-identity {
+  text-align: center;
+  padding: 16px 32px 0;
+}
+
+.profile-name {
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  background: linear-gradient(180deg, #ffffff 20%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+
+html[lang="ar"] .profile-name {
+  font-family: 'Cairo', sans-serif;
+}
+
+.profile-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-username {
+  color: var(--accent-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-meta-dot {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.profile-date {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Stats Row */
+.profile-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 24px 24px 24px;
+  padding: 16px 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.profile-stat {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.profile-stat-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-family: 'Cinzel', 'Cairo', serif;
+}
+
+.profile-stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ============================================
+   DETAILS CARD — Account Info
+   ============================================ */
+.profile-details-card {
+  padding: 24px;
+}
+
+.profile-section-title {
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding-inline-start: 14px;
+}
+
+html[lang="ar"] .profile-section-title {
+  font-family: 'Cairo', sans-serif;
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+
+.profile-detail-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.profile-detail-copyable {
+  cursor: pointer;
+}
+
+.profile-detail-copyable:hover {
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.profile-detail-copyable:active {
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.profile-detail-icon {
+  flex-shrink: 0;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.profile-detail-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.profile-detail-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  word-break: break-all;
+  text-align: end;
+}
+
+.profile-copy-hint {
+  display: inline-flex;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.profile-detail-copyable:hover .profile-copy-hint {
+  opacity: 1;
+}
+
+/* Auth Badge */
+.profile-auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(88, 101, 242, 0.15);
+  color: #7289da;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 50px;
+  border: 1px solid rgba(88, 101, 242, 0.25);
+}
+
+/* ============================================
+   ACTIONS CARD — Sign Out
+   ============================================ */
+.profile-actions-card {
+  padding: 16px 24px;
+}
+
+.profile-signout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.profile-signout-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 520px) {
+  .profile-page {
+    padding: 100px 16px 60px;
+  }
+
+  .profile-container {
+    gap: 12px;
+  }
+
+  .profile-banner {
+    height: 100px;
+  }
+
+  .profile-avatar-section {
+    margin-top: -40px;
+  }
+
+  .profile-avatar-ring {
+    padding: 3px;
+  }
+
+  .profile-avatar {
+    width: 72px;
+    height: 72px;
+  }
+
+  .profile-name {
+    font-size: 1.25rem;
+  }
+
+  .profile-stats-row {
+    margin: 20px 16px 20px;
+  }
+
+  .profile-stat {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .profile-stat-text {
+    align-items: center;
+  }
+
+  .profile-details-card {
+    padding: 20px 16px;
+  }
+
+  .profile-detail-row {
+    padding: 10px 8px;
+  }
+
+  .profile-actions-card {
+    padding: 12px 16px;
+  }
+}

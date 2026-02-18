@@ -32,7 +32,7 @@ export function Footer() {
             <ul className="footer-links">
               <li><Link href="/">{nav('home')}</Link></li>
               <li><Link href="/story">{nav('story')}</Link></li>
-              <li><Link href="/cards">{nav('cards')}</Link></li>
+              <li><Link href="/luna-fantasy">{nav('lunaFantasy')}</Link></li>
               <li><Link href="/characters">{nav('characters')}</Link></li>
               <li><Link href="/bank">{nav('bank')}</Link></li>
               <li><Link href="/partners">{nav('partners')}</Link></li>
