@@ -279,13 +279,42 @@
       "empty": "لا توجد بطاقات بعد",
       "lunaFantasy": "لونا فانتسي",
       "grandFantasy": "جراند فانتسي",
-      "bumper": "بمبر"
+      "bumper": "بمبر",
+      "bookPage": "صفحة {current} من {total}",
+      "bookOf": "من",
+      "bookPrev": "السابق",
+      "bookNext": "التالي",
+      "bookAll": "الكل",
+      "bookOwned": "المملوكة",
+      "bookCollected": "{owned} / {total} مُجمعة"
     },
     "treasury": {
       "title": "الخزينة",
       "lunari": "لوناري",
       "stones": "أحجار القمر",
-      "noStones": "لا توجد أحجار بعد"
+      "noStones": "لا توجد أحجار بعد",
+      "tickets": "تذاكر اللعب"
+    },
+    "stones": {
+      "title": "مجموعة أحجار القمر",
+      "moonStones": "أحجار القمر",
+      "forbiddenStones": "الأحجار المحظورة",
+      "progress": "{count} / {total}",
+      "tierNone": "جامع",
+      "tierZenith": "زينيث",
+      "tierChosen": "مختار لونا",
+      "hintChaos": "ابحث عن ختم العقل المدبر",
+      "hintShuran": "ابحث عن ختم الحارس",
+      "hintHalo": "ابحث عن ختم الوصي"
+    },
+    "activity": {
+      "title": "نشاط اليوم",
+      "messagesToday": "الرسائل",
+      "voiceToday": "دقائق الصوت"
+    },
+    "inventory": {
+      "title": "المخزون",
+      "empty": "لا توجد عناصر مشتراة بعد"
     },
     "rarity": {
       "common": "عادي",

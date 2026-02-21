@@ -52,6 +52,20 @@ export interface CardsByGame {
   bumper: UserCard[];
 }
 
+export interface ChatActivity {
+  messagesToday: number;
+  voiceMinutesToday: number;
+}
+
+export interface CatalogCard {
+  id: string;
+  name: string;
+  rarity: string;
+  imageUrl: string;
+  attack?: number;
+  game?: string;
+}
+
 export interface GameDataResponse {
   cardsByGame: CardsByGame;
   totalCards: number;
@@ -61,4 +75,7 @@ export interface GameDataResponse {
   gameWins: GameWins | null;
   pvp: PvpRecord;
   inventory: InventoryItem[];
+  tickets: number;
+  chatActivity: ChatActivity | null;
+  cardCatalog: CatalogCard[];
 }

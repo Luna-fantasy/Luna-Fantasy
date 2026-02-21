@@ -278,13 +278,42 @@
       "empty": "No cards yet",
       "lunaFantasy": "Luna Fantasy",
       "grandFantasy": "Grand Fantasy",
-      "bumper": "Bumper"
+      "bumper": "Bumper",
+      "bookPage": "Page {current} of {total}",
+      "bookOf": "of",
+      "bookPrev": "Previous",
+      "bookNext": "Next",
+      "bookAll": "All",
+      "bookOwned": "Owned",
+      "bookCollected": "{owned} / {total} collected"
     },
     "treasury": {
       "title": "Treasury",
       "lunari": "Lunari",
       "stones": "Moon Stones",
-      "noStones": "No stones yet"
+      "noStones": "No stones yet",
+      "tickets": "Game Tickets"
+    },
+    "stones": {
+      "title": "Moon Stone Collection",
+      "moonStones": "Moon Stones",
+      "forbiddenStones": "Forbidden Stones",
+      "progress": "{count} / {total}",
+      "tierNone": "Collector",
+      "tierZenith": "Zenith",
+      "tierChosen": "Luna Chosen",
+      "hintChaos": "Seek a Mastermind's Seal",
+      "hintShuran": "Seek a Sentinel's Seal",
+      "hintHalo": "Seek a Guardian's Seal"
+    },
+    "activity": {
+      "title": "Activity Today",
+      "messagesToday": "Messages",
+      "voiceToday": "Voice Minutes"
+    },
+    "inventory": {
+      "title": "Inventory",
+      "empty": "No items purchased yet"
     },
     "rarity": {
       "common": "Common",

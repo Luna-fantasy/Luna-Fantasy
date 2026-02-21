@@ -3,34 +3,20 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGameData } from '@/hooks/useGameData';
-import type { UserCard, UserStone, CardsByGame } from '@/types/gameData';
+import type { UserCard, UserStone, CardsByGame, CatalogCard } from '@/types/gameData';
+import CardBook from './CardBook';
 import '@/styles/profile.css';
 import '@/styles/profile-game.css';
 
-const RARITY_ORDER = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden', 'mythical'] as const;
-
 type GameKey = keyof CardsByGame;
 
-const GAME_TABS: { key: GameKey; labelKey: string }[] = [
-  { key: 'lunaFantasy', labelKey: 'collection.lunaFantasy' },
-  { key: 'grandFantasy', labelKey: 'collection.grandFantasy' },
-  { key: 'bumper', labelKey: 'collection.bumper' },
+const GAME_TABS: { key: GameKey; labelKey: string; gameFilter?: string }[] = [
+  { key: 'lunaFantasy', labelKey: 'collection.lunaFantasy', gameFilter: 'luna_fantasy' },
+  { key: 'grandFantasy', labelKey: 'collection.grandFantasy', gameFilter: 'grand_fantasy' },
+  { key: 'bumper', labelKey: 'collection.bumper', gameFilter: 'bumper' },
 ];
-
-function getRarityClass(rarity: string): string {
-  return `rarity-${rarity.toLowerCase()}`;
-}
-
-function getRarityDistribution(cards: UserCard[]) {
-  const counts: Record<string, number> = {};
-  for (const card of cards) {
-    const r = card.rarity.toLowerCase();
-    counts[r] = (counts[r] || 0) + 1;
-  }
-  return counts;
-}
 
 function xpForLevel(level: number): number {
   return level * level * 100;
@@ -71,23 +57,15 @@ export default function ProfileContent() {
     setBrokenImages(prev => new Set(prev).add(id));
   };
 
-  // Active tab cards
-  const activeCards = gameData?.cardsByGame[activeGame] ?? [];
-  const rarityDist = getRarityDistribution(activeCards);
-  const totalActiveCards = activeCards.length;
-
-  // Available tabs (only those with cards, default to all if loading)
-  const availableTabs = isLoading
-    ? GAME_TABS
-    : GAME_TABS.filter(tab => (gameData?.cardsByGame[tab.key]?.length ?? 0) > 0);
-
-  // Pick first available tab if current has no cards
-  const effectiveGame = availableTabs.find(tab => tab.key === activeGame)
-    ? activeGame
-    : (availableTabs[0]?.key ?? 'lunaFantasy');
-
+  // Pick effective game
+  const effectiveGame = activeGame;
   const effectiveCards = gameData?.cardsByGame[effectiveGame] ?? [];
-  const effectiveDist = getRarityDistribution(effectiveCards);
+
+  // Filter catalog cards by active game tab
+  const activeGameFilter = GAME_TABS.find(tab => tab.key === effectiveGame)?.gameFilter;
+  const filteredCatalog: CatalogCard[] = (gameData?.cardCatalog ?? []).filter(c =>
+    !activeGameFilter || !c.game || c.game === activeGameFilter
+  );
 
   // Level XP
   const currentLevel = gameData?.level?.level ?? 0;
@@ -143,46 +121,6 @@ export default function ProfileContent() {
             </p>
           </div>
 
-          {/* Stats Row */}
-          <div className="profile-stats-row">
-            <div className="profile-stat">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
-                <rect x="2" y="3" width="20" height="18" rx="2" />
-                <path d="M8 7h8M8 12h8M8 17h4" />
-              </svg>
-              <div className="profile-stat-text">
-                <span className="profile-stat-value">
-                  {isLoading ? <span className="skeleton skeleton-stat" /> : formatNumber(gameData?.totalCards ?? 0)}
-                </span>
-                <span className="profile-stat-label">{t('stats.cards')}</span>
-              </div>
-            </div>
-            <div className="profile-stat-divider" />
-            <div className="profile-stat">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-secondary)" strokeWidth="2">
-                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z" />
-              </svg>
-              <div className="profile-stat-text">
-                <span className="profile-stat-value">
-                  {isLoading ? <span className="skeleton skeleton-stat" /> : (gameData?.stones.length ?? 0)}
-                </span>
-                <span className="profile-stat-label">{t('stats.stones')}</span>
-              </div>
-            </div>
-            <div className="profile-stat-divider" />
-            <div className="profile-stat">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-legendary)" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
-              <div className="profile-stat-text">
-                <span className="profile-stat-value">
-                  {isLoading ? <span className="skeleton skeleton-stat" /> : formatNumber(gameData?.lunari ?? 0)}
-                </span>
-                <span className="profile-stat-label">{t('stats.lunari')}</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Card Collection Section */}
@@ -191,7 +129,7 @@ export default function ProfileContent() {
 
           {/* Game Tabs */}
           <div className="game-tabs">
-            {(isLoading ? GAME_TABS : availableTabs).map(tab => (
+            {GAME_TABS.map(tab => (
               <button
                 key={tab.key}
                 className={`game-tab ${effectiveGame === tab.key ? 'active' : ''}`}
@@ -205,155 +143,125 @@ export default function ProfileContent() {
             ))}
           </div>
 
-          {/* Card Scroll */}
-          {isLoading ? (
-            <div className="card-scroll-strip">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="mini-card">
-                  <div className="mini-card-image-wrap">
-                    <div className="skeleton" style={{ width: '100%', height: '100%' }} />
-                  </div>
-                  <div className="skeleton" style={{ width: '80px', height: '14px', marginTop: 4 }} />
-                </div>
-              ))}
-            </div>
-          ) : effectiveCards.length === 0 ? (
-            <div className="collection-empty">
-              <div className="collection-empty-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="2" y="3" width="20" height="18" rx="2" />
-                  <path d="M8 7h8M8 12h8M8 17h4" />
-                </svg>
-              </div>
-              <p>{t('collection.empty')}</p>
-            </div>
-          ) : (
-            <>
-              <div className="card-scroll-strip">
-                {effectiveCards.map((card, idx) => {
-                  const rKey = card.rarity.toLowerCase();
-                  const cardId = `${card.id || idx}`;
-                  const isBroken = brokenImages.has(cardId);
-                  return (
-                    <div
-                      key={cardId}
-                      className="mini-card"
-                      onClick={() => {
-                        if (!isBroken && card.imageUrl) {
-                          setLightbox({ src: card.imageUrl, caption: card.name });
-                        }
-                      }}
-                    >
-                      <div className={`mini-card-image-wrap rarity-border-${rKey}`}>
-                        {isBroken || !card.imageUrl ? (
-                          <div className={`mini-card-placeholder rarity-bg-${rKey}`}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                              <rect x="2" y="3" width="20" height="18" rx="2" />
-                              <path d="M8 7h8M8 12h8M8 17h4" />
-                            </svg>
-                          </div>
-                        ) : (
-                          <img
-                            src={card.imageUrl}
-                            alt={card.name}
-                            onError={() => handleImageError(cardId)}
-                          />
-                        )}
-                        <span className={`mini-card-rarity ${getRarityClass(card.rarity)}`}>
-                          {card.rarity}
-                        </span>
-                      </div>
-                      <div className="mini-card-name">{card.name}</div>
-                      <div className="mini-card-attack">ATK {card.attack}</div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Rarity Distribution Bar */}
-              <div className="rarity-bar">
-                {RARITY_ORDER.map(r => {
-                  const count = effectiveDist[r] || 0;
-                  if (count === 0) return null;
-                  const pct = (count / effectiveCards.length) * 100;
-                  return (
-                    <div
-                      key={r}
-                      className={`rarity-bar-segment bar-${r}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Rarity Legend */}
-              <div className="rarity-legend">
-                {RARITY_ORDER.map(r => {
-                  const count = effectiveDist[r] || 0;
-                  if (count === 0) return null;
-                  return (
-                    <div key={r} className="rarity-legend-item">
-                      <span className={`rarity-legend-dot dot-${r}`} />
-                      {count} {t(`rarity.${r}`)}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
+          {/* Card Book */}
+          <CardBook
+            ownedCards={effectiveCards}
+            catalogCards={filteredCatalog}
+            isLoading={isLoading}
+            onCardClick={(src, caption) => setLightbox({ src, caption })}
+            brokenImages={brokenImages}
+            onImageError={handleImageError}
+          />
         </div>
 
         {/* Treasury Section */}
         <div className="profile-card profile-treasury-card">
           <h2 className="profile-section-title">{t('treasury.title')}</h2>
-          <div className="treasury-grid">
+          <div className="treasury-row">
             {/* Lunari */}
-            <div className="treasury-lunari">
-              <div className="treasury-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
-                {t('treasury.lunari')}
-              </div>
-              <div className="treasury-lunari-value">
-                {isLoading ? <span className="skeleton" style={{ width: '80px', height: '28px' }} /> : formatNumber(gameData?.lunari ?? 0)}
+            <div className="treasury-item treasury-item-lunari">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+              <div className="treasury-item-info">
+                <span className="treasury-item-value treasury-lunari-value">
+                  {isLoading ? <span className="skeleton" style={{ width: '60px', height: '20px' }} /> : formatNumber(gameData?.lunari ?? 0)}
+                </span>
+                <span className="treasury-item-label">{t('treasury.lunari')}</span>
               </div>
             </div>
 
-            {/* Stones */}
-            <div className="treasury-stones">
-              <div className="treasury-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
-                  <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z" />
+            {/* Game Tickets — only show when user has tickets */}
+            {(gameData?.tickets ?? 0) > 0 && (
+              <div className="treasury-item treasury-item-tickets">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
+                  <path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V9z" />
                 </svg>
-                {t('treasury.stones')}
+                <div className="treasury-item-info">
+                  <span className="treasury-item-value treasury-tickets-value">
+                    {formatNumber(gameData?.tickets ?? 0)}
+                  </span>
+                  <span className="treasury-item-label">{t('treasury.tickets')}</span>
+                </div>
               </div>
-              {isLoading ? (
-                <div className="stones-grid">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="skeleton" style={{ width: '48px', height: '48px', borderRadius: '50%' }} />
-                  ))}
-                </div>
-              ) : (gameData?.stones.length ?? 0) === 0 ? (
-                <div className="treasury-empty">{t('treasury.noStones')}</div>
-              ) : (
-                <div className="stones-grid">
-                  {gameData!.stones.map((stone, idx) => (
-                    <img
-                      key={stone.id || idx}
-                      src={stone.imageUrl}
-                      alt={stone.name}
-                      className="stone-thumb"
-                      title={stone.name}
-                      onClick={() => setLightbox({ src: stone.imageUrl, caption: stone.name })}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
+
+        {/* Moon Stone Collection Section */}
+        <StoneCollection
+          stones={gameData?.stones ?? []}
+          isLoading={isLoading}
+          onStoneClick={(src, caption) => setLightbox({ src, caption })}
+        />
+
+        {/* Activity Today Section — only show when there's activity */}
+        {!isLoading && ((gameData?.chatActivity?.messagesToday ?? 0) > 0 || (gameData?.chatActivity?.voiceMinutesToday ?? 0) > 0) && (
+          <div className="profile-card profile-activity-card">
+            <h2 className="profile-section-title">{t('activity.title')}</h2>
+            <div className="activity-grid">
+              <div className="activity-item activity-messages">
+                <div className="activity-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </div>
+                <div className="activity-info">
+                  <span className="activity-value">
+                    {formatNumber(gameData?.chatActivity?.messagesToday ?? 0)}
+                  </span>
+                  <span className="activity-label">{t('activity.messagesToday')}</span>
+                </div>
+              </div>
+              <div className="activity-item activity-voice">
+                <div className="activity-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="23" />
+                    <line x1="8" y1="23" x2="16" y2="23" />
+                  </svg>
+                </div>
+                <div className="activity-info">
+                  <span className="activity-value">
+                    {formatNumber(gameData?.chatActivity?.voiceMinutesToday ?? 0)}
+                  </span>
+                  <span className="activity-label">{t('activity.voiceToday')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Inventory Section — only show when user has items */}
+        {!isLoading && (gameData?.inventory.length ?? 0) > 0 && (
+          <div className="profile-card profile-inventory-card">
+            <h2 className="profile-section-title">{t('inventory.title')}</h2>
+            <div className="inventory-grid">
+              {gameData!.inventory.map((item, idx) => (
+                <div key={item.id || idx} className="inventory-item">
+                  <div className="inventory-item-header">
+                    <span className="inventory-item-name">{item.name}</span>
+                    <span className="inventory-item-price">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                      </svg>
+                      {formatNumber(item.price)}
+                    </span>
+                  </div>
+                  {item.description && (
+                    <p className="inventory-item-desc">{item.description}</p>
+                  )}
+                  <span className="inventory-item-date">
+                    {new Date(item.purchaseDate).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Player Stats Section */}
         <div className="profile-card profile-stats-card">
@@ -623,6 +531,172 @@ export default function ProfileContent() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Stone name lists (must match LunaJester config) ── */
+const MOON_STONE_NAMES = [
+  'Lunar Stone', 'Silver Beach Gem', 'Wishmaster Broken Cube', "Dragon's Tear",
+  'Solar Stone', 'Galaxy Stone', 'Stone of Wisdom', 'Astral Prism',
+  'Eternal Stone', 'Mastermind Stone', 'Luna Moon Stone', 'Moonbound Emerald',
+];
+
+const FORBIDDEN_STONE_NAMES = ['Chaos Pearl', "Shuran's Heart", 'Halo Core'];
+
+const FORBIDDEN_HINTS: Record<string, string> = {
+  'Chaos Pearl': 'hintChaos',
+  "Shuran's Heart": 'hintShuran',
+  'Halo Core': 'hintHalo',
+};
+
+function StoneCollection({
+  stones,
+  isLoading,
+  onStoneClick,
+}: {
+  stones: UserStone[];
+  isLoading: boolean;
+  onStoneClick: (src: string, caption: string) => void;
+}) {
+  const t = useTranslations('profilePage');
+
+  const { ownedMoonNames, ownedForbiddenNames, moonStones, forbiddenStones } = useMemo(() => {
+    const ownedMap = new Map<string, UserStone>();
+    for (const s of stones) {
+      if (!ownedMap.has(s.name)) ownedMap.set(s.name, s);
+    }
+    const ownedMoonNames = new Set(MOON_STONE_NAMES.filter(n => ownedMap.has(n)));
+    const ownedForbiddenNames = new Set(FORBIDDEN_STONE_NAMES.filter(n => ownedMap.has(n)));
+
+    const moonStones = MOON_STONE_NAMES.map(name => ({
+      name,
+      owned: ownedMap.has(name),
+      data: ownedMap.get(name),
+    }));
+    const forbiddenStones = FORBIDDEN_STONE_NAMES.map(name => ({
+      name,
+      owned: ownedMap.has(name),
+      data: ownedMap.get(name),
+    }));
+
+    return { ownedMoonNames, ownedForbiddenNames, moonStones, forbiddenStones };
+  }, [stones]);
+
+  const moonCount = ownedMoonNames.size;
+  const forbiddenCount = ownedForbiddenNames.size;
+  const moonPercent = Math.round((moonCount / 12) * 100);
+  const forbiddenPercent = Math.round((forbiddenCount / 3) * 100);
+
+  // Tier calculation
+  const isZenith = moonCount === 12;
+  const isChosen = isZenith && forbiddenCount === 3;
+  const tierKey = isChosen ? 'tierChosen' : isZenith ? 'tierZenith' : 'tierNone';
+  const tierClass = isChosen ? 'tier-chosen' : isZenith ? 'tier-zenith' : 'tier-none';
+
+  if (isLoading) {
+    return (
+      <div className="profile-card profile-stones-card">
+        <h2 className="profile-section-title">{t('stones.title')}</h2>
+        <div className="skeleton" style={{ width: '100%', height: '200px', borderRadius: '12px' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="profile-card profile-stones-card">
+      {/* Header with title + tier badge */}
+      <div className="stones-header">
+        <h2 className="profile-section-title">{t('stones.title')}</h2>
+        <span className={`stones-tier-badge ${tierClass}`}>
+          {t(`stones.${tierKey}`)}
+        </span>
+      </div>
+
+      {/* Moon Stones */}
+      <div className="stones-section">
+        <div className="stones-section-header">
+          <span className="stones-section-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2">
+              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z" />
+            </svg>
+            {t('stones.moonStones')}
+          </span>
+          <span className="stones-section-count">{moonCount} / 12</span>
+        </div>
+        <div className="stones-progress-bar">
+          <div className="stones-progress-fill stones-progress-moon" style={{ width: `${moonPercent}%` }} />
+        </div>
+        <div className="stones-grid">
+          {moonStones.map((stone) => (
+            <div
+              key={stone.name}
+              className={`stone-card ${stone.owned ? 'stone-card-owned' : 'stone-card-locked'}`}
+              onClick={() => {
+                if (stone.owned && stone.data?.imageUrl) {
+                  onStoneClick(stone.data.imageUrl, stone.name);
+                }
+              }}
+            >
+              <div className="stone-image-wrap">
+                {stone.owned && stone.data?.imageUrl ? (
+                  <img src={stone.data.imageUrl} alt={stone.name} />
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                )}
+              </div>
+              <span className="stone-name">{stone.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Forbidden Stones */}
+      <div className="stones-section stones-section-forbidden">
+        <div className="stones-section-header">
+          <span className="stones-section-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+              <polygon points="12 2 15 9 22 9 17 14 19 22 12 17 5 22 7 14 2 9 9 9" />
+            </svg>
+            {t('stones.forbiddenStones')}
+          </span>
+          <span className="stones-section-count">{forbiddenCount} / 3</span>
+        </div>
+        <div className="stones-progress-bar">
+          <div className="stones-progress-fill stones-progress-forbidden" style={{ width: `${forbiddenPercent}%` }} />
+        </div>
+        <div className="stones-grid stones-grid-forbidden">
+          {forbiddenStones.map((stone) => (
+            <div
+              key={stone.name}
+              className={`stone-card stone-card-forbidden ${stone.owned ? 'stone-card-owned' : 'stone-card-locked'}`}
+              onClick={() => {
+                if (stone.owned && stone.data?.imageUrl) {
+                  onStoneClick(stone.data.imageUrl, stone.name);
+                }
+              }}
+            >
+              <div className="stone-image-wrap stone-image-forbidden">
+                {stone.owned && stone.data?.imageUrl ? (
+                  <img src={stone.data.imageUrl} alt={stone.name} />
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                )}
+              </div>
+              <span className="stone-name">{stone.name}</span>
+              {!stone.owned && (
+                <span className="stone-hint">{t(`stones.${FORBIDDEN_HINTS[stone.name]}`)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -10,6 +10,8 @@ import type {
   InventoryItem,
   CardsByGame,
   GameDataResponse,
+  ChatActivity,
+  CatalogCard,
 } from "@/types/gameData";
 
 function groupCards(cards: UserCard[]): CardsByGame {
@@ -42,7 +44,11 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db("Database");
 
-    const [cardsDoc, stonesDoc, pointsDoc, levelsDoc, magicWinsDoc, nemesisDocs, inventoryDoc] =
+    // Build today's date key in UTC (YYYY-MM-DD) for chat_stats
+    const now = new Date();
+    const todayKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
+
+    const [cardsDoc, stonesDoc, pointsDoc, levelsDoc, magicWinsDoc, nemesisDocs, inventoryDoc, ticketsDoc, chatMsgDoc, chatVoiceDoc, catalogDocs] =
       await Promise.all([
         db.collection("cards").findOne({ _id: discordId as any }),
         db.collection("stones").findOne({ _id: discordId as any }),
@@ -51,6 +57,10 @@ export async function GET() {
         db.collection("magic_wins").findOne({ _id: discordId as any }),
         db.collection("nemesis").find({ _id: { $regex: discordId } as any }).toArray(),
         db.collection("inventory").findOne({ _id: discordId as any }),
+        db.collection("tickets").findOne({ _id: discordId as any }),
+        db.collection("chat_stats").findOne({ _id: `universal_chat_${todayKey}` as any }),
+        db.collection("chat_stats").findOne({ _id: `universal_voice_${todayKey}` as any }),
+        db.collection("card_catalog").find({}).toArray(),
       ]);
 
     // Cards
@@ -118,6 +128,41 @@ export async function GET() {
       } catch {}
     }
 
+    // Tickets (st.db: data is stringified int)
+    let tickets = 0;
+    if (ticketsDoc?.data) {
+      tickets = parseInt(ticketsDoc.data, 10) || 0;
+    }
+
+    // Chat activity — docs store Record<userId, count/minutes> as stringified JSON
+    let chatActivity: ChatActivity | null = null;
+    try {
+      let messagesToday = 0;
+      let voiceMinutesToday = 0;
+      if (chatMsgDoc?.data) {
+        const parsed = JSON.parse(chatMsgDoc.data);
+        messagesToday = parsed[discordId] ?? 0;
+      }
+      if (chatVoiceDoc?.data) {
+        const parsed = JSON.parse(chatVoiceDoc.data);
+        voiceMinutesToday = parsed[discordId] ?? 0;
+      }
+      chatActivity = { messagesToday, voiceMinutesToday };
+    } catch {}
+
+    // Card catalog — regular documents with id, name (LocalizedString), rarity, imageUrl, game
+    const cardCatalog: CatalogCard[] = catalogDocs.map((doc) => {
+      const name = typeof doc.name === "object" && doc.name?.en ? doc.name.en : String(doc.name ?? "");
+      return {
+        id: doc.id ?? String(doc._id),
+        name,
+        rarity: doc.rarity ?? "common",
+        imageUrl: doc.imageUrl ?? "",
+        attack: doc.attack,
+        game: doc.game,
+      };
+    });
+
     const response: GameDataResponse = {
       cardsByGame,
       totalCards: allCards.length,
@@ -127,6 +172,9 @@ export async function GET() {
       gameWins,
       pvp,
       inventory,
+      tickets,
+      chatActivity,
+      cardCatalog,
     };
 
     return NextResponse.json(response);
