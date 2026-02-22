@@ -872,29 +872,72 @@ html[lang="ar"] .treasury-item-value {
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.06);
   overflow: hidden;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  perspective: 1800px;
 }
 
-.book-wrapper.flip-left {
-  animation: pageSlideOutLeft 0.3s ease forwards;
+/* Page-fold animation: turning right page over to the left (next) */
+.book-wrapper.flip-left .book-page-right {
+  animation: pageFoldLeft 0.5s ease-in-out forwards;
+  transform-origin: left center;
 }
 
-.book-wrapper.flip-right {
-  animation: pageSlideOutRight 0.3s ease forwards;
+.book-wrapper.flip-left .book-page-left {
+  animation: pageFadeOut 0.25s ease forwards;
 }
 
-@keyframes pageSlideOutLeft {
-  0% { opacity: 1; transform: translateX(0); }
-  50% { opacity: 0; transform: translateX(-20px); }
-  51% { opacity: 0; transform: translateX(20px); }
-  100% { opacity: 1; transform: translateX(0); }
+/* Page-fold animation: turning left page over to the right (prev) */
+.book-wrapper.flip-right .book-page-left {
+  animation: pageFoldRight 0.5s ease-in-out forwards;
+  transform-origin: right center;
 }
 
-@keyframes pageSlideOutRight {
-  0% { opacity: 1; transform: translateX(0); }
-  50% { opacity: 0; transform: translateX(20px); }
-  51% { opacity: 0; transform: translateX(-20px); }
-  100% { opacity: 1; transform: translateX(0); }
+.book-wrapper.flip-right .book-page-right {
+  animation: pageFadeOut 0.25s ease forwards;
+}
+
+@keyframes pageFoldLeft {
+  0% {
+    transform: rotateY(0deg);
+    box-shadow: none;
+  }
+  30% {
+    transform: rotateY(-55deg);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+  }
+  60% {
+    transform: rotateY(-110deg);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
+  }
+  100% {
+    transform: rotateY(-180deg);
+    box-shadow: none;
+    opacity: 0;
+  }
+}
+
+@keyframes pageFoldRight {
+  0% {
+    transform: rotateY(0deg);
+    box-shadow: none;
+  }
+  30% {
+    transform: rotateY(55deg);
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.4);
+  }
+  60% {
+    transform: rotateY(110deg);
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.3);
+  }
+  100% {
+    transform: rotateY(180deg);
+    box-shadow: none;
+    opacity: 0;
+  }
+}
+
+@keyframes pageFadeOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Book spine */
@@ -917,6 +960,8 @@ html[lang="ar"] .treasury-item-value {
   gap: 8px;
   padding: 12px;
   min-height: 0;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
 /* Book card */
@@ -1569,9 +1614,19 @@ html[lang="ar"] .stats-level-number {
     gap: 8px;
   }
 
-  /* Book: single page on mobile */
+  /* Book: single page on mobile — fold the visible page */
   .book-wrapper {
     min-height: 360px;
+  }
+
+  .book-wrapper.flip-left .book-page-left {
+    animation: pageFoldLeft 0.5s ease-in-out forwards;
+    transform-origin: left center;
+  }
+
+  .book-wrapper.flip-right .book-page-left {
+    animation: pageFoldRight 0.5s ease-in-out forwards;
+    transform-origin: right center;
   }
 
   .book-spine {
@@ -1623,6 +1678,15 @@ html[dir="rtl"] .card-scroll-strip {
 
 html[dir="rtl"] .book-wrapper {
   flex-direction: row-reverse;
+}
+
+/* RTL: mirror the fold origins */
+html[dir="rtl"] .book-wrapper.flip-left .book-page-right {
+  transform-origin: right center;
+}
+
+html[dir="rtl"] .book-wrapper.flip-right .book-page-left {
+  transform-origin: left center;
 }
 
 html[dir="rtl"] .book-nav {

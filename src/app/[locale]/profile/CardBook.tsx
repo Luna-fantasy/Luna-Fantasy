@@ -198,7 +198,7 @@ export default function CardBook({
     setTimeout(() => {
       setCurrentPage(page);
       setFlipDirection(null);
-    }, 300);
+    }, 500);
   }, []);
 
   const prevPage = () => {
