@@ -230,6 +230,41 @@ export default function CardBook({
     }
   };
 
+  // Incoming page cards (the page being revealed underneath the fold)
+  const incomingData = useMemo(() => {
+    if (pendingPage === null) return null;
+    const inStart = pendingPage * cardsPerView;
+    const inCards = filteredCards.slice(inStart, inStart + cardsPerView);
+    const inLeft = inCards.slice(0, CARDS_PER_PAGE);
+    const inRight = inCards.slice(CARDS_PER_PAGE, CARDS_PER_SPREAD);
+    return {
+      left: inLeft,
+      right: inRight,
+      leftEmpty: CARDS_PER_PAGE - inLeft.length,
+      rightEmpty: !isMobile ? CARDS_PER_PAGE - inRight.length : 0,
+    };
+  }, [pendingPage, filteredCards, cardsPerView, isMobile]);
+
+  // Helper to render a page of cards
+  const renderPageContent = useCallback((cards: MergedCard[], emptyCount: number, prefix: string) => (
+    <>
+      {cards.map((card) => (
+        <BookCard
+          key={`${prefix}-${card.id}`}
+          card={card}
+          isBroken={brokenImages.has(card.id)}
+          onImageError={onImageError}
+          onCardClick={onCardClick}
+        />
+      ))}
+      {Array.from({ length: emptyCount }).map((_, i) => (
+        <div key={`${prefix}-empty-${i}`} className="book-card-empty">
+          <div className="book-card-empty-slot" />
+        </div>
+      ))}
+    </>
+  ), [brokenImages, onImageError, onCardClick]);
+
   if (isLoading) {
     return (
       <div className="book-wrapper">
@@ -251,41 +286,6 @@ export default function CardBook({
       </div>
     );
   }
-
-  // Incoming page cards (the page being revealed underneath the fold)
-  const incomingData = useMemo(() => {
-    if (pendingPage === null) return null;
-    const inStart = pendingPage * cardsPerView;
-    const inCards = filteredCards.slice(inStart, inStart + cardsPerView);
-    const inLeft = inCards.slice(0, CARDS_PER_PAGE);
-    const inRight = inCards.slice(CARDS_PER_PAGE, CARDS_PER_SPREAD);
-    return {
-      left: inLeft,
-      right: inRight,
-      leftEmpty: CARDS_PER_PAGE - inLeft.length,
-      rightEmpty: !isMobile ? CARDS_PER_PAGE - inRight.length : 0,
-    };
-  }, [pendingPage, filteredCards, cardsPerView, isMobile]);
-
-  // Helper to render a page of cards
-  const renderPageContent = (cards: MergedCard[], emptyCount: number, prefix: string) => (
-    <>
-      {cards.map((card) => (
-        <BookCard
-          key={`${prefix}-${card.id}`}
-          card={card}
-          isBroken={brokenImages.has(card.id)}
-          onImageError={onImageError}
-          onCardClick={onCardClick}
-        />
-      ))}
-      {Array.from({ length: emptyCount }).map((_, i) => (
-        <div key={`${prefix}-empty-${i}`} className="book-card-empty">
-          <div className="book-card-empty-slot" />
-        </div>
-      ))}
-    </>
-  );
 
   const hasCatalog = catalogCards.length > 0;
 
