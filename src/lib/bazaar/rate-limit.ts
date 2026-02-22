@@ -75,4 +75,12 @@ export const RATE_LIMITS = {
   stonebox: { maxRequests: 5, windowMs: 60_000 },      // 5 per minute
   tickets: { maxRequests: 5, windowMs: 60_000 },       // 5 per minute
   stripe: { maxRequests: 3, windowMs: 300_000 },       // 3 per 5 minutes
+  marketplace_list: { maxRequests: 3, windowMs: 60_000 },   // 3 per minute
+  marketplace_buy: { maxRequests: 5, windowMs: 60_000 },    // 5 per minute
+  marketplace_cancel: { maxRequests: 5, windowMs: 60_000 }, // 5 per minute
+  auction_create: { maxRequests: 3, windowMs: 60_000 },    // 3 per minute
+  auction_bid: { maxRequests: 10, windowMs: 60_000 },      // 10 per minute
+  auction_resolve: { maxRequests: 5, windowMs: 60_000 },   // 5 per minute
+  swap_propose: { maxRequests: 3, windowMs: 60_000 },     // 3 per minute
+  swap_respond: { maxRequests: 10, windowMs: 60_000 },    // 10 per minute
 } as const;

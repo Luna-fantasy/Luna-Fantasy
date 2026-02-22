@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { UserCard, CatalogCard } from '@/types/gameData';
+import type { CardDetailData } from '@/components/CardDetailModal';
 
 const RARITY_ORDER = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden', 'mythical'] as const;
 
@@ -16,13 +17,17 @@ interface MergedCard {
   imageUrl: string;
   attack?: number;
   owned: boolean;
+  weight?: number;
+  source?: string;
+  obtainedDate?: string;
+  duplicateCount: number;
 }
 
 interface CardBookProps {
   ownedCards: UserCard[];
   catalogCards: CatalogCard[];
   isLoading: boolean;
-  onCardClick: (src: string, caption: string) => void;
+  onCardClick: (card: CardDetailData) => void;
   brokenImages: Set<string>;
   onImageError: (id: string) => void;
 }
@@ -47,18 +52,38 @@ export default function CardBook({
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
   const touchStartX = useRef<number | null>(null);
 
+  // Compute duplicate count map from ownedCards
+  const duplicateMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const c of ownedCards) {
+      map.set(c.name, (map.get(c.name) ?? 0) + 1);
+    }
+    return map;
+  }, [ownedCards]);
+
   // Merge catalog with owned cards (fallback: if catalog is empty, show owned cards directly)
   const mergedCards = useMemo(() => {
     if (catalogCards.length === 0) {
       // No catalog yet — just display owned cards as all-owned entries
-      const merged: MergedCard[] = ownedCards.map((c, idx) => ({
-        id: c.id || `owned-${idx}`,
-        name: c.name,
-        rarity: c.rarity,
-        imageUrl: c.imageUrl,
-        attack: c.attack,
-        owned: true,
-      }));
+      // Deduplicate by name (show first occurrence only, with duplicate count)
+      const seen = new Set<string>();
+      const merged: MergedCard[] = [];
+      for (const c of ownedCards) {
+        if (seen.has(c.name)) continue;
+        seen.add(c.name);
+        merged.push({
+          id: c.id || `owned-${merged.length}`,
+          name: c.name,
+          rarity: c.rarity,
+          imageUrl: c.imageUrl,
+          attack: c.attack,
+          owned: true,
+          weight: c.weight,
+          source: c.source,
+          obtainedDate: c.obtainedDate,
+          duplicateCount: duplicateMap.get(c.name) ?? 1,
+        });
+      }
       merged.sort((a, b) => {
         const ri = getRarityIndex(a.rarity) - getRarityIndex(b.rarity);
         if (ri !== 0) return ri;
@@ -81,8 +106,12 @@ export default function CardBook({
         name: cat.name,
         rarity: cat.rarity,
         imageUrl: owned && ownedCard?.imageUrl ? ownedCard.imageUrl : cat.imageUrl,
-        attack: owned && ownedCard ? ownedCard.attack : cat.attack,
+        attack: cat.attack || ownedCard?.attack || 0,
         owned,
+        weight: cat.weight ?? ownedCard?.weight,
+        source: ownedCard?.source,
+        obtainedDate: ownedCard?.obtainedDate,
+        duplicateCount: duplicateMap.get(cat.name) ?? 0,
       };
     });
 
@@ -94,7 +123,7 @@ export default function CardBook({
     });
 
     return merged;
-  }, [ownedCards, catalogCards]);
+  }, [ownedCards, catalogCards, duplicateMap]);
 
   // Filter
   const filteredCards = useMemo(() => {
@@ -133,6 +162,10 @@ export default function CardBook({
   const pageCards = filteredCards.slice(startIdx, startIdx + cardsPerView);
   const leftPageCards = pageCards.slice(0, CARDS_PER_PAGE);
   const rightPageCards = pageCards.slice(CARDS_PER_PAGE, CARDS_PER_SPREAD);
+
+  // Empty slots to fill the grid
+  const leftEmptySlots = CARDS_PER_PAGE - leftPageCards.length;
+  const rightEmptySlots = !isMobile ? CARDS_PER_PAGE - rightPageCards.length : 0;
 
   // Overall progress
   const totalCatalog = mergedCards.length;
@@ -210,6 +243,36 @@ export default function CardBook({
         </div>
       )}
 
+      {/* Collection Milestones — per-rarity progress */}
+      {hasCatalog && (
+        <div className="book-milestones">
+          <div className="book-milestones-title">{t('collection.milestones')}</div>
+          <div className="book-milestones-grid">
+            {RARITY_ORDER.map(r => {
+              const stat = rarityStats[r];
+              if (!stat) return null;
+              const pct = Math.round((stat.owned / stat.total) * 100);
+              const isComplete = stat.owned === stat.total;
+              return (
+                <div key={r} className={`milestone-item ${isComplete ? 'milestone-complete' : ''}`}>
+                  <div className="milestone-header">
+                    <span className={`milestone-rarity rarity-text-${r}`}>
+                      {t(`rarity.${r}` as any)}
+                    </span>
+                    <span className="milestone-count">
+                      {isComplete ? t('collection.milestoneComplete') : `${stat.owned}/${stat.total}`}
+                    </span>
+                  </div>
+                  <div className="milestone-bar">
+                    <div className={`milestone-fill fill-${r}`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Rarity filter pills */}
       <div className="book-filters">
         <button
@@ -270,6 +333,11 @@ export default function CardBook({
                 onCardClick={onCardClick}
               />
             ))}
+            {Array.from({ length: leftEmptySlots }).map((_, i) => (
+              <div key={`empty-l-${i}`} className="book-card-empty">
+                <div className="book-card-empty-slot" />
+              </div>
+            ))}
           </div>
 
           {/* Spine */}
@@ -285,6 +353,11 @@ export default function CardBook({
                 onImageError={onImageError}
                 onCardClick={onCardClick}
               />
+            ))}
+            {Array.from({ length: rightEmptySlots }).map((_, i) => (
+              <div key={`empty-r-${i}`} className="book-card-empty">
+                <div className="book-card-empty-slot" />
+              </div>
             ))}
           </div>
         </div>
@@ -333,7 +406,7 @@ function BookCard({
   card: MergedCard;
   isBroken: boolean;
   onImageError: (id: string) => void;
-  onCardClick: (src: string, caption: string) => void;
+  onCardClick: (card: CardDetailData) => void;
 }) {
   const rKey = card.rarity.toLowerCase();
 
@@ -341,9 +414,18 @@ function BookCard({
     <div
       className={`book-card ${card.owned ? 'book-card-owned' : 'book-card-unowned'}`}
       onClick={() => {
-        if (card.owned && !isBroken && card.imageUrl) {
-          onCardClick(card.imageUrl, card.name);
-        }
+        onCardClick({
+          id: card.id,
+          name: card.name,
+          rarity: card.rarity,
+          imageUrl: card.imageUrl,
+          attack: card.attack,
+          weight: card.weight,
+          source: card.source,
+          obtainedDate: card.obtainedDate,
+          owned: card.owned,
+          duplicateCount: card.duplicateCount,
+        });
       }}
     >
       <div className={`book-card-image rarity-border-${rKey}`}>
@@ -368,6 +450,9 @@ function BookCard({
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </div>
+        )}
+        {card.duplicateCount > 1 && (
+          <span className="book-card-dupe-badge">x{card.duplicateCount}</span>
         )}
         <span className={`book-card-rarity rarity-${rKey}`}>{card.rarity}</span>
       </div>

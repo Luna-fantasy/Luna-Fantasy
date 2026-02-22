@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getLuckboxTier, VALID_TIERS } from '@/lib/bazaar/luckbox-config';
+import { getLuckboxTier, VALID_TIERS, generateCardStats } from '@/lib/bazaar/luckbox-config';
 import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance, getDailySpending, DAILY_SPEND_LIMIT } from '@/lib/bazaar/lunari-ops';
 import { weightedRandomDraw } from '@/lib/bazaar/weighted-random';
 import { userOwnsCard, addCardToUser } from '@/lib/bazaar/card-ops';
@@ -81,12 +81,28 @@ export async function POST(request: Request) {
     const cardsWithWeight = catalogCards.map((c) => ({
       name: typeof c.name === 'object' && c.name?.en ? c.name.en : String(c.name ?? ''),
       rarity: c.rarity,
-      attack: c.attack ?? 0,
       imageUrl: c.imageUrl ?? '',
-      weight: c.weight ?? 1,
+      drawWeight: c.weight ?? 1,
+      game: c.game,
     }));
 
-    const drawnCard = weightedRandomDraw(cardsWithWeight);
+    // Use drawWeight for the random selection pool
+    const drawPool = cardsWithWeight.map((c) => ({ ...c, weight: c.drawWeight }));
+    const picked = weightedRandomDraw(drawPool);
+
+    // Generate random attack and weight stats based on rarity (matches bot behavior)
+    const stats = generateCardStats(tierConfig.rarity);
+
+    // Prefix card name with "Luna " for lunaFantasy game cards (matches bot naming)
+    const cardName = picked.game === 'lunaFantasy' ? `Luna ${picked.name}` : picked.name;
+
+    const drawnCard = {
+      name: cardName,
+      rarity: tierConfig.rarity.toUpperCase(),
+      attack: stats.attack,
+      imageUrl: picked.imageUrl,
+      weight: stats.weight,
+    };
 
     // 5. Check duplicate
     const isDuplicate = await userOwnsCard(discordId, drawnCard.name);

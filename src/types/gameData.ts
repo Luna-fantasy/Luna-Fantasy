@@ -63,6 +63,7 @@ export interface CatalogCard {
   rarity: string;
   imageUrl: string;
   attack?: number;
+  weight?: number;
   game?: string;
 }
 

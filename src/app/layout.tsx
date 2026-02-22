@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import '@/styles/globals.css';
+import '@/styles/notifications.css';
 import { AuthProvider } from '@/components/AuthProvider';
 
 type Props = {

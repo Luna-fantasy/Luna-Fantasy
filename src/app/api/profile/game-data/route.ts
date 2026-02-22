@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
+import { generateCardStats } from "@/lib/bazaar/luckbox-config";
 import type {
   UserCard,
   UserStone,
@@ -72,6 +73,16 @@ export async function GET() {
           : Array.isArray(cardsDoc.data) ? cardsDoc.data : [];
       } catch {}
     }
+
+    // Safety net: backfill attack/weight for any cards that have bad data (attack=0)
+    for (const card of allCards) {
+      if (card.attack === 0 || card.attack == null) {
+        const stats = generateCardStats(card.rarity);
+        card.attack = stats.attack;
+        card.weight = stats.weight;
+      }
+    }
+
     const cardsByGame = groupCards(allCards);
 
     // Stones — data may be JSON string (bot) or native object (web bazaar)
@@ -162,7 +173,8 @@ export async function GET() {
         name,
         rarity: doc.rarity ?? "common",
         imageUrl: doc.imageUrl ?? "",
-        attack: doc.attack,
+        attack: doc.attack ?? 0,
+        weight: doc.weight,
         game: doc.game,
       };
     });

@@ -159,6 +159,16 @@ html[lang="ar"] .profile-name {
   font-size: 13px;
 }
 
+/* Hero Treasury (inside header card) */
+.hero-treasury {
+  margin: 20px 24px 24px;
+  padding: 0;
+}
+
+.hero-treasury .treasury-row {
+  justify-content: center;
+}
+
 /* Stats Row */
 .profile-stats-row {
   display: flex;
@@ -375,6 +385,10 @@ html[lang="ar"] .profile-section-title {
 
   .profile-name {
     font-size: 1.25rem;
+  }
+
+  .hero-treasury {
+    margin: 16px 16px 20px;
   }
 
   .profile-stats-row {

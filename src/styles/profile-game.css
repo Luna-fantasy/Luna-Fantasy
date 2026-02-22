@@ -404,6 +404,25 @@ html[lang="ar"] .treasury-item-value {
   margin-bottom: 0;
 }
 
+.stones-collect-info {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.stones-collect-link {
+  color: #8b5cf6;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.stones-collect-link:hover {
+  color: #a78bfa;
+  text-decoration: underline;
+}
+
 /* Tier Badge */
 .stones-tier-badge {
   padding: 4px 12px;
@@ -581,6 +600,7 @@ html[lang="ar"] .treasury-item-value {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  padding: 6px;
 }
 
 @keyframes stone-glow {
@@ -599,11 +619,13 @@ html[lang="ar"] .treasury-item-value {
   font-weight: 700;
   color: var(--text-secondary);
   text-align: center;
-  max-width: 80px;
+  max-width: 90px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.2;
+  word-break: break-word;
 }
 
 .stone-card-locked .stone-name {
@@ -1012,6 +1034,42 @@ html[dir="rtl"] .book-card-rarity {
   font-weight: 600;
 }
 
+/* Duplicate count badge */
+.book-card-dupe-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 1px 6px;
+  border-radius: 50px;
+  background: rgba(139, 92, 246, 0.85);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  box-shadow: 0 1px 4px rgba(139, 92, 246, 0.4);
+  z-index: 1;
+}
+
+html[dir="rtl"] .book-card-dupe-badge {
+  left: auto;
+  right: 4px;
+}
+
+/* Empty card slot placeholder */
+.book-card-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.book-card-empty-slot {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-sm);
+  border: 2px dashed rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.015);
+}
+
 .book-card-skeleton {
   aspect-ratio: 2 / 3;
   border-radius: var(--radius-sm);
@@ -1057,6 +1115,103 @@ html[dir="rtl"] .book-card-rarity {
   font-size: 12px;
   font-weight: 700;
   color: var(--text-muted);
+}
+
+/* ============================================
+   COLLECTION MILESTONES
+   ============================================ */
+.book-milestones {
+  margin-bottom: 16px;
+}
+
+.book-milestones-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.book-milestones-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.milestone-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.milestone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.milestone-rarity {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.milestone-rarity.rarity-text-common { color: var(--common); }
+.milestone-rarity.rarity-text-rare { color: var(--rare); }
+.milestone-rarity.rarity-text-epic { color: var(--epic); }
+.milestone-rarity.rarity-text-unique { color: var(--unique); }
+.milestone-rarity.rarity-text-legendary { color: var(--legendary); }
+.milestone-rarity.rarity-text-secret { color: var(--secret); }
+.milestone-rarity.rarity-text-forbidden { color: #ff6600; }
+.milestone-rarity.rarity-text-mythical { color: #ff00ff; }
+
+.milestone-count {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.milestone-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.milestone-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.milestone-fill.fill-common { background: var(--common); }
+.milestone-fill.fill-rare { background: var(--rare); }
+.milestone-fill.fill-epic { background: var(--epic); }
+.milestone-fill.fill-unique { background: var(--unique); }
+.milestone-fill.fill-legendary { background: var(--legendary); }
+.milestone-fill.fill-secret { background: var(--secret); }
+.milestone-fill.fill-forbidden { background: #ff6600; }
+.milestone-fill.fill-mythical { background: #ff00ff; }
+
+/* Gold glow when 100% complete */
+.milestone-item.milestone-complete {
+  border-color: rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.04);
+  animation: milestone-glow 2s ease-in-out infinite alternate;
+}
+
+.milestone-complete .milestone-count {
+  color: var(--legendary);
+}
+
+@keyframes milestone-glow {
+  0% { box-shadow: 0 0 4px rgba(251, 191, 36, 0.1); }
+  100% { box-shadow: 0 0 12px rgba(251, 191, 36, 0.25); }
 }
 
 /* ============================================
@@ -1401,7 +1556,7 @@ html[lang="ar"] .stats-level-number {
 
   .stone-name {
     font-size: 9px;
-    max-width: 64px;
+    max-width: 72px;
   }
 
   .stone-hint {
@@ -1440,6 +1595,10 @@ html[lang="ar"] .stats-level-number {
     font-size: 7px;
   }
 
+  .book-milestones-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .book-filters {
     gap: 4px;
   }
@@ -1447,6 +1606,11 @@ html[lang="ar"] .stats-level-number {
   .book-rarity-btn {
     font-size: 10px;
     padding: 4px 8px;
+  }
+
+  .book-card-dupe-badge {
+    font-size: 7px;
+    padding: 1px 5px;
   }
 }
 
@@ -1465,7 +1629,8 @@ html[dir="rtl"] .book-nav {
   flex-direction: row-reverse;
 }
 
-html[dir="rtl"] .book-nav-btn svg {
+html[dir="rtl"] .book-nav-btn svg,
+html[dir="rtl"] .transaction-page-btn svg {
   transform: scaleX(-1);
 }
 
@@ -1490,4 +1655,189 @@ html[lang="ar"] .stones-section-label,
 html[lang="ar"] .stone-name,
 html[lang="ar"] .stone-hint {
   font-family: 'Cairo', sans-serif;
+}
+
+/* ============================================
+   TRANSACTION HISTORY
+   ============================================ */
+.transaction-history-card {
+  margin-top: 0;
+  padding: 20px 20px 16px;
+}
+
+.transaction-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 14px;
+}
+
+.transaction-header-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+.transaction-header-count {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50px;
+  padding: 1px 8px;
+  line-height: 1.4;
+}
+
+html[lang="ar"] .transaction-header-title {
+  font-family: 'Cairo', sans-serif;
+}
+
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s;
+}
+
+.transaction-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.transaction-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.transaction-credit .transaction-icon {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.transaction-debit .transaction-icon {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.transaction-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.transaction-type {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+}
+
+.transaction-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.transaction-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.transaction-amount {
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.transaction-lunari-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.transaction-credit .transaction-amount { color: #4ade80; }
+.transaction-debit .transaction-amount { color: #ef4444; }
+
+.transaction-date {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Pagination */
+.transaction-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.transaction-page-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.transaction-page-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
+.transaction-page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.transaction-page-info {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: center;
+}
+
+.transactions-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }

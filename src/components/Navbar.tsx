@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { onBalanceUpdate } from '@/lib/balance-events';
+import { NotificationBell } from '@/components/NotificationBell';
+import { FEATURE_FLAGS } from '@/lib/feature-flags';
 
 export function Navbar() {
   const t = useTranslations('nav');
@@ -15,16 +17,24 @@ export function Navbar() {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [gamesDropdownOpen, setGamesDropdownOpen] = useState(false);
+  const [worldDropdownOpen, setWorldDropdownOpen] = useState(false);
+  const [economyDropdownOpen, setEconomyDropdownOpen] = useState(false);
   const [mobileGamesOpen, setMobileGamesOpen] = useState(false);
+  const [mobileWorldOpen, setMobileWorldOpen] = useState(false);
+  const [mobileEconomyOpen, setMobileEconomyOpen] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [lunariBalance, setLunariBalance] = useState<number | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const gamesDropdownRef = useRef<HTMLDivElement>(null);
+  const worldDropdownRef = useRef<HTMLDivElement>(null);
+  const economyDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
 
   const gameRoutes = ['/luna-fantasy', '/grand-fantasy', '/bumper'];
+  const worldRoutes = ['/story', '/characters', '/partners'];
+  const economyRoutes = FEATURE_FLAGS.marketplace
+    ? ['/bank', '/bazaar', '/marketplace']
+    : ['/bank', '/bazaar'];
 
   // Fetch Lunari balance when logged in
   const fetchBalance = useCallback(async () => {
@@ -68,11 +78,14 @@ export function Navbar() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
       if (gamesDropdownRef.current && !gamesDropdownRef.current.contains(e.target as Node)) {
         setGamesDropdownOpen(false);
+      }
+      if (worldDropdownRef.current && !worldDropdownRef.current.contains(e.target as Node)) {
+        setWorldDropdownOpen(false);
+      }
+      if (economyDropdownRef.current && !economyDropdownRef.current.contains(e.target as Node)) {
+        setEconomyDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -90,6 +103,8 @@ export function Navbar() {
   };
 
   const isGamesActive = gameRoutes.some(route => pathname.startsWith(route));
+  const isWorldActive = worldRoutes.some(route => pathname.startsWith(route));
+  const isEconomyActive = economyRoutes.some(route => pathname.startsWith(route));
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -134,16 +149,13 @@ export function Navbar() {
             <Link href="/" className={`nav-link ${isActive('/') && pathname === '/' ? 'active' : ''}`}>
               {t('home')}
             </Link>
-            <Link href="/story" className={`nav-link ${isActive('/story') ? 'active' : ''}`}>
-              {t('story')}
-            </Link>
 
             {/* Games Dropdown */}
             <div className="games-dropdown-wrap" ref={gamesDropdownRef}>
               <button
                 className={`games-dropdown-trigger ${isGamesActive ? 'active' : ''}`}
-                onClick={() => setGamesDropdownOpen(!gamesDropdownOpen)}
-                onMouseEnter={() => setGamesDropdownOpen(true)}
+                onClick={() => { setGamesDropdownOpen(!gamesDropdownOpen); setWorldDropdownOpen(false); setEconomyDropdownOpen(false); }}
+                onMouseEnter={() => { setGamesDropdownOpen(true); setWorldDropdownOpen(false); setEconomyDropdownOpen(false); }}
               >
                 {t('games')}
                 <ChevronIcon open={gamesDropdownOpen} />
@@ -178,18 +190,87 @@ export function Navbar() {
               )}
             </div>
 
-            <Link href="/characters" className={`nav-link ${isActive('/characters') ? 'active' : ''}`}>
-              {t('characters')}
-            </Link>
-            <Link href="/bank" className={`nav-link ${isActive('/bank') ? 'active' : ''}`}>
-              {t('bank')}
-            </Link>
-            <Link href="/bazaar" className={`nav-link ${isActive('/bazaar') ? 'active' : ''}`}>
-              {t('bazaar')}
-            </Link>
-            <Link href="/partners" className={`nav-link ${isActive('/partners') ? 'active' : ''}`}>
-              {t('partners')}
-            </Link>
+            {/* World Dropdown */}
+            <div className="games-dropdown-wrap" ref={worldDropdownRef}>
+              <button
+                className={`games-dropdown-trigger ${isWorldActive ? 'active' : ''}`}
+                onClick={() => { setWorldDropdownOpen(!worldDropdownOpen); setGamesDropdownOpen(false); setEconomyDropdownOpen(false); }}
+                onMouseEnter={() => { setWorldDropdownOpen(true); setGamesDropdownOpen(false); setEconomyDropdownOpen(false); }}
+              >
+                {t('world')}
+                <ChevronIcon open={worldDropdownOpen} />
+              </button>
+              {worldDropdownOpen && (
+                <div
+                  className="games-dropdown"
+                  onMouseLeave={() => setWorldDropdownOpen(false)}
+                >
+                  <Link
+                    href="/story"
+                    className={`games-dropdown-item ${isActive('/story') ? 'active' : ''}`}
+                    onClick={() => setWorldDropdownOpen(false)}
+                  >
+                    {t('story')}
+                  </Link>
+                  <Link
+                    href="/characters"
+                    className={`games-dropdown-item ${isActive('/characters') ? 'active' : ''}`}
+                    onClick={() => setWorldDropdownOpen(false)}
+                  >
+                    {t('characters')}
+                  </Link>
+                  <Link
+                    href="/partners"
+                    className={`games-dropdown-item ${isActive('/partners') ? 'active' : ''}`}
+                    onClick={() => setWorldDropdownOpen(false)}
+                  >
+                    {t('partners')}
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Economy Dropdown */}
+            <div className="games-dropdown-wrap" ref={economyDropdownRef}>
+              <button
+                className={`games-dropdown-trigger ${isEconomyActive ? 'active' : ''}`}
+                onClick={() => { setEconomyDropdownOpen(!economyDropdownOpen); setGamesDropdownOpen(false); setWorldDropdownOpen(false); }}
+                onMouseEnter={() => { setEconomyDropdownOpen(true); setGamesDropdownOpen(false); setWorldDropdownOpen(false); }}
+              >
+                {t('economy')}
+                <ChevronIcon open={economyDropdownOpen} />
+              </button>
+              {economyDropdownOpen && (
+                <div
+                  className="games-dropdown"
+                  onMouseLeave={() => setEconomyDropdownOpen(false)}
+                >
+                  <Link
+                    href="/bank"
+                    className={`games-dropdown-item ${isActive('/bank') ? 'active' : ''}`}
+                    onClick={() => setEconomyDropdownOpen(false)}
+                  >
+                    {t('bank')}
+                  </Link>
+                  <Link
+                    href="/bazaar"
+                    className={`games-dropdown-item ${isActive('/bazaar') ? 'active' : ''}`}
+                    onClick={() => setEconomyDropdownOpen(false)}
+                  >
+                    {t('bazaar')}
+                  </Link>
+                  {FEATURE_FLAGS.marketplace && (
+                    <Link
+                      href="/marketplace"
+                      className={`games-dropdown-item ${isActive('/marketplace') ? 'active' : ''}`}
+                      onClick={() => setEconomyDropdownOpen(false)}
+                    >
+                      {t('marketplace')}
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="actions-box">
@@ -198,11 +279,10 @@ export function Navbar() {
               {status === 'loading' ? (
                 <div className="auth-skeleton" />
               ) : session ? (
-                <div className="user-btn-wrap" ref={dropdownRef}>
-                  <button
-                    className="user-btn"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                  >
+                <>
+                <NotificationBell />
+                <Link href="/profile" className="user-btn-wrap">
+                  <div className="user-btn">
                     {session.user?.image ? (
                       <Image
                         src={session.user.image}
@@ -229,28 +309,9 @@ export function Navbar() {
                         </span>
                       )}
                     </span>
-                  </button>
-                  {dropdownOpen && (
-                    <div className="user-dropdown">
-                      <Link
-                        href="/profile"
-                        className="dropdown-item"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => setDropdownOpen(false)}
-                      >
-                        {t('profile')}
-                      </Link>
-                      <div className="dropdown-divider" />
-                      <button
-                        className="dropdown-item dropdown-signout"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => { setDropdownOpen(false); setShowSignOutModal(true); }}
-                      >
-                        {t('signOut')}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                </Link>
+                </>
               ) : (
                 <button
                   className="btn-discord-login"
@@ -316,9 +377,6 @@ export function Navbar() {
           <Link href="/" className={`mobile-nav-link ${isActive('/') && pathname === '/' ? 'active' : ''}`} onClick={closeMobileMenu}>
             {t('home')}
           </Link>
-          <Link href="/story" className={`mobile-nav-link ${isActive('/story') ? 'active' : ''}`} onClick={closeMobileMenu}>
-            {t('story')}
-          </Link>
 
           {/* Mobile Games Group */}
           <div className="mobile-games-group">
@@ -356,18 +414,79 @@ export function Navbar() {
             )}
           </div>
 
-          <Link href="/characters" className={`mobile-nav-link ${isActive('/characters') ? 'active' : ''}`} onClick={closeMobileMenu}>
-            {t('characters')}
-          </Link>
-          <Link href="/bank" className={`mobile-nav-link ${isActive('/bank') ? 'active' : ''}`} onClick={closeMobileMenu}>
-            {t('bank')}
-          </Link>
-          <Link href="/bazaar" className={`mobile-nav-link ${isActive('/bazaar') ? 'active' : ''}`} onClick={closeMobileMenu}>
-            {t('bazaar')}
-          </Link>
-          <Link href="/partners" className={`mobile-nav-link ${isActive('/partners') ? 'active' : ''}`} onClick={closeMobileMenu}>
-            {t('partners')}
-          </Link>
+          {/* Mobile World Group */}
+          <div className="mobile-games-group">
+            <button
+              className={`mobile-games-trigger ${isWorldActive ? 'active' : ''}`}
+              onClick={() => setMobileWorldOpen(!mobileWorldOpen)}
+            >
+              <span>{t('world')}</span>
+              <ChevronIcon open={mobileWorldOpen} />
+            </button>
+            {mobileWorldOpen && (
+              <div className="mobile-games-sublinks">
+                <Link
+                  href="/story"
+                  className={`mobile-nav-link ${isActive('/story') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {t('story')}
+                </Link>
+                <Link
+                  href="/characters"
+                  className={`mobile-nav-link ${isActive('/characters') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {t('characters')}
+                </Link>
+                <Link
+                  href="/partners"
+                  className={`mobile-nav-link ${isActive('/partners') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {t('partners')}
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Economy Group */}
+          <div className="mobile-games-group">
+            <button
+              className={`mobile-games-trigger ${isEconomyActive ? 'active' : ''}`}
+              onClick={() => setMobileEconomyOpen(!mobileEconomyOpen)}
+            >
+              <span>{t('economy')}</span>
+              <ChevronIcon open={mobileEconomyOpen} />
+            </button>
+            {mobileEconomyOpen && (
+              <div className="mobile-games-sublinks">
+                <Link
+                  href="/bank"
+                  className={`mobile-nav-link ${isActive('/bank') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {t('bank')}
+                </Link>
+                <Link
+                  href="/bazaar"
+                  className={`mobile-nav-link ${isActive('/bazaar') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {t('bazaar')}
+                </Link>
+                {FEATURE_FLAGS.marketplace && (
+                  <Link
+                    href="/marketplace"
+                    className={`mobile-nav-link ${isActive('/marketplace') ? 'active' : ''}`}
+                    onClick={closeMobileMenu}
+                  >
+                    {t('marketplace')}
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="mobile-sidebar-footer">

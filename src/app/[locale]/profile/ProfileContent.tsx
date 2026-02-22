@@ -3,10 +3,13 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
+import { Link } from '@/i18n/routing';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGameData } from '@/hooks/useGameData';
 import type { UserCard, UserStone, CardsByGame, CatalogCard } from '@/types/gameData';
 import CardBook from './CardBook';
+import CardDetailModal from '@/components/CardDetailModal';
+import type { CardDetailData } from '@/components/CardDetailModal';
 import '@/styles/profile.css';
 import '@/styles/profile-game.css';
 
@@ -43,9 +46,12 @@ export default function ProfileContent() {
   const [copied, setCopied] = useState(false);
   const [activeGame, setActiveGame] = useState<GameKey>('lunaFantasy');
   const [lightbox, setLightbox] = useState<{ src: string; caption: string } | null>(null);
+  const [selectedCard, setSelectedCard] = useState<CardDetailData | null>(null);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(true);
+  const [txPage, setTxPage] = useState(0);
+  const TX_PER_PAGE = 5;
 
   const fetchTransactions = useCallback(async () => {
     try {
@@ -147,6 +153,38 @@ export default function ProfileContent() {
             </p>
           </div>
 
+          {/* Treasury — inside hero */}
+          <div className="hero-treasury">
+            <div className="treasury-row">
+              <div className="treasury-item treasury-item-lunari">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+                <div className="treasury-item-info">
+                  <span className="treasury-item-value treasury-lunari-value">
+                    {isLoading ? <span className="skeleton" style={{ width: '60px', height: '20px' }} /> : formatNumber(gameData?.lunari ?? 0)}
+                  </span>
+                  <span className="treasury-item-label">{t('treasury.lunari')}</span>
+                </div>
+              </div>
+
+              {(gameData?.tickets ?? 0) > 0 && (
+                <div className="treasury-item treasury-item-tickets">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
+                    <path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V9z" />
+                  </svg>
+                  <div className="treasury-item-info">
+                    <span className="treasury-item-value treasury-tickets-value">
+                      {formatNumber(gameData?.tickets ?? 0)}
+                    </span>
+                    <span className="treasury-item-label">{t('treasury.tickets')}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* Card Collection Section */}
@@ -174,45 +212,10 @@ export default function ProfileContent() {
             ownedCards={effectiveCards}
             catalogCards={filteredCatalog}
             isLoading={isLoading}
-            onCardClick={(src, caption) => setLightbox({ src, caption })}
+            onCardClick={(card) => setSelectedCard(card)}
             brokenImages={brokenImages}
             onImageError={handleImageError}
           />
-        </div>
-
-        {/* Treasury Section */}
-        <div className="profile-card profile-treasury-card">
-          <h2 className="profile-section-title">{t('treasury.title')}</h2>
-          <div className="treasury-row">
-            {/* Lunari */}
-            <div className="treasury-item treasury-item-lunari">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
-              <div className="treasury-item-info">
-                <span className="treasury-item-value treasury-lunari-value">
-                  {isLoading ? <span className="skeleton" style={{ width: '60px', height: '20px' }} /> : formatNumber(gameData?.lunari ?? 0)}
-                </span>
-                <span className="treasury-item-label">{t('treasury.lunari')}</span>
-              </div>
-            </div>
-
-            {/* Game Tickets — only show when user has tickets */}
-            {(gameData?.tickets ?? 0) > 0 && (
-              <div className="treasury-item treasury-item-tickets">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
-                  <path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V9z" />
-                </svg>
-                <div className="treasury-item-info">
-                  <span className="treasury-item-value treasury-tickets-value">
-                    {formatNumber(gameData?.tickets ?? 0)}
-                  </span>
-                  <span className="treasury-item-label">{t('treasury.tickets')}</span>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Moon Stone Collection Section */}
@@ -438,43 +441,81 @@ export default function ProfileContent() {
         </div>
 
         {/* Transaction History */}
-        {!txLoading && transactions.length > 0 && (
-          <div className="profile-card transaction-history-card">
-            <h2 className="profile-section-title">{t('transactions.title')}</h2>
-            <div className="transactions-list">
-              {transactions.map((tx) => {
-                const isCredit = tx.amount > 0;
-                return (
-                  <div key={tx.id} className={`transaction-item ${isCredit ? 'transaction-credit' : 'transaction-debit'}`}>
-                    <div className="transaction-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        {isCredit ? (
-                          <><polyline points="7 17 17 7" /><polyline points="7 7 17 7 17 17" /></>
-                        ) : (
-                          <><polyline points="17 7 7 17" /><polyline points="17 17 7 17 7 7" /></>
+        {!txLoading && transactions.length > 0 && (() => {
+          const totalPages = Math.ceil(transactions.length / TX_PER_PAGE);
+          const paged = transactions.slice(txPage * TX_PER_PAGE, (txPage + 1) * TX_PER_PAGE);
+          return (
+            <div className="profile-card transaction-history-card">
+              <div className="transaction-header">
+                <h2 className="transaction-header-title">{t('transactions.title')}</h2>
+                <span className="transaction-header-count">{transactions.length}</span>
+              </div>
+              <div className="transactions-list">
+                {paged.map((tx) => {
+                  const isCredit = tx.amount > 0;
+                  return (
+                    <div key={tx.id} className={`transaction-item ${isCredit ? 'transaction-credit' : 'transaction-debit'}`}>
+                      <div className="transaction-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          {isCredit ? (
+                            <><polyline points="7 17 17 7" /><polyline points="7 7 17 7 17 17" /></>
+                          ) : (
+                            <><polyline points="17 7 7 17" /><polyline points="17 17 7 17 7 7" /></>
+                          )}
+                        </svg>
+                      </div>
+                      <div className="transaction-info">
+                        <span className="transaction-type">
+                          {t(`transactions.${tx.type}` as any)}
+                        </span>
+                        {tx.metadata?.itemReceived && (
+                          <span className="transaction-meta">{tx.metadata.itemReceived}</span>
                         )}
-                      </svg>
+                      </div>
+                      <div className="transaction-right">
+                        <span className="transaction-amount">
+                          <svg className="transaction-lunari-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 6v6l4 2" />
+                          </svg>
+                          {isCredit ? '+' : ''}{formatNumber(tx.amount)}
+                        </span>
+                        <span className="transaction-date">
+                          {new Date(tx.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                    <div className="transaction-info">
-                      <span className="transaction-type">
-                        {t(`transactions.${tx.type}` as any)}
-                      </span>
-                      {tx.metadata?.itemReceived && (
-                        <span className="transaction-meta">{tx.metadata.itemReceived}</span>
-                      )}
-                    </div>
-                    <span className="transaction-amount">
-                      {isCredit ? '+' : ''}{formatNumber(tx.amount)}
-                    </span>
-                    <span className="transaction-date">
-                      {new Date(tx.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              {totalPages > 1 && (
+                <div className="transaction-pagination">
+                  <button
+                    className="transaction-page-btn"
+                    disabled={txPage === 0}
+                    onClick={() => setTxPage(txPage - 1)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                  </button>
+                  <span className="transaction-page-info">
+                    {txPage + 1} / {totalPages}
+                  </span>
+                  <button
+                    className="transaction-page-btn"
+                    disabled={txPage >= totalPages - 1}
+                    onClick={() => setTxPage(txPage + 1)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Account Details Card */}
         <div className="profile-card profile-details-card">
@@ -587,7 +628,15 @@ export default function ProfileContent() {
         </div>
       )}
 
-      {/* Lightbox */}
+      {/* Card Detail Modal */}
+      {selectedCard && (
+        <CardDetailModal
+          card={selectedCard}
+          onClose={() => setSelectedCard(null)}
+        />
+      )}
+
+      {/* Lightbox (for stones) */}
       {lightbox && (
         <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
@@ -613,6 +662,24 @@ const FORBIDDEN_HINTS: Record<string, string> = {
   'Chaos Pearl': 'hintChaos',
   "Shuran's Heart": 'hintShuran',
   'Halo Core': 'hintHalo',
+};
+
+const STONE_IMAGE_FALLBACK: Record<string, string> = {
+  'Lunar Stone': 'https://assets.lunarian.app/stones/lunar_stone.png',
+  'Silver Beach Gem': 'https://assets.lunarian.app/stones/silver_beach_gem.png',
+  'Wishmaster Broken Cube': 'https://assets.lunarian.app/stones/wishmaster_broken_cube.png',
+  "Dragon's Tear": 'https://assets.lunarian.app/stones/dragon_s_tear.png',
+  'Solar Stone': 'https://assets.lunarian.app/stones/solar_stone.png',
+  'Galaxy Stone': 'https://assets.lunarian.app/stones/galaxy_stone.png',
+  'Stone of Wisdom': 'https://assets.lunarian.app/stones/stone_of_wisdom.png',
+  'Astral Prism': 'https://assets.lunarian.app/stones/astral_prism.png',
+  'Eternal Stone': 'https://assets.lunarian.app/stones/eternal_stone.png',
+  'Mastermind Stone': 'https://assets.lunarian.app/stones/mastermind_stone.png',
+  'Luna Moon Stone': 'https://assets.lunarian.app/stones/luna_moon_stone.png',
+  'Moonbound Emerald': 'https://assets.lunarian.app/stones/moonbound_emerald.png',
+  'Chaos Pearl': 'https://assets.lunarian.app/stones/chaos_pearl.png',
+  "Shuran's Heart": 'https://assets.lunarian.app/stones/shuran_heart.png',
+  'Halo Core': 'https://assets.lunarian.app/stones/halo_core.png',
 };
 
 function StoneCollection({
@@ -678,6 +745,14 @@ function StoneCollection({
         </span>
       </div>
 
+      {/* How to collect info */}
+      <p className="stones-collect-info">
+        {t('stones.collectBefore')}{' '}
+        <Link href="/bazaar/meluna" className="stones-collect-link">{t('stones.collectMelunaLink')}</Link>
+        {' '}{t('stones.collectMiddle')}{' '}
+        <a href="https://discord.gg/lunarian" target="_blank" rel="noopener noreferrer" className="stones-collect-link">{t('stones.collectDiscordLink')}</a>.
+      </p>
+
       {/* Moon Stones */}
       <div className="stones-section">
         <div className="stones-section-header">
@@ -693,19 +768,21 @@ function StoneCollection({
           <div className="stones-progress-fill stones-progress-moon" style={{ width: `${moonPercent}%` }} />
         </div>
         <div className="stones-grid">
-          {moonStones.map((stone) => (
+          {moonStones.map((stone) => {
+            const imgUrl = stone.data?.imageUrl || STONE_IMAGE_FALLBACK[stone.name];
+            return (
             <div
               key={stone.name}
               className={`stone-card ${stone.owned ? 'stone-card-owned' : 'stone-card-locked'}`}
               onClick={() => {
-                if (stone.owned && stone.data?.imageUrl) {
-                  onStoneClick(stone.data.imageUrl, stone.name);
+                if (stone.owned && imgUrl) {
+                  onStoneClick(imgUrl, stone.name);
                 }
               }}
             >
               <div className="stone-image-wrap">
-                {stone.owned && stone.data?.imageUrl ? (
-                  <img src={stone.data.imageUrl} alt={stone.name} />
+                {stone.owned && imgUrl ? (
+                  <img src={imgUrl} alt={stone.name} />
                 ) : (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -715,7 +792,8 @@ function StoneCollection({
               </div>
               <span className="stone-name">{stone.name}</span>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -734,19 +812,21 @@ function StoneCollection({
           <div className="stones-progress-fill stones-progress-forbidden" style={{ width: `${forbiddenPercent}%` }} />
         </div>
         <div className="stones-grid stones-grid-forbidden">
-          {forbiddenStones.map((stone) => (
+          {forbiddenStones.map((stone) => {
+            const imgUrl = stone.data?.imageUrl || STONE_IMAGE_FALLBACK[stone.name];
+            return (
             <div
               key={stone.name}
               className={`stone-card stone-card-forbidden ${stone.owned ? 'stone-card-owned' : 'stone-card-locked'}`}
               onClick={() => {
-                if (stone.owned && stone.data?.imageUrl) {
-                  onStoneClick(stone.data.imageUrl, stone.name);
+                if (stone.owned && imgUrl) {
+                  onStoneClick(imgUrl, stone.name);
                 }
               }}
             >
               <div className="stone-image-wrap stone-image-forbidden">
-                {stone.owned && stone.data?.imageUrl ? (
-                  <img src={stone.data.imageUrl} alt={stone.name} />
+                {stone.owned && imgUrl ? (
+                  <img src={imgUrl} alt={stone.name} />
                 ) : (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -759,7 +839,8 @@ function StoneCollection({
                 <span className="stone-hint">{t(`stones.${FORBIDDEN_HINTS[stone.name]}`)}</span>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

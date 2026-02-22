@@ -118,3 +118,50 @@ export async function addCardToUser(
   // All retries exhausted — throw to trigger refund
   throw new Error('Failed to add card after retries (concurrent modification)');
 }
+
+/**
+ * Remove a card from user's collection using optimistic concurrency.
+ *
+ * Uses the same read-modify-write loop with exact match on old data value.
+ * Returns the removed CardRecord, or null if the card was not found.
+ */
+export async function removeCardFromUser(
+  discordId: string,
+  cardId: string
+): Promise<CardRecord | null> {
+  const client = await clientPromise;
+  const db = client.db('Database');
+  const collection = db.collection('cards');
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const doc = await collection.findOne({ _id: discordId as any });
+    if (!doc?.data) return null;
+
+    let cards: CardRecord[];
+    try {
+      const raw = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
+      cards = Array.isArray(raw) ? [...raw] : [];
+    } catch {
+      return null;
+    }
+
+    const idx = cards.findIndex((c) => c.id === cardId);
+    if (idx === -1) return null;
+
+    const [removed] = cards.splice(idx, 1);
+
+    const updateResult = await collection.updateOne(
+      { _id: discordId as any, data: doc.data },
+      { $set: { data: cards } }
+    );
+
+    if (updateResult.modifiedCount > 0) return removed;
+
+    // Data was modified by another request — retry
+    if (attempt < MAX_RETRIES - 1) {
+      await new Promise((r) => setTimeout(r, 50 + Math.random() * 100));
+    }
+  }
+
+  return null;
+}
