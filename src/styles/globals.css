@@ -549,7 +549,7 @@ button {
 footer {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.5));
-  padding: 80px 0 40px;
+  padding: 80px 0 32px;
   margin-top: 80px;
   position: relative;
 }
@@ -565,28 +565,28 @@ footer::before {
   background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
 }
 
-.footer-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 60px;
-  margin-bottom: 60px;
+/* Brand row */
+.footer-top {
+  margin-bottom: 48px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .footer-brand-row {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .footer-logo {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
 }
 
 .footer-brand h3 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
   margin: 0;
   background: linear-gradient(180deg, #ffffff 30%, var(--accent-primary) 100%);
@@ -599,16 +599,24 @@ footer::before {
   color: var(--text-muted);
   line-height: 1.8;
   font-size: 14px;
-  max-width: 320px;
+  max-width: 400px;
+}
+
+/* 4-column grid */
+.footer-columns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  margin-bottom: 48px;
 }
 
 .footer-col h4 {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--accent-primary);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .footer-links {
@@ -616,7 +624,7 @@ footer::before {
 }
 
 .footer-links li {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .footer-links a {
@@ -632,18 +640,70 @@ footer::before {
 }
 
 .footer-links a svg {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
+.footer-links a:hover svg {
+  opacity: 1;
+}
+
+/* Payment icons strip */
+.footer-payments {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+
+.payment-icon {
+  width: 42px;
+  height: 28px;
+  border-radius: 4px;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+
+.payment-icon:hover {
+  opacity: 0.8;
+}
+
+/* Bottom bar */
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: 24px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 16px;
   font-size: 13px;
   color: var(--text-muted);
+}
+
+.footer-copyright {
+  flex-shrink: 0;
+}
+
+.footer-legal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-legal a {
+  color: var(--text-muted);
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.footer-legal a:hover {
+  color: var(--accent-primary);
+}
+
+.footer-legal-dot {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 14px;
 }
 
 .footer-built-by {
@@ -651,6 +711,7 @@ footer::before {
   text-decoration: none;
   opacity: 0.7;
   transition: opacity 0.2s;
+  flex-shrink: 0;
 }
 
 .footer-built-by:hover {
@@ -845,6 +906,14 @@ footer::before {
   font-size: 12px;
 }
 
+.user-info-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  line-height: 1;
+}
+
 .user-name {
   font-size: 13px;
   font-weight: 600;
@@ -852,6 +921,16 @@ footer::before {
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.user-lunari {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #ffd700;
+  white-space: nowrap;
 }
 
 .user-dropdown {
@@ -1315,13 +1394,9 @@ html[lang="ar"] .signout-modal-title {
    RESPONSIVE
    ============================================ */
 @media (max-width: 1024px) {
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-  }
-
-  .footer-brand {
-    grid-column: span 2;
+  .footer-columns {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
   }
 }
 
@@ -1353,13 +1428,19 @@ html[lang="ar"] .signout-modal-title {
     padding: 60px 0;
   }
 
-  .footer-grid {
+  .footer-columns {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 32px;
   }
 
-  .footer-brand {
-    grid-column: span 1;
+  .footer-bottom {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .footer-legal {
+    justify-content: center;
   }
 }
 

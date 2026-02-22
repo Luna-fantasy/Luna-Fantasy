@@ -15,6 +15,7 @@
     "bumper": "Bumper",
     "characters": "Characters",
     "bank": "Bank",
+    "bazaar": "Bazaar",
     "partners": "Partners",
     "signIn": "Sign In",
     "signOut": "Sign Out",
@@ -242,10 +243,44 @@
   },
   "footer": {
     "desc": "A premium roleplay experience on Discord. Join a community of writers, gamers, and dreamers.",
-    "navTitle": "Navigation",
-    "socialTitle": "Community",
-    "copyright": "© 2026 Luna. All rights reserved.",
-    "builtBy": "Built by Buried Games Studio"
+    "explore": "Explore",
+    "games": "Games",
+    "merchants": "Merchants",
+    "community": "Community",
+    "home": "Home",
+    "story": "Story",
+    "characters": "Characters",
+    "partners": "Partners",
+    "bank": "Bank",
+    "faq": "FAQ",
+    "lunaFantasy": "Luna Fantasy",
+    "grandFantasy": "Grand Fantasy",
+    "bumper": "Bumper",
+    "bazaar": "Bazaar",
+    "kael": "Kael Vandar",
+    "meluna": "Meluna",
+    "zoldar": "Zoldar",
+    "acceptedPayments": "Accepted Payments",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "refund": "Refund Policy",
+    "copyright": "© 2026 Luna",
+    "builtBy": "Buried Games"
+  },
+  "termsPage": {
+    "title": "Terms of Service",
+    "desc": "Please read these terms carefully before using Luna.",
+    "content": "These Terms of Service govern your use of the Luna platform and its related services. By accessing or using Luna, you agree to be bound by these terms. Luna is a fantasy roleplay community built on Discord. All users must comply with Discord's Terms of Service in addition to these terms. We reserve the right to modify these terms at any time. Continued use of the platform constitutes acceptance of any changes. Content created within Luna remains the intellectual property of its respective creators, while Luna retains the right to use such content within the platform. Users must be at least 13 years of age to participate. We reserve the right to suspend or terminate accounts that violate these terms or community guidelines."
+  },
+  "privacyPage": {
+    "title": "Privacy Policy",
+    "desc": "How we handle your data at Luna.",
+    "content": "Luna is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform. We collect minimal data necessary to provide our services, including Discord account information used for authentication and in-game data such as card collections and currency balances. We do not sell or share your personal data with third parties. Payment information is processed securely through Stripe and is never stored on our servers. You may request deletion of your data at any time by contacting us through our Discord server. We use cookies and similar technologies to maintain your session and improve your experience."
+  },
+  "refundPage": {
+    "title": "Refund Policy",
+    "desc": "Our policy on refunds and purchases.",
+    "content": "All purchases made through Luna's Bazaar using real currency (via Stripe) are generally final. Lunari credited to your account after a successful purchase is considered delivered. If you experience a technical issue where payment was processed but Lunari was not credited, please contact our support team on Discord within 7 days of the transaction. We will investigate and resolve the issue promptly. In-game purchases made with Lunari (such as luckboxes, stone boxes, and tickets) are non-refundable as the virtual items are delivered instantly. We reserve the right to issue refunds at our discretion in exceptional circumstances."
   },
   "auth": {
     "badge": "LUNA UNIVERSE",
@@ -325,6 +360,15 @@
       "forbidden": "Forbidden",
       "mythical": "Mythical"
     },
+    "transactions": {
+      "title": "Recent Transactions",
+      "empty": "No transactions yet",
+      "stripe_purchase": "Lunari Purchase",
+      "luckbox_spend": "Luckbox",
+      "stonebox_spend": "Stone Box",
+      "ticket_spend": "Tickets",
+      "refund": "Refund"
+    },
     "playerStats": {
       "title": "Player Stats",
       "level": "Level",
@@ -403,5 +447,80 @@
     "ctaTitle": "Become a Partner",
     "ctaDesc": "Interested in collaborating with Luna? Join our Discord community and let's create something amazing together.",
     "ctaBtn": "Join Discord"
+  },
+  "bazaarPage": {
+    "title": "The Bazaar",
+    "subtitle": "Spend your Lunari at the finest vendors in Luna. Open mystery boxes, collect rare cards and moon stones, or buy tickets.",
+    "balance": "Balance",
+    "lunariLabel": "Lunari",
+    "buyLunari": "Support Luna",
+    "merchantsHeading": "Merchants",
+    "visitShop": "Visit Shop",
+    "backToBazaar": "Back to Bazaar",
+    "insufficientBalance": "Not enough Lunari",
+    "inDebt": "Pay your debts first",
+    "tabs": {
+      "kael": "Kael Vandar",
+      "meluna": "Meluna",
+      "zoldar": "Zoldar",
+      "store": "Support Luna"
+    },
+    "kael": {
+      "name": "Kael Vandar",
+      "title": "Card Luckbox Merchant",
+      "desc": "Open luckboxes to discover cards of varying rarities. Each box is filtered by tier.",
+      "openBox": "Open Luckbox",
+      "cards": "cards",
+      "poolSize": "{count} cards in pool"
+    },
+    "meluna": {
+      "name": "Meluna",
+      "title": "Moon Stone Oracle",
+      "desc": "Meluna's mystery boxes contain rare moon stones. Each stone holds unique power.",
+      "boxTitle": "Moon Stone Mystery Box",
+      "openBox": "Open Box",
+      "dropRates": "Drop Rates",
+      "duplicateInfo": "Duplicates: 50% chance of 1,000L refund. Stone is always added to your collection."
+    },
+    "zoldar": {
+      "name": "Zoldar",
+      "title": "Ticket Broker",
+      "desc": "Purchase game tickets in bulk at Zoldar's booth. Use tickets to enter special game events.",
+      "buyTickets": "Buy",
+      "currentTickets": "Your Tickets",
+      "ticketsAdded": "tickets added!"
+    },
+    "store": {
+      "title": "Support Luna",
+      "desc": "Help keep the world of Luna alive and growing. As a thank you, you'll receive Lunari to spend across the Bazaar.",
+      "support": "Support",
+      "popular": "Most Popular",
+      "securePayment": "Secure payment via Stripe"
+    },
+    "reveal": {
+      "opening": "Opening...",
+      "youGot": "You got",
+      "duplicate": "Duplicate!",
+      "alreadyOwned": "Already in your collection!",
+      "refund": "Duplicate! {amount}L refunded",
+      "noRefund": "Duplicate! No refund this time",
+      "close": "Close",
+      "buyAnother": "Buy Another",
+      "viewCollection": "View My Collection"
+    },
+    "purchase": {
+      "success": "Thank you for your support! Your Lunari has been credited.",
+      "cancelled": "Purchase was cancelled.",
+      "error": "Something went wrong with your purchase."
+    },
+    "transactions": {
+      "title": "Recent Transactions",
+      "empty": "No transactions yet",
+      "stripe_purchase": "Lunari Purchase",
+      "luckbox_spend": "Luckbox",
+      "stonebox_spend": "Stone Box",
+      "ticket_spend": "Tickets",
+      "refund": "Refund"
+    }
   }
 }

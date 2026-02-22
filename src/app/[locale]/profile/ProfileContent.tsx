@@ -3,12 +3,21 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGameData } from '@/hooks/useGameData';
 import type { UserCard, UserStone, CardsByGame, CatalogCard } from '@/types/gameData';
 import CardBook from './CardBook';
 import '@/styles/profile.css';
 import '@/styles/profile-game.css';
+
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  balanceAfter: number;
+  metadata: Record<string, any>;
+  createdAt: string;
+}
 
 type GameKey = keyof CardsByGame;
 
@@ -35,6 +44,23 @@ export default function ProfileContent() {
   const [activeGame, setActiveGame] = useState<GameKey>('lunaFantasy');
   const [lightbox, setLightbox] = useState<{ src: string; caption: string } | null>(null);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [txLoading, setTxLoading] = useState(true);
+
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/profile/transactions');
+      if (res.ok) {
+        const data = await res.json();
+        setTransactions(data.transactions || []);
+      }
+    } catch {}
+    setTxLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   if (!session?.user) return null;
 
@@ -410,6 +436,45 @@ export default function ProfileContent() {
             )}
           </div>
         </div>
+
+        {/* Transaction History */}
+        {!txLoading && transactions.length > 0 && (
+          <div className="profile-card transaction-history-card">
+            <h2 className="profile-section-title">{t('transactions.title')}</h2>
+            <div className="transactions-list">
+              {transactions.map((tx) => {
+                const isCredit = tx.amount > 0;
+                return (
+                  <div key={tx.id} className={`transaction-item ${isCredit ? 'transaction-credit' : 'transaction-debit'}`}>
+                    <div className="transaction-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        {isCredit ? (
+                          <><polyline points="7 17 17 7" /><polyline points="7 7 17 7 17 17" /></>
+                        ) : (
+                          <><polyline points="17 7 7 17" /><polyline points="17 17 7 17 7 7" /></>
+                        )}
+                      </svg>
+                    </div>
+                    <div className="transaction-info">
+                      <span className="transaction-type">
+                        {t(`transactions.${tx.type}` as any)}
+                      </span>
+                      {tx.metadata?.itemReceived && (
+                        <span className="transaction-meta">{tx.metadata.itemReceived}</span>
+                      )}
+                    </div>
+                    <span className="transaction-amount">
+                      {isCredit ? '+' : ''}{formatNumber(tx.amount)}
+                    </span>
+                    <span className="transaction-date">
+                      {new Date(tx.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Account Details Card */}
         <div className="profile-card profile-details-card">

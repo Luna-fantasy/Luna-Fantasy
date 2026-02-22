@@ -1,0 +1,117 @@
+/* ============================================
+   LEGAL & FAQ PAGES
+   ============================================ */
+.legal-page {
+  min-height: 60vh;
+  padding: 140px 0 80px;
+}
+
+.legal-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.legal-header h1 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, #ffffff 30%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.legal-header p {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.legal-content {
+  max-width: 720px;
+  margin: 0 auto;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.9;
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.5), rgba(12, 16, 24, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+}
+
+/* FAQ Page */
+.faq-page {
+  min-height: 60vh;
+  padding: 140px 0 80px;
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.faq-header h1 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, #ffffff 30%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.faq-header p {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.faq-list {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.faq-item {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.5), rgba(12, 16, 24, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 24px 28px;
+  transition: border-color 0.2s;
+}
+
+.faq-item:hover {
+  border-color: rgba(0, 212, 255, 0.15);
+}
+
+.faq-item h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.faq-item p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .legal-content,
+  .faq-list {
+    margin: 0 8px;
+  }
+
+  .legal-content {
+    padding: 28px 20px;
+  }
+
+  .faq-item {
+    padding: 20px;
+  }
+}

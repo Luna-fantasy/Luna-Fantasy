@@ -9,10 +9,13 @@
 
 const { MongoClient } = require("mongodb");
 
-const DB1_URI =
-  "mongodb+srv://app:80LaxfR68WuOru8z@cluster0.w1nf05u.mongodb.net/Database";
-const DB2_URI =
-  "mongodb+srv://fahed:ck1K8QpJe0d2R3D9@cluster0.u12r3iw.mongodb.net/Database";
+const DB1_URI = process.env.MONGODB_URI;
+const DB2_URI = process.env.MONGODB_URI_2;
+
+if (!DB1_URI || !DB2_URI) {
+  console.error("Error: MONGODB_URI and MONGODB_URI_2 environment variables are required.");
+  process.exit(1);
+}
 
 const COLLECTIONS = ["levels", "cooldowns", "system"];
 

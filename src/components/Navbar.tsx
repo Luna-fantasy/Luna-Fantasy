@@ -3,8 +3,9 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
 import Image from 'next/image';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { onBalanceUpdate } from '@/lib/balance-events';
 
 export function Navbar() {
   const t = useTranslations('nav');
@@ -18,11 +19,33 @@ export function Navbar() {
   const [gamesDropdownOpen, setGamesDropdownOpen] = useState(false);
   const [mobileGamesOpen, setMobileGamesOpen] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [lunariBalance, setLunariBalance] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const gamesDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
 
   const gameRoutes = ['/luna-fantasy', '/grand-fantasy', '/bumper'];
+
+  // Fetch Lunari balance when logged in
+  const fetchBalance = useCallback(async () => {
+    try {
+      const res = await fetch('/api/bazaar/catalog');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.user?.balance != null) {
+        setLunariBalance(data.user.balance);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (session?.user) fetchBalance();
+  }, [session, fetchBalance]);
+
+  // Listen for balance updates from bazaar purchases
+  useEffect(() => {
+    return onBalanceUpdate((balance) => setLunariBalance(balance));
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -161,6 +184,9 @@ export function Navbar() {
             <Link href="/bank" className={`nav-link ${isActive('/bank') ? 'active' : ''}`}>
               {t('bank')}
             </Link>
+            <Link href="/bazaar" className={`nav-link ${isActive('/bazaar') ? 'active' : ''}`}>
+              {t('bazaar')}
+            </Link>
             <Link href="/partners" className={`nav-link ${isActive('/partners') ? 'active' : ''}`}>
               {t('partners')}
             </Link>
@@ -190,8 +216,18 @@ export function Navbar() {
                         {(session.user?.name || '?').charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <span className="user-name">
-                      {session.user?.globalName || session.user?.name || 'User'}
+                    <span className="user-info-col">
+                      <span className="user-name">
+                        {session.user?.globalName || session.user?.name || 'User'}
+                      </span>
+                      {lunariBalance !== null && (
+                        <span className="user-lunari">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="10" />
+                          </svg>
+                          {lunariBalance.toLocaleString()}
+                        </span>
+                      )}
                     </span>
                   </button>
                   {dropdownOpen && (
@@ -325,6 +361,9 @@ export function Navbar() {
           </Link>
           <Link href="/bank" className={`mobile-nav-link ${isActive('/bank') ? 'active' : ''}`} onClick={closeMobileMenu}>
             {t('bank')}
+          </Link>
+          <Link href="/bazaar" className={`mobile-nav-link ${isActive('/bazaar') ? 'active' : ''}`} onClick={closeMobileMenu}>
+            {t('bazaar')}
           </Link>
           <Link href="/partners" className={`mobile-nav-link ${isActive('/partners') ? 'active' : ''}`} onClick={closeMobileMenu}>
             {t('partners')}

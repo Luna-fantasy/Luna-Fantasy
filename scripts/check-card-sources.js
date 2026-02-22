@@ -3,9 +3,11 @@
  */
 const { MongoClient } = require("mongodb");
 
-const DB_URI =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://app:80LaxfR68WuOru8z@cluster0.w1nf05u.mongodb.net/Database";
+const DB_URI = process.env.MONGODB_URI;
+if (!DB_URI) {
+  console.error("Error: MONGODB_URI environment variable is required.");
+  process.exit(1);
+}
 
 async function main() {
   const client = new MongoClient(DB_URI);

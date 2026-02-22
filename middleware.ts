@@ -13,11 +13,13 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  // Check protected routes — /profile under any locale
+  // Check protected routes — /profile and /bazaar under any locale
   const isProtectedRoute = routing.locales.some(
     (locale) =>
       pathname.startsWith(`/${locale}/profile`) ||
-      pathname === `/${locale}/profile`
+      pathname === `/${locale}/profile` ||
+      pathname.startsWith(`/${locale}/bazaar`) ||
+      pathname === `/${locale}/bazaar`
   );
 
   if (isProtectedRoute && !req.auth) {

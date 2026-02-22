@@ -63,28 +63,32 @@ export async function GET() {
         db.collection("card_catalog").find({}).toArray(),
       ]);
 
-    // Cards
+    // Cards — data may be a JSON string (bot) or native array (web bazaar)
     let allCards: UserCard[] = [];
     if (cardsDoc?.data) {
       try {
-        allCards = JSON.parse(cardsDoc.data);
+        allCards = typeof cardsDoc.data === 'string'
+          ? JSON.parse(cardsDoc.data)
+          : Array.isArray(cardsDoc.data) ? cardsDoc.data : [];
       } catch {}
     }
     const cardsByGame = groupCards(allCards);
 
-    // Stones — data is '{"stones": [...]}' (nested)
+    // Stones — data may be JSON string (bot) or native object (web bazaar)
     let stones: UserStone[] = [];
     if (stonesDoc?.data) {
       try {
-        const parsed = JSON.parse(stonesDoc.data);
-        stones = parsed.stones ?? parsed;
+        const parsed = typeof stonesDoc.data === 'string'
+          ? JSON.parse(stonesDoc.data)
+          : stonesDoc.data;
+        stones = parsed.stones ?? (Array.isArray(parsed) ? parsed : []);
       } catch {}
     }
 
-    // Lunari (points) — plain number as string
+    // Lunari (points) — may be number or string
     let lunari = 0;
-    if (pointsDoc?.data) {
-      lunari = parseInt(pointsDoc.data, 10) || 0;
+    if (pointsDoc?.data != null) {
+      lunari = typeof pointsDoc.data === 'number' ? pointsDoc.data : parseInt(pointsDoc.data, 10) || 0;
     }
 
     // Level data

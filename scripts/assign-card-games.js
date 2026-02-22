@@ -8,9 +8,11 @@
  */
 const { MongoClient } = require("mongodb");
 
-const DB_URI =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://app:80LaxfR68WuOru8z@cluster0.w1nf05u.mongodb.net/Database";
+const DB_URI = process.env.MONGODB_URI;
+if (!DB_URI) {
+  console.error("Error: MONGODB_URI environment variable is required.");
+  process.exit(1);
+}
 
 // From the user-owned cards scan (534 users):
 // Luna Fantasy base names (stripped "Luna " prefix)
