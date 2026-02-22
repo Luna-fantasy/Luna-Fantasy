@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { GameDataResponse } from '@/types/gameData';
 
-export function useGameData() {
+export function useGameData(discordId?: string | null) {
   const [data, setData] = useState<GameDataResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,10 @@ export function useGameData() {
 
     async function fetchGameData() {
       try {
-        const res = await fetch('/api/profile/game-data');
+        const url = discordId
+          ? `/api/profile/game-data?discordId=${encodeURIComponent(discordId)}`
+          : '/api/profile/game-data';
+        const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to load game data');
         const json = await res.json();
         if (!cancelled) setData(json);
@@ -26,7 +29,7 @@ export function useGameData() {
 
     fetchGameData();
     return () => { cancelled = true; };
-  }, []);
+  }, [discordId]);
 
   return { data, isLoading, error };
 }

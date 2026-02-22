@@ -33,13 +33,28 @@ function groupCards(cards: UserCard[]): CardsByGame {
   return { lunaFantasy, grandFantasy, bumper };
 }
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.discordId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const targetId = searchParams.get("discordId");
 
-  const discordId = session.user.discordId;
+  let discordId: string;
+  let isPublic = false;
+
+  if (targetId) {
+    // Public profile view — no auth required
+    if (!/^\d{17,20}$/.test(targetId)) {
+      return NextResponse.json({ error: "Invalid Discord ID" }, { status: 400 });
+    }
+    discordId = targetId;
+    isPublic = true;
+  } else {
+    // Own profile — requires auth
+    const session = await auth();
+    if (!session?.user?.discordId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    discordId = session.user.discordId;
+  }
 
   try {
     const client = await clientPromise;
@@ -179,6 +194,17 @@ export async function GET() {
       };
     });
 
+    // For public profiles, look up basic user info and exclude private data
+    let publicUser: { name: string; image: string | null; discordId: string } | undefined;
+    if (isPublic) {
+      const userDoc = await db.collection("users").findOne({ discordId });
+      publicUser = {
+        name: userDoc?.globalName || userDoc?.name || discordId,
+        image: userDoc?.image || null,
+        discordId,
+      };
+    }
+
     const response: GameDataResponse = {
       cardsByGame,
       totalCards: allCards.length,
@@ -187,10 +213,12 @@ export async function GET() {
       level,
       gameWins,
       pvp,
-      inventory,
-      tickets,
-      chatActivity,
+      // Exclude private data for public profiles
+      inventory: isPublic ? [] : inventory,
+      tickets: isPublic ? 0 : tickets,
+      chatActivity: isPublic ? null : chatActivity,
       cardCatalog,
+      ...(publicUser ? { publicUser } : {}),
     };
 
     return NextResponse.json(response);

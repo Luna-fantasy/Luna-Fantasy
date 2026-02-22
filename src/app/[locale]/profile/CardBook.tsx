@@ -98,6 +98,8 @@ export default function CardBook({
       if (!ownedMap.has(c.name)) ownedMap.set(c.name, c);
     }
 
+    const catalogNames = new Set(catalogCards.map(c => c.name));
+
     const merged: MergedCard[] = catalogCards.map((cat) => {
       const owned = ownedNames.has(cat.name);
       const ownedCard = ownedMap.get(cat.name);
@@ -114,6 +116,25 @@ export default function CardBook({
         duplicateCount: duplicateMap.get(cat.name) ?? 0,
       };
     });
+
+    // Append owned cards that have no catalog match (so they still appear)
+    const seen = new Set<string>();
+    for (const c of ownedCards) {
+      if (catalogNames.has(c.name) || seen.has(c.name)) continue;
+      seen.add(c.name);
+      merged.push({
+        id: c.id || `owned-extra-${merged.length}`,
+        name: c.name,
+        rarity: c.rarity,
+        imageUrl: c.imageUrl,
+        attack: c.attack,
+        owned: true,
+        weight: c.weight,
+        source: c.source,
+        obtainedDate: c.obtainedDate,
+        duplicateCount: duplicateMap.get(c.name) ?? 1,
+      });
+    }
 
     // Sort: rarity order, then attack descending
     merged.sort((a, b) => {

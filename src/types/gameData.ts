@@ -67,6 +67,12 @@ export interface CatalogCard {
   game?: string;
 }
 
+export interface PublicUserInfo {
+  name: string;
+  image: string | null;
+  discordId: string;
+}
+
 export interface GameDataResponse {
   cardsByGame: CardsByGame;
   totalCards: number;
@@ -79,4 +85,5 @@ export interface GameDataResponse {
   tickets: number;
   chatActivity: ChatActivity | null;
   cardCatalog: CatalogCard[];
+  publicUser?: PublicUserInfo;
 }
