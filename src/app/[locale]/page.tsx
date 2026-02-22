@@ -159,7 +159,7 @@ function HomeContent() {
               <div className="media-glow media-glow-partners"></div>
               <div className="media-frame">
                 <Image
-                  src="/images/partners/partners-hero.png"
+                  src="https://assets.lunarian.app/partners/partners-hero.png"
                   alt="Luna Partners"
                   width={500}
                   height={400}
