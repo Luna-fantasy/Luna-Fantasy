@@ -308,152 +308,129 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
           </div>
         )}
 
-        {/* Player Stats Section */}
-        <div className="profile-card profile-stats-card">
-          <h2 className="profile-section-title">{t('playerStats.title')}</h2>
-
-          {/* Level + XP */}
-          <div className="stats-level-section">
-            <div className="stats-level-row">
-              <div className="stats-level-number">
-                {isLoading ? <span className="skeleton" style={{ width: '48px', height: '36px' }} /> : currentLevel}
-              </div>
-              <div className="stats-level-label">{t('playerStats.level')}</div>
-            </div>
-
-            <div className="xp-progress-wrap">
-              <div className="xp-progress-bar">
-                <div className="xp-progress-fill" style={{ width: isLoading ? '0%' : `${xpPercent}%` }} />
-              </div>
-              <div className="xp-progress-text">
-                {isLoading
-                  ? <span className="skeleton" style={{ width: '120px', height: '14px' }} />
-                  : `${formatNumber(currentXp)} / ${formatNumber(xpNeeded)} ${t('playerStats.xp')}`
-                }
-              </div>
-            </div>
-
-            <div className="stats-meta">
-              <div className="stats-meta-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                {isLoading
-                  ? <span className="skeleton" style={{ width: '60px', height: '14px' }} />
-                  : `${formatNumber(gameData?.level?.messages ?? 0)} ${t('playerStats.messages')}`
-                }
-              </div>
-              <div className="stats-meta-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="23" />
-                  <line x1="8" y1="23" x2="16" y2="23" />
-                </svg>
-                {isLoading
-                  ? <span className="skeleton" style={{ width: '60px', height: '14px' }} />
-                  : `${Math.round((gameData?.level?.voiceTime ?? 0) / 3600)}h ${t('playerStats.voiceTime')}`
-                }
-              </div>
+        {/* ── Level Orb ── */}
+        <div className="profile-card stats-orb-card">
+          <div className="stats-orb-wrap">
+            {/* SVG ring arc showing XP progress */}
+            <svg className="stats-orb-ring" viewBox="0 0 120 120">
+              <circle className="stats-orb-track" cx="60" cy="60" r="54" />
+              <circle
+                className="stats-orb-progress"
+                cx="60" cy="60" r="54"
+                strokeDasharray={`${2 * Math.PI * 54}`}
+                strokeDashoffset={isLoading ? 2 * Math.PI * 54 : 2 * Math.PI * 54 * (1 - xpPercent / 100)}
+              />
+            </svg>
+            <div className="stats-orb-glow" />
+            <div className="stats-orb-inner">
+              <span className="stats-orb-level">
+                {isLoading ? '--' : currentLevel}
+              </span>
+              <span className="stats-orb-label">{t('playerStats.level')}</span>
             </div>
           </div>
-
-          <div className="stats-divider" />
-
-          {/* Game Wins */}
-          <div className="stats-game-wins">
-            <div className="stats-subtitle">{t('playerStats.gameWins')}</div>
-            <div className="game-wins-grid">
-              <div className="game-win-item">
-                <div className="game-win-icon magic-cards">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
-                    <rect x="2" y="3" width="20" height="18" rx="2" />
-                    <path d="M8 7h8M8 12h8" />
-                  </svg>
-                </div>
-                <div className="game-win-info">
-                  <span className="game-win-count">
-                    {isLoading ? <span className="skeleton" style={{ width: '24px', height: '18px' }} /> : (gameData?.gameWins?.magic_cards ?? 0)}
-                  </span>
-                  <span className="game-win-label">{t('playerStats.magicCards')}</span>
-                </div>
-              </div>
-              <div className="game-win-item">
-                <div className="game-win-icon luna-pairs">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-secondary)" strokeWidth="2">
-                    <rect x="1" y="3" width="9" height="13" rx="1" />
-                    <rect x="14" y="3" width="9" height="13" rx="1" />
-                  </svg>
-                </div>
-                <div className="game-win-info">
-                  <span className="game-win-count">
-                    {isLoading ? <span className="skeleton" style={{ width: '24px', height: '18px' }} /> : (gameData?.gameWins?.luna_pairs ?? 0)}
-                  </span>
-                  <span className="game-win-label">{t('playerStats.lunaPairs')}</span>
-                </div>
-              </div>
-              <div className="game-win-item">
-                <div className="game-win-icon grand-fantasy">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-legendary)" strokeWidth="2">
-                    <polygon points="12 2 15 9 22 9 17 14 19 22 12 17 5 22 7 14 2 9 9 9" />
-                  </svg>
-                </div>
-                <div className="game-win-info">
-                  <span className="game-win-count">
-                    {isLoading ? <span className="skeleton" style={{ width: '24px', height: '18px' }} /> : (gameData?.gameWins?.grand_fantasy ?? 0)}
-                  </span>
-                  <span className="game-win-label">{t('playerStats.grandFantasy')}</span>
-                </div>
-              </div>
-              <div className="game-win-item">
-                <div className="game-win-icon magic-bot">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2">
-                    <rect x="3" y="4" width="18" height="14" rx="2" />
-                    <circle cx="9" cy="10" r="1.5" />
-                    <circle cx="15" cy="10" r="1.5" />
-                    <path d="M9 14h6" />
-                  </svg>
-                </div>
-                <div className="game-win-info">
-                  <span className="game-win-count">
-                    {isLoading ? <span className="skeleton" style={{ width: '24px', height: '18px' }} /> : (gameData?.gameWins?.magic_bot ?? 0)}
-                  </span>
-                  <span className="game-win-label">{t('playerStats.magicBot')}</span>
-                </div>
-              </div>
+          <div className="stats-orb-xp">
+            {isLoading
+              ? <span className="skeleton" style={{ width: '140px', height: '14px' }} />
+              : <>{formatNumber(currentXp)} <span className="stats-orb-xp-sep">/</span> {formatNumber(xpNeeded)} <span className="stats-orb-xp-unit">{t('playerStats.xp')}</span></>
+            }
+          </div>
+          <div className="stats-orb-meta">
+            <div className="stats-orb-meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span className="stats-orb-meta-val">
+                {isLoading ? '—' : formatNumber(gameData?.level?.messages ?? 0)}
+              </span>
+              <span className="stats-orb-meta-label">{t('playerStats.messages')}</span>
+            </div>
+            <div className="stats-orb-meta-divider" />
+            <div className="stats-orb-meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-secondary)" strokeWidth="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+              <span className="stats-orb-meta-val">
+                {isLoading ? '—' : `${Math.round((gameData?.level?.voiceTime ?? 0) / 3600)}h`}
+              </span>
+              <span className="stats-orb-meta-label">{t('playerStats.voiceTime')}</span>
             </div>
           </div>
+        </div>
 
-          <div className="stats-divider" />
-
-          {/* PvP Record */}
-          <div className="stats-pvp">
-            <div className="stats-subtitle">{t('playerStats.pvp')}</div>
-            {isLoading ? (
-              <div className="skeleton" style={{ width: '200px', height: '24px' }} />
-            ) : pvpTotal === 0 ? (
-              <div className="pvp-empty">{t('playerStats.noBattles')}</div>
-            ) : (
-              <div className="pvp-row">
-                <div className="pvp-stat">
-                  <span className="pvp-value pvp-wins">{gameData?.pvp.wins ?? 0}</span>
-                  <span className="pvp-label">{t('playerStats.pvpWins')}</span>
-                </div>
-                <span className="pvp-separator">/</span>
-                <div className="pvp-stat">
-                  <span className="pvp-value pvp-losses">{gameData?.pvp.losses ?? 0}</span>
-                  <span className="pvp-label">{t('playerStats.pvpLosses')}</span>
-                </div>
-                <div className="pvp-winrate">
-                  <span className="pvp-winrate-value">{winRate}%</span>
-                  <span className="pvp-label">{t('playerStats.winRate')}</span>
-                  <div className="pvp-winrate-bar">
-                    <div className="pvp-winrate-fill" style={{ width: `${winRate}%` }} />
+        {/* ── Game Wins ── */}
+        <div className="profile-card stats-wins-card">
+          <h2 className="profile-section-title">{t('playerStats.gameWins')}</h2>
+          <div className="wins-grid">
+            {([
+              { key: 'magic_cards', label: t('playerStats.magicCards'), color: '#00d4ff', icon: <><rect x="2" y="3" width="20" height="18" rx="2" /><path d="M8 7h8M8 12h8" /></> },
+              { key: 'luna_pairs', label: t('playerStats.lunaPairs'), color: '#8b5cf6', icon: <><rect x="1" y="3" width="9" height="13" rx="1" /><rect x="14" y="3" width="9" height="13" rx="1" /></> },
+              { key: 'grand_fantasy', label: t('playerStats.grandFantasy'), color: '#ffd700', icon: <polygon points="12 2 15 9 22 9 17 14 19 22 12 17 5 22 7 14 2 9 9 9" /> },
+              { key: 'magic_bot', label: t('playerStats.magicBot'), color: '#4ade80', icon: <><rect x="3" y="4" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><circle cx="15" cy="10" r="1.5" /><path d="M9 14h6" /></> },
+            ] as const).map((g) => {
+              const count = (gameData?.gameWins as any)?.[g.key] ?? 0;
+              return (
+                <div key={g.key} className="wins-tile" style={{ '--tile-color': g.color } as React.CSSProperties}>
+                  <div className="wins-tile-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={g.color} strokeWidth="2">{g.icon}</svg>
                   </div>
+                  <span className="wins-tile-count">
+                    {isLoading ? <span className="skeleton" style={{ width: '28px', height: '22px' }} /> : count}
+                  </span>
+                  <span className="wins-tile-label">{g.label}</span>
+                  <div className="wins-tile-glow" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── PvP Arena ── */}
+        <div className="profile-card stats-pvp-card">
+          <h2 className="profile-section-title">{t('playerStats.pvp')}</h2>
+          {isLoading ? (
+            <div className="skeleton" style={{ width: '200px', height: '24px', margin: '0 auto' }} />
+          ) : pvpTotal === 0 ? (
+            <div className="pvp-empty">{t('playerStats.noBattles')}</div>
+          ) : (
+            <div className="pvp-arena">
+              {/* Win-rate ring */}
+              <div className="pvp-ring-wrap">
+                <svg className="pvp-ring" viewBox="0 0 100 100">
+                  <circle className="pvp-ring-track" cx="50" cy="50" r="42" />
+                  <circle
+                    className="pvp-ring-fill"
+                    cx="50" cy="50" r="42"
+                    strokeDasharray={`${2 * Math.PI * 42}`}
+                    strokeDashoffset={2 * Math.PI * 42 * (1 - winRate / 100)}
+                  />
+                </svg>
+                <div className="pvp-ring-center">
+                  <span className="pvp-ring-pct">{winRate}%</span>
+                  <span className="pvp-ring-label">{t('playerStats.winRate')}</span>
                 </div>
               </div>
-            )}
-          </div>
+              {/* W / L counters */}
+              <div className="pvp-counters">
+                <div className="pvp-counter pvp-counter-win">
+                  <span className="pvp-counter-val">{gameData?.pvp.wins ?? 0}</span>
+                  <span className="pvp-counter-label">{t('playerStats.pvpWins')}</span>
+                </div>
+                <div className="pvp-counter-divider">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2">
+                    <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z" />
+                  </svg>
+                </div>
+                <div className="pvp-counter pvp-counter-loss">
+                  <span className="pvp-counter-val">{gameData?.pvp.losses ?? 0}</span>
+                  <span className="pvp-counter-label">{t('playerStats.pvpLosses')}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Transaction History — own profile only */}
