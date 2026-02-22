@@ -130,6 +130,7 @@ export async function processAuctionResolution(
       discordId: winnerId,
       type: 'marketplace_buy',
       amount: -winningBid,
+      balanceBefore: deduction.balanceBefore,
       balanceAfter: deduction.balanceAfter,
       source: 'web',
       metadata: {
@@ -147,6 +148,7 @@ export async function processAuctionResolution(
       discordId: listing.sellerId,
       type: 'marketplace_sell',
       amount: winningBid,
+      balanceBefore: 0,
       balanceAfter: 0,
       source: 'web',
       metadata: {

@@ -3,15 +3,17 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import '@/styles/bazaar.css';
 import '@/styles/bazaar-reveal.css';
+import '@/styles/bank.css';
 import MerchantPage from './MerchantPage';
 
-const VALID_MERCHANTS = ['kael', 'meluna', 'zoldar'] as const;
+const VALID_MERCHANTS = ['kael', 'meluna', 'zoldar', 'seluna'] as const;
 type MerchantSlug = (typeof VALID_MERCHANTS)[number];
 
 const MERCHANT_KEYS: Record<MerchantSlug, { nameKey: string; titleKey: string }> = {
   kael: { nameKey: 'kael.name', titleKey: 'kael.title' },
   meluna: { nameKey: 'meluna.name', titleKey: 'meluna.title' },
   zoldar: { nameKey: 'zoldar.name', titleKey: 'zoldar.title' },
+  seluna: { nameKey: 'seluna.name', titleKey: 'seluna.title' },
 };
 
 export function generateStaticParams() {

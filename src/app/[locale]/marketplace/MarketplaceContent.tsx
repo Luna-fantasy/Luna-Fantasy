@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
-import { onBalanceUpdate, emitBalanceUpdate } from '@/lib/balance-events';
+import { onBalanceUpdate, dispatchBalanceUpdate } from '@/lib/balance-events';
 import type { MarketplaceListing, ListingsResponse } from '@/types/marketplace';
 import ListingCard from './ListingCard';
 import CreateListingModal from './CreateListingModal';
@@ -137,7 +137,7 @@ export default function MarketplaceContent() {
         setStatusMsg({ type: 'success', text: t('buySuccess', { card: listing.card.name }) });
         if (data.newBalance != null) {
           setBalance(data.newBalance);
-          emitBalanceUpdate(data.newBalance);
+          dispatchBalanceUpdate(data.newBalance);
         }
         fetchListings();
       } else {

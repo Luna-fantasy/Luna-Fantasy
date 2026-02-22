@@ -122,6 +122,7 @@ export async function POST(request: Request) {
       discordId,
       type: 'marketplace_buy',
       amount: -listing.price,
+      balanceBefore: deduction.balanceBefore,
       balanceAfter: deduction.balanceAfter,
       source: 'web',
       metadata: {
@@ -138,6 +139,7 @@ export async function POST(request: Request) {
       discordId: listing.sellerId,
       type: 'marketplace_sell',
       amount: listing.price,
+      balanceBefore: 0,
       balanceAfter: 0, // Unknown from here
       source: 'web',
       metadata: {

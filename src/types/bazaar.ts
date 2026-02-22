@@ -93,7 +93,15 @@ export type TransactionType =
   | 'luckbox_spend'
   | 'stonebox_spend'
   | 'ticket_spend'
-  | 'refund';
+  | 'refund'
+  | 'bank_daily'
+  | 'bank_loan_taken'
+  | 'bank_loan_repaid'
+  | 'bank_investment_deposit'
+  | 'bank_investment_withdraw'
+  | 'bank_insurance'
+  | 'marketplace_buy'
+  | 'marketplace_sell';
 
 export interface TransactionRecord {
   _id?: string;
@@ -111,6 +119,7 @@ export interface TransactionRecord {
     itemRarity?: string;
     isDuplicate?: boolean;
     refundAmount?: number;
+    [key: string]: unknown;
   };
   createdAt: Date;
   source: 'web';

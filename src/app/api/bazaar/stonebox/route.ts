@@ -64,9 +64,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
+    let refundAmount = 0;
     try {
       // 6. Duplicate refund: 50% chance of 1,000L refund
-      let refundAmount = 0;
       if (isDuplicate && Math.random() < 0.5) {
         refundAmount = 1_000;
         await creditLunari(discordId, refundAmount);

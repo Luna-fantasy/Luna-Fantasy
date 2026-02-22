@@ -17,12 +17,12 @@ const CLEANUP_KEY = Symbol.for('bazaar-rate-limit-cleanup');
 if (!(globalThis as any)[CLEANUP_KEY]) {
   setInterval(() => {
     const cutoff = Date.now() - 120_000; // 2 min old entries
-    for (const [, store] of stores) {
-      for (const [key, entry] of store) {
-        entry.timestamps = entry.timestamps.filter((t) => t > cutoff);
+    stores.forEach((store) => {
+      store.forEach((entry, key) => {
+        entry.timestamps = entry.timestamps.filter((t: number) => t > cutoff);
         if (entry.timestamps.length === 0) store.delete(key);
-      }
-    }
+      });
+    });
   }, 300_000);
   (globalThis as any)[CLEANUP_KEY] = true;
 }
@@ -83,4 +83,9 @@ export const RATE_LIMITS = {
   auction_resolve: { maxRequests: 5, windowMs: 60_000 },   // 5 per minute
   swap_propose: { maxRequests: 3, windowMs: 60_000 },     // 3 per minute
   swap_respond: { maxRequests: 10, windowMs: 60_000 },    // 10 per minute
+  bank_dashboard: { maxRequests: 10, windowMs: 60_000 },  // 10 per minute
+  bank_daily: { maxRequests: 2, windowMs: 60_000 },       // 2 per minute
+  bank_loan: { maxRequests: 3, windowMs: 60_000 },        // 3 per minute
+  bank_investment: { maxRequests: 3, windowMs: 60_000 },  // 3 per minute
+  bank_insurance: { maxRequests: 2, windowMs: 60_000 },   // 2 per minute
 } as const;

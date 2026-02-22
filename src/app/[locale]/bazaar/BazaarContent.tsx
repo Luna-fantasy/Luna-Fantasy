@@ -31,6 +31,13 @@ const MERCHANTS = [
     titleKey: 'zoldar.title',
     descKey: 'zoldar.desc',
   },
+  {
+    slug: 'seluna',
+    image: 'https://assets.lunarian.app/shops/seluna_banker.png',
+    nameKey: 'seluna.name',
+    titleKey: 'seluna.title',
+    descKey: 'seluna.desc',
+  },
 ] as const;
 
 function formatNumber(n: number): string {
