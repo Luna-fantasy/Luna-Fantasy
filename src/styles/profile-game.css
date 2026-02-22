@@ -872,44 +872,83 @@ html[lang="ar"] .treasury-item-value {
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.06);
   overflow: hidden;
+}
+
+/* ── Flip animation container ── */
+.book-flip-container {
+  position: relative;
+  min-height: 480px;
+}
+
+/* Incoming spread — sits in normal flow, establishes height */
+.book-spread-incoming {
+  position: relative;
+  z-index: 1;
+}
+
+.book-spread-incoming .book-page {
+  animation: pageRevealIn 0.5s ease 0.1s both;
+}
+
+/* Outgoing spread — overlays on top, folds away */
+.book-spread-outgoing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  pointer-events: none;
   perspective: 1800px;
 }
 
-/* Page-fold animation: turning right page over to the left (next) */
-.book-wrapper.flip-left .book-page-right {
-  animation: pageFoldLeft 0.5s ease-in-out forwards;
+/* ── Next page (flip-left): right page folds left, left page fades ── */
+.book-spread-outgoing.flip-left .book-page-right {
+  animation: pageFoldLeft 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
   transform-origin: left center;
 }
 
-.book-wrapper.flip-left .book-page-left {
+.book-spread-outgoing.flip-left .book-page-left {
+  animation: pageFadeOut 0.3s ease forwards;
+}
+
+.book-spread-outgoing.flip-left .book-spine {
   animation: pageFadeOut 0.25s ease forwards;
 }
 
-/* Page-fold animation: turning left page over to the right (prev) */
-.book-wrapper.flip-right .book-page-left {
-  animation: pageFoldRight 0.5s ease-in-out forwards;
+/* ── Prev page (flip-right): left page folds right, right page fades ── */
+.book-spread-outgoing.flip-right .book-page-left {
+  animation: pageFoldRight 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
   transform-origin: right center;
 }
 
-.book-wrapper.flip-right .book-page-right {
+.book-spread-outgoing.flip-right .book-page-right {
+  animation: pageFadeOut 0.3s ease forwards;
+}
+
+.book-spread-outgoing.flip-right .book-spine {
   animation: pageFadeOut 0.25s ease forwards;
 }
 
+/* ── Keyframes ── */
 @keyframes pageFoldLeft {
   0% {
-    transform: rotateY(0deg);
+    transform: rotateY(0deg) scale(1);
     box-shadow: none;
+    opacity: 1;
   }
-  30% {
-    transform: rotateY(-55deg);
-    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.4);
+  40% {
+    transform: rotateY(-70deg) scale(1.02);
+    box-shadow: -12px 0 30px rgba(0, 0, 0, 0.45), inset 4px 0 8px rgba(0, 0, 0, 0.1);
+    opacity: 1;
   }
-  60% {
-    transform: rotateY(-110deg);
-    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
+  70% {
+    transform: rotateY(-130deg) scale(1.01);
+    box-shadow: -6px 0 18px rgba(0, 0, 0, 0.3);
+    opacity: 0.6;
   }
   100% {
-    transform: rotateY(-180deg);
+    transform: rotateY(-180deg) scale(1);
     box-shadow: none;
     opacity: 0;
   }
@@ -917,19 +956,22 @@ html[lang="ar"] .treasury-item-value {
 
 @keyframes pageFoldRight {
   0% {
-    transform: rotateY(0deg);
+    transform: rotateY(0deg) scale(1);
     box-shadow: none;
+    opacity: 1;
   }
-  30% {
-    transform: rotateY(55deg);
-    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.4);
+  40% {
+    transform: rotateY(70deg) scale(1.02);
+    box-shadow: 12px 0 30px rgba(0, 0, 0, 0.45), inset -4px 0 8px rgba(0, 0, 0, 0.1);
+    opacity: 1;
   }
-  60% {
-    transform: rotateY(110deg);
-    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.3);
+  70% {
+    transform: rotateY(130deg) scale(1.01);
+    box-shadow: 6px 0 18px rgba(0, 0, 0, 0.3);
+    opacity: 0.6;
   }
   100% {
-    transform: rotateY(180deg);
+    transform: rotateY(180deg) scale(1);
     box-shadow: none;
     opacity: 0;
   }
@@ -938,6 +980,11 @@ html[lang="ar"] .treasury-item-value {
 @keyframes pageFadeOut {
   0%   { opacity: 1; }
   100% { opacity: 0; }
+}
+
+@keyframes pageRevealIn {
+  0%   { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 /* Book spine */
@@ -961,7 +1008,6 @@ html[lang="ar"] .treasury-item-value {
   padding: 12px;
   min-height: 0;
   backface-visibility: hidden;
-  transform-style: preserve-3d;
 }
 
 /* Book card */
@@ -1614,18 +1660,23 @@ html[lang="ar"] .stats-level-number {
     gap: 8px;
   }
 
-  /* Book: single page on mobile — fold the visible page */
+  /* Book: single page on mobile */
   .book-wrapper {
     min-height: 360px;
   }
 
-  .book-wrapper.flip-left .book-page-left {
-    animation: pageFoldLeft 0.5s ease-in-out forwards;
+  .book-flip-container {
+    min-height: 360px;
+  }
+
+  /* Mobile: fold the left page (the only visible page) */
+  .book-spread-outgoing.flip-left .book-page-left {
+    animation: pageFoldLeft 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
     transform-origin: left center;
   }
 
-  .book-wrapper.flip-right .book-page-left {
-    animation: pageFoldRight 0.5s ease-in-out forwards;
+  .book-spread-outgoing.flip-right .book-page-left {
+    animation: pageFoldRight 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
     transform-origin: right center;
   }
 
@@ -1681,11 +1732,11 @@ html[dir="rtl"] .book-wrapper {
 }
 
 /* RTL: mirror the fold origins */
-html[dir="rtl"] .book-wrapper.flip-left .book-page-right {
+html[dir="rtl"] .book-spread-outgoing.flip-left .book-page-right {
   transform-origin: right center;
 }
 
-html[dir="rtl"] .book-wrapper.flip-right .book-page-left {
+html[dir="rtl"] .book-spread-outgoing.flip-right .book-page-left {
   transform-origin: left center;
 }
 

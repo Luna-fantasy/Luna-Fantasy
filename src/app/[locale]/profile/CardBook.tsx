@@ -193,12 +193,16 @@ export default function CardBook({
   const totalOwned = mergedCards.filter(c => c.owned).length;
   const progressPercent = totalCatalog > 0 ? Math.round((totalOwned / totalCatalog) * 100) : 0;
 
+  const [pendingPage, setPendingPage] = useState<number | null>(null);
+
   const goToPage = useCallback((dir: 'left' | 'right', page: number) => {
+    setPendingPage(page);
     setFlipDirection(dir);
     setTimeout(() => {
       setCurrentPage(page);
+      setPendingPage(null);
       setFlipDirection(null);
-    }, 500);
+    }, 600);
   }, []);
 
   const prevPage = () => {
@@ -247,6 +251,41 @@ export default function CardBook({
       </div>
     );
   }
+
+  // Incoming page cards (the page being revealed underneath the fold)
+  const incomingData = useMemo(() => {
+    if (pendingPage === null) return null;
+    const inStart = pendingPage * cardsPerView;
+    const inCards = filteredCards.slice(inStart, inStart + cardsPerView);
+    const inLeft = inCards.slice(0, CARDS_PER_PAGE);
+    const inRight = inCards.slice(CARDS_PER_PAGE, CARDS_PER_SPREAD);
+    return {
+      left: inLeft,
+      right: inRight,
+      leftEmpty: CARDS_PER_PAGE - inLeft.length,
+      rightEmpty: !isMobile ? CARDS_PER_PAGE - inRight.length : 0,
+    };
+  }, [pendingPage, filteredCards, cardsPerView, isMobile]);
+
+  // Helper to render a page of cards
+  const renderPageContent = (cards: MergedCard[], emptyCount: number, prefix: string) => (
+    <>
+      {cards.map((card) => (
+        <BookCard
+          key={`${prefix}-${card.id}`}
+          card={card}
+          isBroken={brokenImages.has(card.id)}
+          onImageError={onImageError}
+          onCardClick={onCardClick}
+        />
+      ))}
+      {Array.from({ length: emptyCount }).map((_, i) => (
+        <div key={`${prefix}-empty-${i}`} className="book-card-empty">
+          <div className="book-card-empty-slot" />
+        </div>
+      ))}
+    </>
+  );
 
   const hasCatalog = catalogCards.length > 0;
 
@@ -337,49 +376,48 @@ export default function CardBook({
           </div>
           <p>{t('collection.empty')}</p>
         </div>
-      ) : (
+      ) : flipDirection && incomingData ? (
+        /* During flip: two stacked spreads — incoming underneath, outgoing folding on top */
         <div
-          className={`book-wrapper ${flipDirection === 'left' ? 'flip-left' : flipDirection === 'right' ? 'flip-right' : ''}`}
+          className="book-flip-container"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Left page */}
-          <div className="book-page book-page-left">
-            {leftPageCards.map((card) => (
-              <BookCard
-                key={card.id}
-                card={card}
-                isBroken={brokenImages.has(card.id)}
-                onImageError={onImageError}
-                onCardClick={onCardClick}
-              />
-            ))}
-            {Array.from({ length: leftEmptySlots }).map((_, i) => (
-              <div key={`empty-l-${i}`} className="book-card-empty">
-                <div className="book-card-empty-slot" />
-              </div>
-            ))}
+          {/* Incoming (new page) — flat underneath */}
+          <div className="book-wrapper book-spread-incoming">
+            <div className="book-page book-page-left">
+              {renderPageContent(incomingData.left, incomingData.leftEmpty, 'in-l')}
+            </div>
+            <div className="book-spine" />
+            <div className="book-page book-page-right">
+              {renderPageContent(incomingData.right, incomingData.rightEmpty, 'in-r')}
+            </div>
           </div>
 
-          {/* Spine */}
+          {/* Outgoing (current page) — folding away on top */}
+          <div className={`book-wrapper book-spread-outgoing ${flipDirection === 'left' ? 'flip-left' : 'flip-right'}`}>
+            <div className="book-page book-page-left">
+              {renderPageContent(leftPageCards, leftEmptySlots, 'out-l')}
+            </div>
+            <div className="book-spine" />
+            <div className="book-page book-page-right">
+              {renderPageContent(rightPageCards, rightEmptySlots, 'out-r')}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Static view — no animation */
+        <div
+          className="book-wrapper"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="book-page book-page-left">
+            {renderPageContent(leftPageCards, leftEmptySlots, 'l')}
+          </div>
           <div className="book-spine" />
-
-          {/* Right page */}
           <div className="book-page book-page-right">
-            {rightPageCards.map((card) => (
-              <BookCard
-                key={card.id}
-                card={card}
-                isBroken={brokenImages.has(card.id)}
-                onImageError={onImageError}
-                onCardClick={onCardClick}
-              />
-            ))}
-            {Array.from({ length: rightEmptySlots }).map((_, i) => (
-              <div key={`empty-r-${i}`} className="book-card-empty">
-                <div className="book-card-empty-slot" />
-              </div>
-            ))}
+            {renderPageContent(rightPageCards, rightEmptySlots, 'r')}
           </div>
         </div>
       )}
