@@ -55,6 +55,7 @@ export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurc
         },
         isDuplicate: data.isDuplicate,
         newBalance: data.newBalance,
+        price,
       });
     } catch {
       setError('Network error');

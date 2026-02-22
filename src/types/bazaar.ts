@@ -131,4 +131,5 @@ export interface RevealData {
   isDuplicate: boolean;
   refundAmount?: number;
   newBalance: number;
+  price?: number;
 }

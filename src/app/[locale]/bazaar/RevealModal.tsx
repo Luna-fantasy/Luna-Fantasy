@@ -30,6 +30,7 @@ export default function RevealModal({ data, onClose, onBuyAnother }: RevealModal
 
   const rarityClass = data.item.rarity ? `reveal-${data.item.rarity}` : 'reveal-common';
   const isCard = data.type === 'card';
+  const canAffordAnother = data.price != null ? data.newBalance >= data.price : true;
 
   return (
     <div className="reveal-overlay" onClick={phase === 'done' ? onClose : undefined}>
@@ -112,9 +113,11 @@ export default function RevealModal({ data, onClose, onBuyAnother }: RevealModal
             <button className="reveal-close-btn" onClick={onClose}>
               {t('reveal.close')}
             </button>
-            <button className="reveal-another-btn" onClick={onBuyAnother}>
-              {t('reveal.buyAnother')}
-            </button>
+            {canAffordAnother && (
+              <button className="reveal-another-btn" onClick={onBuyAnother}>
+                {t('reveal.buyAnother')}
+              </button>
+            )}
           </div>
         )}
         {phase === 'done' && !expanded && (

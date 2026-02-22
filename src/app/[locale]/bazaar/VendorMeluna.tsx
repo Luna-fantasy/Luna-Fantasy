@@ -61,6 +61,7 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
         isDuplicate: data.isDuplicate,
         refundAmount: data.refundAmount,
         newBalance: data.newBalance,
+        price: stoneBox.price,
       });
     } catch {
       setError('Network error');
