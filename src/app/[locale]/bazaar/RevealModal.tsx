@@ -35,7 +35,7 @@ export default function RevealModal({ data, onClose, onBuyAnother }: RevealModal
   return (
     <div className="reveal-overlay" onClick={phase === 'done' ? onClose : undefined}>
       <div className="reveal-modal" onClick={(e) => e.stopPropagation()}>
-        <div className={`reveal-stage reveal-phase-${phase} ${rarityClass}`}>
+        <div className={`reveal-stage reveal-phase-${phase} ${rarityClass} ${isCard ? 'reveal-type-card' : 'reveal-type-stone'}`}>
           {/* Box phase */}
           <div className="reveal-box">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

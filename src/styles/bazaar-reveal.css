@@ -204,6 +204,26 @@
   pointer-events: none;
 }
 
+/* Stone-type overrides — square, no card framing */
+.reveal-type-stone .reveal-item-image {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  border-radius: 16px;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 8px 24px rgba(139, 92, 246, 0.35));
+}
+
+.reveal-type-stone .reveal-item-placeholder {
+  width: 220px;
+  height: 220px;
+}
+
+.reveal-phase-done .reveal-type-stone .reveal-item:hover .reveal-item-image {
+  filter: drop-shadow(0 12px 32px rgba(139, 92, 246, 0.5));
+}
+
 /* Rarity glow on item */
 .reveal-common .reveal-item-image { box-shadow: 0 8px 32px rgba(74, 222, 128, 0.3); }
 .reveal-rare .reveal-item-image { box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3); }
