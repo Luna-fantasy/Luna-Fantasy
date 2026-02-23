@@ -28,7 +28,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { packageId } = await request.json();
+    const { packageId, locale } = await request.json();
+    const safeLocale = locale === 'ar' ? 'ar' : 'en';
     const pkg = getLunariPackage(packageId);
 
     if (!pkg) {
@@ -49,8 +50,8 @@ export async function POST(request: Request) {
         packageId: pkg.id,
         lunariAmount: String(pkg.lunari),
       },
-      success_url: `${origin}/bazaar?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/bazaar?purchase=cancelled`,
+      success_url: `${origin}/${safeLocale}/bazaar?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/${safeLocale}/bazaar?purchase=cancelled`,
     });
 
     return NextResponse.json({ url: checkoutSession.url });

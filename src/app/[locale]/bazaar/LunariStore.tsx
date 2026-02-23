@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 import type { LunariPackage } from '@/types/bazaar';
 
@@ -20,6 +20,7 @@ function getCsrfToken(): string {
 
 export default function LunariStore({ packages, isLoggedIn }: LunariStoreProps) {
   const t = useTranslations('bazaarPage');
+  const locale = useLocale();
   const [buying, setBuying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +33,7 @@ export default function LunariStore({ packages, isLoggedIn }: LunariStoreProps) 
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
-        body: JSON.stringify({ packageId }),
+        body: JSON.stringify({ packageId, locale }),
       });
 
       const data = await res.json();
