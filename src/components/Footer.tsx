@@ -132,6 +132,10 @@ export function Footer() {
             <Link href="/refund">{t('refund')}</Link>
             <span className="footer-legal-dot">·</span>
             <Link href="/faq">{t('faq')}</Link>
+            <span className="footer-legal-dot">·</span>
+            <Link href="/contact">{t('contact')}</Link>
+            <span className="footer-legal-dot">·</span>
+            <Link href="/about">{t('about')}</Link>
           </div>
           <a href="https://buriedgames.com" target="_blank" rel="noopener noreferrer" className="footer-built-by">
             {t('builtBy')}

@@ -308,6 +308,8 @@
     "partners": "Partners",
     "bank": "Bank",
     "faq": "FAQ",
+    "contact": "Contact Us",
+    "about": "About Us",
     "lunaFantasy": "Luna Fantasy",
     "grandFantasy": "Grand Fantasy",
     "bumper": "Bumper",
@@ -761,6 +763,95 @@
       "outgoing": "No outgoing swap offers",
       "history": "No swap history"
     }
+  },
+  "aboutPage": {
+    "badge": "OUR STORY",
+    "title": "About Lunarian",
+    "subtitle": "A fantasy universe born from two friends, a shared dream, and a deep love for storytelling.",
+    "originLabel": "How It Started",
+    "originTitle": "Two Dreamers, One Universe",
+    "originP1": "Lunarian began as a late-night conversation between two friends — one from Kuwait, the other from Saudi Arabia. Both shared an obsession with fantasy worlds, epic lore, and the kind of stories that stay with you long after the last page. They asked themselves a simple question: what if they could build a world that others could actually live in?",
+    "originP2": "What started as rough sketches of characters and hand-drawn maps on notebooks quickly turned into something bigger. They built Luna — a crescent-shaped lunar island with centuries of history, wars, heroes, and villains. But they didn't want it to sit in a document. They wanted it to breathe, to grow with real people inside it.",
+    "originQuote": "\"We didn't just want to tell a story. We wanted to build a world where others could write their own.\"",
+    "originP3": "So they brought it to Discord. What began as a small roleplay server became a full-scale fantasy universe — complete with original card games, a living economy, over 200 characters, and a community of writers, gamers, and dreamers who shape the story every day.",
+    "statCharacters": { "value": "200+", "label": "Characters" },
+    "statCards": { "value": "178", "label": "Cards" },
+    "statGames": { "value": "3", "label": "Card Games" },
+    "statStones": { "value": "15", "label": "Moon Stones" },
+    "whatTitle": "What Is Lunarian?",
+    "whatP1": "Lunarian is a fantasy universe built on Discord. It's a place where storytelling, strategy, and community come together. At its heart is Luna — a vast world with deep lore, original characters, and an economy that players interact with every day.",
+    "whatP2": "Players collect cards, compete in strategic card games like Luna Fantasy and Grand Fantasy, earn and trade a currency called Lunari, and explore a lore that spans centuries of war, peace, and mystery. Everything is interconnected — the story, the games, the economy, and the community.",
+    "pillars": {
+      "story": {
+        "title": "Deep Lore",
+        "desc": "Centuries of history — from the Great Chaos War to the rise of the Two Masterminds. A living story that grows with the community."
+      },
+      "cards": {
+        "title": "Strategic Card Games",
+        "desc": "Three original card games — Luna Fantasy, Grand Fantasy, and Bumper — where strategy and timing beat raw power."
+      },
+      "economy": {
+        "title": "Living Economy",
+        "desc": "Earn Lunari, take loans, invest, trade cards, and visit merchants. A full economic system powered by the community."
+      },
+      "community": {
+        "title": "Community-Driven",
+        "desc": "Writers, gamers, artists, and dreamers building stories together. Luna is shaped by the people who live in it."
+      }
+    },
+    "visionTitle": "Our Vision",
+    "visionP1": "Lunarian was never meant to be a product. It was built by two friends who simply wanted to create something they wished existed — a fantasy world that feels alive, that rewards creativity, and that belongs to the people inside it. That vision hasn't changed.",
+    "visionQuote": "\"Luna doesn't belong to us. It belongs to everyone who has ever written a story, played a card, or called it home.\"",
+    "ctaTitle": "Join the Universe",
+    "ctaDesc": "Luna is free, open, and always growing. Whether you're here for the lore, the games, or the community — there's a place for you.",
+    "ctaJoin": "Join Discord",
+    "ctaStory": "Read the Story"
+  },
+  "contactPage": {
+    "title": "Contact Us",
+    "subtitle": "Have a question or need help? Reach out and we'll get back to you.",
+    "discord": "Discord ID or Username",
+    "discordPlaceholder": "e.g. username or 123456789",
+    "reason": "Reason",
+    "selectReason": "Select a reason",
+    "reasons": {
+      "bugReport": "Bug Report",
+      "featureRequest": "Feature Request",
+      "paymentIssue": "Payment Issue",
+      "accountIssue": "Account Issue",
+      "complaint": "Complaint",
+      "partnership": "Partnership"
+    },
+    "area": "Related Area",
+    "selectArea": "Select an area",
+    "areas": {
+      "lunaFantasy": "Luna Fantasy",
+      "grandFantasy": "Grand Fantasy",
+      "bumper": "Bumper",
+      "bank": "Bank",
+      "bazaar": "Bazaar",
+      "marketplace": "Marketplace",
+      "auth": "Authentication",
+      "website": "Website",
+      "other": "Other"
+    },
+    "message": "Message",
+    "messagePlaceholder": "Describe your issue or question in detail...",
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email",
+    "send": "Send Message",
+    "sending": "Sending...",
+    "successTitle": "Message Sent!",
+    "successDesc": "Thank you for reaching out. Our team will review your message and get back to you on Discord.",
+    "sendAnother": "Send Another Message",
+    "errorMsg": "Something went wrong. Please try again or contact us on Discord.",
+    "attachments": "Attachments",
+    "attachHint": "Drag & drop images or click to browse",
+    "attachLimit": "Max 3 images, 5MB each",
+    "removeFile": "Remove",
+    "orDivider": "OR",
+    "discordCta": "Contact us on Discord",
+    "discordCtaDesc": "Join our server and open a ticket in the support channel for faster help."
   },
   "notifications": {
     "title": "Notifications",
