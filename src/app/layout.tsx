@@ -1,5 +1,7 @@
 import { ReactNode } from 'react';
 import '@/styles/globals.css';
+import '@/styles/notifications.css';
+import { AuthProvider } from '@/components/AuthProvider';
 
 type Props = {
   children: ReactNode;
@@ -17,7 +19,9 @@ export default function RootLayout({ children }: Props) {
         />
       </head>
       <body suppressHydrationWarning>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

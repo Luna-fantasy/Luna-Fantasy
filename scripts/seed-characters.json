@@ -1,0 +1,2108 @@
+[
+  {
+    "id": "cave-monster",
+    "name": {
+      "en": "Cave Monster",
+      "ar": "Cave Monster"
+    },
+    "lore": {
+      "ar": "وحش الكهوف العميقة حيث لا يصل الضوء. قوته تسحق والعتمة تحميه. الدخول إلى منطقته خطأ قاتل."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Cave%20Monster.png"
+  },
+  {
+    "id": "ghoul",
+    "name": {
+      "en": "Ghoul",
+      "ar": "Ghoul"
+    },
+    "lore": {
+      "ar": "كائن جائع بلا شبع. تحركه غريزة مظلمة. اقترابه نذير موت."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Ghoul.png"
+  },
+  {
+    "id": "goblin",
+    "name": {
+      "en": "Goblin",
+      "ar": "Goblin"
+    },
+    "lore": {
+      "ar": "مخلوق ذكي أكثر مما يبدو. يعرف الأنفاق والصفقات القذرة. يبتسم قبل أن يخون."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Goblin.png"
+  },
+  {
+    "id": "imp",
+    "name": {
+      "en": "Imp",
+      "ar": "Imp"
+    },
+    "lore": {
+      "ar": "كائن فوضوي من الأعماق. يستمتع بالأذى أكثر من الربح. تركه حيًا خطأ."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Imp.png"
+  },
+  {
+    "id": "ogre",
+    "name": {
+      "en": "Ogre",
+      "ar": "Ogre"
+    },
+    "lore": {
+      "ar": "قوة غاشمة بلا ندم. يضحك وهو يسحق العظام. لا يفرق بين عدو أو حليف."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Ogre.png"
+  },
+  {
+    "id": "orc",
+    "name": {
+      "en": "Orc",
+      "ar": "Orc"
+    },
+    "lore": {
+      "ar": "محارب شرس بروح قمرية مشوّهة. يحترم القوة فقط. في المعركة، لا يعرف التراجع."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Orc.png"
+  },
+  {
+    "id": "saber-tooth",
+    "name": {
+      "en": "Saber-tooth",
+      "ar": "Saber-tooth"
+    },
+    "lore": {
+      "ar": "وحش الجبال المتجمدة. جوعه لا يُشبع وصوته يرعب. إذا ظهر، الدم يتجمد."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Saber-tooth.png"
+  },
+  {
+    "id": "viper-claw",
+    "name": {
+      "en": "Viper Claw",
+      "ar": "Viper Claw"
+    },
+    "lore": {
+      "ar": "وحش القمر المخالب. يهجم بسرعة لا تُرى. إذا أصاب، لا ينجو أحد."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Viper%20Claw.png"
+  },
+  {
+    "id": "yonko",
+    "name": {
+      "en": "Yonko",
+      "ar": "Yonko"
+    },
+    "lore": {
+      "ar": "قوة أسطورية. لا يحكم… بل يفرض. وجوده يغيّر موازين العالم."
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Yonko.png"
+  },
+  {
+    "id": "abyssal-colossus",
+    "name": {
+      "en": "Abyssal Colossus",
+      "ar": "Abyssal Colossus"
+    },
+    "lore": {
+      "ar": "عملاق الأعماق الذي لم يُخلق ليُهزم. خطوته تبتلع الجبال وصمته يرعب البحر. إذا نهض، يتغيّر شكل العالم."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Abyssal%20Colossus.png"
+  },
+  {
+    "id": "cyclops",
+    "name": {
+      "en": "Cyclops",
+      "ar": "Cyclops"
+    },
+    "lore": {
+      "ar": "قوة بدائية بعين واحدة. يرى الحقيقة دون تزييف. غضبه يهدم المدن."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Cyclops.png"
+  },
+  {
+    "id": "dune-reaper",
+    "name": {
+      "en": "Dune Reaper",
+      "ar": "Dune Reaper"
+    },
+    "lore": {
+      "ar": "عقرب هائل يتخفّى في الصحارى، يضرب بمخالبه الحادة كالشفرات ولسعته السامة القاتلة."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Dune%20Reaper.png"
+  },
+  {
+    "id": "frost-titan",
+    "name": {
+      "en": "Frost Titan",
+      "ar": "Frost Titan"
+    },
+    "lore": {
+      "ar": "عملاق هائل مكوّن من جليد خالص، يشع قوة قارسة مع تشققات من طاقة برد متوهجة. يجسد القسوة الجليدية لليالي القمر."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Frost%20Titan.png"
+  },
+  {
+    "id": "giant",
+    "name": {
+      "en": "Giant",
+      "ar": "Giant"
+    },
+    "lore": {
+      "ar": "قوة الجبال حين تمشي. صبره طويل وغضبه مدمر. إذا تحرك، تغيّرت الأرض."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Giant.png"
+  },
+  {
+    "id": "golem",
+    "name": {
+      "en": "Golem",
+      "ar": "Golem"
+    },
+    "lore": {
+      "ar": "جسد من حجر وقلب من طاقة. أُوجد للحماية لا للكلام. إن تحرك، فالخطر عظيم."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Golem.png"
+  },
+  {
+    "id": "last-titan",
+    "name": {
+      "en": "Last Titan",
+      "ar": "Last Titan"
+    },
+    "lore": {
+      "ar": "بقايا عصر العمالقة. جسده مدينة وسيفه تاريخ. سقوطه يعني نهاية حقبة."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Last%20Titan.png"
+  },
+  {
+    "id": "minotaur",
+    "name": {
+      "en": "Minotaur",
+      "ar": "Minotaur"
+    },
+    "lore": {
+      "ar": "وحش المتاهة الذي لا يضل طريقه. يندفع نحو أعدائه بغضب لا يهدأ."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Minotaur.png"
+  },
+  {
+    "id": "the-mercenary",
+    "name": {
+      "en": "The Mercenary",
+      "ar": "The Mercenary"
+    },
+    "lore": {
+      "ar": "سيف للإيجار… لكن بشروطه. يقاتل للذهب، ويبقى بالاختيار. من يدفع أقل، لا ينجو."
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/The%20Mercenary.png"
+  },
+  {
+    "id": "ancient-dragon",
+    "name": {
+      "en": "Ancient Dragon",
+      "ar": "Ancient Dragon"
+    },
+    "lore": {
+      "ar": "ملك السماء القمرية. يحرس لونا من فوق. سقوطه يعني نهاية عصر.",
+      "en": "King of the Lunar Sky. Guards Luna from above. His fall means the end of an era."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Ancient%20Dragon.png"
+  },
+  {
+    "id": "draconis",
+    "name": {
+      "en": "Draconis",
+      "ar": "Draconis"
+    },
+    "lore": {
+      "ar": "نسل التنين القمري. جلده مرآة للنجوم. غضبه نار سماوية.",
+      "en": "Offspring of the Lunar Dragon. His skin is a mirror of the stars. His anger is celestial fire."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Draconis.png"
+  },
+  {
+    "id": "eclipse-dragon",
+    "name": {
+      "en": "Eclipse Dragon",
+      "ar": "Eclipse Dragon"
+    },
+    "lore": {
+      "ar": "تنين شرير من الظلام يظهر خلال الكسوف النادر. هيئته الظلية وعينه الحاقدة ترعب كل من يحدق به.",
+      "en": "An evil dragon from the darkness appearing during the rare eclipse. His shadowy form and hateful eye terrify all who gaze upon him."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Eclipse%20Dragon.png"
+  },
+  {
+    "id": "hydra",
+    "name": {
+      "en": "Hydra",
+      "ar": "Hydra"
+    },
+    "lore": {
+      "ar": "تنين هائل بثلاثة رؤوس، يمتلك عيونًا ملتهبة وأنيابًا متعطشة، ويزدهر تحت قوة قمر الدم.",
+      "en": "A massive dragon with three heads, possessing flaming eyes and bloodthirsty fangs, thriving under the power of the Blood Moon."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Hydra.png"
+  },
+  {
+    "id": "luna-dragon",
+    "name": {
+      "en": "Luna Dragon",
+      "ar": "Luna Dragon"
+    },
+    "lore": {
+      "ar": "ملك السماء القمرية. يحرس لونا من فوق. سقوطه يعني نهاية عصر.",
+      "en": "King of the Lunar Sky. Guards Luna from above. His fall means the end of an era."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Luna%20Dragon.png"
+  },
+  {
+    "id": "moon-serpent",
+    "name": {
+      "en": "Moon Serpent",
+      "ar": "Moon Serpent"
+    },
+    "lore": {
+      "ar": "كائن أزلي يلتف حول قمم العالم. نَفَسه قمري يبتلع الضوء والظل. استيقاظه نذير كارثة.",
+      "en": "An eternal being wrapping around the peaks of the world. His breath is lunar, swallowing light and shadow. His awakening is a harbinger of disaster."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Moon%20Serpent.png"
+  },
+  {
+    "id": "veil-serpent",
+    "name": {
+      "en": "Veil Serpent",
+      "ar": "Veil Serpent"
+    },
+    "lore": {
+      "ar": "أفعى طيفية وُلدت من ضباب القمر، مغطاة بضوء قمري أثيري، وتستخدم قوى غامضة من العوالم غير المرئية.",
+      "en": "A spectral serpent born of moon mist, covered in ethereal lunar light, using mysterious powers from unseen realms."
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Veil%20Serpent.png"
+  },
+  {
+    "id": "battle-mage",
+    "name": {
+      "en": "Battle Mage",
+      "ar": "Battle Mage"
+    },
+    "lore": {
+      "ar": "محارب صاغ السحر سلاحًا. يضرب بالبرق كما بالسيف. وجوده يحوّل المعركة لعاصفة.",
+      "en": "A warrior who forged magic into a weapon. He strikes with lightning as with a sword. His presence turns the battle into a storm."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Battle%20Mage.png"
+  },
+  {
+    "id": "bloodforged-warlord",
+    "name": {
+      "en": "Bloodforged Warlord",
+      "ar": "Bloodforged Warlord"
+    },
+    "lore": {
+      "ar": "الفارس الذي وضع نفس ضحية لقوة الدم الطاغية. اصبح مسيراً بلعنة ولا يملك قراراً لنفسه.",
+      "en": "The knight who sacrificed himself to the overwhelming power of blood. He became driven by a curse and owns no decision for himself."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Bloodforged%20Warlord.png"
+  },
+  {
+    "id": "bod-aban-luna-champion",
+    "name": {
+      "en": "Bod Aban ' Luna Champion '",
+      "ar": "Bod Aban ' Luna Champion '"
+    },
+    "lore": {
+      "ar": "بودا بان السنتنل الذي ترقى بالقوة واستعار طاقة العقلين المدبرين لكي يهزم ملك الفوضى \" موڤارث \".",
+      "en": "Bod Aban, the Sentinel who rose through power and borrowed the energy of the two masterminds to defeat the Chaos King Movarth."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Bod%20Aban%20'%20Luna%20Champion%20'.png"
+  },
+  {
+    "id": "corrupted-sentinel",
+    "name": {
+      "en": "Corrupted Sentinel",
+      "ar": "Corrupted Sentinel"
+    },
+    "lore": {
+      "ar": "حارس سقط في قبضة السحر المظلم. سيفه المشقوق يحمل طاقة فاسدة. يقاتل لهدف لم يعد يتذكره.",
+      "en": "A guardian who fell into the grip of dark magic. His cracked sword carries corrupt energy. He fights for a goal he no longer remembers."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Corrupted%20Sentinel.png"
+  },
+  {
+    "id": "ethereal-knight",
+    "name": {
+      "en": "Ethereal Knight",
+      "ar": "Ethereal Knight"
+    },
+    "lore": {
+      "ar": "فارس طيفي يحمل نصلًا مشعًا، يحرس المملكة برشاقة خارقة وإصرار لا يتزعزع.",
+      "en": "A spectral knight wielding a radiant blade, guarding the kingdom with supernatural grace and unwavering determination."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Ethereal%20Knight.png"
+  },
+  {
+    "id": "la-luna-elva",
+    "name": {
+      "en": "La Luna Elva",
+      "ar": "La Luna Elva"
+    },
+    "lore": {
+      "ar": "سيف القمر المتجسد. حكمتها تسبق ضربتها. تقاتل باسم لونا لا باسم نفسها.",
+      "en": "The Moon Sword incarnate. Her wisdom precedes her strike. She fights in the name of Luna, not herself."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/La%20Luna%20Elva.png"
+  },
+  {
+    "id": "la-luna-eron",
+    "name": {
+      "en": "La Luna Eron",
+      "ar": "La Luna Eron"
+    },
+    "lore": {
+      "ar": "درع لونا الذي لا يسقط. يمشي بثقل الملوك وصمتهم. حين يقف، لا يُخترق.",
+      "en": "Luna's shield that does not fall. He walks with the weight and silence of kings. When he stands, he cannot be breached."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/La%20Luna%20Eron.png"
+  },
+  {
+    "id": "obsidian-sentinel",
+    "name": {
+      "en": "Obsidian Sentinel",
+      "ar": "Obsidian Sentinel"
+    },
+    "lore": {
+      "ar": "حارس من حجر أسود ويمين أبدي. لا ينام، لا يتكلم، ولا ينسى. إذا وقف في طريقك، فالطريق قد انتهى.",
+      "en": "A guardian of black stone and an eternal oath. He does not sleep, speak, or forget. If he stands in your way, the road has ended."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Obsidian%20Sentinel.png"
+  },
+  {
+    "id": "paladin",
+    "name": {
+      "en": "Paladin",
+      "ar": "Paladin"
+    },
+    "lore": {
+      "ar": "درع القمر وسيف عدالته. يحمي لونا دون تردد. سقوطه يعني سقوط الخط الأخير.",
+      "en": "The shield of the Moon and the sword of its justice. Protects Luna without hesitation. His fall means the fall of the last line."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Paladin.jpeg"
+  },
+  {
+    "id": "paragon-knight",
+    "name": {
+      "en": "Paragon Knight",
+      "ar": "Paragon Knight"
+    },
+    "lore": {
+      "ar": "فارس نبيل يرتدي درعًا لامعًا، يحفظ النظام ويُظهر شجاعة لا تتزعزع في وجه الشر.",
+      "en": "A noble knight in shining armor, upholding order and showing unwavering courage in the face of evil."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Paragon%20Knight.png"
+  },
+  {
+    "id": "prime-zoldar",
+    "name": {
+      "en": "Prime Zoldar",
+      "ar": "Prime Zoldar"
+    },
+    "lore": {
+      "ar": "قاطع القمر في ذروة قوته. قاد جيش لونا في حرب الفوضى الكبرى.",
+      "en": "The Moon Carver at the peak of his power. He led Luna's army in the Great Chaos War."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Prime%20Zoldar.png"
+  },
+  {
+    "id": "revenant",
+    "name": {
+      "en": "Revenant",
+      "ar": "Revenant"
+    },
+    "lore": {
+      "ar": "عاد من الموت بديْنٍ غير مسدّد. لا يتنفس ولا ينسى. سيفه يتحرك بإرادة الانتقام.",
+      "en": "Returned from death with an unpaid debt. He does not breathe and does not forget. His sword moves by the will of vengeance."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Revenant.png"
+  },
+  {
+    "id": "tidal-warden",
+    "name": {
+      "en": "Tidal Warden",
+      "ar": "Tidal Warden"
+    },
+    "lore": {
+      "ar": "فارس طيفي مغطّى بمياه غامضة، يحرس أسرار المملكة عبر المدّ وضوء القمر.",
+      "en": "A spectral knight covered in mysterious waters, guarding the kingdom's secrets through the tides and moonlight."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Tidal%20Warden.png"
+  },
+  {
+    "id": "warlord",
+    "name": {
+      "en": "Warlord",
+      "ar": "Warlord"
+    },
+    "lore": {
+      "ar": "قائد يولد من ساحة الحرب. يخطط ويقاتل بنفسه. أمره لا يُراجع.",
+      "en": "A commander born from the battlefield. He plans and fights himself. His command is not to be reviewed."
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Warlord.png"
+  },
+  {
+    "id": "arcanist",
+    "name": {
+      "en": "Arcanist",
+      "ar": "Arcanist"
+    },
+    "lore": {
+      "ar": "ساحر غارق في أسرار السحر القمري المحرّم. تعويذاته تستنزف الحياة وتشوّه الواقع. كل معرفة يكتسبها لها ثمن دموي.",
+      "en": "A mage drowning in the secrets of forbidden lunar magic. His spells drain life and distort reality. Every knowledge he gains has a bloody price."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Arcanist.png"
+  },
+  {
+    "id": "archer",
+    "name": {
+      "en": "Archer",
+      "ar": "Archer"
+    },
+    "lore": {
+      "ar": "عينه أسرع من السهم. لا يطلق إلا إذا أصاب. الليل صديقه.",
+      "en": "His eye is faster than the arrow. He does not shoot unless he hits. The night is his friend."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Archer.png"
+  },
+  {
+    "id": "assassin",
+    "name": {
+      "en": "Assassin",
+      "ar": "Assassin"
+    },
+    "lore": {
+      "ar": "نصل لونا الخفي. يُنفّذ قبل أن يُلاحظ. إذا سُمي الهدف، انتهى.",
+      "en": "Luna's hidden blade. Executes before being noticed. If the target is named, it is over."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Assassin.png"
+  },
+  {
+    "id": "avelle-adar",
+    "name": {
+      "en": "Avelle Adar",
+      "ar": "Avelle Adar"
+    },
+    "lore": {
+      "ar": "أڤيلً ادار وهو والد كورين أڤيل ، أفيل من فصيلة الايلف وهو فاحش الثراء ويملك بنك لونا المركزي وهو الصديق المقرب للعقلين المدبرين.",
+      "en": "Avelle Adar, father of Corin Avelle. Avelle is of the Elf race, extremely wealthy, owns the Central Bank of Luna, and is a close friend of the two Masterminds."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Avelle%20Adar.jpeg"
+  },
+  {
+    "id": "bard",
+    "name": {
+      "en": "Bard",
+      "ar": "Bard"
+    },
+    "lore": {
+      "ar": "يغني للتاريخ لا للجمهور. ألحانه تحفظ في ارجاء لونا. إن صمت، فقدت لونا قصة مثيرة.",
+      "en": "Sings for history, not the audience. His melodies are preserved throughout Luna. If he falls silent, Luna has lost an exciting story."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Bard.png"
+  },
+  {
+    "id": "blacksmith",
+    "name": {
+      "en": "Blacksmith",
+      "ar": "Blacksmith"
+    },
+    "lore": {
+      "ar": "يضرب الحديد بإيقاع القمر. سلاحه لا يخون حامله. كل قطعة تحمل اسمه.",
+      "en": "Strikes iron with the rhythm of the moon. His weapon does not betray its bearer. Every piece carries his name."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Blacksmith.png"
+  },
+  {
+    "id": "brimor",
+    "name": {
+      "en": "Brimor",
+      "ar": "Brimor"
+    },
+    "lore": {
+      "ar": "تاجر الألوان والأدوار. يمنح المكانة قبل القوة. وجوده يغير موازين المجتمع.",
+      "en": "Merchant of colors and roles. Grants status before power. His existence changes the scales of society."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Brimor.png"
+  },
+  {
+    "id": "broker-the-merchant",
+    "name": {
+      "en": "Broker ' The merchant '",
+      "ar": "Broker ' The merchant '"
+    },
+    "lore": {
+      "ar": "تاجر السوق السوداء في لونا. يعرف ثمن كل شيء… حتى الأرواح. ابتسامته تعني صفقة خاسرة لغيره.",
+      "en": "Runs the black market in Luna. Knows the price of everything... even souls. His smile means a losing deal for others."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Broker%20'%20The%20merchant%20'.png"
+  },
+  {
+    "id": "builder",
+    "name": {
+      "en": "Builder",
+      "ar": "Builder"
+    },
+    "lore": {
+      "ar": "يرفع الجدران حجرًا حجر. يعرف أين يجب أن يقف كل شيء. ما بناه، صمد أمام الزمن.",
+      "en": "Raises walls stone by stone. Knows where everything must stand. What he built withstood time."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Builder.png"
+  },
+  {
+    "id": "clown",
+    "name": {
+      "en": "Clown",
+      "ar": "Clown"
+    },
+    "lore": {
+      "ar": "وجه مرح وقلب مظلم. يضحك الناس لينسوا الخوف. لكن ضحكته الأخيرة ليست بريئة.",
+      "en": "A merry face and a dark heart. Makes people laugh to forget fear. But his last laugh is not innocent."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Clown.png"
+  },
+  {
+    "id": "cook",
+    "name": {
+      "en": "Cook",
+      "ar": "Cook"
+    },
+    "lore": {
+      "ar": "يطهو بما توفره لونا. طعامه يرمم الجسد والروح. ناره هادئة، وتأثيرها عميق.",
+      "en": "Cooks with what Luna provides. His food restores body and soul. His fire is quiet, and its effect is deep."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Cook.png"
+  },
+  {
+    "id": "corin-avelle",
+    "name": {
+      "en": "Corin Avelle",
+      "ar": "Corin Avelle"
+    },
+    "lore": {
+      "ar": "الخادم الذي يرى أكثر مما يُفترض. ولاؤه هادئ، لكنه مطلق. يعرف أسرار القصر أكثر من القصر نفسه.",
+      "en": "The servant who sees more than he is supposed to. His loyalty is quiet, but absolute. Knows the palace secrets more than the palace itself."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Corin%20Avelle.png"
+  },
+  {
+    "id": "dark-wizard",
+    "name": {
+      "en": "Dark Wizard",
+      "ar": "Dark Wizard"
+    },
+    "lore": {
+      "ar": "على خطى شوران يسعى بالتحكم بقوة الفوضى لكنه لا زال يحاول.",
+      "en": "Following in Shuran's footsteps, he seeks to control the power of Chaos but is still trying."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Dark%20Wizard.png"
+  },
+  {
+    "id": "druin",
+    "name": {
+      "en": "Druin",
+      "ar": "Druin"
+    },
+    "lore": {
+      "ar": "صوت الغابة تحت ضوء القمر. يسيطر على الحياة والنمو. غضبه يغيّر الطبيعة.",
+      "en": "Voice of the forest under the moonlight. Controls life and growth. His anger changes nature."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Druid.png"
+  },
+  {
+    "id": "executioner",
+    "name": {
+      "en": "Executioner",
+      "ar": "Executioner"
+    },
+    "lore": {
+      "ar": "ذراع الحكم الأخير في لونا. لا يسأل ولا يتردد. سقوط نصلِه يعني نهاية القصة.",
+      "en": "The arm of the final judgment in Luna. Does not ask and does not hesitate. The fall of his blade means the end of the story."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Executioner.png"
+  },
+  {
+    "id": "farmer",
+    "name": {
+      "en": "Farmer",
+      "ar": "Farmer"
+    },
+    "lore": {
+      "ar": "يزرع تحت القمر لا الشمس. أرضه تتنفس طاقة لونا. بدونه، يجوع الجميع.",
+      "en": "Plants under the moon, not the sun. His land breathes Luna's energy. Without him, everyone starves."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Farmer.png"
+  },
+  {
+    "id": "forager",
+    "name": {
+      "en": "Forager",
+      "ar": "Forager"
+    },
+    "lore": {
+      "ar": "جامع خيرات الغابة القمرية. يعرف أي نبتة تشفي وأيها تقتل. خطوته صامتة، وعينه حادة.",
+      "en": "Gatherer of the lunar forest's bounty. Knows which plant heals and which kills. His step is silent, and his eye is sharp."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Forager.png"
+  },
+  {
+    "id": "healer",
+    "name": {
+      "en": "Healer",
+      "ar": "Healer"
+    },
+    "lore": {
+      "ar": "يعيد التوازن حيث فشل السيف. يمس الجراح بطاقة القمر لا بيديه. بدونه، لا حرب تُكمل.",
+      "en": "Restores balance where the sword failed. Touches wounds with the energy of the Moon, not his hands. Without him, no war is completed."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Healer.png"
+  },
+  {
+    "id": "hunter",
+    "name": {
+      "en": "Hunter",
+      "ar": "Hunter"
+    },
+    "lore": {
+      "ar": "صياد الفريسة المختارة. يتبع أثر القمر لا الدم. لا يعود إلا منتصرًا.",
+      "en": "Hunter of the chosen prey. Follows the trail of the Moon, not blood. Returns only victorious."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Hunter.png"
+  },
+  {
+    "id": "kael-vendar",
+    "name": {
+      "en": "Kael Vendar",
+      "ar": "Kael Vendar"
+    },
+    "lore": {
+      "ar": "التاجر الرسمي للكروت في لونا. يوازن بين الندرة والنظام. منه تبدأ المجموعات، وعنده تُقاس القيم.",
+      "en": "The official card merchant in Luna. Balances scarcity and order. With him collections begin, and by him values are measured."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Kael%20Vendar.jpg"
+  },
+  {
+    "id": "king",
+    "name": {
+      "en": "King",
+      "ar": "King"
+    },
+    "lore": {
+      "ar": "ملك مهيب متوّج بالأحجار السماوية، يحكم بالقوة والفطنة تحت وهج القمر.",
+      "en": "A majestic king crowned with celestial stones, ruling with power and acumen under the glare of the Moon."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/King.png"
+  },
+  {
+    "id": "luna-alchemist",
+    "name": {
+      "en": "Luna Alchemist",
+      "ar": "Luna Alchemist"
+    },
+    "lore": {
+      "ar": "يمزج العلم بطقوس القمر. يعرف ما يشفي وما يفسد. خطأه لا يُغتفر.",
+      "en": "Mixes science with the rituals of the Moon. Knows what heals and what corrupts. His mistake is unforgivable."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Luna%20Alchemist.png"
+  },
+  {
+    "id": "luna-guard",
+    "name": {
+      "en": "Luna Guard",
+      "ar": "Luna Guard"
+    },
+    "lore": {
+      "ar": "حارس الشوارع تحت ضوء القمر. لا يُذكر اسمه، لكن يُحس بوجوده. إن رأيته، فالأمر تحت السيطرة.",
+      "en": "Guardian of the streets under the moonlight. His name is not mentioned, but his presence is felt. If you see him, the matter is under control."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Luna%20Guard.png"
+  },
+  {
+    "id": "lunarians",
+    "name": {
+      "en": "Lunarians",
+      "ar": "Lunarians"
+    },
+    "lore": {
+      "ar": "أبناء لونا الحقيقيون. ليسوا أبطالًا ولا ملوكًا، بل الأساس. إن سقطوا، سقط كل شيء.",
+      "en": "The true children of Luna. Not heroes or kings, but the foundation. If they fall, everything falls."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Lunarians.png"
+  },
+  {
+    "id": "master-thief",
+    "name": {
+      "en": "Master Thief",
+      "ar": "Master Thief"
+    },
+    "lore": {
+      "ar": "يسرق دون أن يترك أثرًا. لا ولاء له إلا للظل. ما يختفي بسببه، لا يُستعاد.",
+      "en": "Steals without leaving a trace. Has no loyalty except to the shadow. What disappears because of him is not recovered."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Master%20Thief.png"
+  },
+  {
+    "id": "meluna",
+    "name": {
+      "en": "Meluna",
+      "ar": "Meluna"
+    },
+    "lore": {
+      "ar": "ميلونا الشقيقة الكبرى لسيلونا ، وضعت متجر الاحجار الثمينه والنادرة في قلب العاصمة \" لونڤور \".",
+      "en": "Meluna, the elder sister of Seluna. Established the store of precious and rare stones in the heart of the capital 'Lunvor'."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Meluna.png"
+  },
+  {
+    "id": "midgets",
+    "name": {
+      "en": "Midgets",
+      "ar": "Midgets"
+    },
+    "lore": {
+      "ar": "شعب صغير بحضور كبير. يعيشون بين الظلال والبيوت الخفية. لا يُستهان بهم أبدًا.",
+      "en": "Small people with a large presence. Living between shadows and hidden houses. Never to be underestimated."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Midgets.png"
+  },
+  {
+    "id": "nebula-weaver",
+    "name": {
+      "en": "Nebula Weaver",
+      "ar": "Nebula Weaver"
+    },
+    "lore": {
+      "ar": "ساحر يتحكم بطاقة الظلال، ينسج طاقة سديمية بقوة مظلمة وبراعة سحرية عميقة.",
+      "en": "A mage controlling shadow energy, weaving nebula energy with dark power and deep magical prowess."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Nebula%20Weaver.png"
+  },
+  {
+    "id": "outcast",
+    "name": {
+      "en": "Outcast",
+      "ar": "Outcast"
+    },
+    "lore": {
+      "ar": "منبوذ اختاره القمر. يقاتل وحده ضد الجميع. نفيه جعله أقوى.",
+      "en": "An outcast chosen by the Moon. Fights alone against everyone. His exile made him stronger."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Outcast.png"
+  },
+  {
+    "id": "prince",
+    "name": {
+      "en": "Prince",
+      "ar": "Prince"
+    },
+    "lore": {
+      "ar": "ظل القمر قبل أن يصير حكمًا. يتعلم الصمت قبل القيادة. خطوته محسوبة، دائمًا.",
+      "en": "Shadow of the Moon before becoming a ruler. Learns silence before leadership. His step is calculated, always."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Prince.png"
+  },
+  {
+    "id": "princess",
+    "name": {
+      "en": "Princess",
+      "ar": "Princess"
+    },
+    "lore": {
+      "ar": "وريثة القمر بنعومة وقوة. قلبها رحيم، وقرارها حاسم. بوجودها، يهدأ القصر.",
+      "en": "Heiress of the Moon with softness and strength. Her heart is merciful, and her decision decisive. With her presence, the palace calms."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Princess.png"
+  },
+  {
+    "id": "seer",
+    "name": {
+      "en": "Seer",
+      "ar": "Seer"
+    },
+    "lore": {
+      "ar": "يرى ما لم يحدث بعد، ويتجاهل ما يحدث الآن. عيناه معلقتان بخيوط القدر القمري. كلماته تحذير، لا نصيحة.",
+      "en": "Sees what has not happened yet, and ignores what is happening now. His eyes are suspended by the threads of lunar fate. His words are a warning, not advice."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Seer.png"
+  },
+  {
+    "id": "seluna",
+    "name": {
+      "en": "Seluna",
+      "ar": "Seluna"
+    },
+    "lore": {
+      "ar": "تاجرة القمر الرحالة تأتي عند اكتمال البدر مره في الشهر، وتعود في كل شهر بأحجار نادره خاصه فيها وكرت محرم لا يباع الى لديها.",
+      "en": "The traveling Moon merchant who comes at the full moon once a month, and returns every month with rare stones of her own and a forbidden card sold only by her."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Seluna.png"
+  },
+  {
+    "id": "shuran-dark-mastermind",
+    "name": {
+      "en": "Shuran ' Dark Mastermind'",
+      "ar": "Shuran ' Dark Mastermind'"
+    },
+    "lore": {
+      "ar": "هو العقل الذي يرى لونا كشبكة لا كعالم. لا يحكم بالسيف ولا بالسحر، بل بالمعرفة والتخطيط البارد. كل حركة في لونا مرت أولًا عبر فكره.",
+      "en": "The mind that sees Luna as a network, not a world. Rules neither by sword nor magic, but by knowledge and cold planning. Every movement in Luna passed first through his thought."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Shuran%20'%20Dark%20Mastermind'.png"
+  },
+  {
+    "id": "thief",
+    "name": {
+      "en": "Thief",
+      "ar": "Thief"
+    },
+    "lore": {
+      "ar": "يسرق دون أن يترك أثرًا. لا ولاء له إلا للظل. ما يختفي بسببه، لا يُستعاد.",
+      "en": "Steals without leaving a trace. Has no loyalty except to the shadow. What disappears because of him is not recovered."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Thief.png"
+  },
+  {
+    "id": "villagers",
+    "name": {
+      "en": "Villagers",
+      "ar": "Villagers"
+    },
+    "lore": {
+      "ar": "النبض اليومي لعالم لونا. يعيشون تحت القمر دون أن يملكوه. ببقائهم، يبقى العالم حيًا.",
+      "en": "The daily pulse of Luna's world. Living under the moon without owning it. By their survival, the world remains alive."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Villagers.png"
+  },
+  {
+    "id": "whisper-queen",
+    "name": {
+      "en": "Whisper Queen",
+      "ar": "Whisper Queen"
+    },
+    "lore": {
+      "ar": "ملكة ظلال تتحدث بالهمس، تستخدم القوة القمرية للتأثير على العقول والسيطرة على ما لا يُرى.",
+      "en": "A shadow queen who speaks in whispers, using lunar power to influence minds and control the unseen."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Whisper%20Queen.png"
+  },
+  {
+    "id": "wizard",
+    "name": {
+      "en": "Wizard",
+      "ar": "Wizard"
+    },
+    "lore": {
+      "ar": "حامل طاقة لونا الخام. سحره ليس تعويذات، بل فهم عميق للقمر. يخطئ مرة واحدة… وتدفع مدينة الثمن.",
+      "en": "Bearer of raw Luna energy. His magic is not spells, but a deep understanding of the Moon. Mistakes once... and a city pays the price."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Wizard.png"
+  },
+  {
+    "id": "zoldar-the-moon-carver",
+    "name": {
+      "en": "Zoldar ' The Moon Carver '",
+      "ar": "Zoldar ' The Moon Carver '"
+    },
+    "lore": {
+      "ar": "قاطع القمر في ذروة قوته. قاد جيش لونا في حرب الفوضى الكبرى.",
+      "en": "The Moon Carver at the peak of his power. Led Luna's army in the Great Chaos War."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Zoldar%20'%20The%20Moon%20Carver%20'.png"
+  },
+  {
+    "id": "trickster",
+    "name": {
+      "en": "trickster",
+      "ar": "trickster"
+    },
+    "lore": {
+      "ar": "حضور لا يُعرّف ولا يُنكر، لا يُرى كحقيقة كاملة بل كظل وعي يسبق الفهم، وجوده لا يفرض نفسه لكنه يغيّر كل ما يمر عبره، ومن يقترب منه لا يسمع إجابة… بل يفقد السؤال.",
+      "en": "A presence that cannot be defined, nor denied. Not seen as a complete truth, but as a shadow of awareness that precedes understanding. It does not impose itself, yet everything that passes through it is altered. Those who approach hear no answer… only the loss of the question."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/trickster.png"
+  },
+  {
+    "id": "mastermind",
+    "name": {
+      "en": "The Mastermind",
+      "ar": "العقل المدبر"
+    },
+    "lore": {
+      "en": "The one who pulls all the strings from the shadows. A strategic genius whose plans span decades. No one knows his true intentions, but all fear his influence.",
+      "ar": "هو العقل الذي يرى لونا كشبكة لا كعالم. لا يحكم بالسيف ولا بالسحر، بل بالمعرفة والتخطيط البارد. كل حركة في لونا مرت أولًا عبر فكره."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.lunarian.app/characters/Main%20Characters/Mastermind.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "luna-sentinel",
+    "name": {
+      "en": "Luna Sentinel",
+      "ar": "حارس لونا"
+    },
+    "lore": {
+      "en": "The unwavering guardian of Luna's borders. With unmatched vigilance and iron will, the Sentinel protects the realm from threats both seen and unseen.",
+      "ar": "الحارس الأعلى لعرش القمر. درعه عهد، وسيفه حكم لا يُرد. إن سقط، سقط معه توازن لونا."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.lunarian.app/characters/Main%20Characters/Luna%20Sentinel.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "luna-guardian",
+    "name": {
+      "en": "Luna Guardian",
+      "ar": "الحارس"
+    },
+    "lore": {
+      "en": "A protector of ancient secrets and keeper of forbidden knowledge. The Guardian stands as the last line of defense against the forces of chaos.",
+      "ar": "جدار لونا الصامت في أوقات الظلام. لا يتقدم ولا يتراجع، فقط يثبت. وجوده يعني أن العدو تأخر كثيرًا."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.lunarian.app/characters/Main%20Characters/Luna%20Guardian.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "luna-knight",
+    "name": {
+      "en": "Luna Knight",
+      "ar": "الفارس"
+    },
+    "lore": {
+      "en": "The blade of justice in Luna's darkest hours. A warrior of unparalleled skill, the Knight has sworn to protect the innocent at any cost.",
+      "ar": "فارس القمر في ساحات الدم والرماد. ينفذ الأوامر دون سؤال، ويحارب دون خوف. اسمه يُذكر حيث تنتهي المعارك."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.lunarian.app/characters/Main%20Characters/Luna%20Knight.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "luna-noble",
+    "name": {
+      "en": "Luna Noble",
+      "ar": "النبيل"
+    },
+    "lore": {
+      "en": "Born of royal blood and raised with destiny. The Noble carries the weight of tradition while forging a new path for Luna's future.",
+      "ar": "ولد في ظل القمر لا في القصور. سلطته تأتي من الولاء لا الدم. يمثل وجه لونا بين شعبها."
+    },
+    "faction": "main",
+    "imageUrl": "https://assets.lunarian.app/characters/Main%20Characters/Luna%20Noble.png",
+    "isMainCharacter": true
+  },
+  {
+    "id": "alpha-direwolf",
+    "name": {
+      "en": "Alpha Direwolf",
+      "ar": "Alpha Direwolf"
+    },
+    "lore": {
+      "ar": "ذئب رهيب وضخم يتربص في الظلال ، يصطاد تحت وهج القمر. الاقوى بين فصيل ذئاب لونا.",
+      "en": "A terrible and huge wolf lurking in the shadows, hunting under the glare of the moon. The strongest of the Luna wolf pack."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Alpha%20Direwolf.png"
+  },
+  {
+    "id": "bunny",
+    "name": {
+      "en": "Bunny",
+      "ar": "Bunny"
+    },
+    "lore": {
+      "ar": "رمز البراءة القمرية. حساس للطاقة والاختلال. الهروب منه فأل سيئ.",
+      "en": "Symbol of lunar innocence. Sensitive to energy and imbalance. Fleeing from it is a bad omen."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Bunny.png"
+  },
+  {
+    "id": "cobra",
+    "name": {
+      "en": "Cobra",
+      "ar": "Cobra"
+    },
+    "lore": {
+      "ar": "حارس الشلالات القمرية. صبره أطول من عمر الفريسة. ضربته واحدة… وكافية.",
+      "en": "Guardian of the lunar waterfalls. His patience is longer than the prey's life. His strike is one... and sufficient."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Cobra.png"
+  },
+  {
+    "id": "deer",
+    "name": {
+      "en": "Deer",
+      "ar": "Deer"
+    },
+    "lore": {
+      "ar": "روح الغابة القمرية. حساس لأي خلل في التوازن. اصطياده نذير شؤم.",
+      "en": "Spirit of the lunar forest. Sensitive to any imbalance. Hunting it is a bad omen."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Deer.png"
+  },
+  {
+    "id": "direwolf",
+    "name": {
+      "en": "Direwolf",
+      "ar": "Direwolf"
+    },
+    "lore": {
+      "ar": "مفترس القمر الأعظم. يقود دون أوامر. عُواؤه إعلان حرب.",
+      "en": "The greatest predator of the Moon. Leads without orders. His howl is a declaration of war."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Direwolf.png"
+  },
+  {
+    "id": "great-sage",
+    "name": {
+      "en": "Great Sage",
+      "ar": "Great Sage"
+    },
+    "lore": {
+      "ar": "حكيم القمر الأكبر وحامل المعرفة القديمة. يرشد التائهين وسط الظلام. وجوده نور نادر في عالم لونا.",
+      "en": "The greatest sage of the Moon and bearer of ancient knowledge. Guides the lost amidst the darkness. His presence is a rare light in the world of Luna."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Great%20Sage.png"
+  },
+  {
+    "id": "hound",
+    "name": {
+      "en": "Hound",
+      "ar": "Hound"
+    },
+    "lore": {
+      "ar": "صياد القمر الأسود. يتبع الرائحة لا الرحمة. إذا بدأ المطاردة، لا يتوقف.",
+      "en": "Hunter of the Black Moon. Follows the scent, not mercy. If he starts the chase, he does not stop."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Hound.png"
+  },
+  {
+    "id": "lynx",
+    "name": {
+      "en": "Lynx",
+      "ar": "Lynx"
+    },
+    "lore": {
+      "ar": "صياد صامت بنظرة ثاقبة. يرى ما لا يُرى. لا يخطئ الفريسة.",
+      "en": "Silent hunter with a piercing gaze. Sees what is unseen. Does not miss the prey."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Lynx.png"
+  },
+  {
+    "id": "moonveil",
+    "name": {
+      "en": "Moon Viel",
+      "ar": "Moon Viel"
+    },
+    "lore": {
+      "ar": "كائن يسير بين الماء والظل. يحجب حضوره كما يحجب القمر نوره. من يراه، يكون قد اقترب أكثر من اللازم.",
+      "en": "A being walking between water and shadow. Veils his presence as the moon veils its light. He who sees him has approached closer than necessary."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Mooveil.png"
+  },
+  {
+    "id": "owl",
+    "name": {
+      "en": "Owl",
+      "ar": "Owl"
+    },
+    "lore": {
+      "ar": "عين الليل الحكيمة. يراقب دون تدخل. إن صرخ، فالخطر قريب.",
+      "en": "The wise eye of the night. Watches without interfering. If it screams, danger is near."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Owl.png"
+  },
+  {
+    "id": "panthera",
+    "name": {
+      "en": "Panthera",
+      "ar": "Panthera"
+    },
+    "lore": {
+      "ar": "صيّادة الليل تحت ظل القمر. خطوتها بلا صوت ونظرتها حكم. من تراها أولًا… لا تراها ثانية.",
+      "en": "Hunter of the night under the moon's shadow. Her step is soundless and her look is a verdict. Who sees her first... does not see her again."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Panthera.png"
+  },
+  {
+    "id": "peacock",
+    "name": {
+      "en": "Peacock",
+      "ar": "Peacock"
+    },
+    "lore": {
+      "ar": "جمال القمر المتباهي. ريشه يخفي قوة غير متوقعة. ينظر إليه الجميع… ولا يفهمه أحد.",
+      "en": "The showy beauty of the Moon. His feathers hide unexpected power. Everyone looks at him... and no one understands him."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Peacock.png"
+  },
+  {
+    "id": "pegasus",
+    "name": {
+      "en": "Pegasus",
+      "ar": "Pegasus"
+    },
+    "lore": {
+      "ar": "جواد القمر المجنّح. لا يُركب إلا لمن اختاره القمر. مروره يترك السماء مضطربة.",
+      "en": "The winged horse of the Moon. Can only be ridden by one chosen by the Moon. His passing leaves the sky turbulent."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Pegasus.png"
+  },
+  {
+    "id": "sage",
+    "name": {
+      "en": "Sage",
+      "ar": "Sage"
+    },
+    "lore": {
+      "ar": "حامل الحكمة التي لا تُقال علنًا. يعرف متى يتكلم ومتى يصمت. وجوده يمنع لونا من تكرار أخطائها.",
+      "en": "Bearer of wisdom not spoken publicly. Knows when to speak and when to be silent. His presence prevents Luna from repeating her mistakes."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Sage.png"
+  },
+  {
+    "id": "silver-beach-guardian",
+    "name": {
+      "en": "Silver Beach Guardian",
+      "ar": "Silver Beach Guardian"
+    },
+    "lore": {
+      "ar": "حارس الشواطئ الفضية في لونا، يشع نورًا ملكياً كمدافع صامد عن نقاء المملكة.",
+      "en": "Guardian of the silver beaches in Luna, radiating royal light as a steadfast defender of the kingdom's purity."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Silver%20Beach%20Guardian.png"
+  },
+  {
+    "id": "silver-bird",
+    "name": {
+      "en": "Silver Bird",
+      "ar": "Silver Bird"
+    },
+    "lore": {
+      "ar": "طائر نادر بلون القمر. ظهوره فأل لتغير قادم. لا يُرى إلا عند الصفاء التام.",
+      "en": "A rare bird the color of the moon. Its appearance is an omen of coming change. Only seen in total clarity."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Silver%20Bird.png"
+  },
+  {
+    "id": "toad",
+    "name": {
+      "en": "Toad",
+      "ar": "Toad"
+    },
+    "lore": {
+      "ar": "حارس البرك القديمة. يعرف أسرار الماء والسكوت. لا يبدو خطيرًا… حتى يفعل.",
+      "en": "Guardian of ancient ponds. Knows the secrets of water and silence. Does not seem dangerous... until he acts."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Toad.png"
+  },
+  {
+    "id": "umbreon",
+    "name": {
+      "en": "Umbreon",
+      "ar": "Umbreon"
+    },
+    "lore": {
+      "ar": "مخلوق الليل الصامت. يتحرك حيث يختفي الضوء. ظهوره يعني أن الظلال استيقظت.",
+      "en": "The silent creature of the night. Moves where the light disappears. His appearance means the shadows have awakened."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Umbreon.png"
+  },
+  {
+    "id": "vulmir",
+    "name": {
+      "en": "Vulmir",
+      "ar": "Vulmir"
+    },
+    "lore": {
+      "ar": "كيان قديم مرتبط بنبض القمر. لا يتكلم إلا عند الخلل العظيم. ظهوره علامة أن التوازن مهدد.",
+      "en": "Ancient entity linked to the pulse of the Moon. Does not speak except at the Great Imbalance. His appearance is a sign that the balance is threatened."
+    },
+    "faction": "moon-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Moon%20Creatures/Vulmir.png"
+  },
+  {
+    "id": "blood-siren",
+    "name": {
+      "en": "Blood Siren",
+      "ar": "Blood Siren"
+    },
+    "lore": {
+      "ar": "حورية دموية مصاصّة للدماء، مغمورة بالظلام، تتغذى على الدم وتتحكم بالظلال بجاذبية شريرة.",
+      "en": "A bloody vampire siren, immersed in darkness, feeding on blood and controlling shadows with evil allure."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Blood%20Siren.png"
+  },
+  {
+    "id": "centaur",
+    "name": {
+      "en": "Centaur",
+      "ar": "Centaur"
+    },
+    "lore": {
+      "ar": "محارب الحكمة والمسير. يجمع القوة والانضباط. خطوته تحدد مصير الجيوش.",
+      "en": "Warrior of wisdom and the march. Combines strength and discipline. His step determines the fate of armies."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Centaur.png"
+  },
+  {
+    "id": "cerberus",
+    "name": {
+      "en": "Cerberus",
+      "ar": "Cerberus"
+    },
+    "lore": {
+      "ar": "حارس البوابات السفلية بثلاثة رؤوس لا تنام. يمنع الأحياء من العبور ويمنع الموتى من الهروب. نباحه إعلان أن لا عودة من هذا الطريق.",
+      "en": "Guardian of the lower gates with three sleepless heads. Prevents the living from crossing and the dead from escaping. His bark is a declaration that there is no return from this path."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Cerberus.png"
+  },
+  {
+    "id": "chimera",
+    "name": {
+      "en": "Chimera",
+      "ar": "Chimera"
+    },
+    "lore": {
+      "ar": "اندماج قوى لا يجب أن تجتمع. عقل واحد، ثلاث وحوش. الهروب منها مستحيل.",
+      "en": "A fusion of powers that should not meet. One mind, three monsters. Escape from it is impossible."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Chimera.png"
+  },
+  {
+    "id": "great-deer",
+    "name": {
+      "en": "Great Deer",
+      "ar": "Great Deer"
+    },
+    "lore": {
+      "ar": "مخلوق غامض من غابات القمر، يُعد الغزال العظيم حارسًا لسماء الليل، متوهجًا بطاقة أثيرية.",
+      "en": "A mysterious creature from the Moon forests, the Great Deer is considered a guardian of the night sky, glowing with ethereal energy."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Great%20Deer.png"
+  },
+  {
+    "id": "griffin",
+    "name": {
+      "en": "Griffin",
+      "ar": "Griffin"
+    },
+    "lore": {
+      "ar": "حارس السماء والحدود القمرية. يهاجم من الأعلى بلا إنذار. وجوده يعني أن الأرض محرّمة.",
+      "en": "Guardian of the sky and lunar borders. Attacks from above without warning. His presence means the ground is forbidden."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Griffin.png"
+  },
+  {
+    "id": "kraken",
+    "name": {
+      "en": "Kraken",
+      "ar": "Kraken"
+    },
+    "lore": {
+      "ar": "وحش الأعماق الذي لا يرى السماء. أذرعه تسحب السفن والرجال نحو العدم. حين يتحرك البحر، يكون هو السبب.",
+      "en": "Monster of the depths that never sees the sky. His arms drag ships and men into nothingness. When the sea moves, he is the cause."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Kraken.png"
+  },
+  {
+    "id": "medusa",
+    "name": {
+      "en": "Medusa",
+      "ar": "Medusa"
+    },
+    "lore": {
+      "ar": "نظرتها حكم لا يُستأنف. من يواجهها يفقد الزمن قبل الجسد. الحجر آخر ما يشعر به أعداؤها.",
+      "en": "Her gaze is a sentence without appeal. He who faces her loses time before the body. Stone is the last thing her enemies feel."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Medusa.png"
+  },
+  {
+    "id": "mermaid",
+    "name": {
+      "en": "Mermaid",
+      "ar": "Mermaid"
+    },
+    "lore": {
+      "ar": "حارسة الأعماق القمرية. صوتها هدوء… وسحر. من يثق بها، يختبر البحر.",
+      "en": "Guardian of the lunar depths. Her voice is calm... and magic. He who trusts her tests the sea."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Mermaid.png"
+  },
+  {
+    "id": "phoenix",
+    "name": {
+      "en": "Phoenix",
+      "ar": "Phoenix"
+    },
+    "lore": {
+      "ar": "روح القمر المتجددة فوق لونا. تحترق لتولد أنقى. سقوطها ليس نهاية.",
+      "en": "The spirit of the Moon renewed above Luna. Burns to be born purer. Its fall is not an end."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Phoenix.png"
+  },
+  {
+    "id": "siren",
+    "name": {
+      "en": "Siren",
+      "ar": "Siren"
+    },
+    "lore": {
+      "ar": "صوتها نداء، ونظرتها غرق. تخدم القمر عبر البحر واللحن. من يسمعها، لا يعود كما كان.",
+      "en": "Her voice is a call, and her gaze is drowning. She serves the Moon through the sea and melody. He who hears her never returns as he was."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Siren.png"
+  },
+  {
+    "id": "sphinx",
+    "name": {
+      "en": "Sphinx",
+      "ar": "Sphinx"
+    },
+    "lore": {
+      "ar": "حارس الأسرار القديمة. يمتحن العقول قبل السيوف. خطأ واحد… والعقاب أبدي.",
+      "en": "Guardian of ancient secrets. Tests minds before swords. One mistake... and the punishment is eternal."
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Sphinx.png"
+  },
+  {
+    "id": "astral-harbinger",
+    "name": {
+      "en": "Astral Harbinger",
+      "ar": "Astral Harbinger"
+    },
+    "lore": {
+      "ar": "الكائن الذي سقط من النجوم واستقر في لونا. يستدعي طاقة نجميه وقمرية بالقتال. ظهوره يعني أن ما سيحدث لا يمكن إيقافه.",
+      "en": "The entity that fell from the stars and settled in Luna. It summons stellar and lunar energy in battle. Its appearance means what is coming cannot be stopped."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Astral-Harbinger.png"
+  },
+  {
+    "id": "baby-wisp",
+    "name": {
+      "en": "Baby Wisp",
+      "ar": "Baby Wisp"
+    },
+    "lore": {
+      "ar": "طاقة قمرية في بدايتها. فضولي، ضعيف، لكنه نقي. حمايته مسؤولية الجميع.",
+      "en": "A lunar energy in its infancy. Curious, weak, but pure. Protecting it is everyone's responsibility."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Baby%20Wisp.png"
+  },
+  {
+    "id": "dream-eater",
+    "name": {
+      "en": "Dream Eater",
+      "ar": "Dream Eater"
+    },
+    "lore": {
+      "ar": "كيان كابوسي يتغذى على الأحلام، يفترس في الظلال ويزرع الرعب في العقل النائم.",
+      "en": "A nightmarish entity that feeds on dreams, hunting in the shadows and planting terror in the sleeping mind."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Dream%20Eater.png"
+  },
+  {
+    "id": "gatekeeper",
+    "name": {
+      "en": "Gatekeeper",
+      "ar": "Gatekeeper"
+    },
+    "lore": {
+      "ar": "حارس العبور بين العوالم. لا يُقنع ولا يُرشا. من يرفضه… لا يعود.",
+      "en": "Guardian of passage between worlds. It cannot be persuaded or bribed. Those it refuses... do not return."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Gatekeeper.png"
+  },
+  {
+    "id": "harbinger",
+    "name": {
+      "en": "Harbinger",
+      "ar": "Harbinger"
+    },
+    "lore": {
+      "ar": "الكائن الغامض الذي يتغذى على ( ويسب ) كائنات الطاقه القمرية. لكل كائن ويسب يصطاده يزاد قوة. قوته غاشمه ولا يمكن التصدي له الا بالاسلحة القمرية.",
+      "en": "A mysterious entity that feeds on Wisps—beings of lunar energy. With every Wisp it hunts, it grows stronger. Its power is brutal, and it can only be opposed with lunar weapons."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Harbinger.png"
+  },
+  {
+    "id": "herald",
+    "name": {
+      "en": "Herald",
+      "ar": "Herald"
+    },
+    "lore": {
+      "ar": "صوت القمر حين يقرر أن يُسمع. لا يعلن إلا ما لا يمكن إيقافه. كلماته بداية، وقراراته نهاية.",
+      "en": "The voice of the moon when it decides to be heard. It announces only what cannot be stopped. Its words are a beginning, and its decisions are an end."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Herald.png"
+  },
+  {
+    "id": "infernal-demon",
+    "name": {
+      "en": "Infernal Demon",
+      "ar": "Infernal Demon"
+    },
+    "lore": {
+      "ar": "شيطان اللهب الأزرق، نفيه القمر ولم يقتله. ناره تحرق الجسد والروح معًا. تحريره خطأ لا يُغتفر.",
+      "en": "The blue-flame demon—banished by the moon, not killed. Its fire burns body and soul together. Freeing it is an unforgivable mistake."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Infernal%20Demon.png"
+  },
+  {
+    "id": "jester",
+    "name": {
+      "en": "Jester",
+      "ar": "Jester"
+    },
+    "lore": {
+      "ar": "ضحكته تخفي أكثر مما تكشف. يعبث بالقوانين ليكشف حقيقتها. الفوضى سلاحه، والمرح قناعه.",
+      "en": "Its laughter hides more than it reveals. It bends the laws to expose their truth. Chaos is its weapon, and joy is its mask."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Jester.png"
+  },
+  {
+    "id": "null-bringer",
+    "name": {
+      "en": "Null Bringer",
+      "ar": "Null Bringer"
+    },
+    "lore": {
+      "ar": "كائن يمحو كل ما يراه ، لا يميز أحد ابداً. طاقته تبتلع السحر، الزمن، والذاكرة. ما يسقط أمامه لا يُذكر حتى في الأساطير.",
+      "en": "An entity that erases everything it sees, showing no distinction to anyone. Its power devours magic, time, and memory. What falls before it is not remembered—even in legends."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Null%20Bringer.png"
+  },
+  {
+    "id": "paradox-keeper",
+    "name": {
+      "en": "Paradox Keeper",
+      "ar": "Paradox Keeper"
+    },
+    "lore": {
+      "ar": "سيد التناقض، موجود ونقيضه في آن واحد. يلتوي حول الزمن كما يلتوي القمر بين النور والظل. مواجهته تعني فقدان العقل او الموت.",
+      "en": "Master of contradiction—existing and its opposite at once. It twists around time as the moon twists between light and shadow. Facing it means losing your mind or dying."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Paradox%20Keeper.png"
+  },
+  {
+    "id": "seraph",
+    "name": {
+      "en": "Seraph",
+      "ar": "Seraph"
+    },
+    "lore": {
+      "ar": "مبعوث القمر الأعلى، لا يُعرف ماهو ومن أي فصيل. أجنحته لا ترحم، وسيفه لا يتردد. نزوله يعني أن الميزان قد حُسم.",
+      "en": "The emissary of the higher moon—unknown what it is or which faction it belongs to. Its wings show no mercy, and its sword does not hesitate. Its descent means the balance has been decided."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Seraph.png"
+  },
+  {
+    "id": "the-half-breed",
+    "name": {
+      "en": "The Half-Breed",
+      "ar": "The Half-Breed"
+    },
+    "lore": {
+      "ar": "مولود بين قوتين متعاديتين. يحمل لعنة ونعمة معًا. لا ينتمي… لكنه لا يُهزم.",
+      "en": "Born between two opposing forces. Carrying both a curse and a blessing. It belongs nowhere... yet it cannot be defeated."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/The%20Half-Breed.png"
+  },
+  {
+    "id": "thorns-queen",
+    "name": {
+      "en": "Thorns Queen",
+      "ar": "Thorns Queen"
+    },
+    "lore": {
+      "ar": "ملكة شريرة متشابكة مع الأشواك والورود، تحكم الظلال وتستمد قوتها من أحضان الطبيعة.",
+      "en": "A wicked queen entwined with thorns and roses, ruling the shadows and drawing her power from nature’s embrace."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Thorns%20Queen.png"
+  },
+  {
+    "id": "umbra",
+    "name": {
+      "en": "Umbra",
+      "ar": "Umbra"
+    },
+    "lore": {
+      "ar": "تجسيد الظل القمري. يتحرك حيث ينكسر الضوء. وجوده يسبق الكارثة.",
+      "en": "The embodiment of lunar shadow. It moves where light fractures. Its presence precedes catastrophe."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Umbra.png"
+  },
+  {
+    "id": "wishmaster",
+    "name": {
+      "en": "Wishmaster",
+      "ar": "Wishmaster"
+    },
+    "lore": {
+      "ar": "يحقق الأمنيات بثمن خفي. كلماته فخاخ مقنّعة. أمنيتك قد تكون نهايتك.",
+      "en": "He grants wishes for a hidden price. His words are disguised traps. Your wish may be your end."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Wishmaster.png"
+  },
+  {
+    "id": "wisp",
+    "name": {
+      "en": "Wisp",
+      "ar": "Wisp"
+    },
+    "lore": {
+      "ar": "طيف صغير بطاقة قديمة. يرشد الضائعين دون أن يُرى. يظهر فقط لمن ما زال نقيًا.",
+      "en": "A small wraith with ancient energy. It guides the lost without being seen. It appears only to those who remain pure."
+    },
+    "faction": "strange-being",
+    "imageUrl": "https://assets.lunarian.app/characters/Strange%20Being/Wisp.png"
+  },
+  {
+    "id": "alpha-werewolf",
+    "name": {
+      "en": "Alpha Werewolf",
+      "ar": "Alpha Werewolf"
+    },
+    "lore": {
+      "ar": "قائد مستذئبين لا ينازع. أقوى وأشرس من جميع أبناء جنسه. عندما يعوي، تبدأ المذبحة.",
+      "en": "The undisputed leader of all werewolves. Stronger and more savage than any of his kind. When he howls, the slaughter begins."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Alpha%20Werewolf.png"
+  },
+  {
+    "id": "elder-vampire",
+    "name": {
+      "en": "Elder Vampire",
+      "ar": "Elder Vampire"
+    },
+    "lore": {
+      "ar": "سيد مصاصي الدماء منذ العصور الأولى. يتغذى على البشر ويأمر الظلال. إرادته قانون في الليل.",
+      "en": "The lord of vampires since the earliest ages. He feeds on humans and commands the shadows. His will is law in the night."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Elder%20Vampire.png"
+  },
+  {
+    "id": "lycan",
+    "name": {
+      "en": "Lycan",
+      "ar": "Lycan"
+    },
+    "lore": {
+      "ar": "إنسان مزقته لعنة القمر. قوته تتضاعف مع اكتماله. عقله يقاتل الوحش داخله.",
+      "en": "A human torn apart by the moon’s curse. His power multiplies as the moon reaches fullness. His mind battles the beast within."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Lycan.png"
+  },
+  {
+    "id": "vampire",
+    "name": {
+      "en": "Vampire",
+      "ar": "Vampire"
+    },
+    "lore": {
+      "ar": "سيد الليل والدم. يخطط قبل أن يهاجم. الخالد الذي لا ينسى.",
+      "en": "Master of night and blood. He plans before he strikes. The immortal who never forgets."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Vampire.png"
+  },
+  {
+    "id": "werewolf",
+    "name": {
+      "en": "Werewolf",
+      "ar": "Werewolf"
+    },
+    "lore": {
+      "ar": "وحش القمر الكامل. لا يعرف الرحمة ولا السيطرة. ظهوره كارثة مؤكدة.",
+      "en": "The beast of the full moon. It knows neither mercy nor control. Its appearance is a guaranteed catastrophe."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Werewolf.png"
+  },
+  {
+    "id": "witch",
+    "name": {
+      "en": "Witch",
+      "ar": "Witch"
+    },
+    "lore": {
+      "ar": "ساحرة ترى لونا كرقعة لعب. تتنبأ، وتغيّر، وتعبث. كل تعويذة لها ثمن.",
+      "en": "A witch who sees Luna as a game board. She foretells, alters, and manipulates. Every spell comes at a price."
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Witch.png"
+  },
+  {
+    "id": "gravemind",
+    "name": {
+      "en": "Gravemind",
+      "ar": "Gravemind"
+    },
+    "lore": {
+      "ar": "عقل المقابر وملك الموتى الصامت. يحرك العظام كما تحرك الريح الغبار. كل جيش يسقط، ينضم إليه.",
+      "en": "Mind of the graves and silent king of the dead. He moves bones as the wind moves dust. Every army that falls joins him."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Gravemind.png"
+  },
+  {
+    "id": "monarch-abyss",
+    "name": {
+      "en": "Monarch Abyss",
+      "ar": "Monarch Abyss"
+    },
+    "lore": {
+      "ar": "ملك هيكلي يحكم ظلام الهاوية، حاكم مرعب لعالم الظلال وأرواح الضياع الجامحة.",
+      "en": "A skeletal king ruling the darkness of the abyss, a terrifying ruler of the shadow world and wild lost souls."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Monarch%20Abyss.png"
+  },
+  {
+    "id": "phantom",
+    "name": {
+      "en": "Phantom",
+      "ar": "Phantom"
+    },
+    "lore": {
+      "ar": "ظل بلا جسد ثابت. يظهر ليقتل ويختفي. لا يترك أثرًا إلا الخوف.",
+      "en": "A shadow with no fixed body. Appears to kill and vanishes. Leaves no trace but fear."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Phantom.png"
+  },
+  {
+    "id": "reaper",
+    "name": {
+      "en": "Reaper",
+      "ar": "Reaper"
+    },
+    "lore": {
+      "ar": "جامع الأرواح تحت ضوء القمر الصامت. لا يطارد… بل ينتظر اللحظة التي ينهار فيها الخصم. من يراه، يكون قد انتهى بالفعل.",
+      "en": "Collector of souls under the silent moonlight. He does not chase... but waits for the moment the opponent collapses. He who sees him is already finished."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Reaper.png"
+  },
+  {
+    "id": "shadow-reign",
+    "name": {
+      "en": "Shadow Reign",
+      "ar": "Shadow Reign"
+    },
+    "lore": {
+      "ar": "شبح متلفع بالظلام والظلال، يمتلك قوى الليل ويحرس الأسرار الخفية.",
+      "en": "A ghost wrapped in darkness and shadows, possessing the powers of the night and guarding hidden secrets."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Shadow%20Reign.png"
+  },
+  {
+    "id": "shape-shifter",
+    "name": {
+      "en": "Shape Shifter",
+      "ar": "Shape Shifter"
+    },
+    "lore": {
+      "ar": "كيان مظلم مغطى بالظلال، متحوّل جزئيًا، يتنقل بين الأشكال ويتلاشى بين الهويات، لا يُعرف له وجه ثابت ولا مصير واحد.",
+      "en": "A dark entity covered in shadows, partially transforming, shifting between forms and fading between identities; known by no fixed face nor single destiny."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Shape%20Shifter.PNG"
+  },
+  {
+    "id": "specter",
+    "name": {
+      "en": "Specter",
+      "ar": "Specter"
+    },
+    "lore": {
+      "ar": "روح لم تُغلق صفحتها. يتحرك بين العالمين. رؤيته تعني أن الموت قريب.",
+      "en": "A spirit whose chapter was not closed. Moves between worlds. Seeing it means death is near."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Specter.png"
+  },
+  {
+    "id": "wraith",
+    "name": {
+      "en": "Wraith",
+      "ar": "Wraith"
+    },
+    "lore": {
+      "ar": "بقايا روح رفضت الرحيل. لا تنتمي للحياة ولا للموت. ظهورها علامة اختلال.",
+      "en": "Remnants of a soul that refused to leave. Belongs neither to life nor death. Its appearance is a sign of imbalance."
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Wraith.png"
+  },
+  {
+    "id": "blademaster",
+    "name": {
+      "en": "Blademaster",
+      "ar": "Blademaster"
+    },
+    "lore": {
+      "ar": "الاخ الاصغر لزولدار ، لطالما كان يحلم ان يصبح جارديان مثل اخيه ولكن لم تتم الموافقة عليه.",
+      "en": "Zoldar's younger brother. He always dreamed of becoming a Guardian like his brother, but he was never approved."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Blademaster.png"
+  },
+  {
+    "id": "chaos-warlord",
+    "name": {
+      "en": "Chaos Warlord",
+      "ar": "Chaos Warlord"
+    },
+    "lore": {
+      "ar": "قائد جيش ملك الفوضى \" موڤارث \" والمقاتل الذي يُعتمد عليه في كل قتال، يقتلع رؤوس اعدائه بيديه العاريتين.",
+      "en": "The commander of the Chaos King Movarth's army and the fighter relied upon in every battle; he tears the heads of his enemies off with his bare hands."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Chaos%20Warlord.png"
+  },
+  {
+    "id": "dragon-slayer",
+    "name": {
+      "en": "Dragon Slayer",
+      "ar": "Dragon Slayer"
+    },
+    "lore": {
+      "ar": "صائد الأساطير المكسورة. دم التنانين صقل اسمه. لا يهاب وحشًا مهما علا.",
+      "en": "Hunter of broken legends. Dragon blood polished his name. He fears no beast, no matter how great."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Dragon%20Slayer.png"
+  },
+  {
+    "id": "exclipse-warrior",
+    "name": {
+      "en": "Exclipse Warrior",
+      "ar": "Exclipse Warrior"
+    },
+    "lore": {
+      "ar": "مقاتل لحظة الكسوف الأبدي. يجمع النور والظلام في ضربة واحدة. حين يقاتل، تختفي الفوارق.",
+      "en": "Fighter of the eternal eclipse moment. He combines light and darkness in a single strike. When he fights, differences vanish."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Exclipse%20Warrior.png"
+  },
+  {
+    "id": "grandmaster",
+    "name": {
+      "en": "Grandmaster",
+      "ar": "Grandmaster"
+    },
+    "lore": {
+      "ar": "بلغ نهاية الطريق القتالي. كل حركة محسوبة. يهزم خصمه قبل أن يبدأ القتال.",
+      "en": "He has reached the end of the martial path. Every move is calculated. He defeats his opponent before the fight even begins."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Grandmaster.png"
+  },
+  {
+    "id": "luneth-cavor",
+    "name": {
+      "en": "Luneth & Cavor",
+      "ar": "Luneth & Cavor"
+    },
+    "lore": {
+      "ar": "عقلان، جسد واحد في المعركة. هجوم متزامن لا يُصد. إذا رأيت أحدهما، الآخر خلفك.",
+      "en": "Two minds, one body in battle. A synchronized attack that cannot be blocked. If you see one, the other is behind you."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Luneth%20%26%20Cavor.png"
+  },
+  {
+    "id": "mad-crow",
+    "name": {
+      "en": "Mad Crow",
+      "ar": "Mad Crow"
+    },
+    "lore": {
+      "ar": "مقاتل فقد عقله للقمر. اللغة الوحيدة التي يعرفها العنف فقط. فوضاه محسوبة… بطريقته.",
+      "en": "A fighter who lost his mind to the moon. The only language he knows is violence. His chaos is calculated... in his own way."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Mad%20Crow.png"
+  },
+  {
+    "id": "monk",
+    "name": {
+      "en": "Monk",
+      "ar": "Monk"
+    },
+    "lore": {
+      "ar": "جسد منضبط بعقل صافٍ. قوته داخلية لا تُرى. يضرب حين يصبح الصمت كافيًا.",
+      "en": "A disciplined body with a clear mind. His power is internal and unseen. He strikes when silence becomes sufficient."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Monk.png"
+  },
+  {
+    "id": "moon-bender",
+    "name": {
+      "en": "Moon Bender",
+      "ar": "Moon Bender"
+    },
+    "lore": {
+      "ar": "مقاتل يُشكّل طاقة القمر بيديه العاريتين. كل ضربة تنحني لها الجاذبية والنية. قوته ليست في السلاح، بل في السيطرة المطلقة.",
+      "en": "A fighter who shapes the moon's energy with his bare hands. Gravity and intent bow to every strike. His power is not in weapons, but in absolute control."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Moon%20Bender.png"
+  },
+  {
+    "id": "moon-rider",
+    "name": {
+      "en": "Moon Rider",
+      "ar": "Moon Rider"
+    },
+    "lore": {
+      "ar": "فارس القمر، يمتطي وحشًا وُلد من الظلال. يظهر في المعارك المستحيلة حيث لا أمل بالبقاء. هجومه الخاطف يترك الخراب قبل أن يُرى.",
+      "en": "Knight of the Moon, riding a beast born of shadows. He appears in impossible battles where there is no hope of survival. His swift attack leaves ruin before he is seen."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Moon%20Rider.png"
+  },
+  {
+    "id": "movarth-chaos-king",
+    "name": {
+      "en": "Movarth 'Chaos King'",
+      "ar": "Movarth 'Chaos King'"
+    },
+    "lore": {
+      "ar": "ملك بلا قانون ولا عرش ثابت. يحكم بالفوضى لا بالأوامر. وجوده يكسر توازن العصور.",
+      "en": "A king with no law and no fixed throne. He rules by chaos, not orders. His existence breaks the balance of the ages."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Movarth%20'Chaos%20King'.png"
+  },
+  {
+    "id": "mysterious-warrior",
+    "name": {
+      "en": "Mysterious Warrior",
+      "ar": "Mysterious Warrior"
+    },
+    "lore": {
+      "ar": "هوية مخفية وقوة ظاهرة. يقاتل لأسباب لا يُفصح عنها. آثاره تُرى، واسمه لا.",
+      "en": "Hidden identity and visible power. He fights for undisclosed reasons. His traces are seen, but his name is not."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Mysterious%20Warrior.png"
+  },
+  {
+    "id": "pacifier",
+    "name": {
+      "en": "Pacifier",
+      "ar": "Pacifier"
+    },
+    "lore": {
+      "ar": "قاطع طريق في صحراء لونا. لا يلتزم بقواعد الشرف. لا يسرقك دون أن يقتلك.",
+      "en": "A bandit in the desert of Luna. He adheres to no rules of honor. He does not rob you without killing you."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Pacifier.png"
+  },
+  {
+    "id": "rune-breaker",
+    "name": {
+      "en": "Rune Breaker",
+      "ar": "Rune Breaker"
+    },
+    "lore": {
+      "ar": "كاسر الرون، وُلد ليحطم السحر لا ليستعمله. سيوفه تُمزّق التعويذات كما تُقطع الأجساد. حيث يفشل السحرة، يبدأ هو القتال الحقيقي.",
+      "en": "The Rune Breaker, born to shatter magic, not use it. His swords tear through spells as they cut through bodies. Where mages fail, his true fight begins."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Rune%20Breaker.png"
+  },
+  {
+    "id": "shadow",
+    "name": {
+      "en": "Shadow",
+      "ar": "Shadow"
+    },
+    "lore": {
+      "ar": "قاتل يتحرك بين ضربتين. لا يُرى إلا حين يكون الأوان قد فات. الظلام يعرف اسمه جيدًا.",
+      "en": "An assassin who moves between two strikes. Only seen when it is too late. Darkness knows his name well."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Shadow.png"
+  },
+  {
+    "id": "skull-crusher",
+    "name": {
+      "en": "Skull-Crusher",
+      "ar": "Skull-Crusher"
+    },
+    "lore": {
+      "ar": "جلاد لونا الصامت. سلاحه حكم نهائي. من يسقط أمامه لا يُذكر.",
+      "en": "Luna's silent executioner. His weapon is a final verdict. He who falls before him is not remembered."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Skull-Crusher.png"
+  },
+  {
+    "id": "solar-warrior",
+    "name": {
+      "en": "Solar Warrior",
+      "ar": "Solar Warrior"
+    },
+    "lore": {
+      "ar": "محارب الشمس في عالم القمر. ناره لا تنطفئ حتى في الظلام. يصطدم بلونا ولا ينكسر.",
+      "en": "Warrior of the Sun in the world of the Moon. His fire does not extinguish even in darkness. He collides with Luna and does not break."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Solar%20Warrior.png"
+  },
+  {
+    "id": "wanderer",
+    "name": {
+      "en": "Wanderer",
+      "ar": "Wanderer"
+    },
+    "lore": {
+      "ar": "مسافر بلا وجهة ثابتة. يعرف الطرق المنسية. حيث يمشي، تتغير القصص.",
+      "en": "A traveler with no fixed destination. He knows the forgotten paths. Where he walks, stories change."
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Wanderer.png"
+  }
+]

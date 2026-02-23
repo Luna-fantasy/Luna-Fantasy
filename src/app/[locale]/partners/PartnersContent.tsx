@@ -2,80 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-
-interface Partner {
-  id: string;
-  name: string;
-  type: { en: string; ar: string };
-  description: { en: string; ar: string };
-  logo: string;
-  website?: string;
-  socials: {
-    instagram?: string;
-    x?: string;
-    tiktok?: string;
-    youtube?: string;
-    whatsapp?: string;
-  };
-}
-
-const partners: Partner[] = [
-  {
-    id: "gamer-snack",
-    name: "Gamer Snack",
-    type: { en: "Gaming Content Creator", ar: "صانع محتوى ألعاب" },
-    description: {
-      en: "A popular gaming content creator delivering entertaining gaming content across multiple platforms. From gameplay highlights to gaming tips, Gamer Snack keeps the gaming community engaged.",
-      ar: "صانع محتوى ألعاب شهير يقدم محتوى ترفيهي للألعاب عبر منصات متعددة. من أبرز اللحظات في الألعاب إلى نصائح الألعاب، يبقي Gamer Snack مجتمع الألعاب متفاعلاً.",
-    },
-    logo: "/images/partners/gamer-snack-logo.jpeg",
-    socials: {
-      instagram: "https://www.instagram.com/gamer_snack",
-      x: "https://x.com/gamer_snack",
-      tiktok: "https://www.tiktok.com/@gamersnack",
-      youtube: "https://youtube.com/@gamersnack",
-    },
-  },
-  {
-    id: "respa-design",
-    name: "Respa Design",
-    type: { en: "Creative Design Studio", ar: "استوديو تصميم إبداعي" },
-    description: {
-      en: "A creative design studio specializing in gaming graphics, branding, and visual content. Respa Design brings imagination to life through stunning artwork and design.",
-      ar: "استوديو تصميم إبداعي متخصص في رسومات الألعاب والعلامات التجارية والمحتوى البصري. يجسد Respa Design الخيال من خلال الأعمال الفنية والتصميم المذهل.",
-    },
-    logo: "/images/partners/respa-design-logo.jpeg",
-    socials: {
-      instagram: "https://www.instagram.com/respadesign/",
-    },
-  },
-  {
-    id: "buried-games",
-    name: "Buried Games",
-    type: { en: "Indie Game Studio", ar: "استوديو ألعاب مستقل" },
-    description: {
-      en: "An indie game development studio based in Kuwait, founded in 2018. Buried Games specializes in creating strategy and multiplayer games, unearthing immersive worlds and crafting unforgettable gaming experiences.",
-      ar: "استوديو تطوير ألعاب مستقل مقره الكويت، تأسس في 2018. يتخصص Buried Games في إنشاء ألعاب الاستراتيجية ومتعددة اللاعبين، يكشف عوالم غامرة ويصنع تجارب ألعاب لا تُنسى.",
-    },
-    logo: "/images/partners/buried-games-logo.png",
-    website: "https://buriedgames.com",
-    socials: {},
-  },
-  {
-    id: "mythology-co",
-    name: "Mythology Co.",
-    type: { en: "Creative Brand", ar: "علامة تجارية إبداعية" },
-    description: {
-      en: "A creative brand based in Kuwait, blending mythology-inspired art and design into unique products and experiences.",
-      ar: "علامة تجارية إبداعية مقرها الكويت، تمزج الفن والتصميم المستوحى من الأساطير في منتجات وتجارب فريدة.",
-    },
-    logo: "/images/partners/mythology-logo.png",
-    socials: {
-      instagram: "https://www.instagram.com/mythology.kw",
-      whatsapp: "https://wa.me/96598007400",
-    },
-  }
-];
+import { useEffect, useState } from "react";
+import type { Partner } from "@/lib/partners";
 
 // Social media icons
 const InstagramIcon = () => (
@@ -135,6 +63,14 @@ interface PartnersContentProps {
 
 export function PartnersContent({ locale }: PartnersContentProps) {
   const t = useTranslations("partnersPage");
+  const [partners, setPartners] = useState<Partner[]>([]);
+
+  useEffect(() => {
+    fetch("/api/partners")
+      .then((res) => res.json())
+      .then((data) => setPartners(data))
+      .catch((err) => console.error("Failed to load partners:", err));
+  }, []);
 
   return (
     <main>
@@ -142,7 +78,7 @@ export function PartnersContent({ locale }: PartnersContentProps) {
       <section className="partners-hero">
         <div className="partners-hero-bg">
           <Image
-            src="/images/partners/partners-hero.png"
+            src="https://assets.lunarian.app/partners/partners-hero.png"
             alt="Luna Partners"
             fill
             priority

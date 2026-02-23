@@ -104,7 +104,7 @@ function HomeContent() {
               <span className="showcase-tag showcase-tag-purple">{overview('tagSystem')}</span>
               <h3 className="showcase-title">{showcase('gameTitle')}</h3>
               <p className="showcase-desc">{showcase('gameDesc')}</p>
-              <Link href="/cards" className="btn btn-primary">{showcase('linkCards')}</Link>
+              <Link href="/luna-fantasy" className="btn btn-primary">{showcase('linkCards')}</Link>
             </div>
           </div>
 
@@ -159,7 +159,7 @@ function HomeContent() {
               <div className="media-glow media-glow-partners"></div>
               <div className="media-frame">
                 <Image
-                  src="/images/partners/partners-hero.png"
+                  src="https://assets.lunarian.app/partners/partners-hero.png"
                   alt="Luna Partners"
                   width={500}
                   height={400}
