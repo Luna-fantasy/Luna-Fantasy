@@ -1,0 +1,524 @@
+'use client';
+
+import { useState, useMemo, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
+import type { UserCard, CatalogCard } from '@/types/gameData';
+import type { CardDetailData } from '@/components/CardDetailModal';
+
+const RARITY_ORDER = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden', 'mythical'] as const;
+
+const CARDS_PER_PAGE = 9;
+const CARDS_PER_SPREAD = 18;
+
+interface MergedCard {
+  id: string;
+  name: string;
+  rarity: string;
+  imageUrl: string;
+  attack?: number;
+  owned: boolean;
+  weight?: number;
+  source?: string;
+  obtainedDate?: string;
+  duplicateCount: number;
+}
+
+interface CardBookProps {
+  ownedCards: UserCard[];
+  catalogCards: CatalogCard[];
+  isLoading: boolean;
+  onCardClick: (card: CardDetailData) => void;
+  brokenImages: Set<string>;
+  onImageError: (id: string) => void;
+}
+
+function getRarityIndex(rarity: string): number {
+  const idx = RARITY_ORDER.indexOf(rarity.toLowerCase() as any);
+  return idx === -1 ? RARITY_ORDER.length : idx;
+}
+
+export default function CardBook({
+  ownedCards,
+  catalogCards,
+  isLoading,
+  onCardClick,
+  brokenImages,
+  onImageError,
+}: CardBookProps) {
+  const t = useTranslations('profilePage');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [rarityFilter, setRarityFilter] = useState<string | null>(null);
+  const [showOwnedOnly, setShowOwnedOnly] = useState(false);
+  const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  // Compute duplicate count map from ownedCards
+  const duplicateMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const c of ownedCards) {
+      map.set(c.name, (map.get(c.name) ?? 0) + 1);
+    }
+    return map;
+  }, [ownedCards]);
+
+  // Merge catalog with owned cards (fallback: if catalog is empty, show owned cards directly)
+  const mergedCards = useMemo(() => {
+    if (catalogCards.length === 0) {
+      // No catalog yet — just display owned cards as all-owned entries
+      // Deduplicate by name (show first occurrence only, with duplicate count)
+      const seen = new Set<string>();
+      const merged: MergedCard[] = [];
+      for (const c of ownedCards) {
+        if (seen.has(c.name)) continue;
+        seen.add(c.name);
+        merged.push({
+          id: c.id || `owned-${merged.length}`,
+          name: c.name,
+          rarity: c.rarity,
+          imageUrl: c.imageUrl,
+          attack: c.attack,
+          owned: true,
+          weight: c.weight,
+          source: c.source,
+          obtainedDate: c.obtainedDate,
+          duplicateCount: duplicateMap.get(c.name) ?? 1,
+        });
+      }
+      merged.sort((a, b) => {
+        const ri = getRarityIndex(a.rarity) - getRarityIndex(b.rarity);
+        if (ri !== 0) return ri;
+        return (b.attack ?? 0) - (a.attack ?? 0);
+      });
+      return merged;
+    }
+
+    const ownedNames = new Set(ownedCards.map(c => c.name));
+    const ownedMap = new Map<string, UserCard>();
+    for (const c of ownedCards) {
+      if (!ownedMap.has(c.name)) ownedMap.set(c.name, c);
+    }
+
+    const catalogNames = new Set(catalogCards.map(c => c.name));
+
+    const merged: MergedCard[] = catalogCards.map((cat) => {
+      const owned = ownedNames.has(cat.name);
+      const ownedCard = ownedMap.get(cat.name);
+      return {
+        id: cat.id,
+        name: cat.name,
+        rarity: cat.rarity,
+        imageUrl: owned && ownedCard?.imageUrl ? ownedCard.imageUrl : cat.imageUrl,
+        attack: cat.attack || ownedCard?.attack || 0,
+        owned,
+        weight: cat.weight ?? ownedCard?.weight,
+        source: ownedCard?.source,
+        obtainedDate: ownedCard?.obtainedDate,
+        duplicateCount: duplicateMap.get(cat.name) ?? 0,
+      };
+    });
+
+    // Append owned cards that have no catalog match (so they still appear)
+    const seen = new Set<string>();
+    for (const c of ownedCards) {
+      if (catalogNames.has(c.name) || seen.has(c.name)) continue;
+      seen.add(c.name);
+      merged.push({
+        id: c.id || `owned-extra-${merged.length}`,
+        name: c.name,
+        rarity: c.rarity,
+        imageUrl: c.imageUrl,
+        attack: c.attack,
+        owned: true,
+        weight: c.weight,
+        source: c.source,
+        obtainedDate: c.obtainedDate,
+        duplicateCount: duplicateMap.get(c.name) ?? 1,
+      });
+    }
+
+    // Sort: rarity order, then attack descending
+    merged.sort((a, b) => {
+      const ri = getRarityIndex(a.rarity) - getRarityIndex(b.rarity);
+      if (ri !== 0) return ri;
+      return (b.attack ?? 0) - (a.attack ?? 0);
+    });
+
+    return merged;
+  }, [ownedCards, catalogCards, duplicateMap]);
+
+  // Filter
+  const filteredCards = useMemo(() => {
+    let cards = mergedCards;
+    if (rarityFilter) {
+      cards = cards.filter(c => c.rarity.toLowerCase() === rarityFilter);
+    }
+    if (showOwnedOnly) {
+      cards = cards.filter(c => c.owned);
+    }
+    return cards;
+  }, [mergedCards, rarityFilter, showOwnedOnly]);
+
+  // Rarity stats for filter pills
+  const rarityStats = useMemo(() => {
+    const stats: Record<string, { total: number; owned: number }> = {};
+    for (const card of mergedCards) {
+      const r = card.rarity.toLowerCase();
+      if (!stats[r]) stats[r] = { total: 0, owned: 0 };
+      stats[r].total++;
+      if (card.owned) stats[r].owned++;
+    }
+    return stats;
+  }, [mergedCards]);
+
+  // Detect mobile (SSR-safe)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
+  const cardsPerView = isMobile ? CARDS_PER_PAGE : CARDS_PER_SPREAD;
+  const totalPages = Math.max(1, Math.ceil(filteredCards.length / cardsPerView));
+
+  // Clamp page
+  const safePage = Math.min(currentPage, totalPages - 1);
+  if (safePage !== currentPage) setCurrentPage(safePage);
+
+  const startIdx = safePage * cardsPerView;
+  const pageCards = filteredCards.slice(startIdx, startIdx + cardsPerView);
+  const leftPageCards = pageCards.slice(0, CARDS_PER_PAGE);
+  const rightPageCards = pageCards.slice(CARDS_PER_PAGE, CARDS_PER_SPREAD);
+
+  // Empty slots to fill the grid
+  const leftEmptySlots = CARDS_PER_PAGE - leftPageCards.length;
+  const rightEmptySlots = !isMobile ? CARDS_PER_PAGE - rightPageCards.length : 0;
+
+  // Overall progress
+  const totalCatalog = mergedCards.length;
+  const totalOwned = mergedCards.filter(c => c.owned).length;
+  const progressPercent = totalCatalog > 0 ? Math.round((totalOwned / totalCatalog) * 100) : 0;
+
+  const [pendingPage, setPendingPage] = useState<number | null>(null);
+
+  const goToPage = useCallback((dir: 'left' | 'right', page: number) => {
+    setPendingPage(page);
+    setFlipDirection(dir);
+    setTimeout(() => {
+      setCurrentPage(page);
+      setPendingPage(null);
+      setFlipDirection(null);
+    }, 600);
+  }, []);
+
+  const prevPage = () => {
+    if (safePage > 0) goToPage('right', safePage - 1);
+  };
+
+  const nextPage = () => {
+    if (safePage < totalPages - 1) goToPage('left', safePage + 1);
+  };
+
+  // Touch swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    const isRtl = document.documentElement.dir === 'rtl';
+    if (Math.abs(delta) > 50) {
+      const swipeLeft = isRtl ? delta > 0 : delta < 0;
+      if (swipeLeft) nextPage();
+      else prevPage();
+    }
+  };
+
+  // Incoming page cards (the page being revealed underneath the fold)
+  const incomingData = useMemo(() => {
+    if (pendingPage === null) return null;
+    const inStart = pendingPage * cardsPerView;
+    const inCards = filteredCards.slice(inStart, inStart + cardsPerView);
+    const inLeft = inCards.slice(0, CARDS_PER_PAGE);
+    const inRight = inCards.slice(CARDS_PER_PAGE, CARDS_PER_SPREAD);
+    return {
+      left: inLeft,
+      right: inRight,
+      leftEmpty: CARDS_PER_PAGE - inLeft.length,
+      rightEmpty: !isMobile ? CARDS_PER_PAGE - inRight.length : 0,
+    };
+  }, [pendingPage, filteredCards, cardsPerView, isMobile]);
+
+  // Helper to render a page of cards
+  const renderPageContent = useCallback((cards: MergedCard[], emptyCount: number, prefix: string) => (
+    <>
+      {cards.map((card) => (
+        <BookCard
+          key={`${prefix}-${card.id}`}
+          card={card}
+          isBroken={brokenImages.has(card.id)}
+          onImageError={onImageError}
+          onCardClick={onCardClick}
+        />
+      ))}
+      {Array.from({ length: emptyCount }).map((_, i) => (
+        <div key={`${prefix}-empty-${i}`} className="book-card-empty">
+          <div className="book-card-empty-slot" />
+        </div>
+      ))}
+    </>
+  ), [brokenImages, onImageError, onCardClick]);
+
+  if (isLoading) {
+    return (
+      <div className="book-wrapper">
+        <div className="book-page book-page-left">
+          {Array.from({ length: CARDS_PER_PAGE }).map((_, i) => (
+            <div key={i} className="book-card book-card-skeleton">
+              <div className="skeleton" style={{ width: '100%', height: '100%' }} />
+            </div>
+          ))}
+        </div>
+        <div className="book-spine" />
+        <div className="book-page book-page-right">
+          {Array.from({ length: CARDS_PER_PAGE }).map((_, i) => (
+            <div key={i} className="book-card book-card-skeleton">
+              <div className="skeleton" style={{ width: '100%', height: '100%' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const hasCatalog = catalogCards.length > 0;
+
+  return (
+    <div className="book-container">
+      {/* Collection progress — only show when catalog exists (owned vs unowned is meaningful) */}
+      {hasCatalog && (
+        <div className="book-progress">
+          <div className="book-progress-text">
+            {t('collection.bookCollected', { owned: totalOwned, total: totalCatalog })}
+          </div>
+          <div className="book-progress-bar">
+            <div className="book-progress-fill" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* Collection Milestones — per-rarity progress */}
+      {hasCatalog && (
+        <div className="book-milestones">
+          <div className="book-milestones-title">{t('collection.milestones')}</div>
+          <div className="book-milestones-grid">
+            {RARITY_ORDER.map(r => {
+              const stat = rarityStats[r];
+              if (!stat) return null;
+              const pct = Math.round((stat.owned / stat.total) * 100);
+              const isComplete = stat.owned === stat.total;
+              return (
+                <div key={r} className={`milestone-item ${isComplete ? 'milestone-complete' : ''}`}>
+                  <div className="milestone-header">
+                    <span className={`milestone-rarity rarity-text-${r}`}>
+                      {t(`rarity.${r}` as any)}
+                    </span>
+                    <span className="milestone-count">
+                      {isComplete ? t('collection.milestoneComplete') : `${stat.owned}/${stat.total}`}
+                    </span>
+                  </div>
+                  <div className="milestone-bar">
+                    <div className={`milestone-fill fill-${r}`} style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Rarity filter pills */}
+      <div className="book-filters">
+        <button
+          className={`book-rarity-btn ${!rarityFilter && !showOwnedOnly ? 'active' : ''}`}
+          onClick={() => { setRarityFilter(null); setShowOwnedOnly(false); setCurrentPage(0); }}
+        >
+          {t('collection.bookAll')}
+        </button>
+        {RARITY_ORDER.map(r => {
+          const stat = rarityStats[r];
+          if (!stat) return null;
+          return (
+            <button
+              key={r}
+              className={`book-rarity-btn rarity-pill-${r} ${rarityFilter === r ? 'active' : ''}`}
+              onClick={() => { setRarityFilter(rarityFilter === r ? null : r); setCurrentPage(0); }}
+            >
+              {t(`rarity.${r}`)}
+              <span className="book-rarity-count">{stat.owned}/{stat.total}</span>
+            </button>
+          );
+        })}
+        {hasCatalog && (
+          <button
+            className={`book-rarity-btn book-owned-btn ${showOwnedOnly ? 'active' : ''}`}
+            onClick={() => { setShowOwnedOnly(!showOwnedOnly); setCurrentPage(0); }}
+          >
+            {t('collection.bookOwned')}
+          </button>
+        )}
+      </div>
+
+      {/* Book spread */}
+      {filteredCards.length === 0 ? (
+        <div className="collection-empty">
+          <div className="collection-empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="2" y="3" width="20" height="18" rx="2" />
+              <path d="M8 7h8M8 12h8M8 17h4" />
+            </svg>
+          </div>
+          <p>{t('collection.empty')}</p>
+        </div>
+      ) : flipDirection && incomingData ? (
+        /* During flip: two stacked spreads — incoming underneath, outgoing folding on top */
+        <div
+          className="book-flip-container"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Incoming (new page) — flat underneath */}
+          <div className="book-wrapper book-spread-incoming">
+            <div className="book-page book-page-left">
+              {renderPageContent(incomingData.left, incomingData.leftEmpty, 'in-l')}
+            </div>
+            <div className="book-spine" />
+            <div className="book-page book-page-right">
+              {renderPageContent(incomingData.right, incomingData.rightEmpty, 'in-r')}
+            </div>
+          </div>
+
+          {/* Outgoing (current page) — folding away on top */}
+          <div className={`book-wrapper book-spread-outgoing ${flipDirection === 'left' ? 'flip-left' : 'flip-right'}`}>
+            <div className="book-page book-page-left">
+              {renderPageContent(leftPageCards, leftEmptySlots, 'out-l')}
+            </div>
+            <div className="book-spine" />
+            <div className="book-page book-page-right">
+              {renderPageContent(rightPageCards, rightEmptySlots, 'out-r')}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Static view — no animation */
+        <div
+          className="book-wrapper"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="book-page book-page-left">
+            {renderPageContent(leftPageCards, leftEmptySlots, 'l')}
+          </div>
+          <div className="book-spine" />
+          <div className="book-page book-page-right">
+            {renderPageContent(rightPageCards, rightEmptySlots, 'r')}
+          </div>
+        </div>
+      )}
+
+      {/* Navigation */}
+      {filteredCards.length > 0 && (
+        <div className="book-nav">
+          <button
+            className="book-nav-btn"
+            onClick={prevPage}
+            disabled={safePage === 0}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            {t('collection.bookPrev')}
+          </button>
+
+          <span className="book-page-indicator">
+            {safePage + 1} {t('collection.bookOf')} {totalPages}
+          </span>
+
+          <button
+            className="book-nav-btn"
+            onClick={nextPage}
+            disabled={safePage >= totalPages - 1}
+          >
+            {t('collection.bookNext')}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BookCard({
+  card,
+  isBroken,
+  onImageError,
+  onCardClick,
+}: {
+  card: MergedCard;
+  isBroken: boolean;
+  onImageError: (id: string) => void;
+  onCardClick: (card: CardDetailData) => void;
+}) {
+  const rKey = card.rarity.toLowerCase();
+
+  return (
+    <div
+      className={`book-card ${card.owned ? 'book-card-owned' : 'book-card-unowned'}`}
+      onClick={() => {
+        onCardClick({
+          id: card.id,
+          name: card.name,
+          rarity: card.rarity,
+          imageUrl: card.imageUrl,
+          attack: card.attack,
+          weight: card.weight,
+          source: card.source,
+          obtainedDate: card.obtainedDate,
+          owned: card.owned,
+          duplicateCount: card.duplicateCount,
+        });
+      }}
+    >
+      <div className={`book-card-image rarity-border-${rKey}`}>
+        {isBroken || !card.imageUrl ? (
+          <div className={`mini-card-placeholder rarity-bg-${rKey}`}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="2" y="3" width="20" height="18" rx="2" />
+              <path d="M8 7h8M8 12h8M8 17h4" />
+            </svg>
+          </div>
+        ) : (
+          <img
+            src={card.imageUrl}
+            alt={card.name}
+            onError={() => onImageError(card.id)}
+          />
+        )}
+        {!card.owned && (
+          <div className="book-card-lock">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+        )}
+        {card.duplicateCount > 1 && (
+          <span className="book-card-dupe-badge">x{card.duplicateCount}</span>
+        )}
+        <span className={`book-card-rarity rarity-${rKey}`}>{card.rarity}</span>
+      </div>
+      <div className="book-card-name">{card.name}</div>
+      {card.attack != null && (
+        <div className="book-card-attack">ATK {card.attack}</div>
+      )}
+    </div>
+  );
+}

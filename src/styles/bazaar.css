@@ -1,0 +1,1032 @@
+/* ============================================
+   BAZAAR — Main Styles
+   ============================================ */
+
+/* ── Hero ── */
+.bazaar-hero {
+  position: relative;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bazaar-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(139, 92, 246, 0.15) 0%,
+    rgba(0, 212, 255, 0.1) 50%,
+    rgba(139, 92, 246, 0.1) 100%);
+}
+
+.bazaar-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 50%, var(--bg-void));
+}
+
+.bazaar-hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 120px 24px 48px;
+}
+
+.bazaar-hero-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+
+.bazaar-hero-desc {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+/* ── Layout ── */
+.bazaar-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+/* ── Status Banner ── */
+.bazaar-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.bazaar-status-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.bazaar-status-cancelled {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.bazaar-status-close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.7;
+}
+
+.bazaar-status-close:hover { opacity: 1; }
+
+/* ── Lunari Store Section ── */
+.lunari-section {
+  position: relative;
+  padding: 28px 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 215, 0, 0.04) 0%,
+    var(--bg-elevated) 100%
+  );
+  border: 1px solid rgba(255, 215, 0, 0.1);
+  border-radius: var(--radius-md);
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+
+.lunari-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ffd700, transparent);
+}
+
+/* ── Balance Bar (inside Lunari section) ── */
+.bazaar-balance-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 215, 0, 0.08);
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.bazaar-balance-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.bazaar-balance-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.bazaar-balance-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.bazaar-balance-currency {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.bazaar-debt-badge {
+  padding: 4px 10px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 50px;
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ── Merchants Section ── */
+.merchants-section {
+  margin-top: 8px;
+}
+
+.merchants-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  padding-left: 2px;
+}
+
+/* ── Merchant Showcase ── */
+.merchant-showcase {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.merchant-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px 20px 24px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  text-decoration: none;
+  color: inherit;
+}
+
+.merchant-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+}
+
+.merchant-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+}
+
+.merchant-card:hover::before {
+  opacity: 1;
+}
+
+.merchant-card-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(139, 92, 246, 0.2);
+  background: var(--bg-surface);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.merchant-card:hover .merchant-card-img {
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: scale(1.05);
+}
+
+.merchant-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.merchant-card-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.merchant-card-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent-secondary);
+}
+
+.merchant-card-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 240px;
+}
+
+.merchant-card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  margin-top: 4px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(139, 92, 246, 0.12));
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  color: var(--accent-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.merchant-card:hover .merchant-card-cta {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(139, 92, 246, 0.2));
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+/* ── Merchant Page (Individual) ── */
+.merchant-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  transition: color var(--transition-fast);
+}
+
+.merchant-back-link:hover {
+  color: var(--accent-primary);
+}
+
+.merchant-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+}
+
+.merchant-hero-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(139, 92, 246, 0.25);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.merchant-hero-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.merchant-hero-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.merchant-hero-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--accent-secondary);
+}
+
+.merchant-hero-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* ── Vendor Section ── */
+.vendor-section {
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vendor-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.vendor-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.vendor-title {
+  color: var(--accent-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.vendor-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.vendor-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+.vendor-error button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.vendor-success {
+  padding: 10px 14px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--radius-sm);
+  color: #4ade80;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* ── Luckbox Grid (Kael) ── */
+.luckbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.luckbox-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 20px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.luckbox-card:hover {
+  transform: translateY(-2px);
+}
+
+.luckbox-card-glow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 3px;
+  border-radius: 0 0 8px 8px;
+  opacity: 0.8;
+}
+
+/* Rarity colors */
+.luckbox-common .luckbox-card-glow { background: var(--common); }
+.luckbox-common:hover { border-color: rgba(74, 222, 128, 0.3); }
+.luckbox-rare .luckbox-card-glow { background: var(--rare); }
+.luckbox-rare:hover { border-color: rgba(59, 130, 246, 0.3); }
+.luckbox-epic .luckbox-card-glow { background: var(--epic); }
+.luckbox-epic:hover { border-color: rgba(168, 85, 247, 0.3); }
+.luckbox-unique .luckbox-card-glow { background: var(--unique); }
+.luckbox-unique:hover { border-color: rgba(244, 63, 94, 0.3); }
+.luckbox-legendary .luckbox-card-glow { background: var(--legendary); }
+.luckbox-legendary:hover { border-color: rgba(251, 191, 36, 0.3); }
+.luckbox-secret .luckbox-card-glow { background: var(--secret); }
+.luckbox-secret:hover { border-color: rgba(239, 68, 68, 0.3); }
+
+.luckbox-rarity-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 10px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.luckbox-common .luckbox-rarity-badge { color: var(--common); }
+.luckbox-rare .luckbox-rarity-badge { color: var(--rare); }
+.luckbox-epic .luckbox-rarity-badge { color: var(--epic); }
+.luckbox-unique .luckbox-rarity-badge { color: var(--unique); }
+.luckbox-legendary .luckbox-rarity-badge { color: var(--legendary); }
+.luckbox-secret .luckbox-rarity-badge { color: var(--secret); }
+
+.luckbox-icon {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.luckbox-card-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.luckbox-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.luckbox-buy-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  color: var(--accent-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.luckbox-buy-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(139, 92, 246, 0.3));
+}
+
+.luckbox-buy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.luckbox-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 212, 255, 0.3);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Stonebox (Meluna) ── */
+.stonebox-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.stonebox-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 40px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-width: 400px;
+  width: 100%;
+}
+
+.stonebox-card-glow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+  border-radius: 0 0 8px 8px;
+  opacity: 0.8;
+}
+
+.stonebox-icon {
+  opacity: 0.7;
+}
+
+.stonebox-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stonebox-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.stonebox-duplicate-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.stonebox-buy-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(0, 212, 255, 0.2));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: var(--accent-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.stonebox-buy-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(0, 212, 255, 0.3));
+}
+
+.stonebox-buy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Drop rates */
+.stonebox-droprates {
+  width: 100%;
+  max-width: 400px;
+}
+
+.stonebox-droprates-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.stonebox-chevron {
+  transition: transform var(--transition-fast);
+}
+
+.stonebox-chevron.open {
+  transform: rotate(180deg);
+}
+
+.stonebox-droprates-table {
+  margin-top: 4px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.stonebox-droprate-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.stonebox-droprate-row:last-child { border-bottom: none; }
+
+.stonebox-droprate-name {
+  color: var(--text-secondary);
+}
+
+.stonebox-droprate-percent {
+  color: var(--accent-secondary);
+  font-weight: 600;
+}
+
+/* ── Ticket Grid (Zoldar) ── */
+.zoldar-tickets-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.zoldar-tickets-display strong {
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+.ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.ticket-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast);
+}
+
+.ticket-card:hover { transform: translateY(-2px); }
+
+.ticket-card-header { text-align: center; }
+
+.ticket-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ticket-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.ticket-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffd700;
+}
+
+.ticket-buy-btn {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  color: var(--accent-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+}
+
+.ticket-buy-btn:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.2);
+}
+
+.ticket-buy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Support / Lunari Store ── */
+.support-section {
+  text-align: center;
+}
+
+.support-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.support-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.1);
+  color: #f43f5e;
+  margin-bottom: 4px;
+}
+
+.support-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.support-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  max-width: 440px;
+  line-height: 1.6;
+}
+
+.support-tiers {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.support-tier {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 20px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  min-width: 150px;
+  flex: 0 1 170px;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.support-tier:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.support-tier-popular {
+  padding-top: 32px;
+  border-color: rgba(244, 63, 94, 0.3);
+  background: linear-gradient(
+    180deg,
+    rgba(244, 63, 94, 0.06) 0%,
+    var(--bg-elevated) 100%
+  );
+}
+
+.support-tier-popular:hover {
+  border-color: rgba(244, 63, 94, 0.5);
+}
+
+.support-popular-tag {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 14px;
+  background: #f43f5e;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 0 0 6px 6px;
+  white-space: nowrap;
+}
+
+.support-tier-amount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffd700;
+  margin-top: 4px;
+}
+
+.support-tier-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.support-tier-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  color: #f43f5e;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  gap: 4px;
+}
+
+.support-tier-btn:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: rgba(244, 63, 94, 0.4);
+}
+
+.support-tier-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.support-tier-popular .support-tier-btn {
+  background: #f43f5e;
+  border-color: #f43f5e;
+  color: #fff;
+}
+
+.support-tier-popular .support-tier-btn:hover:not(:disabled) {
+  background: #e11d48;
+  border-color: #e11d48;
+}
+
+.support-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ── Loading ── */
+.bazaar-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.bazaar-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(0, 212, 255, 0.2);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Mobile Responsive ── */
+@media (max-width: 640px) {
+  .bazaar-hero-content {
+    padding: 100px 16px 32px;
+  }
+
+  .lunari-section {
+    padding: 20px 16px;
+    margin-bottom: 24px;
+  }
+
+  .bazaar-balance-bar {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .bazaar-balance-info {
+    justify-content: center;
+  }
+
+  .merchant-showcase {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .merchant-card {
+    padding: 24px 16px 20px;
+  }
+
+  .merchant-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px 16px;
+  }
+
+  .merchant-hero-info {
+    align-items: center;
+  }
+
+  .luckbox-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .luckbox-card {
+    padding: 16px 12px;
+  }
+
+  .ticket-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .support-tiers {
+    gap: 10px;
+  }
+
+  .support-tier {
+    min-width: 130px;
+    flex: 0 1 calc(50% - 5px);
+    padding: 16px 12px 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .luckbox-grid {
+    grid-template-columns: 1fr;
+  }
+}

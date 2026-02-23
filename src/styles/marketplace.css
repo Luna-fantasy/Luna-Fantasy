@@ -1,0 +1,1708 @@
+/* ============================================
+   MARKETPLACE PAGE
+   ============================================ */
+
+.marketplace-page {
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+/* Hero */
+.marketplace-hero {
+  position: relative;
+  padding: 48px 24px 32px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.marketplace-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center top,
+    rgba(0, 212, 255, 0.08) 0%,
+    rgba(139, 92, 246, 0.04) 40%,
+    transparent 70%);
+  pointer-events: none;
+}
+
+.marketplace-hero-content {
+  position: relative;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.marketplace-hero-title {
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 2rem;
+  font-weight: 900;
+  background: linear-gradient(180deg, #ffffff 20%, var(--accent-primary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 8px;
+}
+
+html[lang="ar"] .marketplace-hero-title {
+  font-family: 'Cairo', sans-serif;
+}
+
+.marketplace-hero-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Wrap */
+.marketplace-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+}
+
+/* Status banner */
+.marketplace-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.marketplace-status-success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.marketplace-status-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.marketplace-status-close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+  padding: 4px;
+}
+
+.marketplace-status-close:hover {
+  opacity: 1;
+}
+
+/* Balance bar */
+.marketplace-balance-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.04), rgba(255, 165, 0, 0.02));
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  margin-bottom: 20px;
+}
+
+.marketplace-balance-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.marketplace-balance-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.marketplace-balance-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  background: linear-gradient(180deg, #ffd700 0%, #ff8c00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html[lang="ar"] .marketplace-balance-value {
+  font-family: 'Cairo', sans-serif;
+}
+
+.marketplace-debt-badge {
+  padding: 4px 10px;
+  border-radius: 50px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Tabs */
+.marketplace-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.marketplace-tab {
+  padding: 10px 20px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.marketplace-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+.marketplace-tab.active {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: rgba(0, 212, 255, 0.4);
+  color: var(--accent-primary);
+}
+
+/* Filters */
+.marketplace-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.marketplace-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 14px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.marketplace-search:focus {
+  border-color: rgba(0, 212, 255, 0.4);
+}
+
+.marketplace-search::placeholder {
+  color: var(--text-muted);
+}
+
+.marketplace-select {
+  padding: 10px 14px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.marketplace-select option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* Listings grid */
+.marketplace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+/* Empty state */
+.marketplace-empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--text-muted);
+}
+
+.marketplace-empty p {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+/* Pagination */
+.marketplace-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.marketplace-page-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.marketplace-page-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.marketplace-page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.marketplace-page-info {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   LISTING CARD
+   ============================================ */
+
+.listing-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.listing-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.listing-card-skeleton {
+  padding: 12px;
+}
+
+.listing-card-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.listing-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Reuse rarity borders */
+.listing-card-image.rarity-border-common { border-bottom-color: var(--common); }
+.listing-card-image.rarity-border-rare { border-bottom-color: var(--rare); }
+.listing-card-image.rarity-border-epic { border-bottom-color: var(--epic); }
+.listing-card-image.rarity-border-unique { border-bottom-color: var(--unique); }
+.listing-card-image.rarity-border-legendary { border-bottom-color: var(--legendary); }
+.listing-card-image.rarity-border-secret { border-bottom-color: var(--secret); }
+
+.listing-card-rarity {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 6px;
+  border-radius: 50px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+html[dir="rtl"] .listing-card-rarity {
+  right: auto;
+  left: 6px;
+}
+
+/* Reuse rarity colors */
+.listing-card-rarity.rarity-common { color: var(--common); background: rgba(74, 222, 128, 0.2); border: 1px solid rgba(74, 222, 128, 0.4); }
+.listing-card-rarity.rarity-rare { color: var(--rare); background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.4); }
+.listing-card-rarity.rarity-epic { color: var(--epic); background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); }
+.listing-card-rarity.rarity-unique { color: var(--unique); background: rgba(244, 63, 94, 0.2); border: 1px solid rgba(244, 63, 94, 0.4); }
+.listing-card-rarity.rarity-legendary { color: var(--legendary); background: rgba(251, 191, 36, 0.2); border: 1px solid rgba(251, 191, 36, 0.4); }
+.listing-card-rarity.rarity-secret { color: var(--secret); background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); }
+
+.listing-card-info {
+  padding: 10px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.listing-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listing-card-atk {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.listing-card-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffd700;
+}
+
+.listing-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.listing-card-seller {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+.listing-card-time {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.listing-card-buy-btn {
+  margin: 0 12px 10px;
+  padding: 8px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.listing-card-buy-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ============================================
+   CREATE LISTING MODAL
+   ============================================ */
+
+.create-listing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.create-listing-modal {
+  position: relative;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 500px;
+  width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  cursor: default;
+  animation: card-detail-scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.create-listing-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+html[dir="rtl"] .create-listing-close {
+  right: auto;
+  left: 12px;
+}
+
+.create-listing-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.create-listing-title {
+  font-family: 'Cinzel', 'Cairo', serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+
+html[lang="ar"] .create-listing-title {
+  font-family: 'Cairo', sans-serif;
+}
+
+.create-listing-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.create-listing-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 20px;
+}
+
+/* Card picker grid */
+.create-listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.create-listing-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.create-listing-card:hover {
+  transform: translateY(-2px);
+}
+
+.create-listing-card-img {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.create-listing-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.create-listing-card-name {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+/* Confirm step */
+.create-listing-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.create-listing-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.create-listing-preview-img {
+  width: 80px;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.create-listing-preview-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.create-listing-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.create-listing-preview-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.create-listing-preview-rarity {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 50px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.create-listing-preview-atk {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Escrow warning */
+.create-listing-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.create-listing-warning svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Price input */
+.create-listing-price-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.create-listing-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.create-listing-input-wrap:focus-within {
+  border-color: rgba(0, 212, 255, 0.4);
+}
+
+.create-listing-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  outline: none;
+}
+
+.create-listing-input::placeholder {
+  color: var(--text-muted);
+}
+
+.create-listing-error {
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Actions */
+.create-listing-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.create-listing-back {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.create-listing-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.create-listing-submit {
+  flex: 2;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.create-listing-submit:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.create-listing-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   MY LISTINGS
+   ============================================ */
+
+.my-listings {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.my-listings-heading {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+.my-listings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.my-listing-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.my-listing-past {
+  opacity: 0.6;
+}
+
+.my-listing-img {
+  width: 48px;
+  height: 72px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.my-listing-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.my-listing-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.my-listing-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-listing-rarity {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 50px;
+  width: fit-content;
+}
+
+.my-listing-price-section {
+  display: flex;
+  align-items: center;
+}
+
+.my-listing-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffd700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.my-listing-price:hover {
+  opacity: 0.8;
+}
+
+.my-listing-edit-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.my-listing-price-input {
+  width: 80px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  outline: none;
+}
+
+.my-listing-save-btn,
+.my-listing-cancel-edit-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.my-listing-save-btn:hover {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #4ade80;
+}
+
+.my-listing-cancel-edit-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.my-listing-cancel-btn {
+  padding: 6px 12px;
+  border-radius: 50px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.my-listing-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.my-listing-status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 50px;
+  width: fit-content;
+}
+
+.my-listing-status-sold {
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.my-listing-status-cancelled {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.my-listing-status-expired {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.my-listing-buyer {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 640px) {
+  .marketplace-hero {
+    padding: 32px 16px 24px;
+  }
+
+  .marketplace-hero-title {
+    font-size: 1.5rem;
+  }
+
+  .marketplace-wrap {
+    padding: 0 16px 40px;
+  }
+
+  .marketplace-tabs {
+    gap: 6px;
+  }
+
+  .marketplace-tab {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .marketplace-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .marketplace-filters {
+    flex-direction: column;
+  }
+
+  .marketplace-search,
+  .marketplace-select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .my-listing-item {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .create-listing-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* RTL */
+html[dir="rtl"] .marketplace-tabs,
+html[dir="rtl"] .marketplace-filters {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .marketplace-page-btn svg {
+  transform: scaleX(-1);
+}
+
+html[lang="ar"] .marketplace-tab,
+html[lang="ar"] .marketplace-search,
+html[lang="ar"] .marketplace-select,
+html[lang="ar"] .my-listings-heading,
+html[lang="ar"] .listing-card-name,
+html[lang="ar"] .my-listing-name {
+  font-family: 'Cairo', sans-serif;
+}
+
+@media (max-width: 640px) {
+  html[dir="rtl"] .marketplace-filters {
+    flex-direction: column;
+  }
+}
+
+/* ============================================
+   AUCTION STYLES
+   ============================================ */
+
+/* Auction badge on listing card */
+.listing-card-auction {
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+.listing-card-auction-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+[dir="rtl"] .listing-card-auction-badge {
+  left: auto;
+  right: 8px;
+}
+
+/* Auction info in listing card */
+.listing-card-auction-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.listing-card-bid-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary, #a0a0b0);
+}
+
+/* Auction countdown highlight */
+.listing-card-time-auction {
+  color: #a78bfa;
+}
+
+/* Bid button variant */
+.listing-card-bid-btn {
+  background: rgba(139, 92, 246, 0.15) !important;
+  color: #a78bfa !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+.listing-card-bid-btn:hover {
+  background: rgba(139, 92, 246, 0.25) !important;
+}
+
+/* ─── Auction Bid Modal ──────────────────────── */
+
+.auction-bid-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 16px;
+}
+.auction-bid-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.auction-bid-stat-label {
+  font-size: 11px;
+  color: var(--text-secondary, #a0a0b0);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.auction-bid-stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.auction-bid-countdown {
+  color: #a78bfa;
+}
+.auction-bid-submit {
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: #a78bfa !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+.auction-bid-submit:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.3) !important;
+}
+
+/* ─── Auction Duration Selector ──────────────── */
+
+.auction-duration-section {
+  margin-bottom: 16px;
+}
+.auction-duration-options {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.auction-duration-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, #a0a0b0);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.auction-duration-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary, #fff);
+}
+.auction-duration-btn.active {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #a78bfa;
+}
+
+/* ─── Sell Type Picker ───────────────────────── */
+
+.marketplace-sell-type-picker {
+  padding: 32px 0;
+  text-align: center;
+}
+.marketplace-sell-type-title {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin-bottom: 24px;
+}
+.marketplace-sell-type-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 440px;
+  margin: 0 auto 24px;
+}
+.marketplace-sell-type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, #a0a0b0);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.marketplace-sell-type-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary, #fff);
+}
+.marketplace-sell-type-btn.active {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #a78bfa;
+}
+.marketplace-sell-type-btn svg {
+  opacity: 0.6;
+}
+.marketplace-sell-type-btn.active svg {
+  opacity: 1;
+  stroke: #a78bfa;
+}
+.sell-type-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+.sell-type-desc {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.marketplace-sell-continue-btn {
+  padding: 10px 32px;
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.marketplace-sell-continue-btn:hover {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+/* ─── My Listings Auction ────────────────────── */
+
+.my-listing-auction {
+  border-left: 3px solid rgba(139, 92, 246, 0.4);
+}
+[dir="rtl"] .my-listing-auction {
+  border-left: none;
+  border-right: 3px solid rgba(139, 92, 246, 0.4);
+}
+.my-listing-auction-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.my-listing-auction-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.my-listing-bid-count {
+  font-size: 11px;
+  color: var(--text-secondary, #a0a0b0);
+}
+.my-listing-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.my-listing-resolve-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(81, 207, 102, 0.12);
+  border: 1px solid rgba(81, 207, 102, 0.3);
+  color: #51cf66;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.my-listing-resolve-btn:hover {
+  background: rgba(81, 207, 102, 0.2);
+}
+
+/* ─── Responsive Auction ─────────────────────── */
+
+@media (max-width: 640px) {
+  .auction-bid-info {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .auction-bid-stat {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .marketplace-sell-type-options {
+    grid-template-columns: 1fr;
+  }
+  .my-listing-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* ─── RTL Auction ────────────────────────────── */
+
+html[lang="ar"] .sell-type-label,
+html[lang="ar"] .sell-type-desc,
+html[lang="ar"] .auction-bid-stat-label,
+html[lang="ar"] .auction-bid-stat-value,
+html[lang="ar"] .marketplace-sell-type-title,
+html[lang="ar"] .my-listing-auction-tag,
+html[lang="ar"] .my-listing-bid-count {
+  font-family: 'Cairo', sans-serif;
+}
+
+/* ============================================
+   SWAPS STYLES
+   ============================================ */
+
+/* ─── Sub-tabs ───────────────────────────────── */
+
+.swaps-tab {
+  padding: 0;
+}
+.swaps-sub-tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.swaps-sub-tab {
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, #a0a0b0);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.swaps-sub-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary, #fff);
+}
+.swaps-sub-tab.active {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #818cf8;
+}
+.swaps-sub-tab-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #ff4757;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.swaps-propose-btn {
+  margin-left: auto;
+  padding: 6px 16px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #818cf8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+[dir="rtl"] .swaps-propose-btn {
+  margin-left: 0;
+  margin-right: auto;
+}
+.swaps-propose-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.swaps-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.swaps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Swap Offer Card ────────────────────────── */
+
+.swap-offer-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.2s;
+}
+.swap-offer-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.swap-offer-resolved {
+  opacity: 0.6;
+}
+
+.swap-offer-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.swap-offer-from,
+.swap-offer-to {
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+.swap-offer-timer {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-secondary, #a0a0b0);
+  opacity: 0.7;
+}
+[dir="rtl"] .swap-offer-timer {
+  margin-left: 0;
+  margin-right: auto;
+}
+.swap-offer-status {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+[dir="rtl"] .swap-offer-status {
+  margin-left: 0;
+  margin-right: auto;
+}
+.swap-offer-status-accepted { background: rgba(81, 207, 102, 0.15); color: #51cf66; }
+.swap-offer-status-declined { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
+.swap-offer-status-countered { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+.swap-offer-status-cancelled { background: rgba(255, 255, 255, 0.06); color: var(--text-secondary, #a0a0b0); }
+.swap-offer-status-expired { background: rgba(255, 212, 59, 0.15); color: #ffd43b; }
+
+.swap-offer-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.swap-offer-card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  max-width: 120px;
+}
+.swap-offer-card-img {
+  width: 80px;
+  height: 110px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+.swap-offer-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.swap-offer-card-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  text-align: center;
+  line-height: 1.2;
+}
+.swap-offer-card-rarity {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.swap-offer-arrow {
+  flex-shrink: 0;
+}
+
+.swap-offer-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+.swap-offer-accept-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: rgba(81, 207, 102, 0.12);
+  border: 1px solid rgba(81, 207, 102, 0.3);
+  color: #51cf66;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.swap-offer-accept-btn:hover { background: rgba(81, 207, 102, 0.2); }
+
+.swap-offer-decline-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.swap-offer-decline-btn:hover { background: rgba(255, 107, 107, 0.15); }
+
+.swap-offer-counter-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.swap-offer-counter-btn:hover { background: rgba(139, 92, 246, 0.15); }
+
+.swap-offer-cancel-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, #a0a0b0);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.swap-offer-cancel-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+/* ─── Swap Proposal Modal ────────────────────── */
+
+.swap-proposal-modal {
+  max-width: 520px;
+}
+.swap-search-step {
+  padding: 8px 0;
+}
+.swap-search-bar {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+.swap-search-bar .create-listing-input {
+  flex: 1;
+}
+.swap-search-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #818cf8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.swap-search-btn:hover:not(:disabled) { background: rgba(99, 102, 241, 0.2); }
+.swap-search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.swap-search-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.swap-search-user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.swap-search-username {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+.swap-search-card-count {
+  font-size: 12px;
+  color: var(--text-secondary, #a0a0b0);
+}
+.swap-search-select-btn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #818cf8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.swap-search-select-btn:hover { background: rgba(99, 102, 241, 0.2); }
+
+.create-listing-card.selected {
+  border: 2px solid #818cf8;
+  border-radius: 10px;
+}
+
+/* ─── Swap Confirm ───────────────────────────── */
+
+.swap-confirm-step {
+  padding: 8px 0;
+}
+.swap-confirm-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.swap-confirm-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.swap-confirm-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #a0a0b0);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.swap-confirm-card-img {
+  width: 100px;
+  height: 140px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+.swap-confirm-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.swap-confirm-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  text-align: center;
+}
+.swap-confirm-arrow {
+  flex-shrink: 0;
+}
+
+/* ─── Responsive Swaps ──────────────────────── */
+
+@media (max-width: 640px) {
+  .swaps-sub-tabs {
+    gap: 6px;
+  }
+  .swaps-propose-btn {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+  [dir="rtl"] .swaps-propose-btn {
+    margin-right: 0;
+  }
+  .swap-offer-cards {
+    flex-direction: row;
+    gap: 10px;
+  }
+  .swap-offer-card-img {
+    width: 60px;
+    height: 84px;
+  }
+  .swap-offer-actions {
+    flex-wrap: wrap;
+  }
+  .swap-confirm-card-img {
+    width: 80px;
+    height: 112px;
+  }
+  .swap-search-bar {
+    flex-direction: column;
+  }
+}
+
+/* ─── RTL Swaps ──────────────────────────────── */
+
+html[lang="ar"] .swaps-sub-tab,
+html[lang="ar"] .swaps-propose-btn,
+html[lang="ar"] .swap-offer-from,
+html[lang="ar"] .swap-offer-to,
+html[lang="ar"] .swap-offer-card-name,
+html[lang="ar"] .swap-confirm-label,
+html[lang="ar"] .swap-confirm-card-name,
+html[lang="ar"] .swap-search-username,
+html[lang="ar"] .swap-search-card-count {
+  font-family: 'Cairo', sans-serif;
+}
