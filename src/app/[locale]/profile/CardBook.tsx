@@ -8,6 +8,7 @@ import type { CardDetailData } from '@/components/CardDetailModal';
 const RARITY_ORDER = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden', 'mythical'] as const;
 
 const CARDS_PER_PAGE = 9;
+const CARDS_PER_MOBILE_PAGE = 6;
 const CARDS_PER_SPREAD = 18;
 
 interface MergedCard {
@@ -87,7 +88,7 @@ export default function CardBook({
       merged.sort((a, b) => {
         const ri = getRarityIndex(a.rarity) - getRarityIndex(b.rarity);
         if (ri !== 0) return ri;
-        return (b.attack ?? 0) - (a.attack ?? 0);
+        return (a.attack ?? 0) - (b.attack ?? 0);
       });
       return merged;
     }
@@ -140,7 +141,7 @@ export default function CardBook({
     merged.sort((a, b) => {
       const ri = getRarityIndex(a.rarity) - getRarityIndex(b.rarity);
       if (ri !== 0) return ri;
-      return (b.attack ?? 0) - (a.attack ?? 0);
+      return (a.attack ?? 0) - (b.attack ?? 0);
     });
 
     return merged;
@@ -172,20 +173,57 @@ export default function CardBook({
 
   // Detect mobile (SSR-safe)
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
-  const cardsPerView = isMobile ? CARDS_PER_PAGE : CARDS_PER_SPREAD;
-  const totalPages = Math.max(1, Math.ceil(filteredCards.length / cardsPerView));
+  const pageSize = isMobile ? CARDS_PER_MOBILE_PAGE : CARDS_PER_PAGE;
+
+  // Build individual pages — each page holds only one rarity (max pageSize)
+  const individualPages = useMemo(() => {
+    const pages: MergedCard[][] = [];
+    let currentRarity = '';
+    let currentPage: MergedCard[] = [];
+
+    for (const card of filteredCards) {
+      const rarity = card.rarity.toLowerCase();
+
+      // New rarity → finalize current page, start fresh
+      if (rarity !== currentRarity && currentPage.length > 0) {
+        pages.push(currentPage);
+        currentPage = [];
+      }
+
+      currentRarity = rarity;
+      currentPage.push(card);
+
+      // Full page → finalize
+      if (currentPage.length === pageSize) {
+        pages.push(currentPage);
+        currentPage = [];
+      }
+    }
+
+    if (currentPage.length > 0) {
+      pages.push(currentPage);
+    }
+
+    return pages;
+  }, [filteredCards, pageSize]);
+
+  const totalPages = Math.max(1, isMobile
+    ? individualPages.length
+    : Math.ceil(individualPages.length / 2));
 
   // Clamp page
   const safePage = Math.min(currentPage, totalPages - 1);
   if (safePage !== currentPage) setCurrentPage(safePage);
 
-  const startIdx = safePage * cardsPerView;
-  const pageCards = filteredCards.slice(startIdx, startIdx + cardsPerView);
-  const leftPageCards = pageCards.slice(0, CARDS_PER_PAGE);
-  const rightPageCards = pageCards.slice(CARDS_PER_PAGE, CARDS_PER_SPREAD);
+  const leftPageCards = isMobile
+    ? (individualPages[safePage] ?? [])
+    : (individualPages[safePage * 2] ?? []);
+  const rightPageCards = isMobile
+    ? []
+    : (individualPages[safePage * 2 + 1] ?? []);
 
   // Empty slots to fill the grid
-  const leftEmptySlots = CARDS_PER_PAGE - leftPageCards.length;
+  const leftEmptySlots = pageSize - leftPageCards.length;
   const rightEmptySlots = !isMobile ? CARDS_PER_PAGE - rightPageCards.length : 0;
 
   // Overall progress
@@ -233,17 +271,19 @@ export default function CardBook({
   // Incoming page cards (the page being revealed underneath the fold)
   const incomingData = useMemo(() => {
     if (pendingPage === null) return null;
-    const inStart = pendingPage * cardsPerView;
-    const inCards = filteredCards.slice(inStart, inStart + cardsPerView);
-    const inLeft = inCards.slice(0, CARDS_PER_PAGE);
-    const inRight = inCards.slice(CARDS_PER_PAGE, CARDS_PER_SPREAD);
+    const inLeft = isMobile
+      ? (individualPages[pendingPage] ?? [])
+      : (individualPages[pendingPage * 2] ?? []);
+    const inRight = isMobile
+      ? []
+      : (individualPages[pendingPage * 2 + 1] ?? []);
     return {
       left: inLeft,
       right: inRight,
-      leftEmpty: CARDS_PER_PAGE - inLeft.length,
+      leftEmpty: pageSize - inLeft.length,
       rightEmpty: !isMobile ? CARDS_PER_PAGE - inRight.length : 0,
     };
-  }, [pendingPage, filteredCards, cardsPerView, isMobile]);
+  }, [pendingPage, individualPages, isMobile]);
 
   // Helper to render a page of cards
   const renderPageContent = useCallback((cards: MergedCard[], emptyCount: number, prefix: string) => (
@@ -269,7 +309,7 @@ export default function CardBook({
     return (
       <div className="book-wrapper">
         <div className="book-page book-page-left">
-          {Array.from({ length: CARDS_PER_PAGE }).map((_, i) => (
+          {Array.from({ length: pageSize }).map((_, i) => (
             <div key={i} className="book-card book-card-skeleton">
               <div className="skeleton" style={{ width: '100%', height: '100%' }} />
             </div>
@@ -513,12 +553,7 @@ function BookCard({
         {card.duplicateCount > 1 && (
           <span className="book-card-dupe-badge">x{card.duplicateCount}</span>
         )}
-        <span className={`book-card-rarity rarity-${rKey}`}>{card.rarity}</span>
       </div>
-      <div className="book-card-name">{card.name}</div>
-      {card.attack != null && (
-        <div className="book-card-attack">ATK {card.attack}</div>
-      )}
     </div>
   );
 }

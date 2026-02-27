@@ -31,6 +31,14 @@ export const INVESTMENT_EARLY_FEE = 5_000;
 export const INVESTMENT_DEPOSIT_LOCK_DAYS = 7;
 export const INVESTMENT_DEPOSIT_LOCK_MS = INVESTMENT_DEPOSIT_LOCK_DAYS * 24 * 60 * 60 * 1000;
 
+// ── Trading ──
+export const TRADE_MAX_AMOUNT = 50_000;
+export const TRADE_WIN_RATE = 0.20;   // +20% on win
+export const TRADE_LOSS_RATE = 0.30;  // -30% on loss
+export const TRADE_WIN_CHANCE = 0.50; // 50%
+export const TRADE_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours
+export const TRADE_PRESET_AMOUNTS = [5_000, 10_000, 25_000, 50_000] as const;
+
 // ── Insurance ──
 export const INSURANCE_COST = 500_000;
 
@@ -60,3 +68,51 @@ export const MONTHLY_ELIGIBLE_ROLE_IDS = [
   ...Object.keys(SPECIAL_ROLES),
   BOOSTER_ROLE_ID,
 ];
+
+// ── Seluna — Moonlight Merchant ──
+export const SELUNA_FULL_MOON_ROLE_ID = '1446303175958331547';
+export const SELUNA_SHOP_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+export const SELUNA_RESPAWN_DAYS = 30;
+
+export const SELUNA_ITEMS = [
+  {
+    id: 'luna_cerberus_card',
+    type: 'card' as const,
+    name: 'Luna Cerberus',
+    price: 50_000,
+    stock: 2,
+    rarity: 'Secret',
+    attack: 500,
+    weight: 0.3,
+  },
+  {
+    id: 'fullmoon_role',
+    type: 'role' as const,
+    name: 'Full Moon',
+    price: 500_000,
+    stock: -1, // unlimited
+    roleId: SELUNA_FULL_MOON_ROLE_ID,
+  },
+  {
+    id: 'tickets_bundle',
+    type: 'tickets' as const,
+    name: '10 Tickets Bundle',
+    price: 3_000,
+    stock: -1, // unlimited
+    ticketCount: 10,
+  },
+  {
+    id: 'luna_moon_stone',
+    type: 'stone' as const,
+    name: 'Luna Moon Stone',
+    price: 15_000,
+    stock: 5,
+  },
+  {
+    id: 'moonbound_emerald',
+    type: 'stone' as const,
+    name: 'Moonbound Emerald',
+    price: 20_000,
+    stock: 5,
+  },
+] as const;

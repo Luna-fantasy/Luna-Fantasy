@@ -1688,21 +1688,115 @@
 
 /* ── Seluna Vendor (Bazaar) ── */
 
+/* ── Seluna — Moonlight Merchant ── */
+
 .seluna-section {
   padding: 0;
 }
 
+/* Shop status banner */
+.seluna-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.seluna-status-banner.status-open {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  color: #22c55e;
+}
+
+.seluna-status-banner.status-closed {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+.seluna-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.seluna-status-dot.open {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  animation: selunaPulse 2s ease-in-out infinite;
+}
+
+.seluna-status-dot.closed {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes selunaPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.seluna-status-label {
+  flex-shrink: 0;
+}
+
+.seluna-countdown {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.seluna-next-open {
+  margin-left: auto;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+/* Closed state atmospheric message */
+.seluna-closed-message {
+  text-align: center;
+  padding: 32px 24px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.4), rgba(12, 16, 24, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+}
+
+.seluna-closed-message p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Item grid */
 .seluna-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 24px;
 }
 
+.seluna-grid.shop-closed .seluna-card {
+  opacity: 0.55;
+}
+
+.seluna-grid.shop-closed .seluna-card:hover {
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Item card */
 .seluna-card {
   background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xl);
-  padding: 32px;
+  padding: 28px;
   position: relative;
   overflow: hidden;
   transition: var(--transition-smooth);
@@ -1718,66 +1812,112 @@
   background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
 }
 
-
 .seluna-card:hover {
   border-color: rgba(0, 212, 255, 0.2);
   transform: translateY(-4px);
 }
 
+.seluna-card.dimmed {
+  pointer-events: auto;
+}
+
+/* Item image */
+.seluna-card-image {
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.seluna-card-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 .seluna-card-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .seluna-card-icon {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(0, 212, 255, 0.15);
   border: 1px solid rgba(0, 212, 255, 0.3);
   border-radius: var(--radius-md);
-  font-size: 24px;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
-.seluna-card-icon.protection-icon::before {
-  content: '\25C9';
-  color: var(--accent-primary);
-  font-weight: 900;
+.seluna-card-icon.card-icon {
+  background: rgba(255, 215, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.3);
 }
 
-.seluna-card-icon.vip-icon {
+.seluna-card-icon.role-icon {
   background: rgba(139, 92, 246, 0.15);
   border-color: rgba(139, 92, 246, 0.3);
 }
 
-.seluna-card-icon.vip-icon::before {
-  content: '\2605';
-  color: var(--accent-secondary);
-  font-weight: 900;
+.seluna-card-icon.tickets-icon {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.seluna-card-icon.stone-icon {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .seluna-card-title {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: var(--text-primary);
   margin: 0;
 }
 
-.seluna-card-subtitle {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin: 2px 0 0;
+/* Type badges */
+.seluna-type-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
 }
 
-.seluna-card-desc {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 20px;
+.seluna-type-badge.card-type {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.12);
+}
+
+.seluna-type-badge.role-type {
+  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.seluna-type-badge.tickets-type {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.seluna-type-badge.stone-type {
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
 }
 
 .seluna-card-price {
@@ -1821,8 +1961,8 @@
   color: var(--text-primary);
 }
 
-.seluna-detail-value.profit {
-  color: #22c55e;
+.seluna-detail-value.sold-out {
+  color: #ef4444;
 }
 
 .seluna-buy-btn {
@@ -1855,11 +1995,6 @@
   transform: none;
 }
 
-.seluna-buy-btn.vip {
-  background: linear-gradient(135deg, var(--accent-secondary), #7c3aed);
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
-}
-
 .seluna-buy-btn.confirm {
   background: linear-gradient(135deg, #22c55e, #16a34a);
   box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
@@ -1875,20 +2010,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px;
-  margin-top: 20px;
-  font-size: 14px;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #22c55e;
   background: rgba(34, 197, 94, 0.1);
   border: 1px solid rgba(34, 197, 94, 0.3);
   border-radius: var(--radius-md);
-}
-
-.seluna-owned-badge.vip {
-  color: var(--accent-secondary);
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(139, 92, 246, 0.3);
 }
 
 .seluna-confirm {
@@ -1928,6 +2057,510 @@
   animation: slideDown 0.3s ease-out;
 }
 
+/* ============================================
+   BRIMOR — ROLE SHOP MERCHANT STYLES
+   ============================================ */
+
+.brimor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.brimor-card {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-smooth);
+}
+
+.brimor-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #a78bfa, transparent);
+}
+
+.brimor-card:hover {
+  border-color: rgba(139, 92, 246, 0.25);
+  transform: translateY(-4px);
+}
+
+.brimor-card-owned {
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.brimor-card-owned::before {
+  background: linear-gradient(90deg, transparent, #22c55e, transparent);
+}
+
+.brimor-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.brimor-card-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--radius-md);
+  font-size: 22px;
+  flex-shrink: 0;
+  color: #a78bfa;
+}
+
+.brimor-card-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.brimor-type-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.brimor-card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.brimor-card-price {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+}
+
+.brimor-price-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.brimor-price-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #a78bfa;
+}
+
+.brimor-owned-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+}
+
+.brimor-owned-badge.brimor-active {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.brimor-owned-badge.brimor-inactive {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brimor-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 24px;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.brimor-toggle-btn.toggle-show {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.25);
+}
+
+.brimor-toggle-btn.toggle-show:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.35);
+}
+
+.brimor-toggle-btn.toggle-hide {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+.brimor-toggle-btn.toggle-hide:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.brimor-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.brimor-buy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 20px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.brimor-buy-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+}
+
+.brimor-buy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.brimor-buy-btn.confirm {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+}
+
+.brimor-buy-btn.cancel {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  color: var(--text-secondary);
+}
+
+.brimor-confirm {
+  margin-top: 20px;
+}
+
+.brimor-confirm-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.brimor-confirm-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.brimor-confirm-buttons .brimor-buy-btn {
+  flex: 1;
+  margin-top: 0;
+}
+
+/* ============================================
+   MELLS SELVAIR — BACKGROUND SHOP STYLES
+   ============================================ */
+
+.mells-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.mells-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.mells-tab:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.mells-tab-active {
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.1);
+  border-color: rgba(192, 132, 252, 0.3);
+}
+
+.mells-tab-active:hover {
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.14);
+  border-color: rgba(192, 132, 252, 0.35);
+}
+
+.mells-tab-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+.mells-tab-active .mells-tab-count {
+  background: rgba(192, 132, 252, 0.2);
+  color: #c084fc;
+}
+
+.mells-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.mells-card {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: var(--transition-smooth);
+}
+
+.mells-card:hover {
+  border-color: rgba(192, 132, 252, 0.25);
+  transform: translateY(-4px);
+}
+
+.mells-card-owned {
+  border-color: rgba(34, 197, 94, 0.15);
+}
+
+.mells-card-active {
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+}
+
+.mells-card-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.mells-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.mells-card:hover .mells-card-img {
+  transform: scale(1.05);
+}
+
+.mells-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+}
+
+[dir="rtl"] .mells-badge {
+  right: auto;
+  left: 10px;
+}
+
+.mells-badge-owned {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.mells-badge-active {
+  color: #fff;
+  background: rgba(34, 197, 94, 0.6);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.mells-card-body {
+  padding: 16px 20px 20px;
+}
+
+.mells-card-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.mells-card-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.mells-price-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: #c084fc;
+}
+
+.mells-price-currency {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.mells-equip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.25);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.mells-equip-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.35);
+}
+
+.mells-equip-btn.mells-unequip {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+.mells-equip-btn.mells-unequip:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mells-equip-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mells-buy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.mells-buy-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(168, 85, 247, 0.4);
+}
+
+.mells-buy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.mells-buy-btn.confirm {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+}
+
+.mells-buy-btn.cancel {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+  color: var(--text-secondary);
+}
+
+.mells-confirm {
+  margin-top: 4px;
+}
+
+.mells-confirm-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.mells-confirm-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.mells-confirm-buttons .mells-buy-btn {
+  flex: 1;
+}
+
 /* ── Dashboard Responsive ── */
 
 @media (max-width: 768px) {
@@ -1953,8 +2586,34 @@
     grid-template-columns: 1fr;
   }
 
+  .brimor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mells-tabs {
+    width: 100%;
+  }
+
+  .mells-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .mells-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
   .investment-add-more {
     flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .mells-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1972,4 +2631,10 @@
 [dir="rtl"] .role-description {
   padding-left: 0;
   padding-right: 14px;
+}
+
+[dir="rtl"] .seluna-countdown,
+[dir="rtl"] .seluna-next-open {
+  margin-left: 0;
+  margin-right: auto;
 }

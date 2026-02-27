@@ -63,6 +63,38 @@ export async function getUserGuildRoles(discordId: string): Promise<string[]> {
 }
 
 /**
+ * Fetch a guild member's display name from the Discord API.
+ * Returns nick > global_name > username, or null if not found.
+ */
+export async function getGuildMemberName(discordId: string): Promise<{ name: string; avatar: string | null } | null> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) return null;
+
+  try {
+    const res = await fetch(
+      `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordId}`,
+      {
+        headers: { Authorization: `Bot ${token}` },
+        next: { revalidate: 0 },
+      }
+    );
+
+    if (!res.ok) return null;
+
+    const member = await res.json();
+    const name = member.nick || member.user?.global_name || member.user?.username || null;
+    const userId = member.user?.id;
+    const avatarHash = member.user?.avatar;
+    const avatar = avatarHash && userId
+      ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${avatarHash.startsWith('a_') ? 'gif' : 'png'}?size=128`
+      : null;
+    return name ? { name, avatar } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Classify a set of role IDs into staff/special/booster/VIP categories.
  */
 export function classifyUserRoles(roleIds: string[]): RoleClassification {

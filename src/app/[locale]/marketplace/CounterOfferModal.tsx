@@ -54,8 +54,6 @@ export default function CounterOfferModal({ originalSwap, onClose, onCreated }: 
         const data = await myRes.json();
         const allCards = [
           ...(data.cardsByGame?.lunaFantasy || []),
-          ...(data.cardsByGame?.grandFantasy || []),
-          ...(data.cardsByGame?.bumper || []),
         ];
         setMyCards(allCards);
       }

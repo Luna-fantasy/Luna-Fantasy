@@ -6,6 +6,71 @@ function getDb() {
 }
 
 /**
+ * Fire-and-forget: increment money_earned + total_earned in profiles collection.
+ * Matches bot behavior: profilesManager.addMoneyEarned(userId, amount)
+ */
+async function trackProfileEarnings(discordId: string, amount: number): Promise<void> {
+  if (amount <= 0) return;
+  try {
+    const db = await getDb();
+    const collection = db.collection('profiles');
+    try {
+      await collection.updateOne(
+        { _id: discordId as any },
+        { $inc: { 'data.money_earned': amount, 'data.total_earned': amount } },
+        { upsert: true }
+      );
+    } catch (err: any) {
+      // Fallback for string data — read, parse, increment, write back
+      if (err?.code !== 14) return;
+      const doc = await collection.findOne({ _id: discordId as any });
+      const parsed = doc?.data ? (typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data) : {};
+      parsed.money_earned = (parsed.money_earned ?? 0) + amount;
+      parsed.total_earned = (parsed.total_earned ?? 0) + amount;
+      await collection.updateOne(
+        { _id: discordId as any },
+        { $set: { data: parsed } },
+        { upsert: true }
+      );
+    }
+  } catch {
+    // Fire-and-forget — never block the main operation
+  }
+}
+
+/**
+ * Fire-and-forget: increment money_spent + total_spent in profiles collection.
+ * Matches bot behavior: profilesManager.addMoneySpent(userId, amount)
+ */
+async function trackProfileSpending(discordId: string, amount: number): Promise<void> {
+  if (amount <= 0) return;
+  try {
+    const db = await getDb();
+    const collection = db.collection('profiles');
+    try {
+      await collection.updateOne(
+        { _id: discordId as any },
+        { $inc: { 'data.money_spent': amount, 'data.total_spent': amount } },
+        { upsert: true }
+      );
+    } catch (err: any) {
+      if (err?.code !== 14) return;
+      const doc = await collection.findOne({ _id: discordId as any });
+      const parsed = doc?.data ? (typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data) : {};
+      parsed.money_spent = (parsed.money_spent ?? 0) + amount;
+      parsed.total_spent = (parsed.total_spent ?? 0) + amount;
+      await collection.updateOne(
+        { _id: discordId as any },
+        { $set: { data: parsed } },
+        { upsert: true }
+      );
+    }
+  } catch {
+    // Fire-and-forget — never block the main operation
+  }
+}
+
+/**
  * Atomic check-and-deduct Lunari.
  * Uses findOneAndUpdate with $gte guard — only deducts if balance >= amount.
  * Falls back to optimistic concurrency if data is stored as string (legacy).
@@ -28,6 +93,7 @@ export async function deductLunari(
     if (result) {
       const balanceAfter = typeof result.data === 'number' ? result.data : parseInt(result.data, 10) || 0;
       console.log(`[deductLunari] atomic success: ${discordId} deducted ${amount}, before=${balanceAfter + amount}, after=${balanceAfter}`);
+      void trackProfileSpending(discordId, amount);
       return { success: true, balanceBefore: balanceAfter + amount, balanceAfter };
     }
   } catch (err: any) {
@@ -58,6 +124,7 @@ export async function deductLunari(
 
     if (updateResult.modifiedCount > 0) {
       console.log(`[deductLunari] fallback success: ${discordId} deducted ${amount}, before=${balance}, after=${balance - amount}`);
+      void trackProfileSpending(discordId, amount);
       return { success: true, balanceBefore: balance, balanceAfter: balance - amount };
     }
 
@@ -89,6 +156,7 @@ export async function creditLunari(
       { upsert: true, returnDocument: 'after' }
     );
     const balanceAfter = result ? (typeof result.data === 'number' ? result.data : parseInt(result.data, 10) || 0) : amount;
+    void trackProfileEarnings(discordId, amount);
     return { balanceAfter };
   } catch (err: any) {
     if (err?.code !== 14) throw err;
@@ -106,6 +174,7 @@ export async function creditLunari(
       : await collection.updateOne({ _id: discordId as any }, { $setOnInsert: { data: newBalance } }, { upsert: true });
 
     if (result.modifiedCount > 0 || result.upsertedCount > 0) {
+      void trackProfileEarnings(discordId, amount);
       return { balanceAfter: newBalance };
     }
     await new Promise(r => setTimeout(r, 50 + Math.random() * 100));

@@ -18,18 +18,21 @@ const PAGES: Page[] = [
 
   // Games
   { path: '/luna-fantasy/', changeFrequency: 'monthly', priority: 0.8 },
-  { path: '/grand-fantasy/', changeFrequency: 'monthly', priority: 0.8 },
-  { path: '/bumper/', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/luna-pairs/', changeFrequency: 'monthly', priority: 0.8 },
 
   // Economy
   { path: '/bank/', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/bazaar/', changeFrequency: 'weekly', priority: 0.7 },
+  { path: '/trading/', changeFrequency: 'weekly', priority: 0.7 },
   { path: '/marketplace/', changeFrequency: 'daily', priority: 0.7 },
 
   // Merchants
   { path: '/bazaar/kael/', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/bazaar/meluna/', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/bazaar/zoldar/', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/bazaar/seluna/', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/bazaar/brimor/', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/bazaar/mells/', changeFrequency: 'monthly', priority: 0.6 },
 
   // Info
   { path: '/partners/', changeFrequency: 'monthly', priority: 0.6 },

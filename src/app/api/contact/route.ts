@@ -32,8 +32,6 @@ export async function POST(req: NextRequest) {
 
     const areaLabels: Record<string, string> = {
       lunaFantasy: 'Luna Fantasy',
-      grandFantasy: 'Grand Fantasy',
-      bumper: 'Bumper',
       bank: 'Bank',
       bazaar: 'Bazaar',
       marketplace: 'Marketplace',

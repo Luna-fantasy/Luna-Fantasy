@@ -86,8 +86,8 @@ html[dir="rtl"] .card-detail-close {
   aspect-ratio: 2 / 3;
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  background: transparent;
 }
 
 .card-detail-image {
@@ -96,15 +96,17 @@ html[dir="rtl"] .card-detail-close {
   object-fit: cover;
 }
 
-/* Rarity glow borders */
-.rarity-glow-common { border-color: var(--common); box-shadow: 0 0 20px rgba(74, 222, 128, 0.2); }
-.rarity-glow-rare { border-color: var(--rare); box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
-.rarity-glow-epic { border-color: var(--epic); box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); }
-.rarity-glow-unique { border-color: var(--unique); box-shadow: 0 0 20px rgba(244, 63, 94, 0.2); }
-.rarity-glow-legendary { border-color: var(--legendary); box-shadow: 0 0 24px rgba(251, 191, 36, 0.3); }
-.rarity-glow-secret { border-color: var(--secret); box-shadow: 0 0 24px rgba(239, 68, 68, 0.3); }
-.rarity-glow-forbidden { border-color: #ff6600; box-shadow: 0 0 24px rgba(255, 102, 0, 0.3); }
-.rarity-glow-mythical { border-color: #ff00ff; box-shadow: 0 0 24px rgba(255, 0, 255, 0.3); }
+/* Rarity glow — border removed, keep subtle glow only */
+.rarity-glow-common,
+.rarity-glow-rare,
+.rarity-glow-epic,
+.rarity-glow-unique,
+.rarity-glow-legendary,
+.rarity-glow-secret,
+.rarity-glow-forbidden,
+.rarity-glow-mythical {
+  border: none;
+}
 
 /* Unowned card */
 .card-detail-unowned .card-detail-image {

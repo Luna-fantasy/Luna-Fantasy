@@ -22,6 +22,7 @@ const SPECIAL_ROLE_NAMES: Record<string, { en: string; ar: string; desc?: { en: 
   '1417160274447827086': { en: 'Luna Noble', ar: 'نبيل لونا', desc: { en: 'Founders of Luna', ar: 'المؤسسين في عالم لونا' } },
   '1427759046697422859': { en: 'Trickster', ar: 'المحتال', desc: { en: 'Full Cards collection', ar: 'مجموعة كاملة من البطاقات' } },
   '1458898769343942798': { en: 'Luna Chosen', ar: 'مختار لونا', desc: { en: 'Full Moonstones collection', ar: 'مجموعة كاملة من أحجار القمر' } },
+  [BOOSTER_ROLE_ID]: { en: 'Luna Booster', ar: 'معزز لونا', desc: { en: 'Discord Nitro Boosters', ar: 'معززي نيترو ديسكورد' } },
 };
 
 export function MonthlySalaryCard({ roles, locale }: MonthlySalaryCardProps) {

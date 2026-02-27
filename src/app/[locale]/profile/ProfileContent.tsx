@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Link } from '@/i18n/routing';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGameData } from '@/hooks/useGameData';
-import type { UserCard, UserStone, CardsByGame, CatalogCard } from '@/types/gameData';
+import type { UserCard, UserStone, CardsByGame, CatalogCard, BadgeData } from '@/types/gameData';
 import CardBook from './CardBook';
 import CardDetailModal from '@/components/CardDetailModal';
 import type { CardDetailData } from '@/components/CardDetailModal';
@@ -22,13 +22,66 @@ interface Transaction {
   createdAt: string;
 }
 
-type GameKey = keyof CardsByGame;
+const BADGE_DEFS = [
+  { id: 'million', name: '1 Million', desc: 'Reached 1M Lunari', image: '1MillionAchievement.png' },
+  { id: 'one_year', name: '1 Year', desc: '1 year in the server', image: '1YearAchievement.png' },
+  { id: 'all_cards', name: 'All Cards', desc: 'Collected every card', image: 'AllCardsAchievement.png' },
+  { id: 'all_stones', name: 'All Stones', desc: 'Collected every stone', image: 'AllStonesAchievement.png' },
+  { id: 'la_luna', name: 'La Luna', desc: 'Reached Level 100', image: 'LaLunaAchievement.png' },
+  { id: 'first_role', name: 'First Role', desc: 'Purchased a Role', image: 'FirstRoleAchievement.png' },
+  { id: 'text', name: 'Wordsmith', desc: '2,500+ messages sent', image: 'TextAchievement.png' },
+  { id: 'voice', name: 'Voice Legend', desc: '100+ hours in voice', image: 'VoiceAchievement.png' },
+  { id: 'games_500', name: '500 Wins', desc: '500 game wins total', image: '500GamesAchievement.png' },
+  { id: 'honor', name: 'Honored', desc: 'Honored by Luna', image: 'HonorAchievement.png' },
+] as const;
 
-const GAME_TABS: { key: GameKey; labelKey: string; gameFilter?: string }[] = [
-  { key: 'lunaFantasy', labelKey: 'collection.lunaFantasy', gameFilter: 'luna_fantasy' },
-  { key: 'grandFantasy', labelKey: 'collection.grandFantasy', gameFilter: 'grand_fantasy' },
-  { key: 'bumper', labelKey: 'collection.bumper', gameFilter: 'bumper' },
-];
+const BG_FILENAME_MAP: Record<string, string> = {
+  bg_calm_bath: 'Calm_Bath.png',
+  bg_dark_gate: 'Dark_Gate.png',
+  bg_library: 'Library.png',
+  bg_silverbeach_gate: 'Silverbeach_gate.jpeg',
+  bg_lovers_hideaway: 'Lovers_hideaway.png',
+  bg_rocky_terrain: 'Rocky_terrain.png',
+  bg_molten_road: 'Molten_Road.png',
+  bg_rose_garden: 'Rose_Garden.png',
+  bg_royal_palace: 'Royal_Palace.png',
+  bg_alchemist_desk: 'Alchemist_Desk.jpeg',
+  bg_golden_garden: 'Golden_Garden.png',
+  bg_bloodforged_decay: 'Bloodforged_Decay.jpeg',
+  bg_dark_wizard: 'Dark_Wizard.jpeg',
+  bg_crystal_palace: 'Crystall_Palace.png',
+  bg_fountain_of_beauty: 'Fountain_Of_Beauty.png',
+  bg_mushroom_paradise: 'Mushroom_Paradise.png',
+  bg_romantic_canal: 'Romantic_Canal.png',
+  bg_runic_ruins: 'Runic_Ruins.jpeg',
+  bg_neon_bazaar: 'Neon_Bazaar_Alley.png',
+  bg_royal_hall: 'Royal_Hall.png',
+  bg_atlantic_passage: 'Atlantic_Passage.png',
+  bg_floating_monolith: 'Floating_Monolith.png',
+  bg_opulent_palace: 'Opulent_Palace.png',
+  bg_tranquil_hideaway: 'Tranquil_Hideaway.jpeg',
+  bg_observatory: 'Observatory.png',
+  bg_ethereal_home: 'Ethereal_Home.png',
+  bg_bank_vault: 'Bank_Vault.png',
+  bg_spaceway: 'Spaceway.png',
+  bg_mastermind: 'Mastermind.png',
+};
+
+function getBackgroundUrl(bgId: string | undefined | null): string | null {
+  if (!bgId || bgId === 'default') return null;
+  const filename = BG_FILENAME_MAP[bgId];
+  if (!filename) return null;
+  return `https://assets.lunarian.app/profiles/${filename}`;
+}
+
+function getRankBackgroundUrl(rankId: string | undefined | null): string | null {
+  if (!rankId || rankId === 'default') return null;
+  // Rank IDs use "rank_" prefix — map to bg_ to look up filename
+  const bgKey = rankId.replace(/^rank_/, 'bg_');
+  return getBackgroundUrl(bgKey);
+}
+
+type GameKey = keyof CardsByGame;
 
 function xpForLevel(level: number): number {
   return level * level * 100;
@@ -49,7 +102,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
   const { data: gameData, isLoading } = useGameData(viewingDiscordId || null);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [activeGame, setActiveGame] = useState<GameKey>('lunaFantasy');
+  const activeGame: GameKey = 'lunaFantasy';
   const [lightbox, setLightbox] = useState<{ src: string; caption: string } | null>(null);
   const [selectedCard, setSelectedCard] = useState<CardDetailData | null>(null);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
@@ -105,15 +158,9 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
     setBrokenImages(prev => new Set(prev).add(id));
   };
 
-  // Pick effective game
-  const effectiveGame = activeGame;
-  const effectiveCards = gameData?.cardsByGame[effectiveGame] ?? [];
-
-  // Filter catalog cards by active game tab
-  const activeGameFilter = GAME_TABS.find(tab => tab.key === effectiveGame)?.gameFilter;
-  const filteredCatalog: CatalogCard[] = (gameData?.cardCatalog ?? []).filter(c =>
-    !activeGameFilter || !c.game || c.game === activeGameFilter
-  );
+  // All cards in one collection
+  const effectiveCards = gameData?.cardsByGame[activeGame] ?? [];
+  const filteredCatalog: CatalogCard[] = gameData?.cardCatalog ?? [];
 
   // Level XP
   const currentLevel = gameData?.level?.level ?? 0;
@@ -125,15 +172,35 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
   const pvpTotal = (gameData?.pvp.wins ?? 0) + (gameData?.pvp.losses ?? 0);
   const winRate = pvpTotal > 0 ? Math.round(((gameData?.pvp.wins ?? 0) / pvpTotal) * 100) : 0;
 
+  // Backgrounds
+  const profileBgUrl = getBackgroundUrl(gameData?.profile?.active_background);
+  const rankBgUrl = getRankBackgroundUrl(gameData?.profile?.active_rank_background);
+
   return (
     <div className="profile-page">
       <div className="profile-container">
 
         {/* Header Card — Banner + Avatar + Identity */}
         <div className="profile-card profile-header-card">
-          <div className="profile-banner">
-            <div className="profile-banner-glow" />
-            <div className="profile-banner-pattern" />
+          <div className={`profile-banner ${profileBgUrl ? 'profile-banner-has-bg' : ''}`}>
+            {profileBgUrl ? (
+              <>
+                <Image
+                  src={profileBgUrl}
+                  alt=""
+                  fill
+                  className="profile-banner-bg"
+                  sizes="720px"
+                  priority
+                />
+                <div className="profile-banner-overlay" />
+              </>
+            ) : (
+              <>
+                <div className="profile-banner-glow" />
+                <div className="profile-banner-pattern" />
+              </>
+            )}
           </div>
 
           <div className="profile-avatar-section">
@@ -206,22 +273,6 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
         {/* Card Collection Section */}
         <div className="profile-card profile-collection-card">
           <h2 className="profile-section-title">{t('collection.title')}</h2>
-
-          {/* Game Tabs */}
-          <div className="game-tabs">
-            {GAME_TABS.map(tab => (
-              <button
-                key={tab.key}
-                className={`game-tab ${effectiveGame === tab.key ? 'active' : ''}`}
-                onClick={() => setActiveGame(tab.key)}
-              >
-                {t(tab.labelKey)}
-                <span className="game-tab-count">
-                  {isLoading ? '-' : (gameData?.cardsByGame[tab.key]?.length ?? 0)}
-                </span>
-              </button>
-            ))}
-          </div>
 
           {/* Card Book */}
           <CardBook
@@ -309,7 +360,19 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
         )}
 
         {/* ── Level Orb ── */}
-        <div className="profile-card stats-orb-card">
+        <div className={`profile-card stats-orb-card ${rankBgUrl ? 'stats-orb-card-has-bg' : ''}`}>
+          {rankBgUrl && (
+            <>
+              <Image
+                src={rankBgUrl}
+                alt=""
+                fill
+                className="stats-orb-card-bg"
+                sizes="720px"
+              />
+              <div className="stats-orb-card-overlay" />
+            </>
+          )}
           <div className="stats-orb-wrap">
             {/* SVG ring arc showing XP progress */}
             <svg className="stats-orb-ring" viewBox="0 0 120 120">
@@ -387,6 +450,9 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
             })}
           </div>
         </div>
+
+        {/* ── Achievements ── */}
+        <AchievementsSection badges={gameData?.badges ?? null} isLoading={isLoading} />
 
         {/* ── PvP Arena ── */}
         <div className="profile-card stats-pvp-card">
@@ -677,6 +743,80 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Achievements Section ── */
+function AchievementsSection({
+  badges,
+  isLoading,
+}: {
+  badges: BadgeData | null;
+  isLoading: boolean;
+}) {
+  const t = useTranslations('profilePage');
+
+  const earnedCount = useMemo(() => {
+    if (!badges) return 0;
+    return BADGE_DEFS.filter(b => badges[b.id] && badges[b.id] > 0).length;
+  }, [badges]);
+
+  if (isLoading) {
+    return (
+      <div className="profile-card achievements-card">
+        <h2 className="profile-section-title">{t('achievements.title')}</h2>
+        <div className="skeleton" style={{ width: '100%', height: '200px', borderRadius: '12px' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="profile-card achievements-card">
+      <div className="achievements-header">
+        <h2 className="profile-section-title">{t('achievements.title')}</h2>
+        <span className="achievements-count">{earnedCount} / {BADGE_DEFS.length}</span>
+      </div>
+      <div className="achievements-grid">
+        {BADGE_DEFS.map((badge) => {
+          const timestamp = badges?.[badge.id];
+          const isEarned = !!timestamp && timestamp > 0;
+          const earnedDate = isEarned
+            ? new Date(timestamp * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+            : null;
+
+          return (
+            <div
+              key={badge.id}
+              className={`achievement-card ${isEarned ? 'achievement-card-earned' : 'achievement-card-locked'}`}
+              title={isEarned ? t('achievements.earnedOn', { date: earnedDate! }) : badge.desc}
+            >
+              <div className="achievement-image-wrap">
+                <Image
+                  src={`https://assets.lunarian.app/badges/${badge.image}`}
+                  alt={badge.name}
+                  width={80}
+                  height={80}
+                  className="achievement-image"
+                />
+                {!isEarned && (
+                  <div className="achievement-lock-overlay">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <span className="achievement-name">{badge.name}</span>
+              <span className="achievement-desc">{badge.desc}</span>
+              {isEarned && earnedDate && (
+                <span className="achievement-date">{earnedDate}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

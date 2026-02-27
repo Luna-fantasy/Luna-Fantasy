@@ -88,4 +88,10 @@ export const RATE_LIMITS = {
   bank_loan: { maxRequests: 3, windowMs: 60_000 },        // 3 per minute
   bank_investment: { maxRequests: 3, windowMs: 60_000 },  // 3 per minute
   bank_insurance: { maxRequests: 2, windowMs: 60_000 },   // 2 per minute
+  bank_trade: { maxRequests: 3, windowMs: 60_000 },       // 3 per minute
+  seluna_purchase: { maxRequests: 3, windowMs: 60_000 },  // 3 per minute
+  brimor_purchase: { maxRequests: 3, windowMs: 60_000 },  // 3 per minute
+  brimor_toggle: { maxRequests: 10, windowMs: 60_000 },   // 10 per minute
+  mells_purchase: { maxRequests: 3, windowMs: 60_000 },   // 3 per minute
+  mells_equip: { maxRequests: 10, windowMs: 60_000 },     // 10 per minute
 } as const;

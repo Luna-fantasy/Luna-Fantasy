@@ -54,8 +54,6 @@ export default function SwapProposalModal({ onClose, onCreated }: SwapProposalMo
         const data = await res.json();
         const allCards = [
           ...(data.cardsByGame?.lunaFantasy || []),
-          ...(data.cardsByGame?.grandFantasy || []),
-          ...(data.cardsByGame?.bumper || []),
         ];
         setMyCards(allCards);
       }

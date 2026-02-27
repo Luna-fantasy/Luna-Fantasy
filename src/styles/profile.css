@@ -63,6 +63,27 @@
   pointer-events: none;
 }
 
+/* Banner with custom background */
+.profile-banner-has-bg {
+  overflow: hidden;
+}
+
+.profile-banner-bg {
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.profile-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(12, 16, 24, 0.15) 0%,
+    rgba(12, 16, 24, 0.6) 100%
+  );
+  pointer-events: none;
+}
+
 /* Avatar */
 .profile-avatar-section {
   display: flex;

@@ -19,7 +19,8 @@
         "special": [
           { "role": { "en": "Luna Noble", "ar": "نبيل لونا" }, "command": null, "description": { "en": "Founders of Luna", "ar": "المؤسسين في عالم لونا" } },
           { "role": { "en": "Trickster", "ar": "المحتال" }, "command": "/book", "description": { "en": "Full Cards collection", "ar": "مجموعة كاملة من البطاقات" } },
-          { "role": { "en": "Luna Chosen", "ar": "مختار لونا" }, "command": "/chest", "description": { "en": "Full Moonstones collection", "ar": "مجموعة كاملة من أحجار القمر" } }
+          { "role": { "en": "Luna Chosen", "ar": "مختار لونا" }, "command": "/chest", "description": { "en": "Full Moonstones collection", "ar": "مجموعة كاملة من أحجار القمر" } },
+          { "role": { "en": "Luna Booster", "ar": "معزز لونا" }, "command": null, "description": { "en": "Discord Nitro Boosters", "ar": "معززي نيترو ديسكورد" } }
         ]
       }
     }

@@ -231,6 +231,7 @@ function BankDashboard({ bankData, locale, refetch }: { bankData: BankDashboardD
         onDeposit={handleDeposit}
         onWithdraw={handleWithdraw}
       />
+
     </div>
   );
 }

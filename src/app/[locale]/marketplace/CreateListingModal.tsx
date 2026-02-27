@@ -31,8 +31,6 @@ export default function CreateListingModal({ onClose, onCreated }: CreateListing
         const data = await res.json();
         const allCards: UserCard[] = [
           ...(data.cardsByGame?.lunaFantasy || []),
-          ...(data.cardsByGame?.grandFantasy || []),
-          ...(data.cardsByGame?.bumper || []),
         ];
         setCards(allCards);
       }

@@ -13,7 +13,6 @@ import MyListings from './MyListings';
 import SwapsTab from './SwapsTab';
 import CardDetailModal from '@/components/CardDetailModal';
 import type { CardDetailData } from '@/components/CardDetailModal';
-
 type Tab = 'browse' | 'my-listings' | 'sell' | 'swaps';
 type SellType = 'fixed' | 'auction';
 
@@ -322,7 +321,7 @@ export default function MarketplaceContent() {
           )}
         </div>
 
-        {/* Browse tab */}
+        {/* Browse tab — card listings (gated) */}
         {activeTab === 'browse' && (
           <div className="marketplace-browse">
             {/* Filters */}
@@ -443,7 +442,7 @@ export default function MarketplaceContent() {
           </div>
         )}
 
-        {/* My Listings tab */}
+        {/* My Listings tab (gated) */}
         {activeTab === 'my-listings' && isLoggedIn && (
           <MyListings
             listings={myListings}
@@ -454,7 +453,7 @@ export default function MarketplaceContent() {
           />
         )}
 
-        {/* Swaps tab */}
+        {/* Swaps tab (gated) */}
         {activeTab === 'swaps' && isLoggedIn && (
           <SwapsTab
             onStatusMsg={(msg) => {
@@ -464,7 +463,7 @@ export default function MarketplaceContent() {
           />
         )}
 
-        {/* Sell tab — type selection then modal */}
+        {/* Sell tab — type selection then modal (gated) */}
         {activeTab === 'sell' && isLoggedIn && !showSellModal && (
           <div className="marketplace-sell-type-picker">
             <h3 className="marketplace-sell-type-title">{t('sellTypeTitle')}</h3>
@@ -502,7 +501,7 @@ export default function MarketplaceContent() {
           </div>
         )}
 
-        {/* Fixed price sell modal */}
+        {/* Fixed price sell modal (gated) */}
         {showSellModal && isLoggedIn && sellType === 'fixed' && (
           <CreateListingModal
             onClose={() => { setShowSellModal(false); }}
@@ -510,7 +509,7 @@ export default function MarketplaceContent() {
           />
         )}
 
-        {/* Auction sell modal */}
+        {/* Auction sell modal (gated) */}
         {showSellModal && isLoggedIn && sellType === 'auction' && (
           <CreateAuctionModal
             onClose={() => { setShowSellModal(false); }}

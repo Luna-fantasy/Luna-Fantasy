@@ -8,11 +8,13 @@ import VendorKael from '../VendorKael';
 import VendorMeluna from '../VendorMeluna';
 import VendorZoldar from '../VendorZoldar';
 import VendorSeluna from '../VendorSeluna';
+import VendorBrimor from '../VendorBrimor';
+import VendorMells from '../VendorMells';
 import RevealModal from '../RevealModal';
 import type { CatalogResponse, RevealData } from '@/types/bazaar';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
 
-type MerchantSlug = 'kael' | 'meluna' | 'zoldar' | 'seluna';
+type MerchantSlug = 'kael' | 'meluna' | 'zoldar' | 'seluna' | 'brimor' | 'mells';
 
 const MERCHANT_CONFIG: Record<MerchantSlug, {
   image: string;
@@ -39,10 +41,22 @@ const MERCHANT_CONFIG: Record<MerchantSlug, {
     descKey: 'zoldar.desc',
   },
   seluna: {
-    image: 'https://assets.lunarian.app/shops/seluna_banker.png',
+    image: 'https://assets.lunarian.app/icons/seluna.png',
     nameKey: 'seluna.name',
     titleKey: 'seluna.title',
     descKey: 'seluna.desc',
+  },
+  brimor: {
+    image: 'https://assets.lunarian.app/shops/brimor.png',
+    nameKey: 'brimor.name',
+    titleKey: 'brimor.title',
+    descKey: 'brimor.desc',
+  },
+  mells: {
+    image: 'https://assets.lunarian.app/shops/mells_selvair.png',
+    nameKey: 'mells.name',
+    titleKey: 'mells.title',
+    descKey: 'mells.desc',
   },
 };
 
@@ -60,7 +74,6 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
   const [tickets, setTickets] = useState(0);
   const [hasDebt, setHasDebt] = useState(false);
   const [reveal, setReveal] = useState<RevealData | null>(null);
-  const [hasInsurance, setHasInsurance] = useState(false);
 
   const config = MERCHANT_CONFIG[merchant];
 
@@ -83,23 +96,9 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
     }
   }, []);
 
-  // Fetch bank data for Seluna vendor
-  const fetchBankData = useCallback(async () => {
-    if (merchant !== 'seluna' || !session?.user) return;
-    try {
-      const res = await fetch('/api/bank/dashboard');
-      if (!res.ok) return;
-      const data = await res.json();
-      setHasInsurance(data.hasInsurance ?? false);
-      setBalance(data.balance ?? 0);
-      setHasDebt(data.debt > 0);
-    } catch {}
-  }, [merchant, session?.user]);
-
   useEffect(() => {
     fetchCatalog();
-    fetchBankData();
-  }, [fetchCatalog, fetchBankData]);
+  }, [fetchCatalog]);
 
   const updateBalance = (newBalance: number) => {
     setBalance(newBalance);
@@ -206,19 +205,20 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
               balance={balance}
               hasDebt={hasDebt}
               isLoggedIn={!!session?.user}
-              hasInsurance={hasInsurance}
-              onPurchaseInsurance={async () => {
-                const csrf = document.cookie.match(/bazaar_csrf=([^;]+)/)?.[1] ?? '';
-                const res = await fetch('/api/bank/insurance', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error);
-                updateBalance(data.newBalance);
-                setHasInsurance(true);
-                return data;
-              }}
+            />
+          )}
+          {merchant === 'brimor' && (
+            <VendorBrimor
+              balance={balance}
+              hasDebt={hasDebt}
+              isLoggedIn={!!session?.user}
+            />
+          )}
+          {merchant === 'mells' && (
+            <VendorMells
+              balance={balance}
+              hasDebt={hasDebt}
+              isLoggedIn={!!session?.user}
             />
           )}
           {isLoading && (

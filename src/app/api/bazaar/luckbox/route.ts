@@ -69,21 +69,24 @@ export async function POST(request: Request) {
     // 4. Draw random card from catalog
     const client = await clientPromise;
     const db = client.db('Database');
-    const catalogCards = await db
-      .collection('card_catalog')
-      .find({ rarity: tierConfig.rarity })
-      .toArray();
+    const configDoc = await db
+      .collection('cards_config')
+      .findOne({ _id: tierConfig.rarity.toUpperCase() as any });
 
-    if (catalogCards.length === 0) {
+    if (!configDoc?.data) {
       return NextResponse.json({ error: 'No cards available for this tier' }, { status: 400 });
     }
 
-    const cardsWithWeight = catalogCards.map((c) => ({
-      name: typeof c.name === 'object' && c.name?.en ? c.name.en : String(c.name ?? ''),
+    const parsedCards = typeof configDoc.data === 'string' ? JSON.parse(configDoc.data) : configDoc.data;
+    if (!Array.isArray(parsedCards) || parsedCards.length === 0) {
+      return NextResponse.json({ error: 'No cards available for this tier' }, { status: 400 });
+    }
+
+    const cardsWithWeight = parsedCards.map((c: any) => ({
+      name: String(c.name ?? ''),
       rarity: c.rarity,
       imageUrl: c.imageUrl ?? '',
       drawWeight: c.weight ?? 1,
-      game: c.game,
     }));
 
     // Use drawWeight for the random selection pool
@@ -93,11 +96,8 @@ export async function POST(request: Request) {
     // Generate random attack and weight stats based on rarity (matches bot behavior)
     const stats = generateCardStats(tierConfig.rarity);
 
-    // Prefix card name with "Luna " for lunaFantasy game cards (matches bot naming)
-    const cardName = picked.game === 'lunaFantasy' ? `Luna ${picked.name}` : picked.name;
-
     const drawnCard = {
-      name: cardName,
+      name: picked.name,
       rarity: tierConfig.rarity.toUpperCase(),
       attack: stats.attack,
       imageUrl: picked.imageUrl,

@@ -3,7 +3,7 @@
  *
  * Logic derived from scanning 534 users' card collections:
  * - Cards whose names appear with "Luna " prefix → game: "lunaFantasy"
- * - Cards whose names appear with "Bumper" prefix → game: "bumper"
+ * - Cards whose names appear with "Bumper" prefix → game: "lunaPairs"
  * - Everything else → game: "grandFantasy"
  */
 const { MongoClient } = require("mongodb");
@@ -71,8 +71,8 @@ function determineGame(catalogNameEn) {
     if (LUNA_FANTASY_NAMES.has(alias)) return "lunaFantasy";
   }
 
-  // Direct Bumper match (catalog card named "Bumper")
-  if (catalogNameEn === "Bumper" || BUMPER_NAMES.has(catalogNameEn)) return "bumper";
+  // Direct Bumper match — card names still start with "Bumper" but game is "lunaPairs"
+  if (catalogNameEn === "Bumper" || BUMPER_NAMES.has(catalogNameEn)) return "lunaPairs";
 
   // Grand Fantasy alias check
   if (CATALOG_TO_GF_ALIASES[catalogNameEn]) return "grandFantasy";
@@ -90,7 +90,7 @@ async function main() {
   const cards = await collection.find({}).toArray();
   console.log(`Processing ${cards.length} catalog cards...\n`);
 
-  const counts = { lunaFantasy: 0, grandFantasy: 0, bumper: 0 };
+  const counts = { lunaFantasy: 0, grandFantasy: 0, lunaPairs: 0 };
 
   for (const card of cards) {
     const game = determineGame(card.name.en);
@@ -105,8 +105,8 @@ async function main() {
   console.log("Game assignments:");
   console.log(`  Luna Fantasy: ${counts.lunaFantasy}`);
   console.log(`  Grand Fantasy: ${counts.grandFantasy}`);
-  console.log(`  Bumper: ${counts.bumper}`);
-  console.log(`  Total: ${counts.lunaFantasy + counts.grandFantasy + counts.bumper}`);
+  console.log(`  Luna Pairs: ${counts.lunaPairs}`);
+  console.log(`  Total: ${counts.lunaFantasy + counts.grandFantasy + counts.lunaPairs}`);
 
   // Create index on game field
   await collection.createIndex({ game: 1 });
@@ -115,8 +115,8 @@ async function main() {
   // Verify
   const lunaCount = await collection.countDocuments({ game: "lunaFantasy" });
   const gfCount = await collection.countDocuments({ game: "grandFantasy" });
-  const bumperCount = await collection.countDocuments({ game: "bumper" });
-  console.log(`\nVerification — Luna: ${lunaCount}, Grand: ${gfCount}, Bumper: ${bumperCount}`);
+  const lunaPairsCount = await collection.countDocuments({ game: "lunaPairs" });
+  console.log(`\nVerification — Luna: ${lunaCount}, Grand: ${gfCount}, Luna Pairs: ${lunaPairsCount}`);
 
   await client.close();
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import clientPromise from "@/lib/mongodb";
 import { generateCardStats } from "@/lib/bazaar/luckbox-config";
+import { getGuildMemberName } from "@/lib/bank/discord-roles";
 import type {
   UserCard,
   UserStone,
@@ -13,24 +14,12 @@ import type {
   GameDataResponse,
   ChatActivity,
   CatalogCard,
+  BadgeData,
+  ProfileData,
 } from "@/types/gameData";
 
 function groupCards(cards: UserCard[]): CardsByGame {
-  const lunaFantasy: UserCard[] = [];
-  const grandFantasy: UserCard[] = [];
-  const bumper: UserCard[] = [];
-
-  for (const card of cards) {
-    if (card.name.startsWith("Luna ")) {
-      lunaFantasy.push(card);
-    } else if (card.name.startsWith("Bumper")) {
-      bumper.push(card);
-    } else {
-      grandFantasy.push(card);
-    }
-  }
-
-  return { lunaFantasy, grandFantasy, bumper };
+  return { lunaFantasy: cards };
 }
 
 export async function GET(request: Request) {
@@ -64,7 +53,7 @@ export async function GET(request: Request) {
     const now = new Date();
     const todayKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
 
-    const [cardsDoc, stonesDoc, pointsDoc, levelsDoc, magicWinsDoc, nemesisDocs, inventoryDoc, ticketsDoc, chatMsgDoc, chatVoiceDoc, catalogDocs] =
+    const [cardsDoc, stonesDoc, pointsDoc, levelsDoc, magicWinsDoc, nemesisDocs, inventoryDoc, ticketsDoc, chatMsgDoc, chatVoiceDoc, catalogDocs, badgesDoc, profileDoc] =
       await Promise.all([
         db.collection("cards").findOne({ _id: discordId as any }),
         db.collection("stones").findOne({ _id: discordId as any }),
@@ -76,7 +65,9 @@ export async function GET(request: Request) {
         db.collection("tickets").findOne({ _id: discordId as any }),
         db.collection("chat_stats").findOne({ _id: `universal_chat_${todayKey}` as any }),
         db.collection("chat_stats").findOne({ _id: `universal_voice_${todayKey}` as any }),
-        db.collection("card_catalog").find({}).toArray(),
+        db.collection("cards_config").find({}).toArray(),
+        db.collection("badges").findOne({ _id: discordId as any }),
+        db.collection("profiles").findOne({ _id: discordId as any }),
       ]);
 
     // Cards — data may be a JSON string (bot) or native array (web bazaar)
@@ -180,29 +171,71 @@ export async function GET(request: Request) {
       chatActivity = { messagesToday, voiceMinutesToday };
     } catch {}
 
-    // Card catalog — regular documents with id, name (LocalizedString), rarity, imageUrl, game
-    const cardCatalog: CatalogCard[] = catalogDocs.map((doc) => {
-      const name = typeof doc.name === "object" && doc.name?.en ? doc.name.en : String(doc.name ?? "");
-      return {
-        id: doc.id ?? String(doc._id),
-        name,
-        rarity: doc.rarity ?? "common",
-        imageUrl: doc.imageUrl ?? "",
-        attack: doc.attack ?? 0,
-        weight: doc.weight,
-        game: doc.game,
-      };
-    });
+    // Card catalog — cards_config: one doc per rarity, data is JSON string of card array
+    const cardCatalog: CatalogCard[] = [];
+    for (const doc of catalogDocs) {
+      const parsed = typeof doc.data === "string" ? JSON.parse(doc.data) : doc.data;
+      if (!Array.isArray(parsed)) continue;
+      for (const c of parsed) {
+        cardCatalog.push({
+          id: c.name,
+          name: String(c.name ?? ""),
+          rarity: (c.rarity ?? "COMMON").toLowerCase(),
+          imageUrl: c.imageUrl ?? "",
+          attack: c.attack ?? 0,
+          weight: c.weight,
+        });
+      }
+    }
+
+    // Badges — data may be JSON string or native object
+    let badges: BadgeData | null = null;
+    if (badgesDoc?.data) {
+      try {
+        const parsed = typeof badgesDoc.data === 'string'
+          ? JSON.parse(badgesDoc.data)
+          : badgesDoc.data;
+        if (parsed && typeof parsed === 'object') {
+          badges = parsed;
+        }
+      } catch {}
+    }
+
+    // Profile — extract active backgrounds
+    let profile: ProfileData | null = null;
+    if (profileDoc?.data) {
+      try {
+        const parsed = typeof profileDoc.data === 'string'
+          ? JSON.parse(profileDoc.data)
+          : profileDoc.data;
+        if (parsed && typeof parsed === 'object') {
+          profile = {
+            active_background: parsed.active_background ?? 'default',
+            active_rank_background: parsed.active_rank_background ?? 'default',
+          };
+        }
+      } catch {}
+    }
 
     // For public profiles, look up basic user info and exclude private data
     let publicUser: { name: string; image: string | null; discordId: string } | undefined;
     if (isPublic) {
       const userDoc = await db.collection("users").findOne({ discordId });
-      publicUser = {
-        name: userDoc?.globalName || userDoc?.name || discordId,
-        image: userDoc?.image || null,
-        discordId,
-      };
+      if (userDoc) {
+        publicUser = {
+          name: userDoc.globalName || userDoc.name || discordId,
+          image: userDoc.image || null,
+          discordId,
+        };
+      } else {
+        // User never logged into the website — fetch from Discord API
+        const member = await getGuildMemberName(discordId);
+        publicUser = {
+          name: member?.name || discordId,
+          image: member?.avatar || null,
+          discordId,
+        };
+      }
     }
 
     const response: GameDataResponse = {
@@ -218,6 +251,8 @@ export async function GET(request: Request) {
       tickets: isPublic ? 0 : tickets,
       chatActivity: isPublic ? null : chatActivity,
       cardCatalog,
+      badges,
+      profile,
       ...(publicUser ? { publicUser } : {}),
     };
 

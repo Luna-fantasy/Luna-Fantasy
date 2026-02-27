@@ -6,7 +6,7 @@ import '@/styles/bazaar-reveal.css';
 import '@/styles/bank.css';
 import MerchantPage from './MerchantPage';
 
-const VALID_MERCHANTS = ['kael', 'meluna', 'zoldar', 'seluna'] as const;
+const VALID_MERCHANTS = ['kael', 'meluna', 'zoldar', 'seluna', 'brimor', 'mells'] as const;
 type MerchantSlug = (typeof VALID_MERCHANTS)[number];
 
 const MERCHANT_KEYS: Record<MerchantSlug, { nameKey: string; titleKey: string }> = {
@@ -14,6 +14,8 @@ const MERCHANT_KEYS: Record<MerchantSlug, { nameKey: string; titleKey: string }>
   meluna: { nameKey: 'meluna.name', titleKey: 'meluna.title' },
   zoldar: { nameKey: 'zoldar.name', titleKey: 'zoldar.title' },
   seluna: { nameKey: 'seluna.name', titleKey: 'seluna.title' },
+  brimor: { nameKey: 'brimor.name', titleKey: 'brimor.title' },
+  mells: { nameKey: 'mells.name', titleKey: 'mells.title' },
 };
 
 export function generateStaticParams() {

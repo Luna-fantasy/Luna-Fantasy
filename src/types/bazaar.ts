@@ -101,7 +101,12 @@ export type TransactionType =
   | 'bank_investment_withdraw'
   | 'bank_insurance'
   | 'marketplace_buy'
-  | 'marketplace_sell';
+  | 'marketplace_sell'
+  | 'trade_win'
+  | 'trade_loss'
+  | 'seluna_purchase'
+  | 'brimor_purchase'
+  | 'mells_purchase';
 
 export interface TransactionRecord {
   _id?: string;

@@ -30,11 +30,11 @@ export function Navbar() {
   const economyDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
 
-  const gameRoutes = ['/luna-fantasy', '/grand-fantasy', '/bumper'];
+  const gameRoutes = ['/luna-fantasy', '/luna-pairs'];
   const worldRoutes = ['/story', '/characters', '/partners'];
   const economyRoutes = FEATURE_FLAGS.marketplace
-    ? ['/bank', '/bazaar', '/marketplace']
-    : ['/bank', '/bazaar'];
+    ? ['/bank', '/bazaar', '/trading', '/marketplace']
+    : ['/bank', '/bazaar', '/trading'];
 
   // Fetch Lunari balance when logged in
   const fetchBalance = useCallback(async () => {
@@ -173,18 +173,11 @@ export function Navbar() {
                     {t('lunaFantasy')}
                   </Link>
                   <Link
-                    href="/grand-fantasy"
-                    className={`games-dropdown-item ${isActive('/grand-fantasy') ? 'active' : ''}`}
+                    href="/luna-pairs"
+                    className={`games-dropdown-item ${isActive('/luna-pairs') ? 'active' : ''}`}
                     onClick={() => setGamesDropdownOpen(false)}
                   >
-                    {t('grandFantasy')}
-                  </Link>
-                  <Link
-                    href="/bumper"
-                    className={`games-dropdown-item ${isActive('/bumper') ? 'active' : ''}`}
-                    onClick={() => setGamesDropdownOpen(false)}
-                  >
-                    {t('bumper')}
+                    {t('lunaPairs')}
                   </Link>
                 </div>
               )}
@@ -259,6 +252,13 @@ export function Navbar() {
                   >
                     {t('bazaar')}
                   </Link>
+                  <Link
+                    href="/trading"
+                    className={`games-dropdown-item ${isActive('/trading') ? 'active' : ''}`}
+                    onClick={() => setEconomyDropdownOpen(false)}
+                  >
+                    {t('trading')}
+                  </Link>
                   {FEATURE_FLAGS.marketplace && (
                     <Link
                       href="/marketplace"
@@ -280,7 +280,7 @@ export function Navbar() {
                 <div className="auth-skeleton" />
               ) : session ? (
                 <>
-                <NotificationBell />
+                {FEATURE_FLAGS.marketplace && <NotificationBell />}
                 <Link href="/profile" className="user-btn-wrap">
                   <div className="user-btn">
                     {session.user?.image ? (
@@ -397,18 +397,11 @@ export function Navbar() {
                   {t('lunaFantasy')}
                 </Link>
                 <Link
-                  href="/grand-fantasy"
-                  className={`mobile-nav-link ${isActive('/grand-fantasy') ? 'active' : ''}`}
+                  href="/luna-pairs"
+                  className={`mobile-nav-link ${isActive('/luna-pairs') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('grandFantasy')}
-                </Link>
-                <Link
-                  href="/bumper"
-                  className={`mobile-nav-link ${isActive('/bumper') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  {t('bumper')}
+                  {t('lunaPairs')}
                 </Link>
               </div>
             )}
@@ -474,6 +467,13 @@ export function Navbar() {
                   onClick={closeMobileMenu}
                 >
                   {t('bazaar')}
+                </Link>
+                <Link
+                  href="/trading"
+                  className={`mobile-nav-link ${isActive('/trading') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {t('trading')}
                 </Link>
                 {FEATURE_FLAGS.marketplace && (
                   <Link

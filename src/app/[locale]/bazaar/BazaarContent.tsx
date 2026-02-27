@@ -33,10 +33,24 @@ const MERCHANTS = [
   },
   {
     slug: 'seluna',
-    image: 'https://assets.lunarian.app/shops/seluna_banker.png',
+    image: 'https://assets.lunarian.app/icons/seluna.png',
     nameKey: 'seluna.name',
     titleKey: 'seluna.title',
     descKey: 'seluna.desc',
+  },
+  {
+    slug: 'brimor',
+    image: 'https://assets.lunarian.app/shops/brimor.png',
+    nameKey: 'brimor.name',
+    titleKey: 'brimor.title',
+    descKey: 'brimor.desc',
+  },
+  {
+    slug: 'mells',
+    image: 'https://assets.lunarian.app/shops/mells_selvair.png',
+    nameKey: 'mells.name',
+    titleKey: 'mells.title',
+    descKey: 'mells.desc',
   },
 ] as const;
 

@@ -148,12 +148,6 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
                               className="card-image"
                             />
                           </div>
-                          <div className="card-info">
-                            <span className={`card-rarity rarity-${card.rarity}`}>
-                              {t(`filters.${card.rarity}`)}
-                            </span>
-                            <h4 className="card-name">{card.name[locale]}</h4>
-                          </div>
                         </div>
                       ))}
                     </div>

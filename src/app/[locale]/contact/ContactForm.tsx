@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 
 const REASONS = ['bugReport', 'featureRequest', 'paymentIssue', 'accountIssue', 'complaint', 'partnership'] as const;
-const AREAS = ['lunaFantasy', 'grandFantasy', 'bumper', 'bank', 'bazaar', 'marketplace', 'auth', 'website', 'other'] as const;
+const AREAS = ['lunaFantasy', 'bank', 'bazaar', 'marketplace', 'auth', 'website', 'other'] as const;
 const MAX_FILES = 3;
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 

@@ -17,12 +17,27 @@
 | `levels` | R/W | R | R | XP/level data |
 | `cooldowns` | R/W | R/W | — | Command cooldowns |
 
+### Bot + Web Collections
+
+| Collection | LunaJester | Web App | Purpose |
+|---|---|---|---|
+| `cards_config` | R/W | R | Card catalog (one doc per rarity, data is JSON string of card array) |
+| `seluna_vendor` | R/W | R/W | Seluna shop state (open/close timing) and stock tracking |
+
+### Shared Collections (Bot + Web)
+
+| Collection | LunaJester | Web App | Purpose |
+|---|---|---|---|
+| `vendor_config` | R (shop items) | R (shop items) | Vendor shop definitions (items, prices, roleIds) |
+| `inventory` | R/W (purchase records) | R/W (purchase records) | User purchase history for role shops |
+
 ### Web-Only Collections
 
 | Collection | Purpose |
 |---|---|
 | `lunari_transactions` | Web purchase audit trail |
-| `card_catalog` | Card pool for web luckbox draws |
+| `luna_pairs_config` | Luna Pairs faction/card catalog (one doc per faction) |
+| ~~`card_catalog`~~ | **Deprecated** — replaced by `cards_config` |
 
 ---
 
@@ -71,7 +86,7 @@ Key patterns:
 ```
 {
   discordId: string,
-  type: "luckbox_spend" | "stonebox_spend" | "ticket_spend" | "stripe_purchase",
+  type: "luckbox_spend" | "stonebox_spend" | "ticket_spend" | "stripe_purchase" | "seluna_purchase",
   amount: number,          // negative for spends, positive for credits
   balanceBefore: number,
   balanceAfter: number,
@@ -82,7 +97,91 @@ Key patterns:
 }
 ```
 
-### `card_catalog` (web-only)
+### `cards_config` (bot-managed, web reads)
+```
+{
+  _id: "COMMON" | "RARE" | "EPIC" | "UNIQUE" | "LEGENDARY" | "SECRET" | "FORBIDDEN",
+  data: string   // JSON-stringified array of card objects
+}
+```
+Each card object in the parsed `data` array:
+```
+{ name: string, rarity: string, attack: number, weight: number, imageUrl: string }
+```
+- 7 documents total (one per rarity)
+- `_id` is the rarity in UPPERCASE
+- `data` is a JSON string that must be parsed with `JSON.parse()`
+- Card names already include prefixes (e.g. "Luna Centaur") — no transformation needed
+- No `game` field; no localized names
+
+### `luna_pairs_config` (web-managed)
+```
+{
+  _id: "beasts" | "colossals" | "dragons" | "knights" | "lunarians" | "moon_creatures" | "mythical_creatures" | "strange_beings" | "supernatural" | "underworld" | "warriors",
+  data: {
+    name: { en: string, ar: string },
+    color: string,      // hex color for the faction
+    cards: [{ name: string, image: string }, ...]
+  }
+}
+```
+- 11 documents total (one per faction)
+- `_id` is the faction key in lowercase (underscore-separated)
+- `data.cards[].image` is the filename in R2 (e.g. `beasts_ogre.png`)
+- Image URL: `https://assets.lunarian.app/LunaPairs/{image}`
+- Seeded via `scripts/seed-luna-pairs-config.js`
+
+### `seluna_vendor`
+Two documents:
+
+**`active_shops`** — Shop open/close state (managed by bot via `!set-seluna`):
+```
+{
+  _id: "active_shops",
+  data: {
+    startTime: ISODate,       // when shop opened
+    endTime: ISODate,         // when shop closes (startTime + 24h)
+    nextAppearTime: ISODate   // next scheduled opening (endTime + 30 days)
+  }
+}
+```
+
+**`shop_stocks`** — Per-item remaining stock (decremented by web on purchase):
+```
+{
+  _id: "shop_stocks",
+  data: {
+    luna_cerberus_card: number,   // starts at 2
+    luna_moon_stone: number,      // starts at 5
+    moonbound_emerald: number     // starts at 5
+    // unlimited items (fullmoon_role, tickets_bundle) not tracked
+  }
+}
+```
+- Stock is initialized by the bot when it opens the shop
+- Web decrements via `$inc: { "data.<itemId>": -1 }` on purchase
+- Items with `stock: -1` in config are unlimited and not tracked here
+
+### `vendor_config`
+```
+{ _id: "brimor", data: { title, description, image, items: [...] } }
+```
+- One document per shop (keyed by shop ID)
+- `items` array: `{ id, name, price, roleId, description }`
+- Seeded via `scripts/seed-vendor-config.js`
+- Both bot (shop.ts) and web (vendor-config.ts) read from this collection
+- Bot falls back to `config.shops` if DB entry missing
+
+### `inventory`
+```
+{ _id: "discordUserId", data: [ PurchaseRecord, ... ] }
+```
+- `data` is an array of purchase records (st.db push pattern)
+- PurchaseRecord: `{ id, name, price, roleId?, description?, shopId, purchaseDate }`
+- `shopId` indicates which shop the item came from (e.g., "brimor")
+- Used by both bot and web to check ownership and list owned roles
+
+### `card_catalog` (deprecated)
 ```
 {
   _id: ObjectId,
@@ -94,6 +193,7 @@ Key patterns:
   game?: string
 }
 ```
+**Deprecated** — replaced by `cards_config`. The web app no longer reads from this collection.
 
 ---
 

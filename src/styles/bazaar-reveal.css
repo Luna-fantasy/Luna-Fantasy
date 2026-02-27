@@ -154,9 +154,10 @@
 }
 
 .reveal-item-image {
-  width: 200px;
-  height: 280px;
-  object-fit: cover;
+  width: 240px;
+  height: auto;
+  max-height: 360px;
+  object-fit: contain;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -167,8 +168,8 @@
 }
 
 .reveal-item-placeholder {
-  width: 200px;
-  height: 280px;
+  width: 240px;
+  height: 340px;
   display: flex;
   align-items: center;
   justify-content: center;

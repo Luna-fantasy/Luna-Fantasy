@@ -1,0 +1,497 @@
+/* ============================================
+   LUNA PAIRS - FACTION WAR GAME PAGE
+   ============================================ */
+
+/* Hero Section */
+.lp-hero {
+  position: relative;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 160px 24px 80px;
+  overflow: hidden;
+}
+
+.lp-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.lp-hero-bg-image {
+  object-fit: cover;
+  opacity: 0.3;
+  filter: saturate(1.2);
+}
+
+.lp-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(3, 3, 6, 0.3) 0%, transparent 30%),
+    linear-gradient(0deg, var(--bg-void) 0%, transparent 50%),
+    radial-gradient(ellipse at center, transparent 30%, var(--bg-void) 100%),
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(220, 20, 60, 0.12) 0%, transparent 60%);
+}
+
+.lp-hero-content {
+  max-width: 800px;
+}
+
+.lp-hero-title {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 900;
+  margin-bottom: 16px;
+  background: linear-gradient(180deg,
+    #ffffff 0%,
+    #DC143C 60%,
+    #800020 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 40px rgba(220, 20, 60, 0.3));
+}
+
+.lp-hero-desc {
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.8;
+  font-size: 1.1rem;
+}
+
+.lp-hero-cta {
+  margin-top: 32px;
+}
+
+.lp-hero-cta .cta-discord {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #5865F2, #4752c4);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-hero-cta .cta-discord:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(88, 101, 242, 0.5);
+}
+
+.lp-hero-cta .cta-discord svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Info Section */
+.lp-info-section {
+  padding: 60px 0;
+}
+
+.lp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.lp-info-card {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #DC143C, transparent);
+}
+
+.lp-info-card h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #DC143C;
+}
+
+.lp-info-card p {
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+/* Rules */
+.lp-rules-section {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  margin-bottom: 40px;
+}
+
+.lp-rules-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.lp-rules-list li {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  padding-left: 28px;
+  position: relative;
+}
+
+[dir="rtl"] .lp-rules-list li {
+  padding-left: 0;
+  padding-right: 28px;
+}
+
+.lp-rules-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  background: #DC143C;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #DC143C;
+}
+
+[dir="rtl"] .lp-rules-list li::before {
+  left: auto;
+  right: 0;
+}
+
+/* Rewards Table */
+.lp-rewards-section {
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+}
+
+.lp-rewards-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 24px;
+  color: #DC143C;
+}
+
+.lp-rewards-table-wrap {
+  overflow-x: auto;
+}
+
+.lp-rewards-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.lp-rewards-table th {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lp-rewards-table td {
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lp-rewards-table tr:last-child td {
+  border-bottom: none;
+}
+
+.lp-reward-base {
+  color: #4ade80 !important;
+  font-weight: 700;
+}
+
+.lp-reward-bonus {
+  color: #60a5fa !important;
+  font-weight: 700;
+}
+
+.lp-reward-double {
+  color: #f59e0b !important;
+  font-weight: 700;
+}
+
+/* Gallery Section */
+.lp-gallery-section {
+  padding: 40px 0 100px;
+}
+
+/* Filter Bar */
+.lp-filter-bar {
+  background: linear-gradient(135deg, rgba(12, 16, 24, 0.95), rgba(7, 10, 18, 0.98));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xl);
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: fit-content;
+  margin: 0 auto 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.lp-filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 10px 18px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.lp-filter-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.lp-filter-btn.active {
+  color: #fff;
+  background: #DC143C;
+  box-shadow: 0 0 20px rgba(220, 20, 60, 0.4);
+}
+
+.lp-filter-count {
+  font-size: 11px;
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+}
+
+.lp-filter-btn.active .lp-filter-count {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Faction Sections */
+.lp-factions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+}
+
+.lp-faction-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lp-faction-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.lp-faction-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 50px;
+  border: 1px solid;
+}
+
+/* Cards Grid */
+.lp-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+/* Card Item */
+.lp-card-item {
+  position: relative;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s, border-color 0.4s;
+  transform-origin: center bottom;
+  animation: lpCardReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(17, 24, 34, 0.6), rgba(12, 16, 24, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@keyframes lpCardReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.lp-card-item:nth-child(1) { animation-delay: 0.05s; }
+.lp-card-item:nth-child(2) { animation-delay: 0.1s; }
+.lp-card-item:nth-child(3) { animation-delay: 0.15s; }
+.lp-card-item:nth-child(4) { animation-delay: 0.2s; }
+.lp-card-item:nth-child(5) { animation-delay: 0.25s; }
+.lp-card-item:nth-child(6) { animation-delay: 0.3s; }
+
+.lp-card-item:hover {
+  transform: translateY(-10px) scale(1.02);
+  z-index: 10;
+  border-color: var(--faction-color);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--faction-color) 30%, transparent);
+}
+
+.lp-card-image-wrapper {
+  aspect-ratio: 2/3;
+  overflow: hidden;
+}
+
+.lp-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s;
+}
+
+.lp-card-item:hover .lp-card-image {
+  transform: scale(1.05);
+}
+
+/* Card Info */
+.lp-card-info {
+  padding: 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.lp-card-name {
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+  margin: 8px 0 0;
+}
+
+.lp-card-faction-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: 50px;
+  border: 1px solid;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .lp-hero {
+    padding: 120px 20px 60px;
+    min-height: 50vh;
+  }
+
+  .lp-hero-title {
+    font-size: 2rem;
+  }
+
+  .lp-hero-cta .cta-discord {
+    padding: 14px 24px;
+    font-size: 14px;
+  }
+
+  .lp-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lp-info-card,
+  .lp-rules-section,
+  .lp-rewards-section {
+    padding: 24px;
+  }
+
+  .lp-rules-list {
+    grid-template-columns: 1fr;
+  }
+
+  .lp-filter-bar {
+    border-radius: var(--radius-lg);
+    padding: 10px;
+  }
+
+  .lp-filter-btn {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .lp-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .lp-card-item {
+    border-radius: var(--radius-md);
+  }
+
+  .lp-faction-header {
+    flex-wrap: wrap;
+  }
+
+  .lp-faction-title {
+    font-size: 1.25rem;
+  }
+
+  .lp-rewards-table th,
+  .lp-rewards-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}

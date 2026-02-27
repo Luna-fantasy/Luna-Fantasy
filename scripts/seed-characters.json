@@ -1009,6 +1009,19 @@
     "imageUrl": "https://assets.lunarian.app/characters/Lunarians/trickster.png"
   },
   {
+    "id": "queen",
+    "name": {
+      "en": "Queen",
+      "ar": "الملكة"
+    },
+    "lore": {
+      "en": "The sovereign ruler of the Lunarians, her wisdom and grace guide her people through the ages. Her power over moonlight is unmatched, and her word is law across the realm.",
+      "ar": "الحاكمة الأعلى للوناريين، حكمتها ونعمتها تقود شعبها عبر العصور. قوتها على ضوء القمر لا مثيل لها، وكلمتها هي القانون في جميع أنحاء المملكة."
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Queen.png"
+  },
+  {
     "id": "mastermind",
     "name": {
       "en": "The Mastermind",
@@ -2104,5 +2117,815 @@
     },
     "faction": "warriors",
     "imageUrl": "https://assets.lunarian.app/characters/Warriors/Wanderer.png"
+  },
+  {
+    "id": "abyssal-leech",
+    "name": {
+      "en": "Abyssal Leech",
+      "ar": "Abyssal Leech"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Abyssal%20Leech.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "bigfoot",
+    "name": {
+      "en": "Bigfoot",
+      "ar": "Bigfoot"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Bigfoot.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "cave-stalker",
+    "name": {
+      "en": "Cave Stalker",
+      "ar": "Cave Stalker"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Cave%20Stalker.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "cursed-rat",
+    "name": {
+      "en": "Cursed Rat",
+      "ar": "Cursed Rat"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Cursed%20Rat.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "cursed-spider",
+    "name": {
+      "en": "Cursed Spider",
+      "ar": "Cursed Spider"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Cursed%20Spider.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "forest-monster",
+    "name": {
+      "en": "Forest Monster",
+      "ar": "Forest Monster"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Forest%20Monster.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "hybrid-lion",
+    "name": {
+      "en": "Hybrid Lion",
+      "ar": "Hybrid Lion"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Hybrid%20Lion.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "mountain-grizzly",
+    "name": {
+      "en": "Mountain Grizzly",
+      "ar": "Mountain Grizzly"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Mountain%20Grizzly.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "mountains-freak",
+    "name": {
+      "en": "Mountains Freak",
+      "ar": "Mountains Freak"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Mountains%20Freak.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "night-fangs",
+    "name": {
+      "en": "Night Fangs",
+      "ar": "Night Fangs"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Night%20Fangs.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "orc-warchief",
+    "name": {
+      "en": "Orc Warchief",
+      "ar": "Orc Warchief"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Orc%20Warchief.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "river-drowner",
+    "name": {
+      "en": "River Drowner",
+      "ar": "River Drowner"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/River%20Drowner.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "swamp-hag",
+    "name": {
+      "en": "Swamp Hag",
+      "ar": "Swamp Hag"
+    },
+    "faction": "beasts",
+    "imageUrl": "https://assets.lunarian.app/characters/Beasts/Swamp%20Hag.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "magma-titan",
+    "name": {
+      "en": "Magma Titan",
+      "ar": "Magma Titan"
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Magma%20Titan.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "earth-wyrm",
+    "name": {
+      "en": "Earth Wyrm",
+      "ar": "Earth Wyrm"
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Earth%20Wyrm.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "kong",
+    "name": {
+      "en": "Kong",
+      "ar": "Kong"
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Kong.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "monolith",
+    "name": {
+      "en": "Monolith",
+      "ar": "Monolith"
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Monolith.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "sea-colossus",
+    "name": {
+      "en": "Sea Colossus",
+      "ar": "Sea Colossus"
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/Sea%20Colossus.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "the-forgotten-titan",
+    "name": {
+      "en": "The Forgotten Titan",
+      "ar": "The Forgotten Titan"
+    },
+    "faction": "colossals",
+    "imageUrl": "https://assets.lunarian.app/characters/Colossals/The%20Forgotten%20Titan.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "bloodforged-dragon",
+    "name": {
+      "en": "Bloodforged Dragon",
+      "ar": "Bloodforged Dragon"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Bloodforged%20Dragon.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "bloom-drake",
+    "name": {
+      "en": "Bloom Drake",
+      "ar": "Bloom Drake"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Bloom%20Drake.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "dune-dracon",
+    "name": {
+      "en": "Dune Dracon",
+      "ar": "Dune Dracon"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Dune%20Dracon.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "echo-dragonet",
+    "name": {
+      "en": "Echo Dragonet",
+      "ar": "Echo Dragonet"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Echo%20Dragonet.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "frost-dragon",
+    "name": {
+      "en": "Frost Dragon",
+      "ar": "Frost Dragon"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Frost%20Dragon.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "glacial-dragon",
+    "name": {
+      "en": "Glacial Dragon",
+      "ar": "Glacial Dragon"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Glacial%20Dragon.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "infernal-dragon",
+    "name": {
+      "en": "Infernal Dragon",
+      "ar": "Infernal Dragon"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Infernal%20Dragon.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "man-eater",
+    "name": {
+      "en": "Man Eater",
+      "ar": "Man Eater"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Man%20Eater.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "moss-drake",
+    "name": {
+      "en": "Moss Drake",
+      "ar": "Moss Drake"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Moss%20Drake.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "obsidian-dragon",
+    "name": {
+      "en": "Obsidian Dragon",
+      "ar": "Obsidian Dragon"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Obsidian%20Dragon.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "ocean-drake",
+    "name": {
+      "en": "Ocean Drake",
+      "ar": "Ocean Drake"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Ocean%20Drake.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "pearl-draconis",
+    "name": {
+      "en": "Pearl Draconis",
+      "ar": "Pearl Draconis"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Pearl%20Draconis.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "shadow-drake",
+    "name": {
+      "en": "Shadow Drake",
+      "ar": "Shadow Drake"
+    },
+    "faction": "dragons",
+    "imageUrl": "https://assets.lunarian.app/characters/Dragons/Shadow%20Drake.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "aurel",
+    "name": {
+      "en": "Aurel",
+      "ar": "Aurel"
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Aurel.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "elite-trooper",
+    "name": {
+      "en": "Elite Trooper",
+      "ar": "Elite Trooper"
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Elite%20Trooper.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "night-walker",
+    "name": {
+      "en": "Night Walker",
+      "ar": "Night Walker"
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Night%20Walker.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "prism-knight",
+    "name": {
+      "en": "Prism Knight",
+      "ar": "Prism Knight"
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Prism%20Knight.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "sable",
+    "name": {
+      "en": "Sable",
+      "ar": "Sable"
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Sable.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "talon-warden",
+    "name": {
+      "en": "Talon Warden",
+      "ar": "Talon Warden"
+    },
+    "faction": "knights",
+    "imageUrl": "https://assets.lunarian.app/characters/Knights/Talon%20Warden.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "dina",
+    "name": {
+      "en": "Dina",
+      "ar": "Dina"
+    },
+    "faction": "lunarians",
+    "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Dina.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "astral-manta",
+    "name": {
+      "en": "Astral Manta",
+      "ar": "Astral Manta"
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Astral%20Manta.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "basilisk",
+    "name": {
+      "en": "Basilisk",
+      "ar": "Basilisk"
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Basilisk.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "eclipse-stag",
+    "name": {
+      "en": "Eclipse Stag",
+      "ar": "Eclipse Stag"
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Eclipse%20Stag.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "grim-shadow",
+    "name": {
+      "en": "Grim Shadow",
+      "ar": "Grim Shadow"
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Grim%20Shadow.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "lunar-scarab",
+    "name": {
+      "en": "Lunar Scarab",
+      "ar": "Lunar Scarab"
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Lunar%20Scarab.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "moon-wyrm",
+    "name": {
+      "en": "Moon Wyrm",
+      "ar": "Moon Wyrm"
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Moon%20Wyrm.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "moonglass-master",
+    "name": {
+      "en": "Moonglass Master",
+      "ar": "Moonglass Master"
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/Moonglass%20Master.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "the-shallow",
+    "name": {
+      "en": "The Shallow",
+      "ar": "The Shallow"
+    },
+    "faction": "mythical-creatures",
+    "imageUrl": "https://assets.lunarian.app/characters/Mythical%20Creatures/The%20Shallow.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "the-countess",
+    "name": {
+      "en": "The Countess",
+      "ar": "The Countess"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/The%20Countess.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "banshee",
+    "name": {
+      "en": "Banshee",
+      "ar": "Banshee"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Banshee.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "blood-fiend",
+    "name": {
+      "en": "Blood Fiend",
+      "ar": "Blood Fiend"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Blood%20Fiend.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "doppelganger",
+    "name": {
+      "en": "Doppelganger",
+      "ar": "Doppelganger"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Doppelganger.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "dullahan",
+    "name": {
+      "en": "Dullahan",
+      "ar": "Dullahan"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Dullahan.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "moon-howler",
+    "name": {
+      "en": "Moon Howler",
+      "ar": "Moon Howler"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Moon%20Howler.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "necromancer",
+    "name": {
+      "en": "Necromancer",
+      "ar": "Necromancer"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Necromancer.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "night-crawler",
+    "name": {
+      "en": "Night Crawler",
+      "ar": "Night Crawler"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Night%20Crawler.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "shadow-stalker",
+    "name": {
+      "en": "Shadow Stalker",
+      "ar": "Shadow Stalker"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Shadow%20Stalker.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "shaman",
+    "name": {
+      "en": "Shaman",
+      "ar": "Shaman"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Shaman.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "the-silent-ancient",
+    "name": {
+      "en": "The Silent Ancient",
+      "ar": "The Silent Ancient"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/The%20Silent%20Ancient.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "the-weaver",
+    "name": {
+      "en": "The Weaver",
+      "ar": "The Weaver"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/The%20Weaver.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "warlock",
+    "name": {
+      "en": "Warlock",
+      "ar": "Warlock"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Warlock.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "wendigo",
+    "name": {
+      "en": "Wendigo",
+      "ar": "Wendigo"
+    },
+    "faction": "supernaturals",
+    "imageUrl": "https://assets.lunarian.app/characters/Supernaturals/Wendigo.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "banished-general",
+    "name": {
+      "en": "Banished General",
+      "ar": "Banished General"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Banished%20General.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "dark-demon",
+    "name": {
+      "en": "Dark Demon",
+      "ar": "Dark Demon"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Dark%20Demon.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "death-serpent",
+    "name": {
+      "en": "Death Serpent",
+      "ar": "Death Serpent"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Death%20Serpent.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "grave-titan",
+    "name": {
+      "en": "Grave Titan",
+      "ar": "Grave Titan"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Grave%20Titan.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "grim-reaper",
+    "name": {
+      "en": "Grim Reaper",
+      "ar": "Grim Reaper"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Grim%20Reaper.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "judge-of-death",
+    "name": {
+      "en": "Judge Of Death",
+      "ar": "Judge Of Death"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Judge%20Of%20Death.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "psycho-jailer",
+    "name": {
+      "en": "Psycho Jailer",
+      "ar": "Psycho Jailer"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Psycho%20Jailer.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "puppet-master",
+    "name": {
+      "en": "Puppet Master",
+      "ar": "Puppet Master"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Puppet%20Master.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "the-hatred",
+    "name": {
+      "en": "The Hatred",
+      "ar": "The Hatred"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/The%20Hatred.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "underworld-guardian",
+    "name": {
+      "en": "Underworld Guardian",
+      "ar": "Underworld Guardian"
+    },
+    "faction": "underworld",
+    "imageUrl": "https://assets.lunarian.app/characters/Underworld/Underworld%20Guardian.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "bog",
+    "name": {
+      "en": "Bog",
+      "ar": "Bog"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Bog.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "bonk-the-juggernaut",
+    "name": {
+      "en": "Bonk The Juggernaut",
+      "ar": "Bonk The Juggernaut"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Bonk%20The%20Juggernaut.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "crows-leader",
+    "name": {
+      "en": "Crows Leader",
+      "ar": "Crows Leader"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Crows%20Leader.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "dune-huntress",
+    "name": {
+      "en": "Dune Huntress",
+      "ar": "Dune Huntress"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Dune%20Huntress.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "helm-smasher",
+    "name": {
+      "en": "Helm Smasher",
+      "ar": "Helm Smasher"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Helm%20Smasher.jpg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "nomad-assassin",
+    "name": {
+      "en": "Nomad Assassin",
+      "ar": "Nomad Assassin"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Nomad%20Assassin.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "ruins-scout",
+    "name": {
+      "en": "Ruins Scout",
+      "ar": "Ruins Scout"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Ruins%20Scout.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "the-crag-mercenary",
+    "name": {
+      "en": "The Crag Mercenary",
+      "ar": "The Crag Mercenary"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/The%20Crag%20Mercenary.jpeg",
+    "isMainCharacter": false
+  },
+  {
+    "id": "zan-the-berserker",
+    "name": {
+      "en": "Zan The Berserker",
+      "ar": "Zan The Berserker"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Zan%20The%20Berserker.png",
+    "isMainCharacter": false
+  },
+  {
+    "id": "zarkan",
+    "name": {
+      "en": "Zarkan",
+      "ar": "Zarkan"
+    },
+    "faction": "warriors",
+    "imageUrl": "https://assets.lunarian.app/characters/Warriors/Zarkan.png",
+    "isMainCharacter": false
   }
 ]

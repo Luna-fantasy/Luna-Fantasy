@@ -14,6 +14,15 @@ const nextConfig = {
     ],
   },
   trailingSlash: true,
+  async redirects() {
+    return [
+      {
+        source: '/:locale(en|ar)/bumper/:path*',
+        destination: '/:locale/luna-pairs/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = withNextIntl(nextConfig);

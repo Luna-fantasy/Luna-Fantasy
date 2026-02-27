@@ -17,7 +17,12 @@ export async function GET() {
     const rarities = LUCKBOX_TIERS.map((t) => t.rarity);
     const rarityCounts = await Promise.all(
       rarities.map(async (rarity) => {
-        const count = await db.collection('card_catalog').countDocuments({ rarity });
+        const doc = await db.collection('cards_config').findOne({ _id: rarity.toUpperCase() as any });
+        let count = 0;
+        if (doc?.data) {
+          const parsed = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
+          count = Array.isArray(parsed) ? parsed.length : 0;
+        }
         return { rarity, count };
       })
     );

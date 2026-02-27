@@ -48,8 +48,6 @@ export interface InventoryItem {
 
 export interface CardsByGame {
   lunaFantasy: UserCard[];
-  grandFantasy: UserCard[];
-  bumper: UserCard[];
 }
 
 export interface ChatActivity {
@@ -64,7 +62,15 @@ export interface CatalogCard {
   imageUrl: string;
   attack?: number;
   weight?: number;
-  game?: string;
+}
+
+export interface BadgeData {
+  [badgeId: string]: number; // badge_id → unix timestamp (0 or absent = not earned)
+}
+
+export interface ProfileData {
+  active_background: string;      // e.g. "bg_calm_bath" or "default"
+  active_rank_background: string;  // e.g. "rank_calm_bath" or "default"
 }
 
 export interface PublicUserInfo {
@@ -85,5 +91,7 @@ export interface GameDataResponse {
   tickets: number;
   chatActivity: ChatActivity | null;
   cardCatalog: CatalogCard[];
+  badges: BadgeData | null;
+  profile: ProfileData | null;
   publicUser?: PublicUserInfo;
 }

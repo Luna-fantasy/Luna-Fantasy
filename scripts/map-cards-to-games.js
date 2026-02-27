@@ -1,6 +1,6 @@
 /**
  * map-cards-to-games.js — Analyze all user-owned cards to build a
- * mapping of base card name → game (lunaFantasy / grandFantasy / bumper).
+ * mapping of base card name → game (lunaFantasy / grandFantasy / lunaPairs).
  */
 const { MongoClient } = require("mongodb");
 
@@ -19,7 +19,7 @@ async function main() {
   console.log(`Scanning ${docs.length} users...\n`);
 
   const lunaFantasyNames = new Set();
-  const bumperNames = new Set();
+  const lunaPairsNames = new Set();
   const grandFantasyNames = new Set();
 
   for (const doc of docs) {
@@ -30,7 +30,7 @@ async function main() {
         if (name.startsWith("Luna ")) {
           lunaFantasyNames.add(name.replace(/^Luna /, ""));
         } else if (name.startsWith("Bumper")) {
-          bumperNames.add(name);
+          lunaPairsNames.add(name);
         } else {
           grandFantasyNames.add(name);
         }
@@ -40,8 +40,8 @@ async function main() {
 
   console.log(`Luna Fantasy cards (${lunaFantasyNames.size}):`);
   console.log([...lunaFantasyNames].sort().join(", "));
-  console.log(`\nBumper cards (${bumperNames.size}):`);
-  console.log([...bumperNames].sort().join(", "));
+  console.log(`\nLuna Pairs cards (${lunaPairsNames.size}):`);
+  console.log([...lunaPairsNames].sort().join(", "));
   console.log(`\nGrand Fantasy cards (${grandFantasyNames.size}):`);
   console.log([...grandFantasyNames].sort().join(", "));
 
@@ -50,7 +50,7 @@ async function main() {
   const catalogNames = new Set(catalog.map(c => c.name.en));
 
   // Check which catalog cards have no game assignment
-  const allAssigned = new Set([...lunaFantasyNames, ...bumperNames, ...grandFantasyNames]);
+  const allAssigned = new Set([...lunaFantasyNames, ...lunaPairsNames, ...grandFantasyNames]);
   const unassigned = [...catalogNames].filter(n => !allAssigned.has(n));
 
   if (unassigned.length > 0) {

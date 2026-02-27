@@ -37,8 +37,6 @@ export default function CreateAuctionModal({ onClose, onCreated }: CreateAuction
         const data = await res.json();
         const allCards: UserCard[] = [
           ...(data.cardsByGame?.lunaFantasy || []),
-          ...(data.cardsByGame?.grandFantasy || []),
-          ...(data.cardsByGame?.bumper || []),
         ];
         setCards(allCards);
       }
