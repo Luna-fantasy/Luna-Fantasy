@@ -34,12 +34,45 @@
    ============================================ */
 .profile-header-card {
   overflow: hidden;
+  position: relative;
+}
+
+/* Full-card custom background */
+.profile-header-has-bg {
+  position: relative;
+}
+
+.profile-header-bg {
+  object-fit: cover;
+  object-position: center 30%;
+  z-index: 0;
+}
+
+.profile-header-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(12, 16, 24, 0.2) 0%,
+    rgba(12, 16, 24, 0.55) 40%,
+    rgba(12, 16, 24, 0.8) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.profile-header-has-bg > *:not(.profile-header-bg):not(.profile-header-bg-overlay) {
+  position: relative;
+  z-index: 2;
 }
 
 /* Banner */
 .profile-banner {
   position: relative;
   height: 120px;
+}
+
+.profile-banner-default {
   background: linear-gradient(135deg, #0c1018 0%, #111822 100%);
 }
 
@@ -60,27 +93,6 @@
   background-image:
     radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.06) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-/* Banner with custom background */
-.profile-banner-has-bg {
-  overflow: hidden;
-}
-
-.profile-banner-bg {
-  object-fit: cover;
-  object-position: center 30%;
-}
-
-.profile-banner-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(12, 16, 24, 0.15) 0%,
-    rgba(12, 16, 24, 0.6) 100%
-  );
   pointer-events: none;
 }
 

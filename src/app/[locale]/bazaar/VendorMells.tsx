@@ -18,6 +18,8 @@ interface VendorMellsProps {
   balance: number;
   hasDebt: boolean;
   isLoggedIn: boolean;
+  userAvatar?: string;
+  userName?: string;
 }
 
 function formatNumber(n: number): string {
@@ -29,7 +31,7 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorMells({ balance, hasDebt, isLoggedIn }: VendorMellsProps) {
+export default function VendorMells({ balance, hasDebt, isLoggedIn, userAvatar, userName }: VendorMellsProps) {
   const t = useTranslations('bazaarPage');
 
   const [items, setItems] = useState<MellsItem[]>([]);
@@ -41,6 +43,7 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn }: VendorMell
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [currentBalance, setCurrentBalance] = useState(balance);
+  const [previewItem, setPreviewItem] = useState<MellsItem | null>(null);
 
   useEffect(() => {
     setCurrentBalance(balance);
@@ -214,13 +217,20 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn }: VendorMell
           return (
             <div key={item.id} className={`mells-card ${item.owned ? 'mells-card-owned' : ''} ${item.active ? 'mells-card-active' : ''}`}>
               {/* Image Preview */}
-              <div className="mells-card-preview">
+              <div className="mells-card-preview" onClick={() => setPreviewItem(item)} role="button" tabIndex={0}>
                 <img
                   src={item.imageUrl}
                   alt={item.name}
                   className="mells-card-img"
                   loading="lazy"
                 />
+                <span className="mells-preview-hint">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  {t('mells.preview')}
+                </span>
                 {item.owned && (
                   <span className={`mells-badge ${item.active ? 'mells-badge-active' : 'mells-badge-owned'}`}>
                     {item.active ? t('mells.active') : t('mells.owned')}
@@ -296,6 +306,58 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn }: VendorMell
           );
         })}
       </div>
+
+      {/* Profile Preview Modal */}
+      {previewItem && (
+        <div className="mells-preview-backdrop" onClick={() => setPreviewItem(null)}>
+          <div className="mells-preview-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="mells-preview-close" onClick={() => setPreviewItem(null)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            <p className="mells-preview-label">{t('mells.previewTitle')}</p>
+
+            {/* Mini Profile Card */}
+            <div className="mells-preview-card">
+              <img
+                src={previewItem.imageUrl}
+                alt=""
+                className="mells-preview-card-bg"
+              />
+              <div className="mells-preview-card-overlay" />
+
+              <div className="mells-preview-card-content">
+                <div className="mells-preview-banner" />
+                <div className="mells-preview-avatar-wrap">
+                  <div className="mells-preview-avatar-ring">
+                    {userAvatar ? (
+                      <img src={userAvatar} alt="" className="mells-preview-avatar" />
+                    ) : (
+                      <div className="mells-preview-avatar mells-preview-avatar-fallback">
+                        {(userName || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="mells-preview-identity">
+                  <span className="mells-preview-name">{userName || 'Luna User'}</span>
+                  <span className="mells-preview-meta">@user</span>
+                </div>
+                <div className="mells-preview-stats">
+                  <div className="mells-preview-stat">
+                    <span className="mells-preview-stat-val">{formatNumber(currentBalance)}</span>
+                    <span className="mells-preview-stat-lbl">{t('lunariLabel')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="mells-preview-bg-name">{previewItem.name}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

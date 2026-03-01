@@ -545,6 +545,11 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes gradientShift {
+  0% { background-position: 200% center; }
+  100% { background-position: 0% center; }
+}
+
 /* ── Stonebox (Meluna) ── */
 .stonebox-container {
   display: flex;

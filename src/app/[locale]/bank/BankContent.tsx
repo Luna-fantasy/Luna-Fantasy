@@ -113,7 +113,7 @@ function ResultBanner({ result, onDismiss }: ResultBannerProps) {
 
 // ── Dashboard (logged-in) ──
 
-function BankDashboard({ bankData, locale, refetch }: { bankData: BankDashboardData; locale: 'en' | 'ar'; refetch: () => Promise<void> }) {
+function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankDashboardData; locale: 'en' | 'ar'; refetch: () => Promise<void>; session: any }) {
   const t = useTranslations('bankPage');
   const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -220,6 +220,8 @@ function BankDashboard({ bankData, locale, refetch }: { bankData: BankDashboardD
         debt={bankData.debt}
         isVip={isVip}
         balance={bankData.balance}
+        userName={session?.user?.globalName || session?.user?.name || session?.user?.username}
+        userAvatar={session?.user?.image}
         onTakeLoan={handleTakeLoan}
         onRepayLoan={handleRepayLoan}
       />
@@ -459,7 +461,7 @@ export function BankContent({ data, locale }: BankContentProps) {
         )}
 
         {isLoggedIn && bankData && (
-          <BankDashboard bankData={bankData} locale={locale} refetch={refetch} />
+          <BankDashboard bankData={bankData} locale={locale} refetch={refetch} session={session} />
         )}
 
         {!isLoggedIn && (

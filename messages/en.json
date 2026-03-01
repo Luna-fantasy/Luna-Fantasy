@@ -633,7 +633,9 @@
       "unequipped": "{item} background removed.",
       "loginRequired": "Login Required",
       "inDebt": "Clear Debt First",
-      "insufficient": "Insufficient Balance"
+      "insufficient": "Insufficient Balance",
+      "preview": "Preview",
+      "previewTitle": "Profile Preview"
     },
     "store": {
       "title": "Support Luna",

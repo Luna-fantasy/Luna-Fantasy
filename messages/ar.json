@@ -634,7 +634,9 @@
       "unequipped": "تمت إزالة خلفية {item}.",
       "loginRequired": "تسجيل الدخول مطلوب",
       "inDebt": "سدد ديونك أولاً",
-      "insufficient": "رصيد غير كافٍ"
+      "insufficient": "رصيد غير كافٍ",
+      "preview": "معاينة",
+      "previewTitle": "معاينة الملف الشخصي"
     },
     "store": {
       "title": "ادعم لونا",

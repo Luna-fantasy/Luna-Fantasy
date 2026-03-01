@@ -2,8 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { LOAN_TIERS } from '@/lib/bank/bank-config';
+import { LoanContractCanvas } from '@/components/LoanContractCanvas';
 import type { LoanRecord } from '@/types/bank';
 
 interface LoanManagerProps {
@@ -12,6 +12,8 @@ interface LoanManagerProps {
   debt: number;
   isVip: boolean;
   balance: number;
+  userName?: string | null;
+  userAvatar?: string | null;
   onTakeLoan: (tier: number) => Promise<void>;
   onRepayLoan: () => Promise<void>;
 }
@@ -37,7 +39,7 @@ function formatCountdownDays(dueDate: string): { text: string; overdue: boolean 
   return { text: `${hours}h`, overdue: false };
 }
 
-export function LoanManager({ activeLoan, level, debt, isVip, balance, onTakeLoan, onRepayLoan }: LoanManagerProps) {
+export function LoanManager({ activeLoan, level, debt, isVip, balance, userName, userAvatar, onTakeLoan, onRepayLoan }: LoanManagerProps) {
   const t = useTranslations('bankPage');
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -85,52 +87,66 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, onTakeLoa
           <h2 className="bank-section-title">{t('loans.title')}</h2>
         </div>
 
-        <div className={`active-loan-card ${dueCountdown.overdue ? 'overdue' : ''}`}>
-          <div className="active-loan-header">
-            <span className="active-loan-label">{t('loanAction.activeLoan')}</span>
-            <span className={`active-loan-due ${dueCountdown.overdue ? 'overdue' : ''}`}>
-              {dueCountdown.text}
-            </span>
+        <div className="loan-section-with-image">
+          <div className="loan-section-content">
+            <div className={`active-loan-card ${dueCountdown.overdue ? 'overdue' : ''}`}>
+              <div className="active-loan-header">
+                <span className="active-loan-label">{t('loanAction.activeLoan')}</span>
+                <span className={`active-loan-due ${dueCountdown.overdue ? 'overdue' : ''}`}>
+                  {dueCountdown.text}
+                </span>
+              </div>
+
+              <div className="active-loan-details">
+                <div className="active-loan-stat">
+                  <span className="active-loan-stat-label">{t('loanAction.borrowed')}</span>
+                  <span className="active-loan-stat-value">{activeLoan.amount.toLocaleString()}</span>
+                </div>
+                <div className="active-loan-stat">
+                  <span className="active-loan-stat-label">{t('loanAction.interest')}</span>
+                  <span className="active-loan-stat-value interest">{activeLoan.interest.toLocaleString()}</span>
+                </div>
+                <div className="active-loan-stat">
+                  <span className="active-loan-stat-label">{t('loanAction.totalDue')}</span>
+                  <span className="active-loan-stat-value total">{activeLoan.repaymentAmount.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Loan progress bar */}
+              <div className="loan-progress">
+                <div
+                  className="loan-progress-fill"
+                  style={{
+                    width: `${Math.min(100, Math.max(0,
+                      ((Date.now() - new Date(activeLoan.takenAt).getTime()) /
+                        (new Date(activeLoan.dueDate).getTime() - new Date(activeLoan.takenAt).getTime())) * 100
+                    ))}%`
+                  }}
+                />
+              </div>
+
+              <button
+                className={`section-action-btn repay-btn ${dueCountdown.overdue ? 'urgent' : ''}`}
+                onClick={handleRepay}
+                disabled={loading || balance < activeLoan.repaymentAmount}
+              >
+                {loading ? t('dashboard.processing') : `${t('loanAction.repay')} (${activeLoan.repaymentAmount.toLocaleString()} ${t('currency')})`}
+              </button>
+              {balance < activeLoan.repaymentAmount && (
+                <p className="loan-insufficient">{t('loanAction.insufficientBalance')}</p>
+              )}
+            </div>
           </div>
 
-          <div className="active-loan-details">
-            <div className="active-loan-stat">
-              <span className="active-loan-stat-label">{t('loanAction.borrowed')}</span>
-              <span className="active-loan-stat-value">{activeLoan.amount.toLocaleString()}</span>
-            </div>
-            <div className="active-loan-stat">
-              <span className="active-loan-stat-label">{t('loanAction.interest')}</span>
-              <span className="active-loan-stat-value interest">{activeLoan.interest.toLocaleString()}</span>
-            </div>
-            <div className="active-loan-stat">
-              <span className="active-loan-stat-label">{t('loanAction.totalDue')}</span>
-              <span className="active-loan-stat-value total">{activeLoan.repaymentAmount.toLocaleString()}</span>
-            </div>
-          </div>
-
-          {/* Loan progress bar */}
-          <div className="loan-progress">
-            <div
-              className="loan-progress-fill"
-              style={{
-                width: `${Math.min(100, Math.max(0,
-                  ((Date.now() - new Date(activeLoan.takenAt).getTime()) /
-                    (new Date(activeLoan.dueDate).getTime() - new Date(activeLoan.takenAt).getTime())) * 100
-                ))}%`
-              }}
+          <div className="loan-image-container">
+            <LoanContractCanvas
+              avatarUrl={userAvatar}
+              userName={userName}
+              loanAmount={activeLoan.amount}
+              width={320}
+              height={440}
             />
           </div>
-
-          <button
-            className={`section-action-btn repay-btn ${dueCountdown.overdue ? 'urgent' : ''}`}
-            onClick={handleRepay}
-            disabled={loading || balance < activeLoan.repaymentAmount}
-          >
-            {loading ? t('dashboard.processing') : `${t('loanAction.repay')} (${activeLoan.repaymentAmount.toLocaleString()} ${t('currency')})`}
-          </button>
-          {balance < activeLoan.repaymentAmount && (
-            <p className="loan-insufficient">{t('loanAction.insufficientBalance')}</p>
-          )}
         </div>
       </section>
     );
@@ -243,13 +259,9 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, onTakeLoa
         </div>
 
         <div className="loan-image-container">
-          <Image
-            src="/images/loan_contract.png"
-            alt="Bank of Luna Loan Agreement"
+          <LoanContractCanvas
             width={320}
             height={440}
-            className="loan-contract-image"
-            priority={false}
           />
         </div>
       </div>

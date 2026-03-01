@@ -219,6 +219,8 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
               balance={balance}
               hasDebt={hasDebt}
               isLoggedIn={!!session?.user}
+              userAvatar={session?.user?.image ?? undefined}
+              userName={session?.user?.globalName || session?.user?.name || undefined}
             />
           )}
           {isLoading && (

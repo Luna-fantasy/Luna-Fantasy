@@ -227,7 +227,25 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
       }
     }
 
-    // 9. Log transaction
+    // 9. Award "first_role" badge if this is the user's first Brimor purchase
+    if (!inventory.some((r: any) => r.shopId === 'brimor')) {
+      try {
+        const badgesDoc = await db.collection('badges').findOne({ _id: discordId as any });
+        const badges = badgesDoc?.data ?? {};
+        if (!badges['first_role']) {
+          const updatedBadges = { ...badges, first_role: Date.now() };
+          await db.collection('badges').updateOne(
+            { _id: discordId as any },
+            { $set: { data: updatedBadges } },
+            { upsert: true }
+          );
+        }
+      } catch (err) {
+        console.error('[brimor] Failed to award first_role badge:', err);
+      }
+    }
+
+    // 10. Log transaction
     void logTransaction({
       discordId,
       type: 'brimor_purchase',

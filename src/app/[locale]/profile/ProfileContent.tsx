@@ -181,21 +181,22 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
       <div className="profile-container">
 
         {/* Header Card — Banner + Avatar + Identity */}
-        <div className="profile-card profile-header-card">
-          <div className={`profile-banner ${profileBgUrl ? 'profile-banner-has-bg' : ''}`}>
-            {profileBgUrl ? (
-              <>
-                <Image
-                  src={profileBgUrl}
-                  alt=""
-                  fill
-                  className="profile-banner-bg"
-                  sizes="720px"
-                  priority
-                />
-                <div className="profile-banner-overlay" />
-              </>
-            ) : (
+        <div className={`profile-card profile-header-card ${profileBgUrl ? 'profile-header-has-bg' : ''}`}>
+          {profileBgUrl && (
+            <>
+              <Image
+                src={profileBgUrl}
+                alt=""
+                fill
+                className="profile-header-bg"
+                sizes="720px"
+                priority
+              />
+              <div className="profile-header-bg-overlay" />
+            </>
+          )}
+          <div className={`profile-banner ${!profileBgUrl ? 'profile-banner-default' : ''}`}>
+            {!profileBgUrl && (
               <>
                 <div className="profile-banner-glow" />
                 <div className="profile-banner-pattern" />

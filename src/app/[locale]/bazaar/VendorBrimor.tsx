@@ -12,6 +12,7 @@ interface BrimorItem {
   description: string;
   owned: boolean;
   active: boolean;
+  gradientColors?: string[];
 }
 
 interface VendorBrimorProps {
@@ -191,7 +192,18 @@ export default function VendorBrimor({ balance, hasDebt, isLoggedIn }: VendorBri
                   {'\u2605'}
                 </span>
                 <div>
-                  <h3 className="brimor-card-title">{item.name}</h3>
+                  <h3
+                  className="brimor-card-title"
+                  style={item.gradientColors ? {
+                    backgroundImage: `linear-gradient(90deg, ${item.gradientColors[0]}, ${item.gradientColors[1]}, ${item.gradientColors[0]})`,
+                    backgroundSize: '200% auto',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    color: 'transparent',
+                    animation: 'gradientShift 1.5s linear infinite',
+                  } : undefined}
+                >{item.name}</h3>
                   <span className="brimor-type-badge">{t('brimor.roleLabel')}</span>
                 </div>
               </div>
