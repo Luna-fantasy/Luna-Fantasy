@@ -110,6 +110,8 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
   const [txLoading, setTxLoading] = useState(true);
   const [txPage, setTxPage] = useState(0);
   const TX_PER_PAGE = 5;
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const INVENTORY_PER_PAGE = 6;
 
   const fetchTransactions = useCallback(async () => {
     if (isPublicView) { setTxLoading(false); return; }
@@ -336,7 +338,9 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
           <div className="profile-card profile-inventory-card">
             <h2 className="profile-section-title">{t('inventory.title')}</h2>
             <div className="inventory-grid">
-              {gameData!.inventory.map((item, idx) => (
+              {gameData!.inventory
+                .slice((inventoryPage - 1) * INVENTORY_PER_PAGE, inventoryPage * INVENTORY_PER_PAGE)
+                .map((item, idx) => (
                 <div key={item.id || idx} className="inventory-item">
                   <div className="inventory-item-header">
                     <span className="inventory-item-name">{item.name}</span>
@@ -357,6 +361,27 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                 </div>
               ))}
             </div>
+            {gameData!.inventory.length > INVENTORY_PER_PAGE && (
+              <div className="inventory-pagination">
+                <button
+                  className="inventory-page-btn"
+                  disabled={inventoryPage <= 1}
+                  onClick={() => setInventoryPage(p => p - 1)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <span className="inventory-page-info">
+                  {inventoryPage} / {Math.ceil(gameData!.inventory.length / INVENTORY_PER_PAGE)}
+                </span>
+                <button
+                  className="inventory-page-btn"
+                  disabled={inventoryPage >= Math.ceil(gameData!.inventory.length / INVENTORY_PER_PAGE)}
+                  onClick={() => setInventoryPage(p => p + 1)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -431,7 +456,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
           <div className="wins-grid">
             {([
               { key: 'magic_cards', label: t('playerStats.magicCards'), color: '#00d4ff', icon: <><rect x="2" y="3" width="20" height="18" rx="2" /><path d="M8 7h8M8 12h8" /></> },
-              { key: 'luna_pairs', label: t('playerStats.lunaPairs'), color: '#8b5cf6', icon: <><rect x="1" y="3" width="9" height="13" rx="1" /><rect x="14" y="3" width="9" height="13" rx="1" /></> },
+              { key: 'luna_pairs', label: t('playerStats.factionWar'), color: '#8b5cf6', icon: <><rect x="1" y="3" width="9" height="13" rx="1" /><rect x="14" y="3" width="9" height="13" rx="1" /></> },
               { key: 'grand_fantasy', label: t('playerStats.grandFantasy'), color: '#ffd700', icon: <polygon points="12 2 15 9 22 9 17 14 19 22 12 17 5 22 7 14 2 9 9 9" /> },
               { key: 'magic_bot', label: t('playerStats.magicBot'), color: '#4ade80', icon: <><rect x="3" y="4" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><circle cx="15" cy="10" r="1.5" /><path d="M9 14h6" /></> },
             ] as const).map((g) => {

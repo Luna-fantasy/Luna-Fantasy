@@ -13,8 +13,8 @@ export async function getCardCatalog(): Promise<Card[]> {
 
   const cards: Card[] = [];
   for (const doc of docs) {
-    const parsed = typeof doc.data === "string" ? JSON.parse(doc.data) : doc.data;
-    if (!Array.isArray(parsed)) continue;
+    const parsed = Array.isArray(doc.items) ? doc.items : [];
+    if (parsed.length === 0) continue;
     for (const c of parsed) {
       const cardName = typeof c.name === 'string' ? { en: c.name, ar: c.name } : c.name;
       const rarity = (c.rarity || doc._id).toString().toLowerCase();

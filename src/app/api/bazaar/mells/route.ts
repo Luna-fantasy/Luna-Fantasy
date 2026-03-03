@@ -36,14 +36,9 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db('Database');
 
-    // Read inventory — st.db pattern: { _id: discordId, data: [...] }
+    // Read inventory
     const inventoryDoc = await db.collection('inventory').findOne({ _id: discordId as any });
-    const rawInventory = inventoryDoc?.data;
-    const inventory: any[] = Array.isArray(rawInventory)
-      ? rawInventory
-      : typeof rawInventory === 'string'
-        ? JSON.parse(rawInventory)
-        : rawInventory ? [rawInventory] : [];
+    const inventory: any[] = Array.isArray(inventoryDoc?.items) ? inventoryDoc.items : [];
 
     for (const record of inventory) {
       if (record.shopId === 'mells_selvair') {
@@ -144,12 +139,7 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
     const client = await clientPromise;
     const db = client.db('Database');
     const inventoryDoc = await db.collection('inventory').findOne({ _id: discordId as any });
-    const rawInventory = inventoryDoc?.data;
-    const inventory: any[] = Array.isArray(rawInventory)
-      ? rawInventory
-      : typeof rawInventory === 'string'
-        ? JSON.parse(rawInventory)
-        : rawInventory ? [rawInventory] : [];
+    const inventory: any[] = Array.isArray(inventoryDoc?.items) ? inventoryDoc.items : [];
 
     const alreadyOwned = inventory.some((r: any) => r.id === itemId && r.shopId === 'mells_selvair');
     if (alreadyOwned) {
@@ -180,7 +170,7 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
     // 6. Add to bank reserve
     void addToBankReserve(item.price);
 
-    // 7. Save to inventory collection (st.db push pattern)
+    // 7. Save to inventory collection
     const purchaseRecord = {
       id: item.id,
       name: item.name,
@@ -193,17 +183,11 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
       purchaseDate: new Date().toISOString(),
     };
 
-    if (inventoryDoc) {
-      await db.collection('inventory').updateOne(
-        { _id: discordId as any },
-        { $push: { data: purchaseRecord as any } }
-      );
-    } else {
-      await db.collection('inventory').insertOne({
-        _id: discordId as any,
-        data: [purchaseRecord],
-      } as any);
-    }
+    await db.collection('inventory').updateOne(
+      { _id: discordId as any },
+      { $push: { items: purchaseRecord as any } },
+      { upsert: true }
+    );
 
     // 8. Log transaction
     void logTransaction({
@@ -266,12 +250,7 @@ async function handleEquip(discordId: string, itemId: string) {
 
   // 2. Verify ownership from inventory
   const inventoryDoc = await db.collection('inventory').findOne({ _id: discordId as any });
-  const rawInventory = inventoryDoc?.data;
-  const inventory: any[] = Array.isArray(rawInventory)
-    ? rawInventory
-    : typeof rawInventory === 'string'
-      ? JSON.parse(rawInventory)
-      : rawInventory ? [rawInventory] : [];
+  const inventory: any[] = Array.isArray(inventoryDoc?.items) ? inventoryDoc.items : [];
 
   const owned = inventory.some((r: any) => r.id === itemId && r.shopId === 'mells_selvair');
   if (!owned) {

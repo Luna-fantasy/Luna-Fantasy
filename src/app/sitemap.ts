@@ -18,7 +18,7 @@ const PAGES: Page[] = [
 
   // Games
   { path: '/luna-fantasy/', changeFrequency: 'monthly', priority: 0.8 },
-  { path: '/luna-pairs/', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/faction-war/', changeFrequency: 'monthly', priority: 0.8 },
 
   // Economy
   { path: '/bank/', changeFrequency: 'weekly', priority: 0.7 },
@@ -33,6 +33,9 @@ const PAGES: Page[] = [
   { path: '/bazaar/seluna/', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/bazaar/brimor/', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/bazaar/mells/', changeFrequency: 'monthly', priority: 0.6 },
+
+  // Community
+  { path: '/members/', changeFrequency: 'daily', priority: 0.7 },
 
   // Info
   { path: '/partners/', changeFrequency: 'monthly', priority: 0.6 },

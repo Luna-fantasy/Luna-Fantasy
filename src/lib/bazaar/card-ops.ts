@@ -15,20 +15,16 @@ let cardIdCounter = 0;
 
 /**
  * Read user's card collection from the cards collection.
- * Data is stored as a JSON array (sometimes stringified).
+ * Cards are stored as a native array in the `cards` field.
  */
 export async function getUserCards(discordId: string): Promise<CardRecord[]> {
   const client = await clientPromise;
   const db = client.db('Database');
   const doc = await db.collection('cards').findOne({ _id: discordId as any });
 
-  if (!doc?.data) return [];
+  if (!doc?.cards) return [];
 
-  try {
-    return typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
-  } catch {
-    return [];
-  }
+  return Array.isArray(doc.cards) ? doc.cards : [];
 }
 
 /**
@@ -75,7 +71,7 @@ export async function addCardToUser(
       // No document exists — insert new one with upsert guard
       const result = await collection.updateOne(
         { _id: discordId as any },
-        { $setOnInsert: { data: [newCard] } },
+        { $setOnInsert: { cards: [newCard] } },
         { upsert: true }
       );
       if (result.upsertedCount > 0 || result.modifiedCount > 0) return;
@@ -83,27 +79,17 @@ export async function addCardToUser(
       continue;
     }
 
-    // Parse existing cards — CLONE the array to avoid mutating doc.data
-    // (doc.data is used in the match filter for optimistic concurrency)
-    let cards: CardRecord[];
-    try {
-      const raw = doc.data
-        ? typeof doc.data === 'string'
-          ? JSON.parse(doc.data)
-          : Array.isArray(doc.data) ? doc.data : []
-        : [];
-      cards = [...raw]; // Shallow clone so push doesn't mutate doc.data
-    } catch {
-      cards = [];
-    }
+    // Parse existing cards — CLONE the array to avoid mutating doc.cards
+    // (doc.cards is used in the match filter for optimistic concurrency)
+    const raw = Array.isArray(doc.cards) ? doc.cards : [];
+    const cards: CardRecord[] = [...raw]; // Shallow clone so push doesn't mutate doc.cards
 
     cards.push(newCard);
 
-    // Optimistic concurrency: only update if data hasn't changed since our read.
-    // doc.data still holds the ORIGINAL value (not mutated thanks to clone).
+    // Optimistic concurrency: only update if cards hasn't changed since our read.
     const updateResult = await collection.updateOne(
-      { _id: discordId as any, data: doc.data },
-      { $set: { data: cards } }
+      { _id: discordId as any, cards: doc.cards },
+      { $set: { cards } }
     );
 
     if (updateResult.modifiedCount > 0) return; // Success
@@ -135,15 +121,9 @@ export async function removeCardFromUser(
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const doc = await collection.findOne({ _id: discordId as any });
-    if (!doc?.data) return null;
+    if (!doc?.cards) return null;
 
-    let cards: CardRecord[];
-    try {
-      const raw = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
-      cards = Array.isArray(raw) ? [...raw] : [];
-    } catch {
-      return null;
-    }
+    const cards: CardRecord[] = Array.isArray(doc.cards) ? [...doc.cards] : [];
 
     const idx = cards.findIndex((c) => c.id === cardId);
     if (idx === -1) return null;
@@ -151,8 +131,8 @@ export async function removeCardFromUser(
     const [removed] = cards.splice(idx, 1);
 
     const updateResult = await collection.updateOne(
-      { _id: discordId as any, data: doc.data },
-      { $set: { data: cards } }
+      { _id: discordId as any, cards: doc.cards },
+      { $set: { cards } }
     );
 
     if (updateResult.modifiedCount > 0) return removed;

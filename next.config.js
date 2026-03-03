@@ -18,7 +18,12 @@ const nextConfig = {
     return [
       {
         source: '/:locale(en|ar)/bumper/:path*',
-        destination: '/:locale/luna-pairs/:path*',
+        destination: '/:locale/faction-war/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:locale(en|ar)/luna-pairs/:path*',
+        destination: '/:locale/faction-war/:path*',
         permanent: true,
       },
     ];

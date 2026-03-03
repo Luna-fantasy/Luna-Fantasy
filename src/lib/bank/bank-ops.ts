@@ -37,8 +37,8 @@ function getDb() {
 export async function getCooldown(type: string, userId: string): Promise<number | null> {
   const db = await getDb();
   const doc = await db.collection('cooldowns').findOne({ _id: `${type}_${userId}` as any });
-  if (!doc?.data) return null;
-  return typeof doc.data === 'number' ? doc.data : parseInt(doc.data, 10) || null;
+  if (doc?.value == null) return null;
+  return typeof doc.value === 'number' ? doc.value : null;
 }
 
 /**
@@ -65,7 +65,7 @@ export async function setCooldown(type: string, userId: string): Promise<void> {
   const db = await getDb();
   await db.collection('cooldowns').updateOne(
     { _id: `${type}_${userId}` as any },
-    { $set: { data: Date.now() } },
+    { $set: { value: Date.now() } },
     { upsert: true }
   );
 }
@@ -75,9 +75,7 @@ export async function setCooldown(type: string, userId: string): Promise<void> {
 export async function getUserLevel(userId: string): Promise<number> {
   const db = await getDb();
   const doc = await db.collection('levels').findOne({ _id: userId as any });
-  if (!doc?.data) return 0;
-  const data = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
-  return data.level ?? 0;
+  return doc?.level ?? 0;
 }
 
 // ── Debt ──
@@ -85,8 +83,8 @@ export async function getUserLevel(userId: string): Promise<number> {
 export async function getDebtAmount(userId: string): Promise<number> {
   const db = await getDb();
   const doc = await db.collection('system').findOne({ _id: `debt_${userId}` as any });
-  if (!doc?.data) return 0;
-  return typeof doc.data === 'number' ? doc.data : parseInt(doc.data, 10) || 0;
+  if (doc?.value == null) return 0;
+  return typeof doc.value === 'number' ? doc.value : 0;
 }
 
 export async function clearDebt(userId: string): Promise<void> {
@@ -99,9 +97,8 @@ export async function clearDebt(userId: string): Promise<void> {
 export async function getUserLoans(userId: string): Promise<LoanRecord[]> {
   const db = await getDb();
   const doc = await db.collection('system').findOne({ _id: `loans_${userId}` as any });
-  if (!doc?.data) return [];
-  const data = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
-  return Array.isArray(data) ? data : [];
+  if (!doc?.value) return [];
+  return Array.isArray(doc.value) ? doc.value : [];
 }
 
 export async function getActiveLoan(userId: string): Promise<LoanRecord | null> {
@@ -156,7 +153,7 @@ export async function createLoan(
   existingLoans.push(loan);
   await db.collection('system').updateOne(
     { _id: `loans_${userId}` as any },
-    { $set: { data: existingLoans } },
+    { $set: { value: existingLoans } },
     { upsert: true }
   );
 
@@ -188,7 +185,7 @@ export async function repayLoan(
   const db = await getDb();
   await db.collection('system').updateOne(
     { _id: `loans_${userId}` as any },
-    { $set: { data: loans } }
+    { $set: { value: loans } }
   );
 
   // Clear any debt record
@@ -205,8 +202,8 @@ export async function repayLoan(
 export async function getInvestment(userId: string): Promise<InvestmentRecord | null> {
   const db = await getDb();
   const doc = await db.collection('system').findOne({ _id: `investment_${userId}` as any });
-  if (!doc?.data) return null;
-  const data = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
+  if (!doc?.value) return null;
+  const data = doc.value;
   if (!data.active) return null;
   return data as InvestmentRecord;
 }
@@ -258,7 +255,7 @@ export async function depositInvestment(
 
   await db.collection('system').updateOne(
     { _id: `investment_${userId}` as any },
-    { $set: { data: investment } },
+    { $set: { value: investment } },
     { upsert: true }
   );
 
@@ -299,7 +296,7 @@ export async function withdrawInvestment(
   const db = await getDb();
   await db.collection('system').updateOne(
     { _id: `investment_${userId}` as any },
-    { $set: { data: { ...investment, active: false } } }
+    { $set: { value: { ...investment, active: false } } }
   );
 
   return { payout, profit, early: !isMature, balanceAfter };
@@ -310,9 +307,8 @@ export async function withdrawInvestment(
 export async function hasInsurance(userId: string): Promise<boolean> {
   const db = await getDb();
   const doc = await db.collection('system').findOne({ _id: `insurances_${userId}` as any });
-  if (!doc?.data) return false;
-  const data = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
-  return Array.isArray(data) && data.some((ins: any) => ins.type === 'steal_protection');
+  if (!doc?.value) return false;
+  return Array.isArray(doc.value) && doc.value.some((ins: any) => ins.type === 'steal_protection');
 }
 
 export async function purchaseInsurance(
@@ -326,8 +322,7 @@ export async function purchaseInsurance(
 
   const db = await getDb();
   const doc = await db.collection('system').findOne({ _id: `insurances_${userId}` as any });
-  const existing = doc?.data ? (typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data) : [];
-  const insurances = Array.isArray(existing) ? existing : [];
+  const insurances = Array.isArray(doc?.value) ? doc.value : [];
 
   insurances.push({
     type: 'steal_protection',
@@ -337,7 +332,7 @@ export async function purchaseInsurance(
 
   await db.collection('system').updateOne(
     { _id: `insurances_${userId}` as any },
-    { $set: { data: insurances } },
+    { $set: { value: insurances } },
     { upsert: true }
   );
 

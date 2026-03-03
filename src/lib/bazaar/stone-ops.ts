@@ -13,21 +13,16 @@ interface StoneData {
 
 /**
  * Read user's stone collection.
- * Data is stored as { stones: [...] } (sometimes stringified).
+ * Stones are stored as a native array in the `stones` field.
  */
 export async function getUserStones(discordId: string): Promise<StoneData> {
   const client = await clientPromise;
   const db = client.db('Database');
   const doc = await db.collection('stones').findOne({ _id: discordId as any });
 
-  if (!doc?.data) return { stones: [] };
+  if (!doc?.stones) return { stones: [] };
 
-  try {
-    const parsed = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
-    return { stones: parsed.stones ?? (Array.isArray(parsed) ? parsed : []) };
-  } catch {
-    return { stones: [] };
-  }
+  return { stones: Array.isArray(doc.stones) ? doc.stones : [] };
 }
 
 /**
@@ -69,7 +64,7 @@ export async function addStoneToUser(
       // No document exists — insert new one with upsert guard
       const result = await collection.updateOne(
         { _id: discordId as any },
-        { $setOnInsert: { data: { stones: [newStone] } } },
+        { $setOnInsert: { stones: [newStone] } },
         { upsert: true }
       );
       if (result.upsertedCount > 0 || result.modifiedCount > 0) return;
@@ -77,28 +72,17 @@ export async function addStoneToUser(
       continue;
     }
 
-    // Parse existing stones — CLONE to avoid mutating doc.data
-    // (doc.data is used in the match filter for optimistic concurrency)
-    let stoneData: StoneData;
-    try {
-      const parsed = doc.data
-        ? typeof doc.data === 'string'
-          ? JSON.parse(doc.data)
-          : doc.data
-        : { stones: [] };
-      const rawStones = parsed.stones ?? (Array.isArray(parsed) ? parsed : []);
-      stoneData = { stones: [...rawStones] }; // Shallow clone
-    } catch {
-      stoneData = { stones: [] };
-    }
+    // Parse existing stones — CLONE to avoid mutating doc.stones
+    // (doc.stones is used in the match filter for optimistic concurrency)
+    const rawStones = Array.isArray(doc.stones) ? doc.stones : [];
+    const stoneData: StoneData = { stones: [...rawStones] }; // Shallow clone
 
     stoneData.stones.push(newStone);
 
-    // Optimistic concurrency: only update if data hasn't changed since our read.
-    // doc.data still holds the ORIGINAL value (not mutated thanks to clone).
+    // Optimistic concurrency: only update if stones hasn't changed since our read.
     const updateResult = await collection.updateOne(
-      { _id: discordId as any, data: doc.data },
-      { $set: { data: stoneData } }
+      { _id: discordId as any, stones: doc.stones },
+      { $set: { stones: stoneData.stones } }
     );
 
     if (updateResult.modifiedCount > 0) return; // Success

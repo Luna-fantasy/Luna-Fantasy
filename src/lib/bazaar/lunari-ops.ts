@@ -82,60 +82,24 @@ export async function deductLunari(
   const db = await getDb();
   const collection = db.collection('points');
 
-  // Try atomic numeric deduction first
-  try {
-    const result = await collection.findOneAndUpdate(
-      { _id: discordId as any, data: { $type: 'number', $gte: amount } },
-      { $inc: { data: -amount } },
-      { returnDocument: 'after' }
-    );
+  // Atomic numeric deduction — balance field is always a number
+  const result = await collection.findOneAndUpdate(
+    { _id: discordId as any, balance: { $type: 'number', $gte: amount } },
+    { $inc: { balance: -amount } },
+    { returnDocument: 'after' }
+  );
 
-    if (result) {
-      const balanceAfter = typeof result.data === 'number' ? result.data : parseInt(result.data, 10) || 0;
-      console.log(`[deductLunari] atomic success: ${discordId} deducted ${amount}, before=${balanceAfter + amount}, after=${balanceAfter}`);
-      void trackProfileSpending(discordId, amount);
-      return { success: true, balanceBefore: balanceAfter + amount, balanceAfter };
-    }
-  } catch (err: any) {
-    // $inc on non-numeric data throws TypeMismatch (code 14) — fall through to string fallback
-    if (err?.code !== 14) throw err;
-    console.log(`[deductLunari] atomic path TypeMismatch for ${discordId}, falling back to string path`);
+  if (result) {
+    const balanceAfter = typeof result.balance === 'number' ? result.balance : 0;
+    console.log(`[deductLunari] success: ${discordId} deducted ${amount}, before=${balanceAfter + amount}, after=${balanceAfter}`);
+    void trackProfileSpending(discordId, amount);
+    return { success: true, balanceBefore: balanceAfter + amount, balanceAfter };
   }
 
-  // Fallback: data might be stored as string (legacy st.db) or user doesn't exist
-  for (let retry = 0; retry < 3; retry++) {
-    const doc = await collection.findOne({ _id: discordId as any });
-    if (!doc) {
-      return { success: false, balanceBefore: 0, balanceAfter: 0 };
-    }
-
-    const rawData = doc.data;
-    const balance = typeof rawData === 'string' ? parseInt(rawData, 10) : (typeof rawData === 'number' ? rawData : 0);
-
-    if (isNaN(balance) || balance < amount) {
-      return { success: false, balanceBefore: balance || 0, balanceAfter: balance || 0 };
-    }
-
-    // Optimistic concurrency: exact match on old value
-    const updateResult = await collection.updateOne(
-      { _id: discordId as any, data: rawData },
-      { $set: { data: balance - amount } }
-    );
-
-    if (updateResult.modifiedCount > 0) {
-      console.log(`[deductLunari] fallback success: ${discordId} deducted ${amount}, before=${balance}, after=${balance - amount}`);
-      void trackProfileSpending(discordId, amount);
-      return { success: true, balanceBefore: balance, balanceAfter: balance - amount };
-    }
-
-    // Data changed since our read — small jittered delay before retry
-    if (retry < 2) {
-      await new Promise((r) => setTimeout(r, 50 + Math.random() * 100));
-    }
-  }
-
-  console.log(`[deductLunari] all retries exhausted for ${discordId}, amount=${amount}`);
-  return { success: false, balanceBefore: 0, balanceAfter: 0 };
+  // No match — either insufficient balance or user doesn't exist
+  const doc = await collection.findOne({ _id: discordId as any });
+  const currentBalance = doc?.balance ?? 0;
+  return { success: false, balanceBefore: currentBalance, balanceAfter: currentBalance };
 }
 
 /**
@@ -149,37 +113,14 @@ export async function creditLunari(
   const db = await getDb();
   const collection = db.collection('points');
 
-  try {
-    const result = await collection.findOneAndUpdate(
-      { _id: discordId as any },
-      { $inc: { data: amount } },
-      { upsert: true, returnDocument: 'after' }
-    );
-    const balanceAfter = result ? (typeof result.data === 'number' ? result.data : parseInt(result.data, 10) || 0) : amount;
-    void trackProfileEarnings(discordId, amount);
-    return { balanceAfter };
-  } catch (err: any) {
-    if (err?.code !== 14) throw err;
-  }
-
-  // Fallback for string data — with optimistic concurrency
-  for (let retry = 0; retry < 3; retry++) {
-    const doc = await collection.findOne({ _id: discordId as any });
-    const rawData = doc?.data;
-    const current = rawData ? (typeof rawData === 'string' ? parseInt(rawData, 10) : rawData) || 0 : 0;
-    const newBalance = current + amount;
-
-    const result = doc
-      ? await collection.updateOne({ _id: discordId as any, data: rawData }, { $set: { data: newBalance } })
-      : await collection.updateOne({ _id: discordId as any }, { $setOnInsert: { data: newBalance } }, { upsert: true });
-
-    if (result.modifiedCount > 0 || result.upsertedCount > 0) {
-      void trackProfileEarnings(discordId, amount);
-      return { balanceAfter: newBalance };
-    }
-    await new Promise(r => setTimeout(r, 50 + Math.random() * 100));
-  }
-  throw new Error('Failed to credit Lunari after retries');
+  const result = await collection.findOneAndUpdate(
+    { _id: discordId as any },
+    { $inc: { balance: amount } },
+    { upsert: true, returnDocument: 'after' }
+  );
+  const balanceAfter = result ? (typeof result.balance === 'number' ? result.balance : 0) : amount;
+  void trackProfileEarnings(discordId, amount);
+  return { balanceAfter };
 }
 
 /**
@@ -188,8 +129,8 @@ export async function creditLunari(
 export async function getBalance(discordId: string): Promise<number> {
   const db = await getDb();
   const doc = await db.collection('points').findOne({ _id: discordId as any });
-  if (!doc?.data) return 0;
-  return typeof doc.data === 'number' ? doc.data : parseInt(doc.data, 10) || 0;
+  if (doc?.balance == null) return 0;
+  return typeof doc.balance === 'number' ? doc.balance : 0;
 }
 
 /**
@@ -200,25 +141,9 @@ export async function addToBankReserve(amount: number): Promise<void> {
   const db = await getDb();
   const collection = db.collection('system');
 
-  // Try atomic $inc first
-  try {
-    await collection.findOneAndUpdate(
-      { _id: 'luna_bank_reserve' as any },
-      { $inc: { data: amount } },
-      { upsert: true }
-    );
-    return;
-  } catch (err: any) {
-    // If data is a string (legacy st.db), fall back to read-convert-set
-    if (err?.code !== 14) throw err;
-  }
-
-  // Fallback: read, parse, set as number
-  const doc = await collection.findOne({ _id: 'luna_bank_reserve' as any });
-  const current = doc?.data ? (typeof doc.data === 'string' ? parseInt(doc.data, 10) : doc.data) || 0 : 0;
-  await collection.updateOne(
+  await collection.findOneAndUpdate(
     { _id: 'luna_bank_reserve' as any },
-    { $set: { data: current + amount } },
+    { $inc: { value: amount } },
     { upsert: true }
   );
 }
@@ -229,8 +154,8 @@ export async function addToBankReserve(amount: number): Promise<void> {
 export async function checkDebt(discordId: string): Promise<boolean> {
   const db = await getDb();
   const debtDoc = await db.collection('system').findOne({ _id: `debt_${discordId}` as any });
-  const debt = debtDoc?.data || 0;
-  return typeof debt === 'number' ? debt > 0 : parseInt(debt, 10) > 0;
+  const debt = debtDoc?.value || 0;
+  return typeof debt === 'number' ? debt > 0 : 0 > 0;
 }
 
 /**

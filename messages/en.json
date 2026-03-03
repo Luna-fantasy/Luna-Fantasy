@@ -11,7 +11,7 @@
     "story": "Story",
     "games": "Luna Games",
     "lunaFantasy": "Luna Fantasy",
-    "lunaPairs": "Luna Pairs",
+    "factionWar": "Faction War",
     "characters": "Characters",
     "bank": "Bank",
     "bazaar": "Bazaar",
@@ -25,7 +25,8 @@
     "signOutConfirmTitle": "Sign Out?",
     "signOutConfirmDesc": "Are you sure you want to sign out of your account?",
     "cancel": "Cancel",
-    "profile": "Profile"
+    "profile": "Profile",
+    "members": "Members"
   },
   "hero": {
     "badge": "FANTASY UNIVERSE",
@@ -107,12 +108,12 @@
       "mythical": "Mythical"
     }
   },
-  "lunaPairsPage": {
-    "heroTitle": "Luna Pairs",
+  "factionWarPage": {
+    "heroTitle": "Faction War",
     "heroSubtitle": "Faction War",
-    "subtitle": "Collect faction trios and dominate the battlefield. Explore all 11 factions and their warriors in the Luna Pairs card game.",
-    "whatTitle": "What is Luna Pairs?",
-    "whatDesc": "Luna Pairs is a PvP card game where two players compete to collect faction trios. Built from 11 unique factions with over 250 character cards, every match is a strategic battle of drawing, discarding, and outsmarting your opponent.",
+    "subtitle": "Collect faction trios and dominate the battlefield. Explore all 11 factions and their warriors in the Faction War card game.",
+    "whatTitle": "What is Faction War?",
+    "whatDesc": "Faction War is a PvP card game where two players compete to collect faction trios. Built from 11 unique factions with over 250 character cards, every match is a strategic battle of drawing, discarding, and outsmarting your opponent.",
     "howTitle": "How to Play?",
     "howDesc": "Each player starts with 9 cards from a shared deck. On your turn, draw from the deck or take the field card, then manage your hand to form three matching faction trios before your opponent does.",
     "rules": {
@@ -346,11 +347,12 @@
     "characters": "Characters",
     "partners": "Partners",
     "bank": "Bank",
+    "members": "Members",
     "faq": "FAQ",
     "contact": "Contact Us",
     "about": "About Us",
     "lunaFantasy": "Luna Fantasy",
-    "lunaPairs": "Luna Pairs",
+    "factionWar": "Faction War",
     "bazaar": "Bazaar",
     "kael": "Kael Vandar",
     "meluna": "Meluna",
@@ -473,7 +475,20 @@
       "luckbox_spend": "Luckbox",
       "stonebox_spend": "Stone Box",
       "ticket_spend": "Tickets",
-      "refund": "Refund"
+      "refund": "Refund",
+      "bank_daily": "Daily Reward",
+      "bank_loan_taken": "Loan Taken",
+      "bank_loan_repaid": "Loan Repaid",
+      "bank_investment_deposit": "Investment Deposit",
+      "bank_investment_withdraw": "Investment Withdrawal",
+      "bank_insurance": "Insurance",
+      "marketplace_buy": "Marketplace Purchase",
+      "marketplace_sell": "Marketplace Sale",
+      "trade_win": "Trade Won",
+      "trade_loss": "Trade Lost",
+      "seluna_purchase": "Seluna Purchase",
+      "brimor_purchase": "Brimor Purchase",
+      "mells_purchase": "Mells Purchase"
     },
     "playerStats": {
       "title": "Player Stats",
@@ -483,7 +498,7 @@
       "voiceTime": "Voice Hours",
       "gameWins": "Game Wins",
       "magicCards": "Magic Cards",
-      "lunaPairs": "Luna Pairs",
+      "factionWar": "Faction War",
       "grandFantasy": "Grand Fantasy",
       "magicBot": "Magic Bot",
       "wins": "wins",
@@ -843,7 +858,7 @@
       },
       "cards": {
         "title": "Strategic Card Games",
-        "desc": "Three original card games — Luna Fantasy, Grand Fantasy, and Luna Pairs — where strategy and timing beat raw power."
+        "desc": "Three original card games — Luna Fantasy, Grand Fantasy, and Faction War — where strategy and timing beat raw power."
       },
       "economy": {
         "title": "Living Economy",
@@ -918,6 +933,20 @@
     "minutesAgo": "{count}m ago",
     "hoursAgo": "{count}h ago",
     "daysAgo": "{count}d ago"
+  },
+  "membersPage": {
+    "title": "Members",
+    "subtitle": "Browse the community of Luna. Discover fellow adventurers, their collections, and their journey through the Luna universe.",
+    "totalMembers": "{count} Members",
+    "searchPlaceholder": "Search members...",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "level": "Highest Level",
+      "lunari": "Most Lunari",
+      "cards": "Most Cards"
+    },
+    "noResults": "No members found"
   },
   "tradingPage": {
     "title": "Trading",

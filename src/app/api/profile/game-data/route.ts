@@ -70,14 +70,10 @@ export async function GET(request: Request) {
         db.collection("profiles").findOne({ _id: discordId as any }),
       ]);
 
-    // Cards — data may be a JSON string (bot) or native array (web bazaar)
+    // Cards — stored as native array in `cards` field
     let allCards: UserCard[] = [];
-    if (cardsDoc?.data) {
-      try {
-        allCards = typeof cardsDoc.data === 'string'
-          ? JSON.parse(cardsDoc.data)
-          : Array.isArray(cardsDoc.data) ? cardsDoc.data : [];
-      } catch {}
+    if (cardsDoc?.cards) {
+      allCards = Array.isArray(cardsDoc.cards) ? cardsDoc.cards : [];
     }
 
     // Safety net: backfill attack/weight for any cards that have bad data (attack=0)
@@ -91,91 +87,88 @@ export async function GET(request: Request) {
 
     const cardsByGame = groupCards(allCards);
 
-    // Stones — data may be JSON string (bot) or native object (web bazaar)
+    // Stones — stored as native array in `stones` field
     let stones: UserStone[] = [];
-    if (stonesDoc?.data) {
-      try {
-        const parsed = typeof stonesDoc.data === 'string'
-          ? JSON.parse(stonesDoc.data)
-          : stonesDoc.data;
-        stones = parsed.stones ?? (Array.isArray(parsed) ? parsed : []);
-      } catch {}
+    if (stonesDoc?.stones) {
+      stones = Array.isArray(stonesDoc.stones) ? stonesDoc.stones : [];
     }
 
-    // Lunari (points) — may be number or string
+    // Lunari (points) — stored as `balance` field
     let lunari = 0;
-    if (pointsDoc?.data != null) {
-      lunari = typeof pointsDoc.data === 'number' ? pointsDoc.data : parseInt(pointsDoc.data, 10) || 0;
+    if (pointsDoc?.balance != null) {
+      lunari = typeof pointsDoc.balance === 'number' ? pointsDoc.balance : 0;
     }
 
-    // Level data
+    // Level data — stored as native fields
     let level: LevelData | null = null;
-    if (levelsDoc?.data) {
-      try {
-        level = JSON.parse(levelsDoc.data);
-      } catch {}
+    if (levelsDoc) {
+      level = {
+        xp: levelsDoc.xp ?? 0,
+        level: levelsDoc.level ?? 0,
+        messages: levelsDoc.messages ?? 0,
+        voiceTime: levelsDoc.voiceTime ?? 0,
+      };
     }
 
-    // Game wins
+    // Game wins — magic_wins collection is empty, stats now in profiles.data
     let gameWins: GameWins | null = null;
-    if (magicWinsDoc?.data) {
-      try {
-        gameWins = JSON.parse(magicWinsDoc.data);
-      } catch {}
+    if (profileDoc?.data) {
+      const pData = typeof profileDoc.data === 'object' ? profileDoc.data : {};
+      gameWins = {
+        magic_cards: pData.magic_cards_wins ?? 0,
+        luna_pairs: pData.luna_pairs_wins ?? 0,
+        grand_fantasy: pData.grand_fantasy_wins ?? 0,
+        magic_bot: pData.magic_bot_wins ?? 0,
+      };
     }
 
-    // PvP — nemesis docs keyed "playerA_playerB" with data {"playerA": wins, "playerB": wins}
+    // PvP — nemesis docs keyed "playerA_playerB" with top-level {playerA: wins, playerB: wins}
     const pvp: PvpRecord = { wins: 0, losses: 0 };
     for (const doc of nemesisDocs) {
       try {
-        const parsed = JSON.parse(doc.data);
         const docId = String(doc._id);
         const parts = docId.split("_");
         const myIndex = parts.indexOf(discordId);
         const opponentId = parts[myIndex === 0 ? 1 : 0];
 
-        const myWins = parsed[discordId] ?? 0;
-        const theirWins = parsed[opponentId] ?? 0;
+        const myWins = doc[discordId] ?? 0;
+        const theirWins = doc[opponentId] ?? 0;
         pvp.wins += myWins;
         pvp.losses += theirWins;
       } catch {}
     }
 
-    // Inventory
+    // Inventory — stored as native array in `items` field
     let inventory: InventoryItem[] = [];
-    if (inventoryDoc?.data) {
-      try {
-        inventory = JSON.parse(inventoryDoc.data);
-      } catch {}
+    if (inventoryDoc?.items) {
+      inventory = Array.isArray(inventoryDoc.items) ? inventoryDoc.items : [];
     }
 
-    // Tickets (st.db: data is stringified int)
+    // Tickets — stored as `balance` field
     let tickets = 0;
-    if (ticketsDoc?.data) {
-      tickets = parseInt(ticketsDoc.data, 10) || 0;
+    if (ticketsDoc?.balance != null) {
+      tickets = typeof ticketsDoc.balance === 'number' ? ticketsDoc.balance : 0;
     }
 
-    // Chat activity — docs store Record<userId, count/minutes> as stringified JSON
+    // Chat activity — stored as native object in `counts` field
     let chatActivity: ChatActivity | null = null;
     try {
       let messagesToday = 0;
       let voiceMinutesToday = 0;
-      if (chatMsgDoc?.data) {
-        const parsed = JSON.parse(chatMsgDoc.data);
-        messagesToday = parsed[discordId] ?? 0;
+      if (chatMsgDoc?.counts) {
+        messagesToday = chatMsgDoc.counts[discordId] ?? 0;
       }
-      if (chatVoiceDoc?.data) {
-        const parsed = JSON.parse(chatVoiceDoc.data);
-        voiceMinutesToday = parsed[discordId] ?? 0;
+      if (chatVoiceDoc?.counts) {
+        voiceMinutesToday = chatVoiceDoc.counts[discordId] ?? 0;
       }
       chatActivity = { messagesToday, voiceMinutesToday };
     } catch {}
 
-    // Card catalog — cards_config: one doc per rarity, data is JSON string of card array
+    // Card catalog — cards_config: one doc per rarity, items is native array
     const cardCatalog: CatalogCard[] = [];
     for (const doc of catalogDocs) {
-      const parsed = typeof doc.data === "string" ? JSON.parse(doc.data) : doc.data;
-      if (!Array.isArray(parsed)) continue;
+      const parsed = Array.isArray(doc.items) ? doc.items : [];
+      if (parsed.length === 0) continue;
       for (const c of parsed) {
         cardCatalog.push({
           id: c.name,

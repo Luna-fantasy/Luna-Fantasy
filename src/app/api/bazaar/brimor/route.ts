@@ -38,14 +38,9 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db('Database');
 
-    // Read inventory for this user — st.db pattern: { _id: discordId, data: [...] }
+    // Read inventory for this user
     const inventoryDoc = await db.collection('inventory').findOne({ _id: discordId as any });
-    const rawInventory = inventoryDoc?.data;
-    const inventory: any[] = Array.isArray(rawInventory)
-      ? rawInventory
-      : typeof rawInventory === 'string'
-        ? JSON.parse(rawInventory)
-        : rawInventory ? [rawInventory] : [];
+    const inventory: any[] = Array.isArray(inventoryDoc?.items) ? inventoryDoc.items : [];
 
     // Filter to brimor purchases
     for (const record of inventory) {
@@ -138,12 +133,7 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
     const client = await clientPromise;
     const db = client.db('Database');
     const inventoryDoc = await db.collection('inventory').findOne({ _id: discordId as any });
-    const rawInventory = inventoryDoc?.data;
-    const inventory: any[] = Array.isArray(rawInventory)
-      ? rawInventory
-      : typeof rawInventory === 'string'
-        ? JSON.parse(rawInventory)
-        : rawInventory ? [rawInventory] : [];
+    const inventory: any[] = Array.isArray(inventoryDoc?.items) ? inventoryDoc.items : [];
 
     const alreadyOwned = inventory.some((r: any) => r.id === itemId && r.shopId === 'brimor');
     if (alreadyOwned) {
@@ -174,7 +164,7 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
     // 6. Add to bank reserve
     void addToBankReserve(item.price);
 
-    // 7. Save to inventory collection (st.db push pattern)
+    // 7. Save to inventory collection
     const purchaseRecord = {
       id: item.id,
       name: item.name,
@@ -185,19 +175,11 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
       purchaseDate: new Date().toISOString(),
     };
 
-    if (inventoryDoc) {
-      // Push to existing array
-      await db.collection('inventory').updateOne(
-        { _id: discordId as any },
-        { $push: { data: purchaseRecord as any } }
-      );
-    } else {
-      // Create new document with array
-      await db.collection('inventory').insertOne({
-        _id: discordId as any,
-        data: [purchaseRecord],
-      } as any);
-    }
+    await db.collection('inventory').updateOne(
+      { _id: discordId as any },
+      { $push: { items: purchaseRecord as any } },
+      { upsert: true }
+    );
 
     // 8. Grant Discord role
     let grantError: string | null = null;
@@ -306,12 +288,7 @@ async function handleToggle(discordId: string, itemId: string) {
   const client = await clientPromise;
   const db = client.db('Database');
   const inventoryDoc = await db.collection('inventory').findOne({ _id: discordId as any });
-  const rawInventory = inventoryDoc?.data;
-  const inventory: any[] = Array.isArray(rawInventory)
-    ? rawInventory
-    : typeof rawInventory === 'string'
-      ? JSON.parse(rawInventory)
-      : rawInventory ? [rawInventory] : [];
+  const inventory: any[] = Array.isArray(inventoryDoc?.items) ? inventoryDoc.items : [];
 
   const owned = inventory.some((r: any) => r.id === itemId && r.shopId === 'brimor');
   if (!owned) {

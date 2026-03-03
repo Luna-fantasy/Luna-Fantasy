@@ -269,124 +269,125 @@ export default function VendorSeluna({ balance, hasDebt, isLoggedIn }: VendorSel
         </div>
       )}
 
-      {/* Item Grid */}
-      <div className={`seluna-grid ${!shop.active ? 'shop-closed' : ''}`}>
-        {shop.items.map((item) => {
-          const btnState = getButtonState(item);
-          const isConfirming = confirmItem === item.id;
-          const isBuying = buying === item.id;
-          const shopClosed = !shop.active;
+      {/* Item Grid — only shown when shop is open */}
+      {shop.active && (
+        <div className="seluna-grid">
+          {shop.items.map((item) => {
+            const btnState = getButtonState(item);
+            const isConfirming = confirmItem === item.id;
+            const isBuying = buying === item.id;
 
-          return (
-            <div key={item.id} className={`seluna-card ${shopClosed ? 'dimmed' : ''}`}>
-              {/* Item Image (for cards and stones) */}
-              {item.imageUrl && (
-                <div className="seluna-card-image">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    loading="lazy"
-                  />
-                </div>
-              )}
+            return (
+              <div key={item.id} className="seluna-card">
+                {/* Item Image (for cards and stones) */}
+                {item.imageUrl && (
+                  <div className="seluna-card-image">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      loading="lazy"
+                    />
+                  </div>
+                )}
 
-              <div className="seluna-card-header">
-                <span className={`seluna-card-icon ${item.type}-icon`}>
-                  {TYPE_ICONS[item.type] || ''}
-                </span>
-                <div>
-                  <h3 className="seluna-card-title">{item.name}</h3>
-                  <span className={getTypeBadgeClass(item.type)}>
-                    {getTypeLabel(item.type)}
+                <div className="seluna-card-header">
+                  <span className={`seluna-card-icon ${item.type}-icon`}>
+                    {TYPE_ICONS[item.type] || ''}
                   </span>
-                </div>
-              </div>
-
-              {/* Card stats */}
-              {item.type === 'card' && item.rarity && (
-                <div className="seluna-card-detail">
-                  <span>Rarity</span>
-                  <span className="seluna-detail-value">{item.rarity}</span>
-                </div>
-              )}
-              {item.type === 'card' && item.attack && (
-                <div className="seluna-card-detail">
-                  <span>Attack</span>
-                  <span className="seluna-detail-value">{item.attack}</span>
-                </div>
-              )}
-
-              {/* Ticket count */}
-              {item.type === 'tickets' && item.ticketCount && (
-                <div className="seluna-card-detail">
-                  <span>Tickets</span>
-                  <span className="seluna-detail-value">{item.ticketCount}</span>
-                </div>
-              )}
-
-              {/* Price */}
-              <div className="seluna-card-price">
-                <span className="seluna-price-label">{t('seluna.price')}</span>
-                <span className="seluna-price-value">
-                  {formatNumber(item.price)} {t('lunariLabel')}
-                </span>
-              </div>
-
-              {/* Stock */}
-              <div className="seluna-card-detail">
-                <span>{t('seluna.stock')}</span>
-                <span className={`seluna-detail-value ${item.remaining === 0 ? 'sold-out' : ''}`}>
-                  {item.stock === -1
-                    ? t('seluna.unlimited')
-                    : item.remaining > 0
-                      ? t('seluna.stockLeft', { count: item.remaining })
-                      : t('seluna.soldOut')}
-                </span>
-              </div>
-
-              {/* Ownership indicator */}
-              {item.owned && (item.type === 'card' || item.type === 'stone' || item.type === 'role') && (
-                <div className="seluna-owned-badge">{t('seluna.alreadyOwned')}</div>
-              )}
-
-              {/* Buy button / Confirm */}
-              {!isConfirming ? (
-                <button
-                  className="seluna-buy-btn"
-                  onClick={() => setConfirmItem(item.id)}
-                  disabled={shopClosed || btnState.disabled || isBuying}
-                >
-                  {isBuying ? t('seluna.processing') : btnState.disabled ? btnState.label : t('seluna.purchase')}
-                </button>
-              ) : (
-                <div className="seluna-confirm">
-                  <p className="seluna-confirm-text">
-                    {t('seluna.confirmPurchase', {
-                      item: item.name,
-                      price: formatNumber(item.price),
-                    })}
-                  </p>
-                  <div className="seluna-confirm-buttons">
-                    <button
-                      className="seluna-buy-btn confirm"
-                      onClick={() => handlePurchase(item.id)}
-                      disabled={isBuying}
-                    >
-                      {isBuying ? t('seluna.processing') : t('seluna.confirmBtn')}
-                    </button>
-                    <button
-                      className="seluna-buy-btn cancel"
-                      onClick={() => setConfirmItem(null)}
-                    >
-                      {t('seluna.cancelBtn')}
-                    </button>
+                  <div>
+                    <h3 className="seluna-card-title">{item.name}</h3>
+                    <span className={getTypeBadgeClass(item.type)}>
+                      {getTypeLabel(item.type)}
+                    </span>
                   </div>
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+
+                {/* Card stats */}
+                {item.type === 'card' && item.rarity && (
+                  <div className="seluna-card-detail">
+                    <span>Rarity</span>
+                    <span className="seluna-detail-value">{item.rarity}</span>
+                  </div>
+                )}
+                {item.type === 'card' && item.attack && (
+                  <div className="seluna-card-detail">
+                    <span>Attack</span>
+                    <span className="seluna-detail-value">{item.attack}</span>
+                  </div>
+                )}
+
+                {/* Ticket count */}
+                {item.type === 'tickets' && item.ticketCount && (
+                  <div className="seluna-card-detail">
+                    <span>Tickets</span>
+                    <span className="seluna-detail-value">{item.ticketCount}</span>
+                  </div>
+                )}
+
+                {/* Price */}
+                <div className="seluna-card-price">
+                  <span className="seluna-price-label">{t('seluna.price')}</span>
+                  <span className="seluna-price-value">
+                    {formatNumber(item.price)} {t('lunariLabel')}
+                  </span>
+                </div>
+
+                {/* Stock */}
+                <div className="seluna-card-detail">
+                  <span>{t('seluna.stock')}</span>
+                  <span className={`seluna-detail-value ${item.remaining === 0 ? 'sold-out' : ''}`}>
+                    {item.stock === -1
+                      ? t('seluna.unlimited')
+                      : item.remaining > 0
+                        ? t('seluna.stockLeft', { count: item.remaining })
+                        : t('seluna.soldOut')}
+                  </span>
+                </div>
+
+                {/* Ownership indicator */}
+                {item.owned && (item.type === 'card' || item.type === 'stone' || item.type === 'role') && (
+                  <div className="seluna-owned-badge">{t('seluna.alreadyOwned')}</div>
+                )}
+
+                {/* Buy button / Confirm */}
+                {!isConfirming ? (
+                  <button
+                    className="seluna-buy-btn"
+                    onClick={() => setConfirmItem(item.id)}
+                    disabled={btnState.disabled || isBuying}
+                  >
+                    {isBuying ? t('seluna.processing') : btnState.disabled ? btnState.label : t('seluna.purchase')}
+                  </button>
+                ) : (
+                  <div className="seluna-confirm">
+                    <p className="seluna-confirm-text">
+                      {t('seluna.confirmPurchase', {
+                        item: item.name,
+                        price: formatNumber(item.price),
+                      })}
+                    </p>
+                    <div className="seluna-confirm-buttons">
+                      <button
+                        className="seluna-buy-btn confirm"
+                        onClick={() => handlePurchase(item.id)}
+                        disabled={isBuying}
+                      >
+                        {isBuying ? t('seluna.processing') : t('seluna.confirmBtn')}
+                      </button>
+                      <button
+                        className="seluna-buy-btn cancel"
+                        onClick={() => setConfirmItem(null)}
+                      >
+                        {t('seluna.cancelBtn')}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -38,6 +38,7 @@ export function Footer() {
               <li><Link href="/story">{t('story')}</Link></li>
               <li><Link href="/characters">{t('characters')}</Link></li>
               <li><Link href="/partners">{t('partners')}</Link></li>
+              <li><Link href="/members">{t('members')}</Link></li>
               <li><Link href="/bank">{t('bank')}</Link></li>
             </ul>
           </div>
@@ -47,7 +48,7 @@ export function Footer() {
             <h4>{t('games')}</h4>
             <ul className="footer-links">
               <li><Link href="/luna-fantasy">{t('lunaFantasy')}</Link></li>
-              <li><Link href="/luna-pairs">{t('lunaPairs')}</Link></li>
+              <li><Link href="/faction-war">{t('factionWar')}</Link></li>
             </ul>
           </div>
 

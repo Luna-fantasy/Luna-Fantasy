@@ -73,11 +73,11 @@ export async function POST(request: Request) {
       .collection('cards_config')
       .findOne({ _id: tierConfig.rarity.toUpperCase() as any });
 
-    if (!configDoc?.data) {
+    if (!configDoc?.items) {
       return NextResponse.json({ error: 'No cards available for this tier' }, { status: 400 });
     }
 
-    const parsedCards = typeof configDoc.data === 'string' ? JSON.parse(configDoc.data) : configDoc.data;
+    const parsedCards = Array.isArray(configDoc.items) ? configDoc.items : [];
     if (!Array.isArray(parsedCards) || parsedCards.length === 0) {
       return NextResponse.json({ error: 'No cards available for this tier' }, { status: 400 });
     }

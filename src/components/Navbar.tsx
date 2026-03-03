@@ -30,8 +30,8 @@ export function Navbar() {
   const economyDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
 
-  const gameRoutes = ['/luna-fantasy', '/luna-pairs'];
-  const worldRoutes = ['/story', '/characters', '/partners'];
+  const gameRoutes = ['/luna-fantasy', '/faction-war'];
+  const worldRoutes = ['/story', '/characters', '/partners', '/members'];
   const economyRoutes = FEATURE_FLAGS.marketplace
     ? ['/bank', '/bazaar', '/trading', '/marketplace']
     : ['/bank', '/bazaar', '/trading'];
@@ -173,11 +173,11 @@ export function Navbar() {
                     {t('lunaFantasy')}
                   </Link>
                   <Link
-                    href="/luna-pairs"
-                    className={`games-dropdown-item ${isActive('/luna-pairs') ? 'active' : ''}`}
+                    href="/faction-war"
+                    className={`games-dropdown-item ${isActive('/faction-war') ? 'active' : ''}`}
                     onClick={() => setGamesDropdownOpen(false)}
                   >
-                    {t('lunaPairs')}
+                    {t('factionWar')}
                   </Link>
                 </div>
               )}
@@ -218,6 +218,13 @@ export function Navbar() {
                     onClick={() => setWorldDropdownOpen(false)}
                   >
                     {t('partners')}
+                  </Link>
+                  <Link
+                    href="/members"
+                    className={`games-dropdown-item ${isActive('/members') ? 'active' : ''}`}
+                    onClick={() => setWorldDropdownOpen(false)}
+                  >
+                    {t('members')}
                   </Link>
                 </div>
               )}
@@ -397,11 +404,11 @@ export function Navbar() {
                   {t('lunaFantasy')}
                 </Link>
                 <Link
-                  href="/luna-pairs"
-                  className={`mobile-nav-link ${isActive('/luna-pairs') ? 'active' : ''}`}
+                  href="/faction-war"
+                  className={`mobile-nav-link ${isActive('/faction-war') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('lunaPairs')}
+                  {t('factionWar')}
                 </Link>
               </div>
             )}
@@ -438,6 +445,13 @@ export function Navbar() {
                   onClick={closeMobileMenu}
                 >
                   {t('partners')}
+                </Link>
+                <Link
+                  href="/members"
+                  className={`mobile-nav-link ${isActive('/members') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {t('members')}
                 </Link>
               </div>
             )}

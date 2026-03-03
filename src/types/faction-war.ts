@@ -1,11 +1,11 @@
-export interface LunaPairsCard {
+export interface FactionWarCard {
   name: string;
   image: string;
 }
 
-export interface LunaPairsFaction {
+export interface FactionWarFaction {
   id: string;
   name: { en: string; ar: string };
   color: string;
-  cards: LunaPairsCard[];
+  cards: FactionWarCard[];
 }

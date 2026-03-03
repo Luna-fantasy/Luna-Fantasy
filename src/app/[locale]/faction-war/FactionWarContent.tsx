@@ -4,22 +4,22 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import Image from 'next/image';
 import { Lightbox } from '@/components';
-import type { LunaPairsFaction } from '@/types/luna-pairs';
+import type { FactionWarFaction } from '@/types/faction-war';
 import type { Locale } from '@/types';
 
 const R2_BASE = 'https://assets.lunarian.app/LunaPairs';
-function getLunaPairsImageUrl(image: string) { return `${R2_BASE}/${image}`; }
-function getLunaPairsBgUrl() { return `${R2_BASE}/LunaPairs_BG.png`; }
+function getFactionWarImageUrl(image: string) { return `${R2_BASE}/${image}`; }
+function getFactionWarBgUrl() { return `${R2_BASE}/LunaPairs_BG.png`; }
 
-interface LunaPairsContentProps {
-  factions: LunaPairsFaction[];
+interface FactionWarContentProps {
+  factions: FactionWarFaction[];
   locale: Locale;
 }
 
 type FilterKey = 'all' | string;
 
-export function LunaPairsContent({ factions, locale }: LunaPairsContentProps) {
-  const t = useTranslations('lunaPairsPage');
+export function FactionWarContent({ factions, locale }: FactionWarContentProps) {
+  const t = useTranslations('factionWarPage');
   const hero = useTranslations('hero');
 
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
@@ -47,8 +47,8 @@ export function LunaPairsContent({ factions, locale }: LunaPairsContentProps) {
       <section className="lp-hero">
         <div className="lp-hero-bg">
           <Image
-            src={getLunaPairsBgUrl()}
-            alt="Luna Pairs"
+            src={getFactionWarBgUrl()}
+            alt="Faction War"
             fill
             priority
             className="lp-hero-bg-image"
@@ -178,7 +178,7 @@ export function LunaPairsContent({ factions, locale }: LunaPairsContentProps) {
                 </div>
                 <div className="lp-cards-grid">
                   {faction.cards.map(card => {
-                    const imageUrl = getLunaPairsImageUrl(card.image);
+                    const imageUrl = getFactionWarImageUrl(card.image);
                     return (
                       <div
                         key={card.image}

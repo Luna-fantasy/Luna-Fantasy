@@ -36,30 +36,36 @@ export async function GET() {
   const client = await clientPromise;
   const db = client.db('Database');
 
-  // Read shop state from seluna_vendor collection
+  // Read shop state from seluna_vendor collection (new schema: { id, value })
   const shopDoc = await db
     .collection('seluna_vendor')
-    .findOne({ _id: 'active_shops' as any });
+    .findOne({ id: 'active_shops' });
 
-  const shopData = shopDoc?.data ?? shopDoc ?? {};
-  const startTime = shopData.startTime
-    ? new Date(shopData.startTime).getTime()
-    : 0;
-  const endTime = shopData.endTime
-    ? new Date(shopData.endTime).getTime()
-    : 0;
-  const nextAppearTime = shopData.nextAppearTime
-    ? new Date(shopData.nextAppearTime).getTime()
-    : 0;
+  // active_shops.value is keyed by channel ID — find any active shop
+  const shopsMap = shopDoc?.value ?? {};
+  let startTime = 0;
+  let endTime = 0;
+  let nextAppearTime = 0;
+  for (const channelData of Object.values(shopsMap) as any[]) {
+    if (channelData?.startTime) {
+      const st = typeof channelData.startTime === 'number' ? channelData.startTime : new Date(channelData.startTime).getTime();
+      const et = typeof channelData.endTime === 'number' ? channelData.endTime : new Date(channelData.endTime).getTime();
+      if (st > startTime) {
+        startTime = st;
+        endTime = et;
+        nextAppearTime = typeof channelData.nextAppearTime === 'number' ? channelData.nextAppearTime : new Date(channelData.nextAppearTime).getTime();
+      }
+    }
+  }
 
   const now = Date.now();
   const active = startTime > 0 && now >= startTime && now < endTime;
 
-  // Read stock from seluna_vendor.shop_stocks
+  // Read stock from seluna_vendor shop_stock (global stock)
   const stockDoc = await db
     .collection('seluna_vendor')
-    .findOne({ _id: 'shop_stocks' as any });
-  const stockData = stockDoc?.data ?? stockDoc ?? {};
+    .findOne({ id: 'shop_stock' });
+  const stockData = stockDoc?.value ?? {};
 
   // Look up Luna Cerberus card image from cards_config SECRET
   let cerberusImageUrl = '';
@@ -67,17 +73,12 @@ export async function GET() {
     const secretDoc = await db
       .collection('cards_config')
       .findOne({ _id: 'SECRET' as any });
-    if (secretDoc?.data) {
-      const cards =
-        typeof secretDoc.data === 'string'
-          ? JSON.parse(secretDoc.data)
-          : secretDoc.data;
-      const cerberus = Array.isArray(cards)
-        ? cards.find(
-            (c: any) =>
-              c.name === 'Luna Cerberus' || c.name === 'luna_cerberus'
-          )
-        : null;
+    if (secretDoc?.items) {
+      const cards = Array.isArray(secretDoc.items) ? secretDoc.items : [];
+      const cerberus = cards.find(
+        (c: any) =>
+          c.name === 'Luna Cerberus' || c.name === 'luna_cerberus'
+      );
       if (cerberus?.imageUrl) {
         cerberusImageUrl = cerberus.imageUrl;
       }
@@ -212,14 +213,17 @@ export async function POST(request: Request) {
     // 1. Verify shop is active
     const shopDoc = await db
       .collection('seluna_vendor')
-      .findOne({ _id: 'active_shops' as any });
-    const shopData = shopDoc?.data ?? shopDoc ?? {};
-    const startTime = shopData.startTime
-      ? new Date(shopData.startTime).getTime()
-      : 0;
-    const endTime = shopData.endTime
-      ? new Date(shopData.endTime).getTime()
-      : 0;
+      .findOne({ id: 'active_shops' });
+    const shopsMap = shopDoc?.value ?? {};
+    let startTime = 0;
+    let endTime = 0;
+    for (const channelData of Object.values(shopsMap) as any[]) {
+      if (channelData?.startTime) {
+        const st = typeof channelData.startTime === 'number' ? channelData.startTime : new Date(channelData.startTime).getTime();
+        const et = typeof channelData.endTime === 'number' ? channelData.endTime : new Date(channelData.endTime).getTime();
+        if (st > startTime) { startTime = st; endTime = et; }
+      }
+    }
     const now = Date.now();
 
     if (!startTime || now < startTime || now >= endTime) {
@@ -240,8 +244,8 @@ export async function POST(request: Request) {
     if (itemConfig.stock > 0) {
       const stockDoc = await db
         .collection('seluna_vendor')
-        .findOne({ _id: 'shop_stocks' as any });
-      const stockData = stockDoc?.data ?? {};
+        .findOne({ id: 'shop_stock' });
+      const stockData = stockDoc?.value ?? {};
       const remaining =
         typeof stockData[itemConfig.id] === 'number'
           ? stockData[itemConfig.id]
@@ -285,9 +289,8 @@ export async function POST(request: Request) {
     // 8. Decrement stock (for limited items)
     if (itemConfig.stock > 0) {
       await db.collection('seluna_vendor').updateOne(
-        { _id: 'shop_stocks' as any },
-        { $inc: { [`data.${itemConfig.id}`]: -1 } },
-        { upsert: true }
+        { id: 'shop_stock' },
+        { $inc: { [`value.${itemConfig.id}`]: -1 } }
       );
     }
 
@@ -306,18 +309,13 @@ export async function POST(request: Request) {
             const secretDoc = await db
               .collection('cards_config')
               .findOne({ _id: 'SECRET' as any });
-            if (secretDoc?.data) {
-              const cards =
-                typeof secretDoc.data === 'string'
-                  ? JSON.parse(secretDoc.data)
-                  : secretDoc.data;
-              const cerberus = Array.isArray(cards)
-                ? cards.find(
-                    (c: any) =>
-                      c.name === 'Luna Cerberus' ||
-                      c.name === 'luna_cerberus'
-                  )
-                : null;
+            if (secretDoc?.items) {
+              const cards = Array.isArray(secretDoc.items) ? secretDoc.items : [];
+              const cerberus = cards.find(
+                (c: any) =>
+                  c.name === 'Luna Cerberus' ||
+                  c.name === 'luna_cerberus'
+              );
               if (cerberus?.imageUrl) imageUrl = cerberus.imageUrl;
             }
           } catch {}

@@ -19,9 +19,8 @@ export async function GET() {
       rarities.map(async (rarity) => {
         const doc = await db.collection('cards_config').findOne({ _id: rarity.toUpperCase() as any });
         let count = 0;
-        if (doc?.data) {
-          const parsed = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
-          count = Array.isArray(parsed) ? parsed.length : 0;
+        if (doc?.items) {
+          count = Array.isArray(doc.items) ? doc.items.length : 0;
         }
         return { rarity, count };
       })
