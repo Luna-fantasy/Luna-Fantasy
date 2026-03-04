@@ -18,7 +18,7 @@ export async function getFactionWarFactions(): Promise<FactionWarFaction[]> {
   const factions: FactionWarFaction[] = docs.map((doc) => {
     const data = typeof doc.data === "string" ? JSON.parse(doc.data) : doc.data;
     return {
-      id: doc._id as string,
+      id: doc._id.toString(),
       name: data.name,
       color: data.color,
       cards: data.cards,
