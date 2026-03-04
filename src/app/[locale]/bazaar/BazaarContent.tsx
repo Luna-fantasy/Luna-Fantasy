@@ -3,9 +3,9 @@
 import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+// import { useSearchParams } from 'next/navigation'; // hidden — Stripe not yet active
 import { Link } from '@/i18n/routing';
-import LunariStore from './LunariStore';
+// import LunariStore from './LunariStore'; // hidden — Stripe not yet active
 import type { CatalogResponse } from '@/types/bazaar';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
 
@@ -61,13 +61,13 @@ function formatNumber(n: number): string {
 export default function BazaarContent() {
   const t = useTranslations('bazaarPage');
   const { data: session } = useSession();
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams(); // hidden — Stripe not yet active
 
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [balance, setBalance] = useState(0);
   const [hasDebt, setHasDebt] = useState(false);
-  const [purchaseStatus, setPurchaseStatus] = useState<string | null>(null);
+  // const [purchaseStatus, setPurchaseStatus] = useState<string | null>(null); // hidden — Stripe not yet active
 
   const fetchCatalog = useCallback(async () => {
     try {
@@ -91,16 +91,16 @@ export default function BazaarContent() {
     fetchCatalog();
   }, [fetchCatalog]);
 
-  // Handle Stripe redirect
-  useEffect(() => {
-    const purchase = searchParams.get('purchase');
-    if (purchase === 'success') {
-      setPurchaseStatus('success');
-      setTimeout(fetchCatalog, 2000);
-    } else if (purchase === 'cancelled') {
-      setPurchaseStatus('cancelled');
-    }
-  }, [searchParams, fetchCatalog]);
+  // Handle Stripe redirect (hidden — Stripe not yet active)
+  // useEffect(() => {
+  //   const purchase = searchParams.get('purchase');
+  //   if (purchase === 'success') {
+  //     setPurchaseStatus('success');
+  //     setTimeout(fetchCatalog, 2000);
+  //   } else if (purchase === 'cancelled') {
+  //     setPurchaseStatus('cancelled');
+  //   }
+  // }, [searchParams, fetchCatalog]);
 
   useEffect(() => {
     if (balance > 0) {
@@ -120,17 +120,7 @@ export default function BazaarContent() {
       </section>
 
       <div className="bazaar-wrap">
-        {/* Purchase status banner */}
-        {purchaseStatus && (
-          <div className={`bazaar-status-banner bazaar-status-${purchaseStatus}`}>
-            <span>{t(`purchase.${purchaseStatus}`)}</span>
-            <button onClick={() => setPurchaseStatus(null)} className="bazaar-status-close">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-        )}
+        {/* Purchase status banner (hidden — Stripe not yet active) */}
 
         {/* Balance Bar */}
         {session?.user && (
@@ -183,20 +173,7 @@ export default function BazaarContent() {
           </div>
         </section>
 
-        {/* Lunari Store Section */}
-        <section className="lunari-section" style={{ marginTop: 32 }}>
-          {catalog && (
-            <LunariStore
-              packages={catalog.lunariPackages}
-              isLoggedIn={!!session?.user}
-            />
-          )}
-          {isLoading && !catalog && (
-            <div className="bazaar-loading">
-              <div className="bazaar-loading-spinner" />
-            </div>
-          )}
-        </section>
+        {/* Lunari Store Section (hidden — Stripe not yet active) */}
       </div>
     </main>
   );
