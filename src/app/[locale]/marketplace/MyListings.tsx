@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { MarketplaceListing } from '@/types/marketplace';
+import LunariIcon from '@/components/LunariIcon';
 
 interface MyListingsProps {
   listings: MarketplaceListing[];
@@ -71,10 +72,7 @@ export default function MyListings({ listings, isLoading, onCancel, onEditPrice,
                     {isAuction ? (
                       <div className="my-listing-auction-stats">
                         <span className="my-listing-price">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 6v6l4 2" />
-                          </svg>
+                          <LunariIcon size={12} />
                           {(listing.currentBid || listing.auctionConfig?.startingPrice || listing.price).toLocaleString()}
                         </span>
                         <span className="my-listing-bid-count">
@@ -112,10 +110,7 @@ export default function MyListings({ listings, isLoading, onCancel, onEditPrice,
                       </div>
                     ) : (
                       <span className="my-listing-price" onClick={() => { setEditingId(listing.listingId); setEditPrice(String(listing.price)); }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10" />
-                          <path d="M12 6v6l4 2" />
-                        </svg>
+                        <LunariIcon size={12} />
                         {listing.price.toLocaleString()}
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.5">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -177,10 +172,7 @@ export default function MyListings({ listings, isLoading, onCancel, onEditPrice,
                   </div>
                   <div className="my-listing-price-section">
                     <span className="my-listing-price">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 6v6l4 2" />
-                      </svg>
+                      <LunariIcon size={12} />
                       {listing.price.toLocaleString()}
                     </span>
                   </div>

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import Image from 'next/image';
 import { Lightbox } from '@/components';
+import LunariIcon from '@/components/LunariIcon';
 import type { FactionWarFaction } from '@/types/faction-war';
 import type { Locale } from '@/types';
 
@@ -110,20 +111,20 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
                   <tr>
                     <td className="lp-reward-base">{t('rewardsBase')}</td>
                     <td>3 + 3 + 3</td>
-                    <td>12,500L</td>
-                    <td>6,250L</td>
+                    <td>12,500<LunariIcon size={14} /></td>
+                    <td>6,250<LunariIcon size={14} /></td>
                   </tr>
                   <tr>
                     <td className="lp-reward-bonus">{t('rewardsBonus')}</td>
                     <td>6 + 3</td>
-                    <td>15,000L</td>
-                    <td>7,500L</td>
+                    <td>15,000<LunariIcon size={14} /></td>
+                    <td>7,500<LunariIcon size={14} /></td>
                   </tr>
                   <tr>
                     <td className="lp-reward-double">{t('rewardsDouble')}</td>
                     <td>9 × {t('rewardsSame')}</td>
-                    <td>20,000L</td>
-                    <td>10,000L</td>
+                    <td>20,000<LunariIcon size={14} /></td>
+                    <td>10,000<LunariIcon size={14} /></td>
                   </tr>
                 </tbody>
               </table>
@@ -194,19 +195,6 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
                             height={420}
                             className="lp-card-image"
                           />
-                        </div>
-                        <div className="lp-card-info">
-                          <span
-                            className="lp-card-faction-badge"
-                            style={{
-                              color: faction.color,
-                              background: `${faction.color}25`,
-                              borderColor: `${faction.color}50`,
-                            }}
-                          >
-                            {faction.name[locale]}
-                          </span>
-                          <h4 className="lp-card-name">{card.name}</h4>
                         </div>
                       </div>
                     );

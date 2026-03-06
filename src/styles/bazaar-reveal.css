@@ -358,3 +358,71 @@
 .reveal-collection-link:hover {
   color: var(--accent-primary);
 }
+
+/* ── No Stone Result ── */
+.reveal-no-stone .reveal-box {
+  color: #6b7280;
+  filter: drop-shadow(0 0 20px rgba(107, 114, 128, 0.3));
+}
+
+.reveal-no-stone .reveal-particle {
+  background: #6b7280;
+}
+
+.reveal-no-stone-title {
+  font-size: 1.2rem;
+  color: #fbbf24;
+}
+
+.reveal-refund-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ── Sell Duplicate Button ── */
+.reveal-duplicate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.reveal-sell-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.reveal-sell-btn:hover:not(:disabled) {
+  background: rgba(251, 191, 36, 0.2);
+  border-color: rgba(251, 191, 36, 0.6);
+}
+
+.reveal-sell-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reveal-sold-text {
+  font-size: 0.8rem;
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.reveal-sell-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+}

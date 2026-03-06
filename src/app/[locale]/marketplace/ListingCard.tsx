@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import type { MarketplaceListing } from '@/types/marketplace';
+import LunariIcon from '@/components/LunariIcon';
 
 interface ListingCardProps {
   listing: MarketplaceListing;
@@ -74,10 +75,7 @@ export default function ListingCard({
         {isAuction ? (
           <div className="listing-card-auction-info">
             <div className="listing-card-price">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
+              <LunariIcon size={12} />
               <span>
                 {(listing.currentBid || listing.auctionConfig?.startingPrice || listing.price).toLocaleString()}
               </span>
@@ -92,10 +90,7 @@ export default function ListingCard({
           </div>
         ) : (
           <div className="listing-card-price">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
-            </svg>
+            <LunariIcon size={12} />
             <span>{listing.price.toLocaleString()}</span>
           </div>
         )}

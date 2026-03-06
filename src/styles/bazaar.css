@@ -693,6 +693,151 @@
   font-weight: 600;
 }
 
+/* ── Sell Duplicates (Meluna) ── */
+.stonebox-sell-section {
+  width: 100%;
+  max-width: 400px;
+}
+
+.stonebox-sell-list {
+  margin-top: 4px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.stonebox-sell-loading {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+.stonebox-sell-empty {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 12px 0;
+  margin: 0;
+}
+
+.stonebox-sell-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 84px 120px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.stonebox-sell-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.stonebox-sell-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stonebox-sell-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.stonebox-sell-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.stonebox-sell-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stonebox-qty-selector {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.stonebox-qty-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.stonebox-qty-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.stonebox-qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stonebox-qty-value {
+  width: 28px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-inline: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.stonebox-sell-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(251, 191, 36, 0.08);
+  color: #fbbf24;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 90px;
+}
+
+.stonebox-sell-btn:hover:not(:disabled) {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.stonebox-sell-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── Ticket Grid (Zoldar) ── */
 .zoldar-tickets-display {
   display: flex;

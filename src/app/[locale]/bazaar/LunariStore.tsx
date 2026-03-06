@@ -3,6 +3,7 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { useState } from 'react';
 import type { LunariPackage } from '@/types/bazaar';
+import LunariIcon from '@/components/LunariIcon';
 
 interface LunariStoreProps {
   packages: LunariPackage[];
@@ -84,9 +85,7 @@ export default function LunariStore({ packages, isLoggedIn }: LunariStoreProps) 
                 <div className="support-popular-tag">{t('store.popular')}</div>
               )}
               <div className="support-tier-amount">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                </svg>
+                <LunariIcon size={16} />
                 <span>{formatNumber(pkg.lunari)}</span>
               </div>
               <span className="support-tier-name">{pkg.name}</span>

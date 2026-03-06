@@ -124,6 +124,9 @@ export async function GET(request: Request) {
 
     // PvP — nemesis docs keyed "playerA_playerB" with top-level {playerA: wins, playerB: wins}
     const pvp: PvpRecord = { wins: 0, losses: 0 };
+    let nemesisId = '';
+    let nemesisMaxDefeats = 0;
+    let nemesisMyWins = 0;
     for (const doc of nemesisDocs) {
       try {
         const docId = String(doc._id);
@@ -135,7 +138,26 @@ export async function GET(request: Request) {
         const theirWins = doc[opponentId] ?? 0;
         pvp.wins += myWins;
         pvp.losses += theirWins;
+
+        // Track nemesis — opponent who beat me the most
+        if (theirWins > nemesisMaxDefeats) {
+          nemesisMaxDefeats = theirWins;
+          nemesisId = opponentId;
+          nemesisMyWins = myWins;
+        }
       } catch {}
+    }
+
+    // Resolve nemesis user info
+    if (nemesisId && nemesisMaxDefeats > 0) {
+      const nemesisUser = await db.collection("users").findOne({ discordId: nemesisId });
+      pvp.nemesis = {
+        discordId: nemesisId,
+        name: nemesisUser?.globalName || nemesisUser?.name || nemesisUser?.username || 'Unknown',
+        avatar: nemesisUser?.image || null,
+        winsAgainst: nemesisMyWins,
+        lossesAgainst: nemesisMaxDefeats,
+      };
     }
 
     // Inventory — stored as native array in `items` field

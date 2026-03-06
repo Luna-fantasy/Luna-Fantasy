@@ -1,8 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { LuckboxTierConfig, RevealData } from '@/types/bazaar';
+import LunariIcon from '@/components/LunariIcon';
 
 interface VendorKaelProps {
   tiers: (LuckboxTierConfig & { cardCount: number })[];
@@ -10,6 +11,7 @@ interface VendorKaelProps {
   hasDebt: boolean;
   isLoggedIn: boolean;
   onPurchase: (data: RevealData) => void;
+  onRegisterBuyAgain?: (fn: () => void) => void;
 }
 
 function formatNumber(n: number): string {
@@ -21,12 +23,14 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurchase }: VendorKaelProps) {
+export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurchase, onRegisterBuyAgain }: VendorKaelProps) {
   const t = useTranslations('bazaarPage');
   const [buying, setBuying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const lastTierRef = useRef<{ tier: string; price: number } | null>(null);
 
   const handleBuy = async (tier: string, price: number) => {
+    lastTierRef.current = { tier, price };
     if (buying) return;
     setError(null);
     setBuying(tier);
@@ -63,6 +67,14 @@ export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurc
       setBuying(null);
     }
   };
+
+  useEffect(() => {
+    onRegisterBuyAgain?.(() => {
+      if (lastTierRef.current) {
+        handleBuy(lastTierRef.current.tier, lastTierRef.current.price);
+      }
+    });
+  });
 
   return (
     <div className="vendor-section">
@@ -103,10 +115,7 @@ export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurc
                 {t('kael.poolSize', { count: tier.cardCount })}
               </div>
               <div className="luckbox-price">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
+                <LunariIcon size={14} />
                 {formatNumber(tier.price)}
               </div>
               <button

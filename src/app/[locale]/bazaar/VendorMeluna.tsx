@@ -1,8 +1,16 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { RevealData } from '@/types/bazaar';
+import LunariIcon from '@/components/LunariIcon';
+
+interface DuplicateStone {
+  name: string;
+  imageUrl: string;
+  count: number;
+  sellPrice: number;
+}
 
 interface VendorMelunaProps {
   stoneBox: {
@@ -13,6 +21,8 @@ interface VendorMelunaProps {
   hasDebt: boolean;
   isLoggedIn: boolean;
   onPurchase: (data: RevealData) => void;
+  onRegisterBuyAgain?: (fn: () => void) => void;
+  onBalanceUpdate?: (newBalance: number) => void;
 }
 
 function formatNumber(n: number): string {
@@ -24,14 +34,36 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, onPurchase }: VendorMelunaProps) {
+export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, onPurchase, onRegisterBuyAgain, onBalanceUpdate }: VendorMelunaProps) {
   const t = useTranslations('bazaarPage');
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDropRates, setShowDropRates] = useState(false);
 
+  // Sell duplicates state
+  const [duplicates, setDuplicates] = useState<DuplicateStone[]>([]);
+  const [dupsLoading, setDupsLoading] = useState(false);
+  const [showDuplicates, setShowDuplicates] = useState(false);
+  const [sellingStone, setSellingStone] = useState<string | null>(null);
+  const [sellError, setSellError] = useState<string | null>(null);
+  const [sellQuantities, setSellQuantities] = useState<Record<string, number>>({});
+
   const canAfford = balance >= stoneBox.price;
   const disabled = !isLoggedIn || hasDebt || !canAfford || buying;
+
+  const fetchDuplicates = useCallback(async () => {
+    if (!isLoggedIn) return;
+    setDupsLoading(true);
+    try {
+      const res = await fetch('/api/bazaar/my-stones');
+      if (res.ok) {
+        const data = await res.json();
+        setDuplicates(data.duplicates || []);
+      }
+    } catch {} finally {
+      setDupsLoading(false);
+    }
+  }, [isLoggedIn]);
 
   const handleBuy = async () => {
     if (buying) return;
@@ -52,23 +84,101 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
         return;
       }
 
-      onPurchase({
-        type: 'stone',
-        item: {
-          name: data.stone.name,
-          imageUrl: data.stone.imageUrl,
-        },
-        isDuplicate: data.isDuplicate,
-        refundAmount: data.refundAmount,
-        newBalance: data.newBalance,
-        price: stoneBox.price,
-      });
+      if (data.gotStone) {
+        onPurchase({
+          type: 'stone',
+          gotStone: true,
+          item: {
+            name: data.stone.name,
+            imageUrl: data.stone.imageUrl,
+          },
+          isDuplicate: data.isDuplicate ?? false,
+          sellPrice: data.sellPrice,
+          refundAmount: 0,
+          newBalance: data.newBalance,
+          price: stoneBox.price,
+        });
+        // Refresh duplicates list after purchase
+        if (showDuplicates) fetchDuplicates();
+      } else {
+        onPurchase({
+          type: 'stone',
+          gotStone: false,
+          item: { name: '', imageUrl: '' },
+          isDuplicate: false,
+          refundAmount: data.refundAmount,
+          newBalance: data.newBalance,
+          price: stoneBox.price,
+        });
+      }
     } catch {
       setError('Network error');
     } finally {
       setBuying(false);
     }
   };
+
+  const getSellQty = (stoneName: string, maxSellable: number) => {
+    const qty = sellQuantities[stoneName];
+    if (qty == null) return maxSellable; // default to all duplicates
+    return Math.min(qty, maxSellable);
+  };
+
+  const setSellQty = (stoneName: string, qty: number, maxSellable: number) => {
+    setSellQuantities((prev) => ({ ...prev, [stoneName]: Math.max(1, Math.min(qty, maxSellable)) }));
+  };
+
+  const handleSellDuplicate = async (stoneName: string, quantity: number) => {
+    if (sellingStone) return;
+    setSellingStone(stoneName);
+    setSellError(null);
+
+    try {
+      const res = await fetch('/api/bazaar/sell-stone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify({ stoneName, quantity }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSellError(data.error || 'Sell failed');
+        return;
+      }
+
+      const sold = data.sold || quantity;
+      onBalanceUpdate?.(data.newBalance);
+
+      // Update local duplicates list
+      setDuplicates((prev) =>
+        prev
+          .map((d) => d.name === stoneName ? { ...d, count: d.count - sold } : d)
+          .filter((d) => d.count > 1)
+      );
+      // Reset quantity for this stone
+      setSellQuantities((prev) => {
+        const next = { ...prev };
+        delete next[stoneName];
+        return next;
+      });
+    } catch {
+      setSellError('Network error');
+    } finally {
+      setSellingStone(null);
+    }
+  };
+
+  const handleToggleDuplicates = () => {
+    const next = !showDuplicates;
+    setShowDuplicates(next);
+    if (next && duplicates.length === 0) {
+      fetchDuplicates();
+    }
+  };
+
+  useEffect(() => {
+    onRegisterBuyAgain?.(() => handleBuy());
+  });
 
   const eligibleStones = stoneBox.stones.filter((s) => s.weight > 0);
 
@@ -101,10 +211,7 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
           </div>
           <h3 className="stonebox-title">{t('meluna.boxTitle')}</h3>
           <div className="stonebox-price">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
-            </svg>
+            <LunariIcon size={16} />
             {formatNumber(stoneBox.price)}
           </div>
           <p className="stonebox-duplicate-info">{t('meluna.duplicateInfo')}</p>
@@ -155,6 +262,97 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
             </div>
           )}
         </div>
+
+        {/* Sell Duplicates */}
+        {isLoggedIn && (
+          <div className="stonebox-sell-section">
+            <button
+              className="stonebox-droprates-toggle"
+              onClick={handleToggleDuplicates}
+            >
+              <span>{t('meluna.sellDuplicates')}</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className={`stonebox-chevron ${showDuplicates ? 'open' : ''}`}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {showDuplicates && (
+              <div className="stonebox-sell-list">
+                {dupsLoading && (
+                  <div className="stonebox-sell-loading">
+                    <span className="luckbox-spinner" />
+                  </div>
+                )}
+                {!dupsLoading && duplicates.length === 0 && (
+                  <p className="stonebox-sell-empty">{t('meluna.noDuplicates')}</p>
+                )}
+                {sellError && (
+                  <div className="vendor-error" style={{ marginBottom: 8 }}>
+                    <span>{sellError}</span>
+                    <button onClick={() => setSellError(null)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {duplicates.map((stone) => {
+                  const maxSellable = stone.count - 1;
+                  const qty = getSellQty(stone.name, maxSellable);
+                  const totalPrice = qty * stone.sellPrice;
+                  return (
+                    <div key={stone.name} className="stonebox-sell-row">
+                      <img
+                        src={stone.imageUrl}
+                        alt={stone.name}
+                        className="stonebox-sell-img"
+                      />
+                      <div className="stonebox-sell-info">
+                        <span className="stonebox-sell-name">{stone.name}</span>
+                        <span className="stonebox-sell-count">x{stone.count}</span>
+                      </div>
+                      <div className="stonebox-qty-selector">
+                      <button
+                        className="stonebox-qty-btn"
+                        onClick={() => setSellQty(stone.name, qty - 1, maxSellable)}
+                        disabled={qty <= 1 || sellingStone === stone.name}
+                      >
+                        -
+                      </button>
+                      <span className="stonebox-qty-value">{qty}</span>
+                      <button
+                        className="stonebox-qty-btn"
+                        onClick={() => setSellQty(stone.name, qty + 1, maxSellable)}
+                        disabled={qty >= maxSellable || sellingStone === stone.name}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      className="stonebox-sell-btn"
+                      disabled={sellingStone === stone.name}
+                      onClick={() => handleSellDuplicate(stone.name, qty)}
+                    >
+                      {sellingStone === stone.name ? (
+                        <span className="luckbox-spinner" />
+                      ) : (
+                        <>{t('meluna.sellFor', { amount: formatNumber(totalPrice) })}<LunariIcon size={14} /></>
+                      )}
+                    </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

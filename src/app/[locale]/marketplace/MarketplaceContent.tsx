@@ -13,6 +13,7 @@ import MyListings from './MyListings';
 import SwapsTab from './SwapsTab';
 import CardDetailModal from '@/components/CardDetailModal';
 import type { CardDetailData } from '@/components/CardDetailModal';
+import LunariIcon from '@/components/LunariIcon';
 type Tab = 'browse' | 'my-listings' | 'sell' | 'swaps';
 type SellType = 'fixed' | 'auction';
 
@@ -276,10 +277,7 @@ export default function MarketplaceContent() {
             <div className="marketplace-balance-info">
               <span className="marketplace-balance-label">{t('balance')}</span>
               <span className="marketplace-balance-value">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
+                <LunariIcon size={14} />
                 {balance.toLocaleString()}
               </span>
             </div>

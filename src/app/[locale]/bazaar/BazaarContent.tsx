@@ -8,6 +8,7 @@ import { Link } from '@/i18n/routing';
 // import LunariStore from './LunariStore'; // hidden — Stripe not yet active
 import type { CatalogResponse } from '@/types/bazaar';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import LunariIcon from '@/components/LunariIcon';
 
 const MERCHANTS = [
   {
@@ -126,10 +127,7 @@ export default function BazaarContent() {
         {session?.user && (
           <div className="bazaar-balance-bar" style={{ marginBottom: 24 }}>
             <div className="bazaar-balance-info">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
+              <LunariIcon size={20} />
               <span className="bazaar-balance-label">{t('balance')}:</span>
               <span className="bazaar-balance-value">{isLoading ? '...' : formatNumber(balance)}</span>
               <span className="bazaar-balance-currency">{t('lunariLabel')}</span>

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
 import type { MemberListItem, MembersResponse } from '@/types/members';
+import LunariIcon from '@/components/LunariIcon';
 
 export default function MembersContent() {
   const t = useTranslations('membersPage');
@@ -155,9 +156,7 @@ export default function MembersContent() {
                 )}
                 <div className="member-stats">
                   <span className="member-stat">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2.5">
-                      <circle cx="12" cy="12" r="10" />
-                    </svg>
+                    <LunariIcon size={12} />
                     {member.lunari.toLocaleString()}
                   </span>
                   <span className="member-stat">

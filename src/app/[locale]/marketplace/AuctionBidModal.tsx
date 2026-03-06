@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { MarketplaceListing } from '@/types/marketplace';
+import LunariIcon from '@/components/LunariIcon';
 
 interface AuctionBidModalProps {
   listing: MarketplaceListing;
@@ -130,10 +131,7 @@ export default function AuctionBidModal({ listing, onClose, onBidPlaced }: Aucti
           <div className="auction-bid-stat">
             <span className="auction-bid-stat-label">{t('auction.currentBid')}</span>
             <span className="auction-bid-stat-value">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
+              <LunariIcon size={12} />
               {currentBid > 0 ? currentBid.toLocaleString() : t('auction.noBids')}
             </span>
           </div>
@@ -153,10 +151,7 @@ export default function AuctionBidModal({ listing, onClose, onBidPlaced }: Aucti
             {t('auction.yourBid')} ({t('auction.minimum')}: {minBid.toLocaleString()})
           </label>
           <div className="create-listing-input-wrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
-            </svg>
+            <LunariIcon size={14} />
             <input
               type="number"
               className="create-listing-input"

@@ -12,6 +12,7 @@
     "games": "Luna Games",
     "lunaFantasy": "Luna Fantasy",
     "factionWar": "Faction War",
+    "grandFantasy": "Grand Fantasy",
     "characters": "Characters",
     "bank": "Bank",
     "bazaar": "Bazaar",
@@ -96,6 +97,32 @@
       "rule2": "The winner is usually the stronger card, but higher tier doesn't always guarantee a win blindly.",
       "rule3": "A player must win 5 rounds to be the victor.",
       "rule4": "You can use the Random Card as a substitute for any of your existing cards."
+    },
+    "filters": {
+      "all": "All Cards",
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "unique": "Unique",
+      "legendary": "Legendary",
+      "secret": "Secret",
+      "mythical": "Mythical"
+    }
+  },
+  "grandFantasyPage": {
+    "heroTitle": "Grand Fantasy",
+    "heroSubtitle": "The Grand Card Battle",
+    "subtitle": "Explore the complete deck of Grand Fantasy - the ultimate strategic card battle of the Luna universe. Build your army across five rarities and claim victory.",
+    "whatTitle": "What is Grand Fantasy?",
+    "whatDesc": "Grand Fantasy is the premier PvP card battle in the Luna universe. Two players assemble a team of 10 cards — 5 chosen from their own collection and 5 dealt randomly by the Jester — then clash in a series of strategic rounds with powerful modifiers that can turn the tide.",
+    "howTitle": "How to Play?",
+    "howDesc": "Challenge an opponent and pick one card from each rarity in your book: Common, Rare, Epic, Unique, and Legendary. The Jester adds one random card per rarity. Modifiers activate each round, adding twists like hidden cards, power boosts, and surprise reversals.",
+    "rules": {
+      "rule1": "Each player selects 5 cards (one per rarity: Common, Rare, Epic, Unique, Legendary) from their collection.",
+      "rule2": "The Jester deals 5 additional random cards (one per rarity) — giving each player 10 cards total.",
+      "rule3": "Cards battle head-to-head by attack power. The player who wins the most rounds wins the match.",
+      "rule4": "Modifiers activate each round — darkness, power surges, dragon fire, and more can change the outcome.",
+      "rule5": "The winner earns 15,000 Lunari. Special cards like Wolves and Dragons have unique abilities."
     },
     "filters": {
       "all": "All Cards",
@@ -352,6 +379,7 @@
     "contact": "Contact Us",
     "about": "About Us",
     "lunaFantasy": "Luna Fantasy",
+    "grandFantasy": "Grand Fantasy",
     "factionWar": "Faction War",
     "bazaar": "Bazaar",
     "kael": "Kael Vandar",
@@ -506,7 +534,8 @@
       "pvpWins": "Wins",
       "pvpLosses": "Losses",
       "winRate": "Win Rate",
-      "noBattles": "No battles yet"
+      "noBattles": "No battles yet",
+      "nemesis": "Nemesis"
     },
     "achievements": {
       "title": "Achievements",
@@ -561,7 +590,10 @@
       "boxTitle": "Moon Stone Mystery Box",
       "openBox": "Open Box",
       "dropRates": "Drop Rates",
-      "duplicateInfo": "Duplicates: 50% chance of 1,000L refund. Stone is always added to your collection."
+      "duplicateInfo": "50% chance for a random Moon Stone, 50% chance for a 1,000 Lunari refund. Duplicate stones can be sold.",
+      "sellDuplicates": "Sell Duplicates",
+      "noDuplicates": "You have no duplicate stones to sell.",
+      "sellFor": "Sell for {amount}"
     },
     "zoldar": {
       "name": "Zoldar",
@@ -664,7 +696,12 @@
       "youGot": "You got",
       "duplicate": "Duplicate!",
       "alreadyOwned": "Already in your collection!",
-      "refund": "Duplicate! {amount}L refunded",
+      "duplicateStone": "You already have this stone!",
+      "sellDuplicate": "Sell for {amount}",
+      "sold": "Sold!",
+      "noStone": "No stone this time!",
+      "refundReceived": "{amount} refunded",
+      "refund": "Duplicate! {amount} refunded",
       "noRefund": "Duplicate! No refund this time",
       "close": "Close",
       "buyAnother": "Buy Another",

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import type { UserCard } from '@/types/gameData';
+import LunariIcon from '@/components/LunariIcon';
 
 interface CreateListingModalProps {
   onClose: () => void;
@@ -183,10 +184,7 @@ export default function CreateListingModal({ onClose, onCreated }: CreateListing
             <div className="create-listing-price-input">
               <label className="create-listing-label">{t('setPrice')}</label>
               <div className="create-listing-input-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
+                <LunariIcon size={14} />
                 <input
                   type="number"
                   className="create-listing-input"

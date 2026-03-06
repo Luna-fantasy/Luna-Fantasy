@@ -12,6 +12,7 @@ import CardDetailModal from '@/components/CardDetailModal';
 import type { CardDetailData } from '@/components/CardDetailModal';
 import '@/styles/profile.css';
 import '@/styles/profile-game.css';
+import LunariIcon from '@/components/LunariIcon';
 
 interface Transaction {
   id: string;
@@ -243,10 +244,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
           <div className="hero-treasury">
             <div className="treasury-row">
               <div className="treasury-item treasury-item-lunari">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
+                <LunariIcon size={18} />
                 <div className="treasury-item-info">
                   <span className="treasury-item-value treasury-lunari-value">
                     {isLoading ? <span className="skeleton" style={{ width: '60px', height: '20px' }} /> : formatNumber(gameData?.lunari ?? 0)}
@@ -345,10 +343,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                   <div className="inventory-item-header">
                     <span className="inventory-item-name">{item.name}</span>
                     <span className="inventory-item-price">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 6v6l4 2" />
-                      </svg>
+                      <LunariIcon size={12} />
                       {formatNumber(item.price)}
                     </span>
                   </div>
@@ -521,6 +516,29 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                   <span className="pvp-counter-label">{t('playerStats.pvpLosses')}</span>
                 </div>
               </div>
+              {/* Nemesis */}
+              {gameData?.pvp.nemesis && (
+                <div className="pvp-nemesis">
+                  <span className="pvp-nemesis-label">{t('playerStats.nemesis')}</span>
+                  <Link href={`/profile?discordId=${gameData.pvp.nemesis.discordId}`} className="pvp-nemesis-info">
+                    {gameData.pvp.nemesis.avatar && (
+                      <img
+                        src={gameData.pvp.nemesis.avatar}
+                        alt={gameData.pvp.nemesis.name}
+                        className="pvp-nemesis-avatar"
+                      />
+                    )}
+                    <span className="pvp-nemesis-name">
+                      {gameData.pvp.nemesis.name !== 'Unknown' ? gameData.pvp.nemesis.name : gameData.pvp.nemesis.discordId}
+                    </span>
+                    <span className="pvp-nemesis-record">
+                      <span className="pvp-nemesis-w">{gameData.pvp.nemesis.winsAgainst}</span>
+                      {' - '}
+                      <span className="pvp-nemesis-l">{gameData.pvp.nemesis.lossesAgainst}</span>
+                    </span>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -559,10 +577,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                       </div>
                       <div className="transaction-right">
                         <span className="transaction-amount">
-                          <svg className="transaction-lunari-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2.5">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 6v6l4 2" />
-                          </svg>
+                          <LunariIcon size={12} className="transaction-lunari-icon" />
                           {isCredit ? '+' : ''}{formatNumber(tx.amount)}
                         </span>
                         <span className="transaction-date">
@@ -967,7 +982,7 @@ function StoneCollection({
         </div>
         <div className="stones-grid">
           {moonStones.map((stone) => {
-            const imgUrl = stone.data?.imageUrl || STONE_IMAGE_FALLBACK[stone.name];
+            const imgUrl = STONE_IMAGE_FALLBACK[stone.name] || stone.data?.imageUrl;
             return (
             <div
               key={stone.name}
@@ -1011,7 +1026,7 @@ function StoneCollection({
         </div>
         <div className="stones-grid stones-grid-forbidden">
           {forbiddenStones.map((stone) => {
-            const imgUrl = stone.data?.imageUrl || STONE_IMAGE_FALLBACK[stone.name];
+            const imgUrl = STONE_IMAGE_FALLBACK[stone.name] || stone.data?.imageUrl;
             return (
             <div
               key={stone.name}

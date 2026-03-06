@@ -8,6 +8,7 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import { onBalanceUpdate } from '@/lib/balance-events';
 import { NotificationBell } from '@/components/NotificationBell';
 import { FEATURE_FLAGS } from '@/lib/feature-flags';
+import LunariIcon from '@/components/LunariIcon';
 
 export function Navbar() {
   const t = useTranslations('nav');
@@ -30,7 +31,7 @@ export function Navbar() {
   const economyDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
 
-  const gameRoutes = ['/luna-fantasy', '/faction-war'];
+  const gameRoutes = ['/luna-fantasy', '/grand-fantasy', '/faction-war'];
   const worldRoutes = ['/story', '/characters', '/partners', '/members'];
   const economyRoutes = FEATURE_FLAGS.marketplace
     ? ['/bank', '/bazaar', '/trading', '/marketplace']
@@ -173,6 +174,13 @@ export function Navbar() {
                     {t('lunaFantasy')}
                   </Link>
                   <Link
+                    href="/grand-fantasy"
+                    className={`games-dropdown-item ${isActive('/grand-fantasy') ? 'active' : ''}`}
+                    onClick={() => setGamesDropdownOpen(false)}
+                  >
+                    {t('grandFantasy')}
+                  </Link>
+                  <Link
                     href="/faction-war"
                     className={`games-dropdown-item ${isActive('/faction-war') ? 'active' : ''}`}
                     onClick={() => setGamesDropdownOpen(false)}
@@ -309,9 +317,7 @@ export function Navbar() {
                       </span>
                       {lunariBalance !== null && (
                         <span className="user-lunari">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2.5">
-                            <circle cx="12" cy="12" r="10" />
-                          </svg>
+                          <LunariIcon size={10} />
                           {lunariBalance.toLocaleString()}
                         </span>
                       )}
@@ -402,6 +408,13 @@ export function Navbar() {
                   onClick={closeMobileMenu}
                 >
                   {t('lunaFantasy')}
+                </Link>
+                <Link
+                  href="/grand-fantasy"
+                  className={`mobile-nav-link ${isActive('/grand-fantasy') ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {t('grandFantasy')}
                 </Link>
                 <Link
                   href="/faction-war"

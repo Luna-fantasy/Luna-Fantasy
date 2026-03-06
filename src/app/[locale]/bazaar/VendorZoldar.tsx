@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type { TicketPackage, TicketPurchaseResponse } from '@/types/bazaar';
+import LunariIcon from '@/components/LunariIcon';
 
 interface VendorZoldarProps {
   packages: TicketPackage[];
@@ -108,10 +109,7 @@ export default function VendorZoldar({ packages, balance, tickets, hasDebt, isLo
                 <span>{pkg.tickets}</span>
               </div>
               <div className="ticket-price">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
+                <LunariIcon size={14} />
                 {formatNumber(pkg.price)}
               </div>
               <button

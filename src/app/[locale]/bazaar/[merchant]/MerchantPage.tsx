@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from '@/i18n/routing';
 import VendorKael from '../VendorKael';
 import VendorMeluna from '../VendorMeluna';
@@ -13,6 +13,7 @@ import VendorMells from '../VendorMells';
 import RevealModal from '../RevealModal';
 import type { CatalogResponse, RevealData } from '@/types/bazaar';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import LunariIcon from '@/components/LunariIcon';
 
 type MerchantSlug = 'kael' | 'meluna' | 'zoldar' | 'seluna' | 'brimor' | 'mells';
 
@@ -74,6 +75,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
   const [tickets, setTickets] = useState(0);
   const [hasDebt, setHasDebt] = useState(false);
   const [reveal, setReveal] = useState<RevealData | null>(null);
+  const buyAgainRef = useRef<(() => void) | null>(null);
 
   const config = MERCHANT_CONFIG[merchant];
 
@@ -147,10 +149,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
         {session?.user && (
           <div className="bazaar-balance-bar" style={{ marginBottom: 24 }}>
             <div className="bazaar-balance-info">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffd700" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
+              <LunariIcon size={20} />
               <span className="bazaar-balance-label">{t('balance')}:</span>
               <span className="bazaar-balance-value">{isLoading ? '...' : formatNumber(balance)}</span>
               <span className="bazaar-balance-currency">{t('lunariLabel')}</span>
@@ -173,6 +172,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
                 setReveal(data);
                 updateBalance(data.newBalance);
               }}
+              onRegisterBuyAgain={(fn) => { buyAgainRef.current = fn; }}
             />
           )}
           {merchant === 'meluna' && catalog && (
@@ -185,6 +185,8 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
                 setReveal(data);
                 updateBalance(data.newBalance);
               }}
+              onRegisterBuyAgain={(fn) => { buyAgainRef.current = fn; }}
+              onBalanceUpdate={updateBalance}
             />
           )}
           {merchant === 'zoldar' && catalog && (
@@ -238,7 +240,9 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
           onClose={() => setReveal(null)}
           onBuyAnother={() => {
             setReveal(null);
+            buyAgainRef.current?.();
           }}
+          onBalanceUpdate={updateBalance}
         />
       )}
     </main>
