@@ -96,7 +96,7 @@ export async function GET() {
   const cardItems = dbItems.filter((i: any) => (i.type || '').toLowerCase() === 'card');
   if (cardItems.length > 0) {
     // Collect unique rarities needed
-    const rarities = [...new Set(cardItems.map((i: any) => (i.rarity || 'SECRET').toUpperCase()))];
+    const rarities = Array.from(new Set(cardItems.map((i: any) => (i.rarity || 'SECRET').toUpperCase())));
     try {
       for (const rarity of rarities) {
         const rarityDoc = await db
