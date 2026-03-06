@@ -30,7 +30,7 @@ export async function GET() {
 
     // Filter to duplicates (count > 1) with sell_price > 0
     const duplicates: DuplicateStone[] = [];
-    for (const [name, count] of grouped) {
+    for (const [name, count] of Array.from(grouped)) {
       if (count > 1) {
         const sellPrice = getStoneSellPrice(name);
         if (sellPrice > 0) {
