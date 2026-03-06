@@ -23,8 +23,8 @@ function formatNumber(n: number): string {
   return n.toLocaleString();
 }
 
-function formatCountdownDays(dueDate: string): { text: string; overdue: boolean } {
-  const due = new Date(dueDate).getTime();
+function formatCountdownDays(dueDate: number): { text: string; overdue: boolean } {
+  const due = dueDate;
   const now = Date.now();
   const diff = due - now;
 
@@ -104,7 +104,7 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
                 </div>
                 <div className="active-loan-stat">
                   <span className="active-loan-stat-label">{t('loanAction.interest')}</span>
-                  <span className="active-loan-stat-value interest">{activeLoan.interest.toLocaleString()}</span>
+                  <span className="active-loan-stat-value interest">{(activeLoan.repaymentAmount - activeLoan.amount).toLocaleString()}</span>
                 </div>
                 <div className="active-loan-stat">
                   <span className="active-loan-stat-label">{t('loanAction.totalDue')}</span>
@@ -118,8 +118,8 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
                   className="loan-progress-fill"
                   style={{
                     width: `${Math.min(100, Math.max(0,
-                      ((Date.now() - new Date(activeLoan.takenAt).getTime()) /
-                        (new Date(activeLoan.dueDate).getTime() - new Date(activeLoan.takenAt).getTime())) * 100
+                      ((Date.now() - activeLoan.takenAt) /
+                        (activeLoan.dueDate - activeLoan.takenAt)) * 100
                     ))}%`
                   }}
                 />
@@ -260,6 +260,9 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
 
         <div className="loan-image-container">
           <LoanContractCanvas
+            avatarUrl={selectedTier ? userAvatar : undefined}
+            userName={selectedTier ? userName : undefined}
+            loanAmount={selectedTier ?? undefined}
             width={320}
             height={440}
           />

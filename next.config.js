@@ -14,6 +14,7 @@ const nextConfig = {
     ],
   },
   trailingSlash: true,
+  skipTrailingSlashRedirect: true,
   async redirects() {
     return [
       {

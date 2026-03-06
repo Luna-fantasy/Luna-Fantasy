@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { STONES, STONE_BOX_PRICE } from '@/lib/bazaar/stone-config';
-import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance, getDailySpending, DAILY_SPEND_LIMIT } from '@/lib/bazaar/lunari-ops';
+import { STONES, STONE_BOX_PRICE, STONE_REFUND_AMOUNT } from '@/lib/bazaar/stone-config';
+import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
 import { weightedRandomDraw } from '@/lib/bazaar/weighted-random';
 import { userOwnsStone, addStoneToUser } from '@/lib/bazaar/stone-ops';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
@@ -43,77 +43,94 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
-    // 2b. Daily spending limit
-    const dailySpent = await getDailySpending(discordId);
-    if (dailySpent + STONE_BOX_PRICE > DAILY_SPEND_LIMIT) {
-      return NextResponse.json(
-        { error: `Daily spending limit reached (${DAILY_SPEND_LIMIT.toLocaleString()}L/day). Try again tomorrow.` },
-        { status: 429 }
-      );
-    }
-
-    // 3. Draw random stone
-    const drawnStone = weightedRandomDraw(STONES);
-
-    // 4. Check duplicate
-    const isDuplicate = await userOwnsStone(discordId, drawnStone.name);
-
-    // 5. Atomic deduct Lunari
+    // 3. Atomic deduct Lunari (full price)
     const deductResult = await deductLunari(discordId, STONE_BOX_PRICE);
     if (!deductResult.success) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
-    let refundAmount = 0;
     try {
-      // 6. Duplicate refund: 50% chance of 1,000L refund
-      if (isDuplicate && Math.random() < 0.5) {
-        refundAmount = 1_000;
-        await creditLunari(discordId, refundAmount);
+      // 4. 50% chance: get a stone or get refunded
+      const roll = Math.random();
+
+      if (roll < 0.5) {
+        // NO STONE — refund half the cost
+        await creditLunari(discordId, STONE_REFUND_AMOUNT);
+
+        // Net loss goes to bank reserve
+        const netLoss = STONE_BOX_PRICE - STONE_REFUND_AMOUNT;
+        if (netLoss > 0) {
+          await addToBankReserve(netLoss);
+        }
+
+        const newBalance = deductResult.balanceAfter + STONE_REFUND_AMOUNT;
+
+        await logTransaction({
+          discordId,
+          type: 'stonebox_spend',
+          amount: -(STONE_BOX_PRICE - STONE_REFUND_AMOUNT),
+          balanceBefore: deductResult.balanceBefore,
+          balanceAfter: newBalance,
+          metadata: {
+            vendorId: 'meluna',
+            gotStone: false,
+            refundAmount: STONE_REFUND_AMOUNT,
+          },
+          createdAt: new Date(),
+          source: 'web',
+        });
+
+        const res = NextResponse.json({
+          gotStone: false,
+          refundAmount: STONE_REFUND_AMOUNT,
+          newBalance,
+        });
+        return refreshCsrf(res);
       }
 
-      // 7. Add to bank reserve (full price minus any refund)
-      await addToBankReserve(STONE_BOX_PRICE - refundAmount);
+      // GOT A STONE — draw random stone
+      const drawnStone = weightedRandomDraw(STONES);
+      const isDuplicate = await userOwnsStone(discordId, drawnStone.name);
 
-      // 8. Stone is ALWAYS added (even if duplicate)
+      // Full price goes to bank reserve
+      await addToBankReserve(STONE_BOX_PRICE);
+
+      // Stone is always added (even if duplicate)
       await addStoneToUser(discordId, drawnStone);
 
-      // 9. Get updated balance
-      const newBalance = deductResult.balanceAfter + refundAmount;
+      const newBalance = deductResult.balanceAfter;
 
-      // 10. Log transaction
       await logTransaction({
         discordId,
         type: 'stonebox_spend',
-        amount: -(STONE_BOX_PRICE - refundAmount),
+        amount: -STONE_BOX_PRICE,
         balanceBefore: deductResult.balanceBefore,
         balanceAfter: newBalance,
         metadata: {
           vendorId: 'meluna',
+          gotStone: true,
           itemReceived: drawnStone.name,
           isDuplicate,
-          refundAmount,
         },
         createdAt: new Date(),
         source: 'web',
       });
 
       const res = NextResponse.json({
+        gotStone: true,
         stone: {
           name: drawnStone.name,
           imageUrl: drawnStone.imageUrl,
         },
         isDuplicate,
-        refundAmount,
+        sellPrice: isDuplicate ? drawnStone.sell_price : undefined,
+        refundAmount: 0,
         newBalance,
       });
       return refreshCsrf(res);
     } catch (error) {
-      // REFUND on failure — only refund what HASN'T been refunded yet
-      const remainingRefund = STONE_BOX_PRICE - refundAmount;
-      if (remainingRefund > 0) {
-        await creditLunari(discordId, remainingRefund).catch(() => {});
-      }
+      // REFUND on failure — full price back
+      await creditLunari(discordId, STONE_BOX_PRICE).catch(() => {});
       console.error('Stonebox grant error:', error);
       return NextResponse.json({ error: 'Purchase failed. Lunari refunded.' }, { status: 500 });
     }

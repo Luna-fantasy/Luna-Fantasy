@@ -15,7 +15,7 @@ import { addTickets } from '@/lib/bazaar/ticket-ops';
 import { getUserGuildRoles } from '@/lib/bank/discord-roles';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
-import { SELUNA_ITEMS, SELUNA_FULL_MOON_ROLE_ID, GUILD_ID } from '@/lib/bank/bank-config';
+import { SELUNA_FULL_MOON_ROLE_ID, GUILD_ID } from '@/lib/bank/bank-config';
 
 // Stone image URLs (from stone-config.ts)
 const STONE_IMAGES: Record<string, string> = {
@@ -61,35 +61,70 @@ export async function GET() {
   const now = Date.now();
   const active = startTime > 0 && now >= startTime && now < endTime;
 
-  // Read stock from seluna_vendor shop_stock (global stock)
-  const stockDoc = await db
+  // Read inventory items from DB (managed by bot via /seluna add/remove)
+  const itemsDoc = await db
     .collection('seluna_vendor')
-    .findOne({ id: 'shop_stock' });
-  const stockData = stockDoc?.value ?? {};
+    .findOne({ id: 'inventory_items' });
+  const dbItems: any[] = Array.isArray(itemsDoc?.value) ? itemsDoc.value : [];
 
-  // Look up Luna Cerberus card image from cards_config SECRET
-  let cerberusImageUrl = '';
-  try {
-    const secretDoc = await db
-      .collection('cards_config')
-      .findOne({ _id: 'SECRET' as any });
-    if (secretDoc?.items) {
-      const cards = Array.isArray(secretDoc.items) ? secretDoc.items : [];
-      const cerberus = cards.find(
-        (c: any) =>
-          c.name === 'Luna Cerberus' || c.name === 'luna_cerberus'
-      );
-      if (cerberus?.imageUrl) {
-        cerberusImageUrl = cerberus.imageUrl;
+  // Read stock from seluna_vendor shop_stocks (per-channel, pick matching channel)
+  const stocksDoc = await db
+    .collection('seluna_vendor')
+    .findOne({ id: 'shop_stocks' });
+  const allStocks = stocksDoc?.value ?? {};
+  // Find stock data for the active channel (same channel as active shop)
+  let stockData: Record<string, number> = {};
+  for (const [chId, chData] of Object.entries(allStocks) as [string, any][]) {
+    // Use the channel that matches the active shop's most recent entry
+    if (chData && typeof chData === 'object') {
+      stockData = chData;
+    }
+  }
+  // If we found the specific active channel, prefer that
+  for (const [chId, chData] of Object.entries(shopsMap) as [string, any][]) {
+    if (chData?.startTime) {
+      const st = typeof chData.startTime === 'number' ? chData.startTime : new Date(chData.startTime).getTime();
+      if (st === startTime && allStocks[chId]) {
+        stockData = allStocks[chId];
+        break;
       }
     }
-  } catch {
-    // Non-critical — card will render without image
+  }
+
+  // Look up card images from cards_config for any card items
+  const cardImageMap: Record<string, string> = {};
+  const cardItems = dbItems.filter((i: any) => (i.type || '').toLowerCase() === 'card');
+  if (cardItems.length > 0) {
+    // Collect unique rarities needed
+    const rarities = [...new Set(cardItems.map((i: any) => (i.rarity || 'SECRET').toUpperCase()))];
+    try {
+      for (const rarity of rarities) {
+        const rarityDoc = await db
+          .collection('cards_config')
+          .findOne({ _id: rarity as any });
+        if (rarityDoc?.items) {
+          const cards = Array.isArray(rarityDoc.items) ? rarityDoc.items : [];
+          for (const ci of cardItems) {
+            if ((ci.rarity || 'SECRET').toUpperCase() !== rarity) continue;
+            const found = cards.find(
+              (c: any) => c.name?.toLowerCase() === ci.name?.toLowerCase()
+            );
+            if (found?.imageUrl) {
+              cardImageMap[ci.name] = found.imageUrl;
+            }
+          }
+        }
+      }
+    } catch {
+      // Non-critical — cards will render without images
+    }
   }
 
   // Build items with remaining stock and user ownership
   const items = await Promise.all(
-    SELUNA_ITEMS.map(async (item) => {
+    dbItems.map(async (item: any) => {
+      const itemType = (item.type || '').toLowerCase();
+
       // Remaining stock: -1 = unlimited, otherwise check shop_stocks
       let remaining: number;
       if (item.stock === -1) {
@@ -103,39 +138,43 @@ export async function GET() {
 
       // Image URL
       let imageUrl = '';
-      if (item.type === 'card') {
-        imageUrl = cerberusImageUrl;
-      } else if (item.type === 'stone') {
+      if (itemType === 'card') {
+        imageUrl = cardImageMap[item.name] ?? '';
+      } else if (itemType === 'stone') {
         imageUrl = STONE_IMAGES[item.name] ?? '';
       }
 
       // Ownership check (only if logged in)
       let owned = false;
       if (discordId) {
-        if (item.type === 'card') {
+        if (itemType === 'card') {
           owned = await userOwnsCard(discordId, item.name);
-        } else if (item.type === 'stone') {
+        } else if (itemType === 'stone') {
           owned = await userOwnsStone(discordId, item.name);
-        } else if (item.type === 'role') {
+        } else if (itemType === 'role') {
           const roles = await getUserGuildRoles(discordId);
-          owned = roles.includes(SELUNA_FULL_MOON_ROLE_ID);
+          owned = roles.includes(item.roleId || SELUNA_FULL_MOON_ROLE_ID);
         }
       }
 
       return {
         id: item.id,
-        type: item.type,
+        type: itemType,
         name: item.name,
         price: item.price,
         stock: item.stock,
         remaining,
         imageUrl,
         owned,
-        ...(item.type === 'card'
-          ? { rarity: (item as any).rarity, attack: (item as any).attack }
+        description: item.description || '',
+        ...(itemType === 'card'
+          ? { rarity: item.rarity, attack: item.attack }
           : {}),
-        ...(item.type === 'tickets'
-          ? { ticketCount: (item as any).ticketCount }
+        ...(itemType === 'tickets'
+          ? { ticketCount: item.amount }
+          : {}),
+        ...(itemType === 'role'
+          ? { roleId: item.roleId }
           : {}),
       };
     })
@@ -233,19 +272,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Parse & validate item
+    // 2. Parse & validate item (read from DB inventory)
     const { itemId } = await request.json();
-    const itemConfig = SELUNA_ITEMS.find((i) => i.id === itemId);
+    const itemsDoc = await db
+      .collection('seluna_vendor')
+      .findOne({ id: 'inventory_items' });
+    const dbItems: any[] = Array.isArray(itemsDoc?.value) ? itemsDoc.value : [];
+    const itemConfig = dbItems.find((i: any) => i.id === itemId);
     if (!itemConfig) {
       return NextResponse.json({ error: 'Invalid item' }, { status: 400 });
     }
+    const itemType = (itemConfig.type || '').toLowerCase();
 
-    // 3. Check stock (for limited items)
-    if (itemConfig.stock > 0) {
-      const stockDoc = await db
-        .collection('seluna_vendor')
-        .findOne({ id: 'shop_stock' });
-      const stockData = stockDoc?.value ?? {};
+    // 3. Check stock (for limited items) — per-channel from shop_stocks
+    // Find the active channel's stock
+    const stocksDoc = await db
+      .collection('seluna_vendor')
+      .findOne({ id: 'shop_stocks' });
+    const allStocks = stocksDoc?.value ?? {};
+    let activeChannelId: string | null = null;
+    for (const [chId, chData] of Object.entries(shopsMap) as [string, any][]) {
+      if (chData?.startTime) {
+        const st = typeof chData.startTime === 'number' ? chData.startTime : new Date(chData.startTime).getTime();
+        if (st === startTime) { activeChannelId = chId; break; }
+      }
+    }
+    const stockData: Record<string, number> = activeChannelId ? (allStocks[activeChannelId] ?? {}) : {};
+
+    if (itemConfig.stock !== -1 && itemConfig.stock > 0) {
       const remaining =
         typeof stockData[itemConfig.id] === 'number'
           ? stockData[itemConfig.id]
@@ -286,11 +340,11 @@ export async function POST(request: Request) {
     // 7. Add to bank reserve
     void addToBankReserve(itemConfig.price);
 
-    // 8. Decrement stock (for limited items)
-    if (itemConfig.stock > 0) {
+    // 8. Decrement stock (for limited items) — per-channel in shop_stocks
+    if (itemConfig.stock !== -1 && itemConfig.stock > 0 && activeChannelId) {
       await db.collection('seluna_vendor').updateOne(
-        { id: 'shop_stock' },
-        { $inc: { [`value.${itemConfig.id}`]: -1 } }
+        { id: 'shop_stocks' },
+        { $inc: { [`value.${activeChannelId}.${itemConfig.id}`]: -1 } }
       );
     }
 
@@ -299,24 +353,29 @@ export async function POST(request: Request) {
     let refunded = false;
     let grantError: string | null = null;
 
-    switch (itemConfig.type) {
+    switch (itemType) {
       case 'card': {
         isDuplicate = await userOwnsCard(discordId, itemConfig.name);
         if (!isDuplicate) {
-          // Look up card image from cards_config
+          // Look up card image and stats from cards_config using the item's rarity
+          const cardRarity = (itemConfig.rarity || 'SECRET').toUpperCase();
           let imageUrl = '';
+          let attack = 0;
+          let weight = 0;
           try {
-            const secretDoc = await db
+            const rarityDoc = await db
               .collection('cards_config')
-              .findOne({ _id: 'SECRET' as any });
-            if (secretDoc?.items) {
-              const cards = Array.isArray(secretDoc.items) ? secretDoc.items : [];
-              const cerberus = cards.find(
-                (c: any) =>
-                  c.name === 'Luna Cerberus' ||
-                  c.name === 'luna_cerberus'
+              .findOne({ _id: cardRarity as any });
+            if (rarityDoc?.items) {
+              const cards = Array.isArray(rarityDoc.items) ? rarityDoc.items : [];
+              const found = cards.find(
+                (c: any) => c.name?.toLowerCase() === itemConfig.name?.toLowerCase()
               );
-              if (cerberus?.imageUrl) imageUrl = cerberus.imageUrl;
+              if (found) {
+                imageUrl = found.imageUrl || '';
+                attack = found.attack ?? 0;
+                weight = found.weight ?? 0;
+              }
             }
           } catch {}
 
@@ -324,10 +383,10 @@ export async function POST(request: Request) {
             discordId,
             {
               name: itemConfig.name,
-              rarity: 'SECRET',
-              attack: (itemConfig as any).attack ?? 500,
+              rarity: cardRarity,
+              attack,
               imageUrl,
-              weight: (itemConfig as any).weight ?? 0.3,
+              weight,
             },
             'Seluna'
           );
@@ -358,9 +417,10 @@ export async function POST(request: Request) {
           grantError = 'Bot token not configured';
           break;
         }
+        const roleId = itemConfig.roleId || SELUNA_FULL_MOON_ROLE_ID;
         try {
           const res = await fetch(
-            `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordId}/roles/${SELUNA_FULL_MOON_ROLE_ID}`,
+            `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordId}/roles/${roleId}`,
             {
               method: 'PUT',
               headers: {
@@ -384,7 +444,7 @@ export async function POST(request: Request) {
       }
 
       case 'tickets': {
-        await addTickets(discordId, (itemConfig as any).ticketCount ?? 10);
+        await addTickets(discordId, itemConfig.amount ?? 10);
         break;
       }
     }
@@ -404,7 +464,7 @@ export async function POST(request: Request) {
         vendorId: 'seluna',
         itemReceived: itemConfig.name,
         itemId: itemConfig.id,
-        itemType: itemConfig.type,
+        itemType,
         isDuplicate,
         refundAmount: refunded ? itemConfig.price : 0,
       },
@@ -415,7 +475,7 @@ export async function POST(request: Request) {
     const response = NextResponse.json({
       success: true,
       item: itemConfig.name,
-      itemType: itemConfig.type,
+      itemType,
       newBalance,
       isDuplicate,
       refunded,

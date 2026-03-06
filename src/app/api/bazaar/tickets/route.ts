@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getTicketPackage } from '@/lib/bazaar/stone-config';
-import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance, getDailySpending, DAILY_SPEND_LIMIT } from '@/lib/bazaar/lunari-ops';
+import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
 import { addTickets } from '@/lib/bazaar/ticket-ops';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
@@ -47,15 +47,6 @@ export async function POST(request: Request) {
     const balance = await getBalance(discordId);
     if (balance < pkg.price) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
-    }
-
-    // 3b. Daily spending limit
-    const dailySpent = await getDailySpending(discordId);
-    if (dailySpent + pkg.price > DAILY_SPEND_LIMIT) {
-      return NextResponse.json(
-        { error: `Daily spending limit reached (${DAILY_SPEND_LIMIT.toLocaleString()}L/day). Try again tomorrow.` },
-        { status: 429 }
-      );
     }
 
     // 4. Atomic deduct Lunari

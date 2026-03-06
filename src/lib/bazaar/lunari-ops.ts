@@ -177,37 +177,3 @@ export async function isStripeSessionProcessed(sessionId: string): Promise<boole
   return !!existing;
 }
 
-/**
- * Daily spending limit in Lunari (across all bazaar purchases).
- * Prevents users from draining their entire balance in a single session.
- */
-export const DAILY_SPEND_LIMIT = 50_000;
-
-/**
- * Get total Lunari spent today (UTC) by a user across all web bazaar purchases.
- * Only counts debit transactions (negative amounts) from the web source.
- */
-export async function getDailySpending(discordId: string): Promise<number> {
-  const db = await getDb();
-  const now = new Date();
-  const startOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-
-  const result = await db.collection('lunari_transactions').aggregate([
-    {
-      $match: {
-        discordId,
-        source: 'web',
-        amount: { $lt: 0 },
-        createdAt: { $gte: startOfDay },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalSpent: { $sum: { $abs: '$amount' } },
-      },
-    },
-  ]).toArray();
-
-  return result.length > 0 ? result[0].totalSpent : 0;
-}

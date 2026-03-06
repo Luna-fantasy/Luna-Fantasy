@@ -1,15 +1,16 @@
 // ── Bank Types ──
 
 export interface LoanRecord {
+  tier: number;
   amount: number;
-  interest: number;
-  duration: number;
-  takenAt: string;
-  dueDate: string;
   repaymentAmount: number;
+  interestRate: number;
+  isVIP: boolean;
+  dueDate: number;
   active: boolean;
-  overdue: boolean;
-  paidAt: string | null;
+  takenAt: number;
+  paidAt?: number;
+  overdue?: boolean;
 }
 
 export interface InvestmentRecord {

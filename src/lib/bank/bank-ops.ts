@@ -129,19 +129,18 @@ export async function createLoan(
 
   const interestRate = isVip ? LOAN_VIP_INTEREST_RATE : LOAN_INTEREST_RATE;
   const interest = Math.floor(tierAmount * interestRate);
-  const now = new Date();
-  const dueDate = new Date(now.getTime() + LOAN_DURATION_MS);
+  const now = Date.now();
 
   const loan: LoanRecord = {
+    tier: tierAmount,
     amount: tierAmount,
-    interest,
-    duration: LOAN_DURATION_MS,
-    takenAt: now.toISOString(),
-    dueDate: dueDate.toISOString(),
     repaymentAmount: tierAmount + interest,
+    interestRate,
+    isVIP: isVip,
+    dueDate: now + LOAN_DURATION_MS,
     active: true,
+    takenAt: now,
     overdue: false,
-    paidAt: null,
   };
 
   // Credit the loan amount to user
@@ -179,7 +178,7 @@ export async function repayLoan(
     ...loan,
     active: false,
     overdue: false,
-    paidAt: new Date().toISOString(),
+    paidAt: Date.now(),
   };
 
   const db = await getDb();

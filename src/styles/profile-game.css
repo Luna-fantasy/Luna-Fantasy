@@ -1707,6 +1707,60 @@ html[lang="ar"] .pvp-counter-val {
   text-align: center;
 }
 
+/* Nemesis */
+.pvp-nemesis {
+  width: 100%;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.pvp-nemesis-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #ef4444;
+  filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.3));
+}
+
+.pvp-nemesis-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pvp-nemesis-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(239, 68, 68, 0.4);
+}
+
+.pvp-nemesis-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pvp-nemesis-record {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.pvp-nemesis-w {
+  color: #4ade80;
+}
+
+.pvp-nemesis-l {
+  color: #ef4444;
+}
+
 /* ============================================
    LIGHTBOX
    ============================================ */

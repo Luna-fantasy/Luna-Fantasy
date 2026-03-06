@@ -8,26 +8,25 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'cardsPage' });
-  const showcase = await getTranslations({ locale, namespace: 'showcase' });
+  const t = await getTranslations({ locale, namespace: 'grandFantasyPage' });
 
-  const title = `${showcase('gameTitle')} | Luna`;
+  const title = `${t('heroTitle')} | Luna`;
   const description = t('subtitle');
 
   return {
     title,
     description,
     alternates: {
-      canonical: `https://lunarian.app/${locale}/luna-fantasy/`,
-      languages: { en: 'https://lunarian.app/en/luna-fantasy/', ar: 'https://lunarian.app/ar/luna-fantasy/' },
+      canonical: `https://lunarian.app/${locale}/grand-fantasy/`,
+      languages: { en: 'https://lunarian.app/en/grand-fantasy/', ar: 'https://lunarian.app/ar/grand-fantasy/' },
     },
     openGraph: {
       type: 'website',
       siteName: 'Luna',
-      url: `https://lunarian.app/${locale}/luna-fantasy/`,
+      url: `https://lunarian.app/${locale}/grand-fantasy/`,
       title,
       description,
-      images: [{ url: 'https://lunarian.app/images/og-image.png', width: 1200, height: 630, alt: 'Luna Fantasy Card Game' }],
+      images: [{ url: 'https://lunarian.app/images/og-image.png', width: 1200, height: 630, alt: 'Grand Fantasy Card Game' }],
       locale: locale === 'ar' ? 'ar_SA' : 'en_US',
     },
     twitter: {
@@ -39,11 +38,11 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export default async function LunaFantasyPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function GrandFantasyPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const cards = await getCardCatalog('lunaFantasy');
+  const cards = await getCardCatalog('grandFantasy');
 
   return (
     <CardsContent

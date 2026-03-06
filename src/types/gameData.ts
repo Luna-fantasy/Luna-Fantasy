@@ -34,6 +34,13 @@ export interface GameWins {
 export interface PvpRecord {
   wins: number;
   losses: number;
+  nemesis?: {
+    discordId: string;
+    name: string;
+    avatar: string | null;
+    winsAgainst: number;
+    lossesAgainst: number;
+  };
 }
 
 export interface InventoryItem {

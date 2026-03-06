@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getLuckboxTier, VALID_TIERS, generateCardStats } from '@/lib/bazaar/luckbox-config';
-import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance, getDailySpending, DAILY_SPEND_LIMIT } from '@/lib/bazaar/lunari-ops';
+import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
 import { weightedRandomDraw } from '@/lib/bazaar/weighted-random';
 import { userOwnsCard, addCardToUser } from '@/lib/bazaar/card-ops';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
@@ -55,15 +55,6 @@ export async function POST(request: Request) {
     console.log(`[luckbox] ${discordId} balance=${balance}, tier=${tier}, price=${tierConfig.price}`);
     if (balance < tierConfig.price) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
-    }
-
-    // 3b. Daily spending limit
-    const dailySpent = await getDailySpending(discordId);
-    if (dailySpent + tierConfig.price > DAILY_SPEND_LIMIT) {
-      return NextResponse.json(
-        { error: `Daily spending limit reached (${DAILY_SPEND_LIMIT.toLocaleString()}L/day). Try again tomorrow.` },
-        { status: 429 }
-      );
     }
 
     // 4. Draw random card from catalog

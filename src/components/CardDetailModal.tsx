@@ -110,12 +110,6 @@ export default function CardDetailModal({ card, onClose, actions }: CardDetailMo
                 <span className="card-detail-stat-value">{card.weight}</span>
               </div>
             )}
-            {card.source && (
-              <div className="card-detail-stat">
-                <span className="card-detail-stat-label">{t('cardDetail.source')}</span>
-                <span className="card-detail-stat-value">{card.source}</span>
-              </div>
-            )}
             {card.game && (
               <div className="card-detail-stat">
                 <span className="card-detail-stat-label">{t('cardDetail.game')}</span>

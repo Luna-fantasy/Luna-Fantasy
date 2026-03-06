@@ -18,6 +18,7 @@ const PAGES: Page[] = [
 
   // Games
   { path: '/luna-fantasy/', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/grand-fantasy/', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/faction-war/', changeFrequency: 'monthly', priority: 0.8 },
 
   // Economy

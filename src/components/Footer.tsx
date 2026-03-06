@@ -48,6 +48,7 @@ export function Footer() {
             <h4>{t('games')}</h4>
             <ul className="footer-links">
               <li><Link href="/luna-fantasy">{t('lunaFantasy')}</Link></li>
+              <li><Link href="/grand-fantasy">{t('grandFantasy')}</Link></li>
               <li><Link href="/faction-war">{t('factionWar')}</Link></li>
             </ul>
           </div>

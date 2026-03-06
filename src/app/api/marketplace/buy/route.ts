@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
-import { checkDebt, deductLunari, creditLunari, getBalance, logTransaction, getDailySpending, DAILY_SPEND_LIMIT } from '@/lib/bazaar/lunari-ops';
+import { checkDebt, deductLunari, creditLunari, getBalance, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { addCardToUser, userOwnsCard } from '@/lib/bazaar/card-ops';
 import { claimListing, revertClaim, getListingById } from '@/lib/bazaar/marketplace-ops';
 
@@ -81,13 +81,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
   }
 
-  // 9. Daily spending check
-  const dailySpent = await getDailySpending(discordId);
-  if (dailySpent + listing.price > DAILY_SPEND_LIMIT) {
-    return NextResponse.json({ error: 'Daily spending limit reached' }, { status: 429 });
-  }
-
-  // 10. Atomic claim — only one buyer succeeds
+  // 9. Atomic claim — only one buyer succeeds
   const claimed = await claimListing(listingId, discordId, buyerName);
   if (!claimed) {
     return NextResponse.json({ error: 'Listing already sold' }, { status: 409 });

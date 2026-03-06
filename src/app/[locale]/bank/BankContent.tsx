@@ -135,7 +135,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
 
   const handleTakeLoan = async (tier: number) => {
     try {
-      const data = await bankFetch('/api/bank/loan', 'POST', { tier, isVip: bankData.roles.isVip });
+      const data = await bankFetch('/api/bank/loan', 'POST', { tier, isVip });
       dispatchBalanceUpdate(data.newBalance);
       showResult('success', `${t('loanAction.loanGranted')} +${tier.toLocaleString()} ${t('currency')}`);
       await refetch();

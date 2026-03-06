@@ -23,10 +23,13 @@ export type Locale = 'en' | 'ar';
 
 export type CardRarity = 'common' | 'rare' | 'epic' | 'unique' | 'legendary' | 'secret' | 'mythical';
 
+export type CardGame = 'lunaFantasy' | 'grandFantasy' | 'lunaPairs';
+
 export interface Card {
   id: string;
   name: LocalizedString;
   rarity: CardRarity;
   imageUrl: string;
+  game?: CardGame;
   characterId?: string; // Link to character if this card represents one
 }

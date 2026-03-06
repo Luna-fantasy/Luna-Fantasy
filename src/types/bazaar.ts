@@ -13,6 +13,7 @@ export interface StoneConfig {
   name: string;
   weight: number;
   imageUrl: string;
+  sell_price: number;
 }
 
 export interface TicketPackage {
@@ -48,11 +49,13 @@ export interface LuckboxResponse {
 }
 
 export interface StoneboxResponse {
-  stone: {
+  gotStone: boolean;
+  stone?: {
     name: string;
     imageUrl: string;
   };
-  isDuplicate: boolean;
+  isDuplicate?: boolean;
+  sellPrice?: number;
   refundAmount: number;
   newBalance: number;
 }
@@ -136,6 +139,7 @@ export type RevealType = 'card' | 'stone';
 
 export interface RevealData {
   type: RevealType;
+  gotStone?: boolean;
   item: {
     name: string;
     imageUrl: string;
@@ -143,6 +147,7 @@ export interface RevealData {
     attack?: number;
   };
   isDuplicate: boolean;
+  sellPrice?: number;
   refundAmount?: number;
   newBalance: number;
   price?: number;
