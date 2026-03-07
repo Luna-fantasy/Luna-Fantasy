@@ -658,10 +658,10 @@
     "imageUrl": "https://assets.lunarian.app/characters/Lunarians/Dark%20Wizard.png"
   },
   {
-    "id": "druin",
+    "id": "druid",
     "name": {
-      "en": "Druin",
-      "ar": "Druin"
+      "en": "Druid",
+      "ar": "Druid"
     },
     "lore": {
       "ar": "صوت الغابة تحت ضوء القمر. يسيطر على الحياة والنمو. غضبه يغيّر الطبيعة.",
