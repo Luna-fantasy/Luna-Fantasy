@@ -70,8 +70,7 @@ const BG_FILENAME_MAP: Record<string, string> = {
 
 function getBackgroundUrl(bgId: string | undefined | null): string | null {
   if (!bgId || bgId === 'default') return null;
-  const filename = BG_FILENAME_MAP[bgId];
-  if (!filename) return null;
+  const filename = BG_FILENAME_MAP[bgId] || `${bgId}.png`;
   return `https://assets.lunarian.app/profiles/${filename}`;
 }
 
