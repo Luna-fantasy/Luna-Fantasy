@@ -27,7 +27,7 @@ const LORES = {
   // ── Beasts ──
   "Abyssal Leech": {
     en: "A blood-hungry leech from Luna's dark rivers that clings until nothing remains but bone.",
-    ar: "دودة دموية من أنهار لونا المظلمة، لا تترك ضحينها حتى لا يبقى منها إلا العظام.",
+    ar: "دودة دموية من أنهار لونا المظلمة، لا تترك ضحيتها حتى لا يبقى منها إلا العظام.",
   },
   "Bigfoot": {
     en: "A massive forest brute—shy by nature, but it turns savage the moment someone stares too long.",
@@ -127,7 +127,7 @@ const LORES = {
   },
   "Glacial Dragon": {
     en: "Asleep most of the time—when it wakes, a thousand beasts from the snowy forests become its feast.",
-    ar: "نائم معظم الوقت، وإذا استيقظ يصبح على الأقل 1000 حيوان من غابات لونا الثلجية وليمة له.",
+    ar: "نائم معظم الوقت، وإذا استيقظ على الأقل 1000 حيوان من غابات لونا الثلجية يصبحون وليمة له.",
   },
   "Infernal Dragon": {
     en: "A rare infernal breed from Luna's volcanic mountains—said to be among the oldest bloodlines.",
