@@ -43,7 +43,7 @@ export default async function LunaFantasyPage({ params }: { params: Promise<{ lo
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const cards = await getCardCatalog('lunaFantasy');
+  const cards = await getCardCatalog();
 
   return (
     <CardsContent

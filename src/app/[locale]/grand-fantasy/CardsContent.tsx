@@ -32,7 +32,7 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
   }
 
   // Build filters and rarity order from what actually exists
-  const allRarities: CardRarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'mythical'];
+  const allRarities: CardRarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'mythical'];
   const rarityOrder = allRarities.filter(r => cardsByRarity[r] && cardsByRarity[r]!.length > 0);
 
   const filters: { key: FilterKey; label: string }[] = [

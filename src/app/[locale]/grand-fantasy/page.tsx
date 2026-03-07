@@ -42,7 +42,8 @@ export default async function GrandFantasyPage({ params }: { params: Promise<{ l
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const cards = await getCardCatalog('grandFantasy');
+  const allCards = await getCardCatalog();
+  const cards = allCards.filter(c => c.rarity !== 'secret');
 
   return (
     <CardsContent
