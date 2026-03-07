@@ -136,7 +136,7 @@ function HomeContent() {
               <div className="media-glow media-glow-gold-bank"></div>
               <div className="media-frame">
                 <Image
-                  src="/images/hero-bank.jpeg"
+                  src="https://assets.lunarian.app/backgrounds/BankHero.png"
                   alt="Luna Bank"
                   width={500}
                   height={400}

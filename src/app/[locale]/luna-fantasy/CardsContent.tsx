@@ -47,7 +47,7 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
       <section className="cards-hero">
         <div className="cards-hero-bg">
           <Image
-            src="/images/luna-fantasy.png"
+            src="https://assets.lunarian.app/backgrounds/LunaFantasyHero.png"
             alt="Luna Fantasy Card Game"
             fill
             priority

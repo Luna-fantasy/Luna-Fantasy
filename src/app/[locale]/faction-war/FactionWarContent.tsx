@@ -10,7 +10,7 @@ import type { Locale } from '@/types';
 
 const R2_BASE = 'https://assets.lunarian.app/LunaPairs';
 function getFactionWarImageUrl(image: string) { return `${R2_BASE}/${image}`; }
-function getFactionWarBgUrl() { return `${R2_BASE}/LunaPairs_BG.png`; }
+function getFactionWarBgUrl() { return 'https://assets.lunarian.app/backgrounds/FactionWarHero.png'; }
 
 interface FactionWarContentProps {
   factions: FactionWarFaction[];

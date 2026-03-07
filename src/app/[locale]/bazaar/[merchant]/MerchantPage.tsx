@@ -8,6 +8,7 @@ import VendorKael from '../VendorKael';
 import VendorMeluna from '../VendorMeluna';
 import VendorZoldar from '../VendorZoldar';
 import VendorSeluna from '../VendorSeluna';
+import Image from 'next/image';
 import VendorBrimor from '../VendorBrimor';
 import VendorMells from '../VendorMells';
 import RevealModal from '../RevealModal';
@@ -115,7 +116,9 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
     <main>
       {/* Hero */}
       <section className="bazaar-hero">
-        <div className="bazaar-hero-bg" />
+        <div className="bazaar-hero-bg">
+          <Image src="https://assets.lunarian.app/backgrounds/BazaarHero.png" alt="Bazaar" fill priority className="bazaar-hero-bg-image" />
+        </div>
         <div className="bazaar-hero-content">
           <h1 className="bazaar-hero-title">{t(config.nameKey)}</h1>
           <p className="bazaar-hero-desc">{t(config.titleKey)}</p>

@@ -7,21 +7,30 @@
   text-align: center;
   padding: 120px 24px 48px;
   position: relative;
+  overflow: hidden;
 }
 
-.members-hero::before {
+.members-hero-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.members-hero-bg-image {
+  object-fit: cover;
+  object-position: center;
+}
+
+.members-hero::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 600px;
-  height: 400px;
-  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 50%, var(--bg-void));
   pointer-events: none;
 }
 
 .members-hero-title {
+  position: relative;
+  z-index: 1;
   font-family: 'Cinzel', serif;
   font-size: 42px;
   font-weight: 700;
@@ -33,6 +42,8 @@
 }
 
 .members-hero-subtitle {
+  position: relative;
+  z-index: 1;
   font-size: 15px;
   color: var(--text-muted);
   max-width: 480px;
@@ -41,6 +52,8 @@
 }
 
 .members-count-badge {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 6px;

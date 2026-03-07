@@ -424,7 +424,7 @@ export function BankContent({ data, locale }: BankContentProps) {
       {/* Hero Section */}
       <section className="bank-hero">
         <div className="bank-hero-bg">
-          <Image src="/images/hero-bank.jpeg" alt="Luna Bank" fill priority className="bank-hero-bg-image" />
+          <Image src="https://assets.lunarian.app/backgrounds/BankHero.png" alt="Luna Bank" fill priority className="bank-hero-bg-image" />
         </div>
         <div className="bank-hero-content">
           <h1 className="bank-hero-title">{t('title')}</h1>

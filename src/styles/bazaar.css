@@ -15,10 +15,11 @@
 .bazaar-hero-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg,
-    rgba(139, 92, 246, 0.15) 0%,
-    rgba(0, 212, 255, 0.1) 50%,
-    rgba(139, 92, 246, 0.1) 100%);
+}
+
+.bazaar-hero-bg-image {
+  object-fit: cover;
+  object-position: center;
 }
 
 .bazaar-hero-bg::after {

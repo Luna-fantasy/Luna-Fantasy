@@ -8,6 +8,7 @@ import { Link } from '@/i18n/routing';
 // import LunariStore from './LunariStore'; // hidden — Stripe not yet active
 import type { CatalogResponse } from '@/types/bazaar';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import Image from 'next/image';
 import LunariIcon from '@/components/LunariIcon';
 
 const MERCHANTS = [
@@ -113,7 +114,9 @@ export default function BazaarContent() {
     <main>
       {/* Hero */}
       <section className="bazaar-hero">
-        <div className="bazaar-hero-bg" />
+        <div className="bazaar-hero-bg">
+          <Image src="https://assets.lunarian.app/backgrounds/BazaarHero.png" alt="Bazaar" fill priority className="bazaar-hero-bg-image" />
+        </div>
         <div className="bazaar-hero-content">
           <h1 className="bazaar-hero-title">{t('title')}</h1>
           <p className="bazaar-hero-desc">{t('subtitle')}</p>
