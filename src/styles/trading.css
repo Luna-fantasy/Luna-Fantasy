@@ -4,13 +4,12 @@
 
 .trading-page {
   min-height: 100vh;
-  padding-top: 80px;
 }
 
 /* Hero */
 .trading-hero {
   position: relative;
-  padding: 48px 24px 32px;
+  padding: 120px 24px 48px;
   text-align: center;
   overflow: hidden;
 }
@@ -18,15 +17,23 @@
 .trading-hero-bg {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center top,
-    rgba(245, 158, 11, 0.1) 0%,
-    rgba(139, 92, 246, 0.04) 40%,
-    transparent 70%);
-  pointer-events: none;
+}
+
+.trading-hero-bg-image {
+  object-fit: cover;
+  object-position: center;
+}
+
+.trading-hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 50%, var(--bg-void));
 }
 
 .trading-hero-content {
   position: relative;
+  z-index: 1;
   max-width: var(--max-width);
   margin: 0 auto;
 }

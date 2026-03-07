@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { onBalanceUpdate, dispatchBalanceUpdate } from '@/lib/balance-events';
 
 const PRESET_AMOUNTS = [5_000, 10_000, 25_000, 50_000];
@@ -181,7 +182,9 @@ export default function TradingContent() {
     <div className="trading-page">
       {/* Hero */}
       <div className="trading-hero">
-        <div className="trading-hero-bg" />
+        <div className="trading-hero-bg">
+          <Image src="https://assets.lunarian.app/backgrounds/BankHero.png" alt="Trading" fill priority className="trading-hero-bg-image" />
+        </div>
         <div className="trading-hero-content">
           <h1 className="trading-hero-title">{t('title')}</h1>
           <p className="trading-hero-desc">{t('subtitle')}</p>

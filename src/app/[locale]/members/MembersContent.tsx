@@ -62,7 +62,7 @@ export default function MembersContent() {
   };
 
   return (
-    <div className="wrap">
+    <>
       {/* Hero */}
       <section className="members-hero">
         <div className="members-hero-bg">
@@ -82,6 +82,8 @@ export default function MembersContent() {
           </div>
         )}
       </section>
+
+    <div className="wrap">
 
       {/* Filters */}
       <div className="members-filters">
@@ -203,5 +205,6 @@ export default function MembersContent() {
         </>
       )}
     </div>
+    </>
   );
 }
