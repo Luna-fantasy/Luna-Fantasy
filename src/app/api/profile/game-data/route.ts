@@ -59,7 +59,7 @@ export async function GET(request: Request) {
         db.collection("stones").findOne({ _id: discordId as any }),
         db.collection("points").findOne({ _id: discordId as any }),
         db.collection("levels").findOne({ _id: discordId as any }),
-        db.collection("magic_wins").findOne({ _id: discordId as any }),
+        db.collection("game_wins").findOne({ id: discordId }),
         db.collection("nemesis").find({ _id: { $regex: discordId } as any }).toArray(),
         db.collection("inventory").findOne({ _id: discordId as any }),
         db.collection("tickets").findOne({ _id: discordId as any }),
@@ -110,15 +110,38 @@ export async function GET(request: Request) {
       };
     }
 
-    // Game wins — magic_wins collection is empty, stats now in profiles.data
+    // Game wins — game_wins collection: { id, luna_fantasy, grand_fantasy, faction_war }
+    // Bot wins — profiles collection: luna_fantasy.bot_games + grand_fantasy.bot_games + faction_war.bot_games
     let gameWins: GameWins | null = null;
-    if (profileDoc?.data) {
-      const pData = typeof profileDoc.data === 'object' ? profileDoc.data : {};
+    {
+      // Parse game_wins doc (handles old data-string format or new flat fields)
+      let wins: Record<string, number> = {};
+      if (magicWinsDoc) {
+        if (magicWinsDoc.data !== undefined) {
+          const raw = typeof magicWinsDoc.data === 'string' ? JSON.parse(magicWinsDoc.data) : magicWinsDoc.data;
+          wins = (typeof raw === 'object' && raw !== null) ? raw : {};
+        } else {
+          const { _id, id, ...rest } = magicWinsDoc;
+          wins = rest as Record<string, number>;
+        }
+      }
+
+      // Sum bot_games from profiles (each game stores { wins, draws, losses, bot_games })
+      let totalBotWins = 0;
+      if (profileDoc) {
+        const pDoc = profileDoc.data !== undefined
+          ? (typeof profileDoc.data === 'string' ? JSON.parse(profileDoc.data) : profileDoc.data) ?? {}
+          : profileDoc;
+        for (const game of ['luna_fantasy', 'grand_fantasy', 'faction_war'] as const) {
+          totalBotWins += (pDoc[game]?.bot_games ?? 0);
+        }
+      }
+
       gameWins = {
-        magic_cards: pData.magic_cards_wins ?? 0,
-        luna_pairs: pData.luna_pairs_wins ?? 0,
-        grand_fantasy: pData.grand_fantasy_wins ?? 0,
-        magic_bot: pData.magic_bot_wins ?? 0,
+        magic_cards: wins.luna_fantasy ?? 0,
+        luna_pairs: wins.faction_war ?? 0,
+        grand_fantasy: wins.grand_fantasy ?? 0,
+        bot_wins: totalBotWins,
       };
     }
 

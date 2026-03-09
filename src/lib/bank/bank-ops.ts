@@ -116,6 +116,9 @@ export async function createLoan(
     throw new Error('Invalid loan tier');
   }
 
+  // Fix inconsistent state before checking
+  await fixOverdueLoanState(userId);
+
   // Check preconditions
   const [activeLoan, hasDebt, level] = await Promise.all([
     getActiveLoan(userId),
@@ -159,9 +162,41 @@ export async function createLoan(
   return { loan, balanceAfter };
 }
 
+/**
+ * Fix inconsistent overdue loan state — mirrors Butler's fixOverdueLoanState.
+ * If a loan is marked overdue + inactive but never marked paid, and the user
+ * has no debt, it means the auto-deduction already paid it. Mark it as paid.
+ */
+export async function fixOverdueLoanState(userId: string): Promise<void> {
+  const loans = await getUserLoans(userId);
+  const debt = await getDebtAmount(userId);
+
+  const needsFix = loans.some((l) => l.overdue && !l.active && !l.paidAt);
+  if (!needsFix || debt > 0) return;
+
+  const fixed = loans.map((loan) => {
+    if (loan.overdue && !loan.active && !loan.paidAt) {
+      return { ...loan, overdue: false, paidAt: Date.now() };
+    }
+    return loan;
+  });
+
+  const db = await getDb();
+  await db.collection('system').updateOne(
+    { _id: `loans_${userId}` as any },
+    { $set: { value: fixed } }
+  );
+}
+
 export async function repayLoan(
   userId: string
 ): Promise<{ repaymentAmount: number; balanceAfter: number }> {
+  // Must pay debt before repaying loans — mirrors Butler logic
+  const debt = await getDebtAmount(userId);
+  if (debt > 0) throw new Error('You must pay your outstanding debt before repaying a loan');
+
+  await fixOverdueLoanState(userId);
+
   const loans = await getUserLoans(userId);
   const activeIndex = loans.findIndex((l) => l.active);
   if (activeIndex === -1) throw new Error('No active loan to repay');
@@ -187,13 +222,128 @@ export async function repayLoan(
     { $set: { value: loans } }
   );
 
-  // Clear any debt record
-  await clearDebt(userId);
-
-  // Add repayment to bank reserve
-  await addToBankReserve(repaymentAmount);
+  // Only add interest portion to bank reserve (not the full repayment)
+  const interestAmount = repaymentAmount - loan.amount;
+  if (interestAmount > 0) {
+    await addToBankReserve(interestAmount);
+  }
 
   return { repaymentAmount, balanceAfter: deductResult.balanceAfter };
+}
+
+/**
+ * Partial loan repayment — reduces the loan's repaymentAmount.
+ * Mirrors Butler's handleLoanModal logic.
+ */
+export async function partialRepayLoan(
+  userId: string,
+  amount: number
+): Promise<{ newRepaymentAmount: number; balanceAfter: number; fullyPaid: boolean }> {
+  const debt = await getDebtAmount(userId);
+  if (debt > 0) throw new Error('You must pay your outstanding debt before repaying a loan');
+
+  if (amount <= 0) throw new Error('Invalid payment amount');
+
+  await fixOverdueLoanState(userId);
+
+  const loans = await getUserLoans(userId);
+  const activeIndex = loans.findIndex((l) => l.active);
+  if (activeIndex === -1) throw new Error('No active loan to repay');
+
+  const loan = loans[activeIndex];
+  if (amount > loan.repaymentAmount) throw new Error('Amount exceeds loan repayment amount');
+
+  // Deduct from user
+  const deductResult = await deductLunari(userId, amount);
+  if (!deductResult.success) throw new Error('Insufficient balance');
+
+  const newRepaymentAmount = loan.repaymentAmount - amount;
+
+  // Add interest portion of this payment to bank reserve
+  const interestRate = loan.interestRate || LOAN_INTEREST_RATE;
+  const interestPortion = Math.floor(amount * (interestRate / (1 + interestRate)));
+  if (interestPortion > 0) {
+    await addToBankReserve(interestPortion);
+  }
+
+  const fullyPaid = newRepaymentAmount === 0;
+
+  if (fullyPaid) {
+    // Mark loan as fully paid
+    loans[activeIndex] = {
+      ...loan,
+      repaymentAmount: 0,
+      active: false,
+      overdue: false,
+      paidAt: Date.now(),
+    };
+  } else {
+    // Update remaining repayment amount
+    loans[activeIndex] = {
+      ...loan,
+      repaymentAmount: newRepaymentAmount,
+    };
+  }
+
+  const db = await getDb();
+  await db.collection('system').updateOne(
+    { _id: `loans_${userId}` as any },
+    { $set: { value: loans } }
+  );
+
+  return { newRepaymentAmount, balanceAfter: deductResult.balanceAfter, fullyPaid };
+}
+
+/**
+ * Pay outstanding debt (full or partial). Mirrors Butler's handleDebtConfirmation / handleDebtModal.
+ */
+export async function payDebt(
+  userId: string,
+  amount?: number
+): Promise<{ amountPaid: number; remainingDebt: number; balanceAfter: number }> {
+  const currentDebt = await getDebtAmount(userId);
+  if (currentDebt <= 0) throw new Error('No outstanding debt');
+
+  const amountToPay = amount ?? currentDebt; // default to full payment
+  if (amountToPay <= 0) throw new Error('Invalid payment amount');
+  if (amountToPay > currentDebt) throw new Error('Amount exceeds outstanding debt');
+
+  // Deduct from user
+  const deductResult = await deductLunari(userId, amountToPay);
+  if (!deductResult.success) throw new Error('Insufficient balance');
+
+  const remainingDebt = currentDebt - amountToPay;
+
+  if (remainingDebt === 0) {
+    // Fully paid — clear debt and mark overdue loans as paid
+    await clearDebt(userId);
+
+    const loans = await getUserLoans(userId);
+    const hasOverdueUnpaid = loans.some((l) => l.overdue && !l.paidAt);
+    if (hasOverdueUnpaid) {
+      const updated = loans.map((loan) => {
+        if (loan.overdue && !loan.paidAt) {
+          return { ...loan, active: false, overdue: false, paidAt: Date.now() };
+        }
+        return loan;
+      });
+      const db = await getDb();
+      await db.collection('system').updateOne(
+        { _id: `loans_${userId}` as any },
+        { $set: { value: updated } }
+      );
+    }
+  } else {
+    // Partial — update remaining debt
+    const db = await getDb();
+    await db.collection('system').updateOne(
+      { _id: `debt_${userId}` as any },
+      { $set: { value: remainingDebt } },
+      { upsert: true }
+    );
+  }
+
+  return { amountPaid: amountToPay, remainingDebt, balanceAfter: deductResult.balanceAfter };
 }
 
 // ── Investment ──

@@ -259,7 +259,14 @@
       "retry": "Try Again",
       "claimOnDiscord": "Claim on Discord",
       "depositNow": "Deposit now!",
-      "noEligibleRole": "You don't have an eligible role for monthly salary"
+      "noEligibleRole": "You don't have an eligible role for monthly salary",
+      "payDebtFull": "Pay Full Debt",
+      "payDebtPartial": "Partial Payment",
+      "payDebtConfirm": "Confirm Payment",
+      "enterAmount": "Enter amount...",
+      "cancel": "Cancel",
+      "debtFullyPaid": "Debt fully paid!",
+      "debtPartialPaid": "Partial debt payment made"
     },
     "loanAction": {
       "activeLoan": "Active Loan",
@@ -277,7 +284,10 @@
       "confirm": "Confirm",
       "cancel": "Cancel",
       "loanGranted": "Loan granted!",
-      "loanRepaid": "Loan repaid successfully!"
+      "loanRepaid": "Loan repaid successfully!",
+      "partialRepay": "Partial Payment",
+      "partialPaid": "Partial loan payment made",
+      "mustPayDebtFirst": "You must pay your outstanding debt before repaying this loan"
     },
     "investAction": {
       "title": "Investment",
@@ -391,7 +401,7 @@
     "privacy": "Privacy",
     "refund": "Refund Policy",
     "copyright": "© 2026 Luna",
-    "builtBy": "Buried Games"
+    "builtBy": "Buried Games Studio"
   },
   "termsPage": {
     "title": "Terms of Service",
@@ -525,10 +535,10 @@
       "messages": "Messages",
       "voiceTime": "Voice Hours",
       "gameWins": "Game Wins",
-      "magicCards": "Magic Cards",
+      "magicCards": "Luna Fantasy",
       "factionWar": "Faction War",
       "grandFantasy": "Grand Fantasy",
-      "magicBot": "Magic Bot",
+      "botWins": "Bot Wins",
       "wins": "wins",
       "pvp": "PvP Record",
       "pvpWins": "Wins",

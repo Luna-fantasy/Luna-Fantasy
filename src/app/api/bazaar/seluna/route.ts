@@ -41,12 +41,14 @@ export async function GET() {
     .collection('seluna_vendor')
     .findOne({ id: 'active_shops' });
 
-  // active_shops.value is keyed by channel ID — find any active shop
+  // active_shops.value is keyed by channel ID — find any active (non-dev) shop
   const shopsMap = shopDoc?.value ?? {};
   let startTime = 0;
   let endTime = 0;
   let nextAppearTime = 0;
-  for (const channelData of Object.values(shopsMap) as any[]) {
+  for (const [key, channelData] of Object.entries(shopsMap) as [string, any][]) {
+    // Skip dev shops (isDev flag or dev_ key prefix)
+    if (channelData?.isDev || key.startsWith('dev_')) continue;
     if (channelData?.startTime) {
       const st = typeof channelData.startTime === 'number' ? channelData.startTime : new Date(channelData.startTime).getTime();
       const et = typeof channelData.endTime === 'number' ? channelData.endTime : new Date(channelData.endTime).getTime();
@@ -80,8 +82,9 @@ export async function GET() {
       stockData = chData;
     }
   }
-  // If we found the specific active channel, prefer that
+  // If we found the specific active channel, prefer that (skip dev shops)
   for (const [chId, chData] of Object.entries(shopsMap) as [string, any][]) {
+    if (chData?.isDev || chId.startsWith('dev_')) continue;
     if (chData?.startTime) {
       const st = typeof chData.startTime === 'number' ? chData.startTime : new Date(chData.startTime).getTime();
       if (st === startTime && allStocks[chId]) {
@@ -256,7 +259,9 @@ export async function POST(request: Request) {
     const shopsMap = shopDoc?.value ?? {};
     let startTime = 0;
     let endTime = 0;
-    for (const channelData of Object.values(shopsMap) as any[]) {
+    for (const [key, channelData] of Object.entries(shopsMap) as [string, any][]) {
+      // Skip dev shops (isDev flag or dev_ key prefix)
+      if (channelData?.isDev || key.startsWith('dev_')) continue;
       if (channelData?.startTime) {
         const st = typeof channelData.startTime === 'number' ? channelData.startTime : new Date(channelData.startTime).getTime();
         const et = typeof channelData.endTime === 'number' ? channelData.endTime : new Date(channelData.endTime).getTime();
@@ -292,6 +297,7 @@ export async function POST(request: Request) {
     const allStocks = stocksDoc?.value ?? {};
     let activeChannelId: string | null = null;
     for (const [chId, chData] of Object.entries(shopsMap) as [string, any][]) {
+      if (chData?.isDev || chId.startsWith('dev_')) continue;
       if (chData?.startTime) {
         const st = typeof chData.startTime === 'number' ? chData.startTime : new Date(chData.startTime).getTime();
         if (st === startTime) { activeChannelId = chId; break; }

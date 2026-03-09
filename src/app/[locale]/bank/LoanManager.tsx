@@ -16,6 +16,7 @@ interface LoanManagerProps {
   userAvatar?: string | null;
   onTakeLoan: (tier: number) => Promise<void>;
   onRepayLoan: () => Promise<void>;
+  onPartialRepayLoan: (amount: number) => Promise<void>;
 }
 
 function formatNumber(n: number): string {
@@ -39,12 +40,14 @@ function formatCountdownDays(dueDate: number): { text: string; overdue: boolean 
   return { text: `${hours}h`, overdue: false };
 }
 
-export function LoanManager({ activeLoan, level, debt, isVip, balance, userName, userAvatar, onTakeLoan, onRepayLoan }: LoanManagerProps) {
+export function LoanManager({ activeLoan, level, debt, isVip, balance, userName, userAvatar, onTakeLoan, onRepayLoan, onPartialRepayLoan }: LoanManagerProps) {
   const t = useTranslations('bankPage');
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dueCountdown, setDueCountdown] = useState({ text: '', overdue: false });
+  const [showPartialPay, setShowPartialPay] = useState(false);
+  const [partialAmount, setPartialAmount] = useState('');
 
   useEffect(() => {
     if (!activeLoan) return;
@@ -73,6 +76,21 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
     setLoading(true);
     try {
       await onRepayLoan();
+      setShowPartialPay(false);
+      setPartialAmount('');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePartialRepay = async () => {
+    const amount = parseInt(partialAmount);
+    if (loading || isNaN(amount) || amount <= 0) return;
+    setLoading(true);
+    try {
+      await onPartialRepayLoan(amount);
+      setShowPartialPay(false);
+      setPartialAmount('');
     } finally {
       setLoading(false);
     }
@@ -104,7 +122,7 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
                 </div>
                 <div className="active-loan-stat">
                   <span className="active-loan-stat-label">{t('loanAction.interest')}</span>
-                  <span className="active-loan-stat-value interest">{(activeLoan.repaymentAmount - activeLoan.amount).toLocaleString()}</span>
+                  <span className="active-loan-stat-value interest">{Math.floor(activeLoan.amount * (activeLoan.interestRate || 0.20)).toLocaleString()}</span>
                 </div>
                 <div className="active-loan-stat">
                   <span className="active-loan-stat-label">{t('loanAction.totalDue')}</span>
@@ -125,14 +143,60 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
                 />
               </div>
 
-              <button
-                className={`section-action-btn repay-btn ${dueCountdown.overdue ? 'urgent' : ''}`}
-                onClick={handleRepay}
-                disabled={loading || balance < activeLoan.repaymentAmount}
-              >
-                {loading ? t('dashboard.processing') : `${t('loanAction.repay')} (${activeLoan.repaymentAmount.toLocaleString()} ${t('currency')})`}
-              </button>
-              {balance < activeLoan.repaymentAmount && (
+              {debt > 0 && (
+                <div className="loan-debt-block">
+                  <span className="loan-warning-icon">!</span>
+                  <span>{t('loanAction.mustPayDebtFirst')}</span>
+                </div>
+              )}
+
+              {!showPartialPay ? (
+                <div className="loan-repay-buttons">
+                  <button
+                    className={`section-action-btn repay-btn ${dueCountdown.overdue ? 'urgent' : ''}`}
+                    onClick={handleRepay}
+                    disabled={loading || balance < activeLoan.repaymentAmount || debt > 0}
+                  >
+                    {loading ? t('dashboard.processing') : `${t('loanAction.repay')} (${activeLoan.repaymentAmount.toLocaleString()} ${t('currency')})`}
+                  </button>
+                  <button
+                    className="section-action-btn partial-pay-btn"
+                    onClick={() => setShowPartialPay(true)}
+                    disabled={loading || balance <= 0 || debt > 0}
+                  >
+                    {t('loanAction.partialRepay')}
+                  </button>
+                </div>
+              ) : (
+                <div className="loan-partial-form">
+                  <input
+                    type="number"
+                    className="loan-partial-input"
+                    value={partialAmount}
+                    onChange={(e) => setPartialAmount(e.target.value)}
+                    placeholder={t('dashboard.enterAmount')}
+                    min={1}
+                    max={Math.min(activeLoan.repaymentAmount, balance)}
+                  />
+                  <div className="loan-repay-buttons">
+                    <button
+                      className="section-action-btn repay-btn"
+                      onClick={handlePartialRepay}
+                      disabled={loading || !partialAmount || parseInt(partialAmount) <= 0 || parseInt(partialAmount) > activeLoan.repaymentAmount || parseInt(partialAmount) > balance}
+                    >
+                      {loading ? t('dashboard.processing') : t('dashboard.payDebtConfirm')}
+                    </button>
+                    <button
+                      className="section-action-btn cancel-btn"
+                      onClick={() => { setShowPartialPay(false); setPartialAmount(''); }}
+                      disabled={loading}
+                    >
+                      {t('dashboard.cancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {balance < activeLoan.repaymentAmount && debt === 0 && (
                 <p className="loan-insufficient">{t('loanAction.insufficientBalance')}</p>
               )}
             </div>

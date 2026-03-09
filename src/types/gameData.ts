@@ -28,7 +28,7 @@ export interface GameWins {
   magic_cards?: number;
   luna_pairs?: number;
   grand_fantasy?: number;
-  magic_bot?: number;
+  bot_wins?: number;
 }
 
 export interface PvpRecord {

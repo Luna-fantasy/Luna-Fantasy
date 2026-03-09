@@ -155,6 +155,30 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
     }
   };
 
+  const handlePartialRepayLoan = async (amount: number) => {
+    try {
+      const data = await bankFetch('/api/bank/loan', 'PUT', { amount });
+      dispatchBalanceUpdate(data.newBalance);
+      showResult('success', data.fullyPaid ? t('loanAction.loanRepaid') : `${t('loanAction.partialPaid')} -${amount.toLocaleString()} ${t('currency')}`);
+      await refetch();
+    } catch (err: any) {
+      showResult('error', err.message);
+    }
+  };
+
+  const handlePayDebt = async (amount?: number) => {
+    try {
+      const data = await bankFetch('/api/bank/debt', 'POST', { amount: amount ?? null });
+      dispatchBalanceUpdate(data.newBalance);
+      showResult('success', data.remainingDebt === 0
+        ? t('dashboard.debtFullyPaid')
+        : `${t('dashboard.debtPartialPaid')} -${data.amountPaid.toLocaleString()} ${t('currency')}`);
+      await refetch();
+    } catch (err: any) {
+      showResult('error', err.message);
+    }
+  };
+
   const handleDeposit = async (amount: number) => {
     try {
       const data = await bankFetch('/api/bank/investment', 'POST', { amount });
@@ -191,6 +215,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
         balance={bankData.balance}
         debt={bankData.debt}
         level={bankData.level}
+        onPayDebt={handlePayDebt}
       />
 
       {/* Salary Section */}
@@ -224,6 +249,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
         userAvatar={session?.user?.image}
         onTakeLoan={handleTakeLoan}
         onRepayLoan={handleRepayLoan}
+        onPartialRepayLoan={handlePartialRepayLoan}
       />
 
       {/* Investment Section */}

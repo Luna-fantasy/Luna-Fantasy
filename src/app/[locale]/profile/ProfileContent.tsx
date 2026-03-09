@@ -452,7 +452,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
               { key: 'magic_cards', label: t('playerStats.magicCards'), color: '#00d4ff', icon: <><rect x="2" y="3" width="20" height="18" rx="2" /><path d="M8 7h8M8 12h8" /></> },
               { key: 'luna_pairs', label: t('playerStats.factionWar'), color: '#8b5cf6', icon: <><rect x="1" y="3" width="9" height="13" rx="1" /><rect x="14" y="3" width="9" height="13" rx="1" /></> },
               { key: 'grand_fantasy', label: t('playerStats.grandFantasy'), color: '#ffd700', icon: <polygon points="12 2 15 9 22 9 17 14 19 22 12 17 5 22 7 14 2 9 9 9" /> },
-              { key: 'magic_bot', label: t('playerStats.magicBot'), color: '#4ade80', icon: <><rect x="3" y="4" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><circle cx="15" cy="10" r="1.5" /><path d="M9 14h6" /></> },
+              { key: 'bot_wins', label: t('playerStats.botWins'), color: '#4ade80', icon: <><rect x="3" y="4" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" /><circle cx="15" cy="10" r="1.5" /><path d="M9 14h6" /></> },
             ] as const).map((g) => {
               const count = (gameData?.gameWins as any)?.[g.key] ?? 0;
               return (
@@ -796,6 +796,8 @@ function AchievementsSection({
   isLoading: boolean;
 }) {
   const t = useTranslations('profilePage');
+  const [viewingBadge, setViewingBadge] = useState<typeof BADGE_DEFS[number] | null>(null);
+  const [viewingDate, setViewingDate] = useState<string | null>(null);
 
   const earnedCount = useMemo(() => {
     if (!badges) return 0;
@@ -830,6 +832,8 @@ function AchievementsSection({
               key={badge.id}
               className={`achievement-card ${isEarned ? 'achievement-card-earned' : 'achievement-card-locked'}`}
               title={isEarned ? t('achievements.earnedOn', { date: earnedDate! }) : badge.desc}
+              onClick={() => { setViewingBadge(badge); setViewingDate(earnedDate); }}
+              style={{ cursor: 'pointer' }}
             >
               <div className="achievement-image-wrap">
                 <Image
@@ -857,6 +861,31 @@ function AchievementsSection({
           );
         })}
       </div>
+
+      {/* Achievement lightbox */}
+      {viewingBadge && (
+        <div className="achievement-lightbox" onClick={() => setViewingBadge(null)}>
+          <div className="achievement-lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <button className="achievement-lightbox-close" onClick={() => setViewingBadge(null)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+            <Image
+              src={`https://assets.lunarian.app/badges/${viewingBadge.image}`}
+              alt={viewingBadge.name}
+              width={280}
+              height={280}
+              className="achievement-lightbox-image"
+            />
+            <h3 className="achievement-lightbox-name">{viewingBadge.name}</h3>
+            <p className="achievement-lightbox-desc">{viewingBadge.desc}</p>
+            {viewingDate && (
+              <span className="achievement-lightbox-date">{t('achievements.earnedOn', { date: viewingDate })}</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -259,7 +259,14 @@
       "retry": "حاول مجدداً",
       "claimOnDiscord": "استلم في الديسكورد",
       "depositNow": "أودع الآن!",
-      "noEligibleRole": "ليس لديك دور مؤهل للراتب الشهري"
+      "noEligibleRole": "ليس لديك دور مؤهل للراتب الشهري",
+      "payDebtFull": "سداد الدين بالكامل",
+      "payDebtPartial": "دفع جزئي",
+      "payDebtConfirm": "تأكيد الدفع",
+      "enterAmount": "أدخل المبلغ...",
+      "cancel": "إلغاء",
+      "debtFullyPaid": "تم سداد الديون بالكامل!",
+      "debtPartialPaid": "تم دفع مبلغ جزئي من الدين"
     },
     "loanAction": {
       "activeLoan": "قرض نشط",
@@ -277,7 +284,10 @@
       "confirm": "تأكيد",
       "cancel": "إلغاء",
       "loanGranted": "تم منح القرض!",
-      "loanRepaid": "تم سداد القرض بنجاح!"
+      "loanRepaid": "تم سداد القرض بنجاح!",
+      "partialRepay": "سداد جزئي",
+      "partialPaid": "تم دفع مبلغ جزئي من القرض",
+      "mustPayDebtFirst": "يجب سداد ديونك المتأخرة قبل سداد القرض"
     },
     "investAction": {
       "title": "الاستثمار",
@@ -392,7 +402,7 @@
     "privacy": "الخصوصية",
     "refund": "سياسة الاسترداد",
     "copyright": "© 2026 لونا",
-    "builtBy": "Buried Games"
+    "builtBy": "Buried Games Studio"
   },
   "termsPage": {
     "title": "شروط الاستخدام",
@@ -526,10 +536,10 @@
       "messages": "الرسائل",
       "voiceTime": "ساعات الصوت",
       "gameWins": "انتصارات الألعاب",
-      "magicCards": "بطاقات السحر",
+      "magicCards": "لونا فانتسي",
       "factionWar": "حرب الفصائل",
       "grandFantasy": "جراند فانتسي",
-      "magicBot": "بوت السحر",
+      "botWins": "انتصارات البوت",
       "wins": "انتصارات",
       "pvp": "سجل المواجهات",
       "pvpWins": "انتصارات",

@@ -1073,6 +1073,139 @@
   50% { box-shadow: 0 0 20px 4px rgba(239, 68, 68, 0.15); }
 }
 
+/* Debt payment section */
+.bank-debt-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bank-debt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bank-debt-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.debt-pay-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.debt-pay-btn.full {
+  background: #ef4444;
+  color: #fff;
+}
+
+.debt-pay-btn.full:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.debt-pay-btn.partial {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.debt-pay-btn.partial:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.debt-pay-btn.cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+.debt-pay-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bank-debt-partial-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.debt-partial-input {
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.debt-partial-input:focus {
+  border-color: #ef4444;
+}
+
+/* Loan partial payment */
+.loan-repay-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.loan-partial-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.loan-partial-input {
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.loan-partial-input:focus {
+  border-color: var(--accent);
+}
+
+.partial-pay-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.partial-pay-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-secondary) !important;
+}
+
+.loan-debt-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* Result Banner */
 .bank-result-banner {
   display: flex;
