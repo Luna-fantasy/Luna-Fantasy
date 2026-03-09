@@ -66,7 +66,7 @@ export default function MembersContent() {
       {/* Hero */}
       <section className="members-hero">
         <div className="members-hero-bg">
-          <Image src="https://assets.lunarian.app/backgrounds/MembersHero.png" alt="Members" fill priority className="members-hero-bg-image" />
+          <Image src="https://assets.lunarian.app/backgrounds/Members_Hero.png" alt="Members" fill priority className="members-hero-bg-image" />
         </div>
         <h1 className="members-hero-title">{t('title')}</h1>
         <p className="members-hero-subtitle">{t('subtitle')}</p>
