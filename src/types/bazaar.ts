@@ -100,6 +100,7 @@ export type TransactionType =
   | 'bank_daily'
   | 'bank_loan_taken'
   | 'bank_loan_repaid'
+  | 'bank_loan_partial_repaid'
   | 'bank_investment_deposit'
   | 'bank_investment_withdraw'
   | 'bank_insurance'
@@ -110,7 +111,8 @@ export type TransactionType =
   | 'trade_loss'
   | 'seluna_purchase'
   | 'brimor_purchase'
-  | 'mells_purchase';
+  | 'mells_purchase'
+  | 'swap_received';
 
 export interface TransactionRecord {
   _id?: string;
