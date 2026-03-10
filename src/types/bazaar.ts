@@ -103,6 +103,7 @@ export type TransactionType =
   | 'bank_investment_deposit'
   | 'bank_investment_withdraw'
   | 'bank_insurance'
+  | 'bank_debt_paid'
   | 'marketplace_buy'
   | 'marketplace_sell'
   | 'trade_win'
