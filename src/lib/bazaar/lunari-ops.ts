@@ -1,5 +1,6 @@
 import clientPromise from '@/lib/mongodb';
 import type { TransactionRecord } from '@/types/bazaar';
+import { sendTransactionEmbed } from '@/lib/admin/discord-logger';
 
 function getDb() {
   return clientPromise.then((client) => client.db('Database'));
@@ -159,11 +160,21 @@ export async function checkDebt(discordId: string): Promise<boolean> {
 }
 
 /**
- * Log a transaction to lunari_transactions.
+ * Log a transaction to the appropriate collection based on type.
+ * card_* → cards_transactions, stone_* → stones_transactions, else → lunari_transactions
  */
 export async function logTransaction(record: Omit<TransactionRecord, '_id'>): Promise<void> {
   const db = await getDb();
-  await db.collection('lunari_transactions').insertOne(record);
+
+  let collection = 'lunari_transactions';
+  if (record.type.startsWith('card_') || record.type === 'luckbox_spend') collection = 'cards_transactions';
+  else if (record.type.startsWith('stone_') || record.type === 'stonebox_spend') collection = 'stones_transactions';
+
+  await db.collection(collection).insertOne(record);
+
+  if (record.source === 'web') {
+    void sendTransactionEmbed(record).catch(() => {});
+  }
 }
 
 /**
