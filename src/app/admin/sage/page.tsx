@@ -20,6 +20,7 @@ interface SageSettings {
   googleModel: string;
   openrouterModel: string;
   webSearch: boolean;
+  imageGeneration: boolean;
   threadSlowmode: number;
   threadWelcomeMessage: string;
   panelTitle: string;
@@ -38,6 +39,7 @@ const DEFAULT_SETTINGS: SageSettings = {
   googleModel: 'gemini-2.5-flash',
   openrouterModel: 'anthropic/claude-3.5-sonnet:online',
   webSearch: false,
+  imageGeneration: false,
   threadSlowmode: 0,
   threadWelcomeMessage: '',
   panelTitle: '',
@@ -73,29 +75,42 @@ export default function SagePage() {
 
   const { toast } = useToast();
 
-  // Fetch config
+  // Fetch config — API returns flat field names, map to local state
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/config/sage');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const sections = data.sections || {};
+      const s = data.sections || {};
 
-      if (sections.settings) {
-        const s = { ...DEFAULT_SETTINGS, ...sections.settings };
-        setSettings(s);
-        setSettingsOriginal(s);
-      }
-      if (sections.system_prompt !== undefined) {
-        const prompt = typeof sections.system_prompt === 'string' ? sections.system_prompt : '';
+      const settingsData: SageSettings = {
+        provider: s.provider ?? DEFAULT_SETTINGS.provider,
+        googleModel: s.google_model ?? DEFAULT_SETTINGS.googleModel,
+        openrouterModel: s.openrouter_model ?? DEFAULT_SETTINGS.openrouterModel,
+        webSearch: s.enable_search ?? DEFAULT_SETTINGS.webSearch,
+        imageGeneration: s.enable_image_generation ?? DEFAULT_SETTINGS.imageGeneration,
+        threadSlowmode: s.thread_slowmode ?? DEFAULT_SETTINGS.threadSlowmode,
+        threadWelcomeMessage: s.thread_welcome ?? DEFAULT_SETTINGS.threadWelcomeMessage,
+        panelTitle: s.panel_title ?? DEFAULT_SETTINGS.panelTitle,
+        panelDescription: s.panel_description ?? DEFAULT_SETTINGS.panelDescription,
+        panelImageUrl: s.panel_image ?? DEFAULT_SETTINGS.panelImageUrl,
+      };
+      setSettings(settingsData);
+      setSettingsOriginal(settingsData);
+
+      if (s.system_prompt !== undefined) {
+        const prompt = typeof s.system_prompt === 'string' ? s.system_prompt : '';
         setSystemPrompt(prompt);
         setSystemPromptOriginal(prompt);
       }
-      if (sections.privileges) {
-        const p = { ...DEFAULT_PRIVILEGES, ...sections.privileges };
-        setPrivileges(p);
-        setPrivilegesOriginal(p);
-      }
+
+      const privData: SagePrivileges = {
+        lunarianAccess: s.lunarian_access ?? DEFAULT_PRIVILEGES.lunarianAccess,
+        lunarianRoleId: s.lunarian_role_id ?? DEFAULT_PRIVILEGES.lunarianRoleId,
+        privilegedRoles: s.privileged_roles ?? DEFAULT_PRIVILEGES.privilegedRoles,
+      };
+      setPrivileges(privData);
+      setPrivilegesOriginal(privData);
     } catch {
       toast('Failed to load Sage config. Try refreshing.', 'error');
     } finally {
@@ -113,14 +128,45 @@ export default function SagePage() {
   const privilegesChanged = JSON.stringify(privileges) !== JSON.stringify(privilegesOriginal);
   const hasChanges = settingsChanged || systemPromptChanged || privilegesChanged;
 
-  // Save helper — saves only changed sections
+  // Save helper — sends individual field PUTs to match API's per-field design
   async function saveConfig() {
     setSaving(true);
+    const toSave: Array<{ section: string; value: any }> = [];
+    const saved: string[] = [];
     try {
-      const toSave: Array<{ section: string; value: any }> = [];
-      if (settingsChanged) toSave.push({ section: 'settings', value: settings });
-      if (systemPromptChanged) toSave.push({ section: 'system_prompt', value: systemPrompt });
-      if (privilegesChanged) toSave.push({ section: 'privileges', value: privileges });
+      if (settingsChanged) {
+        if (settings.provider !== settingsOriginal.provider)
+          toSave.push({ section: 'provider', value: settings.provider });
+        if (settings.googleModel !== settingsOriginal.googleModel)
+          toSave.push({ section: 'google_model', value: settings.googleModel });
+        if (settings.openrouterModel !== settingsOriginal.openrouterModel)
+          toSave.push({ section: 'openrouter_model', value: settings.openrouterModel });
+        if (settings.webSearch !== settingsOriginal.webSearch)
+          toSave.push({ section: 'enable_search', value: settings.webSearch });
+        if (settings.imageGeneration !== settingsOriginal.imageGeneration)
+          toSave.push({ section: 'enable_image_generation', value: settings.imageGeneration });
+        if (settings.threadSlowmode !== settingsOriginal.threadSlowmode)
+          toSave.push({ section: 'thread_slowmode', value: settings.threadSlowmode });
+        if (settings.threadWelcomeMessage !== settingsOriginal.threadWelcomeMessage)
+          toSave.push({ section: 'thread_welcome', value: settings.threadWelcomeMessage });
+        if (settings.panelTitle !== settingsOriginal.panelTitle)
+          toSave.push({ section: 'panel_title', value: settings.panelTitle });
+        if (settings.panelDescription !== settingsOriginal.panelDescription)
+          toSave.push({ section: 'panel_description', value: settings.panelDescription });
+        if (settings.panelImageUrl !== settingsOriginal.panelImageUrl)
+          toSave.push({ section: 'panel_image', value: settings.panelImageUrl });
+      }
+      if (systemPromptChanged) {
+        toSave.push({ section: 'system_prompt', value: systemPrompt });
+      }
+      if (privilegesChanged) {
+        if (privileges.lunarianAccess !== privilegesOriginal.lunarianAccess)
+          toSave.push({ section: 'lunarian_access', value: privileges.lunarianAccess });
+        if (privileges.lunarianRoleId !== privilegesOriginal.lunarianRoleId)
+          toSave.push({ section: 'lunarian_role_id', value: privileges.lunarianRoleId });
+        if (JSON.stringify(privileges.privilegedRoles) !== JSON.stringify(privilegesOriginal.privilegedRoles))
+          toSave.push({ section: 'privileged_roles', value: privileges.privilegedRoles });
+      }
 
       for (const { section, value } of toSave) {
         const res = await fetch('/api/admin/config/sage', {
@@ -132,6 +178,7 @@ export default function SagePage() {
           const data = await res.json();
           throw new Error(data.error || `Failed to save ${section}`);
         }
+        saved.push(section);
       }
 
       if (settingsChanged) setSettingsOriginal({ ...settings });
@@ -140,7 +187,10 @@ export default function SagePage() {
 
       toast('Saved! Changes take effect within 30 seconds.', 'success');
     } catch (err: any) {
-      toast(err.message, 'error');
+      const msg = saved.length > 0
+        ? `Saved ${saved.length} of ${toSave.length} fields, then failed: ${err.message}. Click Save again to retry.`
+        : err.message;
+      toast(msg, 'error');
     } finally {
       setSaving(false);
     }
@@ -250,12 +300,23 @@ export default function SagePage() {
                 <span className="admin-number-input-desc">Model ID for OpenRouter API</span>
               </div>
             </div>
-            <div style={{ marginTop: '12px' }}>
+            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <ToggleSwitch
                 label="Web Search"
                 checked={settings.webSearch}
                 onChange={(v) => setSettings({ ...settings, webSearch: v })}
               />
+              <ToggleSwitch
+                label="Image Generation"
+                checked={settings.imageGeneration}
+                onChange={(v) => setSettings({ ...settings, imageGeneration: v })}
+              />
+              {settings.imageGeneration && (
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Image generation and web search cannot be used simultaneously per request.
+                  Search is used by default; image generation activates when users ask to create images.
+                </span>
+              )}
             </div>
             <BotBadge bot="sage" />
           </ConfigSection>

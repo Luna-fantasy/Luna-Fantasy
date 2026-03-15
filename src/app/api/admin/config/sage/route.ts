@@ -8,8 +8,8 @@ import clientPromise from '@/lib/mongodb';
 const DB_NAME = 'Database';
 
 const ALLOWED_SECTIONS = new Set([
-  'provider', 'model', 'google_model', 'openrouter_model',
-  'enable_search', 'thread_slowmode',
+  'provider', 'google_model', 'openrouter_model',
+  'enable_search', 'enable_image_generation', 'thread_slowmode',
   'thread_welcome', 'panel_title', 'panel_description', 'panel_image',
   'system_prompt', 'privileged_roles', 'lunarian_role_id', 'lunarian_access',
   'all_known_roles',
@@ -18,10 +18,10 @@ const ALLOWED_SECTIONS = new Set([
 // Maps dashboard section names → bot_config document _id + data field path
 const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   provider:           { docId: 'sage_settings', field: 'provider' },
-  model:              { docId: 'sage_settings', field: 'model' },
   google_model:       { docId: 'sage_settings', field: 'google_model' },
   openrouter_model:   { docId: 'sage_settings', field: 'openrouter_model' },
   enable_search:      { docId: 'sage_settings', field: 'enable_search' },
+  enable_image_generation: { docId: 'sage_settings', field: 'enable_image_generation' },
   thread_slowmode:    { docId: 'sage_settings', field: 'thread_slowmode' },
   thread_welcome:     { docId: 'sage_settings', field: 'thread_welcome' },
   panel_title:        { docId: 'sage_settings', field: 'panel_title' },
@@ -54,10 +54,10 @@ export async function GET() {
     // Settings
     if (settings?.data) {
       sections.provider = settings.data.provider;
-      sections.model = settings.data.model;
       sections.google_model = settings.data.google_model;
       sections.openrouter_model = settings.data.openrouter_model;
       sections.enable_search = settings.data.enable_search;
+      sections.enable_image_generation = settings.data.enable_image_generation;
       sections.thread_slowmode = settings.data.thread_slowmode;
       sections.thread_welcome = settings.data.thread_welcome;
       sections.panel_title = settings.data.panel_title;
