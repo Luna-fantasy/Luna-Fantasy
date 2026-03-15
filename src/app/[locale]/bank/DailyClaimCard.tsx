@@ -2,13 +2,14 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
-import { DAILY_COOLDOWN_MS } from '@/lib/bank/bank-config';
-
 interface DailyClaimCardProps {
   lastClaimed: number | null;
   isVip: boolean;
   onClaim: () => Promise<void>;
   disabled?: boolean;
+  dailyBase?: number;
+  vipBonus?: number;
+  cooldownMs?: number;
 }
 
 function formatCountdown(ms: number): string {
@@ -19,16 +20,23 @@ function formatCountdown(ms: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export function DailyClaimCard({ lastClaimed, isVip, onClaim, disabled }: DailyClaimCardProps) {
+export function DailyClaimCard({ lastClaimed, isVip, onClaim, disabled, dailyBase, vipBonus, cooldownMs }: DailyClaimCardProps) {
   const t = useTranslations('bankPage');
+
+  const DAILY_BASE_DEFAULT = 3_000;
+  const DAILY_VIP_BONUS_DEFAULT = 2_000;
+  const DAILY_COOLDOWN_DEFAULT = 86_400_000;
+  const base = dailyBase ?? DAILY_BASE_DEFAULT;
+  const bonus = vipBonus ?? DAILY_VIP_BONUS_DEFAULT;
+  const cooldown = cooldownMs ?? DAILY_COOLDOWN_DEFAULT;
   const [remaining, setRemaining] = useState(0);
   const [claiming, setClaiming] = useState(false);
 
   const calcRemaining = useCallback(() => {
     if (!lastClaimed) return 0;
     const elapsed = Date.now() - lastClaimed;
-    return Math.max(0, DAILY_COOLDOWN_MS - elapsed);
-  }, [lastClaimed]);
+    return Math.max(0, cooldown - elapsed);
+  }, [lastClaimed, cooldown]);
 
   useEffect(() => {
     setRemaining(calcRemaining());
@@ -65,13 +73,13 @@ export function DailyClaimCard({ lastClaimed, isVip, onClaim, disabled }: DailyC
       </div>
       <p className="salary-desc">{t('salary.daily.desc')}</p>
       <div className="salary-amount">
-        <span className="salary-value">3,000</span>
+        <span className="salary-value">{base.toLocaleString('en-US')}</span>
         <span className="salary-currency">{t('currency')}</span>
       </div>
       {isVip && (
         <div className="salary-bonus">
           <span className="bonus-icon">+</span>
-          <span>{t('salary.daily.vipBonus')}: +2,000 {t('currency')}</span>
+          <span>{t('salary.daily.vipBonus')}: +{bonus.toLocaleString('en-US')} {t('currency')}</span>
         </div>
       )}
       {!isVip && (

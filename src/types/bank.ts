@@ -31,6 +31,24 @@ export interface RoleClassification {
   roleIds: string[];
 }
 
+export interface BankConfigData {
+  loanTiers: number[];
+  loanInterestRate: number;
+  loanVipInterestRate: number;
+  loanDurationMs: number;
+  dailyBase: number;
+  dailyVipBonus: number;
+  dailyCooldownMs: number;
+  monthlyAmount: number;
+  monthlyCooldownMs: number;
+  investmentMinAmount: number;
+  investmentProfitRate: number;
+  investmentMaturityMs: number;
+  investmentEarlyFee: number;
+  investmentDepositLockMs: number;
+  insuranceCost: number;
+}
+
 export interface BankDashboardData {
   balance: number;
   debt: number;
@@ -44,6 +62,7 @@ export interface BankDashboardData {
   };
   roles: RoleClassification;
   hasInsurance: boolean;
+  config?: BankConfigData;
 }
 
 // ── API Response Types ──

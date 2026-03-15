@@ -7,6 +7,7 @@ import { STAFF_ROLES, SPECIAL_ROLES, BOOSTER_ROLE_ID } from '@/lib/bank/bank-con
 interface MonthlySalaryCardProps {
   roles: RoleClassification;
   locale: 'en' | 'ar';
+  monthlyAmount?: number;
 }
 
 const STAFF_ROLE_NAMES: Record<string, { en: string; ar: string }> = {
@@ -25,7 +26,7 @@ const SPECIAL_ROLE_NAMES: Record<string, { en: string; ar: string; desc?: { en: 
   [BOOSTER_ROLE_ID]: { en: 'Luna Booster', ar: 'معزز لونا', desc: { en: 'Discord Nitro Boosters', ar: 'معززي نيترو ديسكورد' } },
 };
 
-export function MonthlySalaryCard({ roles, locale }: MonthlySalaryCardProps) {
+export function MonthlySalaryCard({ roles, locale, monthlyAmount }: MonthlySalaryCardProps) {
   const t = useTranslations('bankPage');
   const userRoleSet = new Set(roles.roleIds);
   const hasEligibleRole = roles.isStaff || roles.isSpecial || roles.isBooster;
@@ -37,7 +38,7 @@ export function MonthlySalaryCard({ roles, locale }: MonthlySalaryCardProps) {
       </div>
       <p className="salary-desc">{t('salary.monthly.desc')}</p>
       <div className="salary-amount">
-        <span className="salary-value">80,000</span>
+        <span className="salary-value">{(monthlyAmount ?? 80_000).toLocaleString('en-US')}</span>
         <span className="salary-currency">{t('currency')}</span>
       </div>
 

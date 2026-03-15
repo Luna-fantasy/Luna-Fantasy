@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getBankDashboardData } from '@/lib/bank/bank-ops';
+import { getLiveBankConfig } from '@/lib/bank/live-bank-config';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { setCsrfCookie } from '@/lib/bazaar/csrf';
 
@@ -22,7 +23,27 @@ export async function GET() {
 
   try {
     const data = await getBankDashboardData(discordId);
-    const response = NextResponse.json(data);
+    const bankConfig = await getLiveBankConfig();
+    const response = NextResponse.json({
+      ...data,
+      config: {
+        loanTiers: bankConfig.loanTiers,
+        loanInterestRate: bankConfig.loanInterestRate,
+        loanVipInterestRate: bankConfig.loanVipInterestRate,
+        loanDurationMs: bankConfig.loanDurationMs,
+        dailyBase: bankConfig.dailyBase,
+        dailyVipBonus: bankConfig.dailyVipBonus,
+        dailyCooldownMs: bankConfig.dailyCooldownMs,
+        monthlyAmount: bankConfig.monthlyAmount,
+        monthlyCooldownMs: bankConfig.monthlyCooldownMs,
+        investmentMinAmount: bankConfig.investmentMinAmount,
+        investmentProfitRate: bankConfig.investmentProfitRate,
+        investmentMaturityMs: bankConfig.investmentMaturityMs,
+        investmentEarlyFee: bankConfig.investmentEarlyFee,
+        investmentDepositLockMs: bankConfig.investmentDepositLockMs,
+        insuranceCost: bankConfig.insuranceCost,
+      },
+    });
     await setCsrfCookie(response);
     return response;
   } catch (err) {

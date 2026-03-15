@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { INVESTMENT_MIN_AMOUNT, INVESTMENT_MATURITY_MS, INVESTMENT_DEPOSIT_LOCK_MS, INVESTMENT_EARLY_FEE, INVESTMENT_PROFIT_RATE } from '@/lib/bank/bank-config';
 import type { InvestmentRecord } from '@/types/bank';
 
 interface InvestmentTrackerProps {
@@ -10,9 +9,19 @@ interface InvestmentTrackerProps {
   balance: number;
   onDeposit: (amount: number) => Promise<void>;
   onWithdraw: () => Promise<void>;
+  minAmount?: number;
+  maturityMs?: number;
+  earlyFee?: number;
+  profitRate?: number;
+  depositLockMs?: number;
 }
 
-export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw }: InvestmentTrackerProps) {
+export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw, minAmount, maturityMs, earlyFee, profitRate, depositLockMs }: InvestmentTrackerProps) {
+  const MIN_AMOUNT = minAmount ?? 20_000;
+  const MATURITY_MS = maturityMs ?? 2_592_000_000;
+  const EARLY_FEE = earlyFee ?? 5_000;
+  const PROFIT_RATE = profitRate ?? 0.30;
+  const DEPOSIT_LOCK_MS = depositLockMs ?? 604_800_000;
   const t = useTranslations('bankPage');
   const [depositAmount, setDepositAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,7 +34,7 @@ export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw }
     const update = () => {
       const startMs = new Date(investment.startDate).getTime();
       const elapsed = Date.now() - startMs;
-      const progress = Math.min(1, elapsed / INVESTMENT_MATURITY_MS);
+      const progress = Math.min(1, elapsed / MATURITY_MS);
       setMaturityProgress(progress);
       setDaysElapsed(Math.floor(elapsed / 86_400_000));
     };
@@ -36,7 +45,7 @@ export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw }
 
   const handleDeposit = async () => {
     const amount = parseInt(depositAmount, 10);
-    if (isNaN(amount) || amount < INVESTMENT_MIN_AMOUNT || loading) return;
+    if (isNaN(amount) || amount < MIN_AMOUNT || loading) return;
     setLoading(true);
     try {
       await onDeposit(amount);
@@ -59,14 +68,14 @@ export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw }
 
   const isMature = investment ? maturityProgress >= 1 : false;
   const canAddMore = investment
-    ? (Date.now() - new Date(investment.startDate).getTime()) <= INVESTMENT_DEPOSIT_LOCK_MS
+    ? (Date.now() - new Date(investment.startDate).getTime()) <= DEPOSIT_LOCK_MS
     : false;
 
   // Active investment view
   if (investment) {
     const projectedPayout = isMature
-      ? Math.floor(investment.amount * (1 + INVESTMENT_PROFIT_RATE))
-      : Math.max(0, investment.amount - INVESTMENT_EARLY_FEE);
+      ? Math.floor(investment.amount * (1 + PROFIT_RATE))
+      : Math.max(0, investment.amount - EARLY_FEE);
     const projectedProfit = projectedPayout - investment.amount;
 
     return (
@@ -126,15 +135,15 @@ export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw }
               <input
                 type="number"
                 className="investment-input"
-                placeholder={`${t('investAction.addMore')} (${t('investAction.min')} ${INVESTMENT_MIN_AMOUNT.toLocaleString()})`}
+                placeholder={`${t('investAction.addMore')} (${t('investAction.min')} ${MIN_AMOUNT.toLocaleString()})`}
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
-                min={INVESTMENT_MIN_AMOUNT}
+                min={MIN_AMOUNT}
               />
               <button
                 className="section-action-btn small"
                 onClick={handleDeposit}
-                disabled={loading || !depositAmount || parseInt(depositAmount, 10) < INVESTMENT_MIN_AMOUNT}
+                disabled={loading || !depositAmount || parseInt(depositAmount, 10) < MIN_AMOUNT}
               >
                 {loading ? t('dashboard.processing') : t('investAction.deposit')}
               </button>
@@ -147,8 +156,8 @@ export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw }
               onClick={() => setShowWithdrawConfirm(true)}
             >
               {isMature
-                ? `${t('investAction.withdraw')} (+${Math.floor(investment.amount * INVESTMENT_PROFIT_RATE).toLocaleString()} ${t('investAction.profit')})`
-                : `${t('investAction.withdrawEarly')} (-${INVESTMENT_EARLY_FEE.toLocaleString()} ${t('investAction.fee')})`
+                ? `${t('investAction.withdraw')} (+${Math.floor(investment.amount * PROFIT_RATE).toLocaleString()} ${t('investAction.profit')})`
+                : `${t('investAction.withdrawEarly')} (-${EARLY_FEE.toLocaleString()} ${t('investAction.fee')})`
               }
             </button>
           ) : (
@@ -173,7 +182,7 @@ export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw }
 
   // No investment — deposit form
   const parsedAmount = parseInt(depositAmount, 10);
-  const isValidAmount = !isNaN(parsedAmount) && parsedAmount >= INVESTMENT_MIN_AMOUNT && parsedAmount <= balance;
+  const isValidAmount = !isNaN(parsedAmount) && parsedAmount >= MIN_AMOUNT && parsedAmount <= balance;
 
   return (
     <section id="investment" className="bank-section investment-section">
@@ -202,17 +211,17 @@ export function InvestmentTracker({ investment, balance, onDeposit, onWithdraw }
         <input
           type="number"
           className="investment-input"
-          placeholder={`${t('investAction.min')} ${INVESTMENT_MIN_AMOUNT.toLocaleString()} ${t('currency')}`}
+          placeholder={`${t('investAction.min')} ${MIN_AMOUNT.toLocaleString()} ${t('currency')}`}
           value={depositAmount}
           onChange={(e) => setDepositAmount(e.target.value)}
-          min={INVESTMENT_MIN_AMOUNT}
+          min={MIN_AMOUNT}
         />
         {isValidAmount && (
           <div className="investment-preview">
             <span>{t('investAction.after30Days')}: </span>
             <span className="investment-preview-value">
-              {Math.floor(parsedAmount * (1 + INVESTMENT_PROFIT_RATE)).toLocaleString()} {t('currency')}
-              <span className="investment-profit-label"> (+{Math.floor(parsedAmount * INVESTMENT_PROFIT_RATE).toLocaleString()})</span>
+              {Math.floor(parsedAmount * (1 + PROFIT_RATE)).toLocaleString()} {t('currency')}
+              <span className="investment-profit-label"> (+{Math.floor(parsedAmount * PROFIT_RATE).toLocaleString()})</span>
             </span>
           </div>
         )}

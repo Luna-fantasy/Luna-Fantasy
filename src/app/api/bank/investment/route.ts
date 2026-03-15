@@ -4,7 +4,7 @@ import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { checkDebt, getBalance, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { depositInvestment, withdrawInvestment } from '@/lib/bank/bank-ops';
-import { INVESTMENT_MIN_AMOUNT } from '@/lib/bank/bank-config';
+import { getLiveBankConfig } from '@/lib/bank/live-bank-config';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -33,10 +33,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'You have outstanding debt' }, { status: 403 });
     }
 
+    const config = await getLiveBankConfig();
     const { amount } = await request.json();
-    if (typeof amount !== 'number' || amount < INVESTMENT_MIN_AMOUNT) {
+    if (typeof amount !== 'number' || amount < config.investmentMinAmount) {
       return NextResponse.json(
-        { error: `Minimum deposit is ${INVESTMENT_MIN_AMOUNT.toLocaleString()} Lunari` },
+        { error: `Minimum deposit is ${config.investmentMinAmount.toLocaleString()} Lunari` },
         { status: 400 }
       );
     }

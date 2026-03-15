@@ -4,13 +4,7 @@ import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { deductLunari, creditLunari, getBalance, addToBankReserve, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { checkCooldown, setCooldown } from '@/lib/bank/bank-ops';
-import {
-  TRADE_MAX_AMOUNT,
-  TRADE_WIN_RATE,
-  TRADE_LOSS_RATE,
-  TRADE_WIN_CHANCE,
-  TRADE_COOLDOWN_MS,
-} from '@/lib/bank/bank-config';
+import { getLiveBankConfig } from '@/lib/bank/live-bank-config';
 
 /**
  * POST /api/bank/trade
@@ -54,18 +48,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid trade amount' }, { status: 400 });
   }
 
-  if (amount > TRADE_MAX_AMOUNT) {
+  const config = await getLiveBankConfig();
+
+  if (amount > config.tradeMaxAmount) {
     return NextResponse.json(
-      { error: `Maximum trade amount is ${TRADE_MAX_AMOUNT.toLocaleString()} Lunari` },
+      { error: `Maximum trade amount is ${config.tradeMaxAmount.toLocaleString()} Lunari` },
       { status: 400 }
     );
   }
 
   try {
     // Check cooldown
-    const cooldown = await checkCooldown('trade', discordId, TRADE_COOLDOWN_MS);
+    const cooldown = await checkCooldown('trade', discordId, config.tradeCooldownMs);
     if (cooldown.onCooldown) {
-      const nextTradeAt = (cooldown.lastUsed ?? 0) + TRADE_COOLDOWN_MS;
+      const nextTradeAt = (cooldown.lastUsed ?? 0) + config.tradeCooldownMs;
       return NextResponse.json(
         { error: 'Trade is on cooldown', nextTradeAt, remainingMs: cooldown.remainingMs },
         { status: 429 }
@@ -82,14 +78,14 @@ export async function POST(request: Request) {
     await setCooldown('trade', discordId);
 
     // Determine outcome
-    const won = Math.random() < TRADE_WIN_CHANCE;
+    const won = Math.random() < config.tradeWinChance;
 
     let newBalance: number;
     let delta: number;
 
     if (won) {
       // Win: +20% of wagered amount
-      const winAmount = Math.floor(amount * TRADE_WIN_RATE);
+      const winAmount = Math.floor(amount * config.tradeWinRate);
       const { balanceAfter } = await creditLunari(discordId, winAmount);
       newBalance = balanceAfter;
       delta = winAmount;
@@ -106,7 +102,7 @@ export async function POST(request: Request) {
       });
     } else {
       // Loss: -30% of wagered amount
-      const lossAmount = Math.floor(amount * TRADE_LOSS_RATE);
+      const lossAmount = Math.floor(amount * config.tradeLossRate);
       const result = await deductLunari(discordId, lossAmount);
 
       if (!result.success) {
@@ -138,7 +134,7 @@ export async function POST(request: Request) {
       amount,
       delta,
       newBalance,
-      nextTradeAt: Date.now() + TRADE_COOLDOWN_MS,
+      nextTradeAt: Date.now() + config.tradeCooldownMs,
     });
     return refreshCsrf(res);
   } catch (err) {
@@ -160,16 +156,17 @@ export async function GET() {
   const discordId = session.user.discordId;
 
   try {
+    const config = await getLiveBankConfig();
     const [balance, cooldown] = await Promise.all([
       getBalance(discordId),
-      checkCooldown('trade', discordId, TRADE_COOLDOWN_MS),
+      checkCooldown('trade', discordId, config.tradeCooldownMs),
     ]);
 
     return NextResponse.json({
       balance,
       onCooldown: cooldown.onCooldown,
       remainingMs: cooldown.remainingMs,
-      nextTradeAt: cooldown.lastUsed ? cooldown.lastUsed + TRADE_COOLDOWN_MS : null,
+      nextTradeAt: cooldown.lastUsed ? cooldown.lastUsed + config.tradeCooldownMs : null,
     });
   } catch (err) {
     console.error('[bank/trade GET] Error:', err);

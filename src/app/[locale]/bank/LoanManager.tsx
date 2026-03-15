@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
-import { LOAN_TIERS } from '@/lib/bank/bank-config';
 import { LoanContractCanvas } from '@/components/LoanContractCanvas';
 import type { LoanRecord } from '@/types/bank';
 
@@ -14,6 +13,9 @@ interface LoanManagerProps {
   balance: number;
   userName?: string | null;
   userAvatar?: string | null;
+  loanTiers?: number[];
+  interestRate?: number;
+  vipInterestRate?: number;
   onTakeLoan: (tier: number) => Promise<void>;
   onRepayLoan: () => Promise<void>;
   onPartialRepayLoan: (amount: number) => Promise<void>;
@@ -40,7 +42,10 @@ function formatCountdownDays(dueDate: number): { text: string; overdue: boolean 
   return { text: `${hours}h`, overdue: false };
 }
 
-export function LoanManager({ activeLoan, level, debt, isVip, balance, userName, userAvatar, onTakeLoan, onRepayLoan, onPartialRepayLoan }: LoanManagerProps) {
+export function LoanManager({ activeLoan, level, debt, isVip, balance, userName, userAvatar, loanTiers, interestRate, vipInterestRate, onTakeLoan, onRepayLoan, onPartialRepayLoan }: LoanManagerProps) {
+  const DEFAULT_LOAN_TIERS = [5_000, 10_000, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 75_000, 100_000];
+  const tiers = loanTiers ?? DEFAULT_LOAN_TIERS;
+
   const t = useTranslations('bankPage');
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -57,7 +62,9 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
     return () => clearInterval(interval);
   }, [activeLoan]);
 
-  const interestRate = isVip ? 15 : 20;
+  const interestPercent = isVip
+    ? Math.round((vipInterestRate ?? 0.15) * 100)
+    : Math.round((interestRate ?? 0.20) * 100);
 
   const handleTakeLoan = async () => {
     if (!selectedTier || loading) return;
@@ -232,11 +239,11 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
           <div className="loan-overview">
             <div className="loan-stat">
               <div className="loan-stat-label">{t('loans.interest')}</div>
-              <div className="loan-stat-value interest">20%</div>
+              <div className="loan-stat-value interest">{Math.round((interestRate ?? 0.20) * 100)}%</div>
             </div>
             <div className="loan-stat">
               <div className="loan-stat-label">{t('loans.vipInterest')}</div>
-              <div className="loan-stat-value vip">15%</div>
+              <div className="loan-stat-value vip">{Math.round((vipInterestRate ?? 0.15) * 100)}%</div>
             </div>
             <div className="loan-stat">
               <div className="loan-stat-label">{t('loans.deadline')}</div>
@@ -270,7 +277,7 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
 
           <div className="loan-tiers-title">{t('loans.tiers')}</div>
           <div className="loan-tiers-grid interactive">
-            {LOAN_TIERS.map((tier) => (
+            {tiers.map((tier) => (
               <button
                 key={tier}
                 className={`loan-tier selectable ${selectedTier === tier ? 'selected' : ''}`}
@@ -289,12 +296,12 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
                 <span className="loan-preview-value">{selectedTier.toLocaleString()} {t('currency')}</span>
               </div>
               <div className="loan-preview-row">
-                <span>{t('loanAction.interest')} ({interestRate}%)</span>
-                <span className="loan-preview-value interest">+{Math.floor(selectedTier * interestRate / 100).toLocaleString()}</span>
+                <span>{t('loanAction.interest')} ({interestPercent}%)</span>
+                <span className="loan-preview-value interest">+{Math.floor(selectedTier * interestPercent / 100).toLocaleString()}</span>
               </div>
               <div className="loan-preview-row total">
                 <span>{t('loanAction.youRepay')}</span>
-                <span className="loan-preview-value">{Math.floor(selectedTier * (1 + interestRate / 100)).toLocaleString()} {t('currency')}</span>
+                <span className="loan-preview-value">{Math.floor(selectedTier * (1 + interestPercent / 100)).toLocaleString()} {t('currency')}</span>
               </div>
             </div>
           )}

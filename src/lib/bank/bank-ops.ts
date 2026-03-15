@@ -4,23 +4,7 @@
  */
 
 import clientPromise from '@/lib/mongodb';
-import {
-  DAILY_BASE,
-  DAILY_VIP_BONUS,
-  DAILY_COOLDOWN_MS,
-  MONTHLY_COOLDOWN_MS,
-  LOAN_TIERS,
-  LOAN_INTEREST_RATE,
-  LOAN_VIP_INTEREST_RATE,
-  LOAN_DURATION_MS,
-  LOAN_MIN_LEVEL,
-  INVESTMENT_MIN_AMOUNT,
-  INVESTMENT_PROFIT_RATE,
-  INVESTMENT_MATURITY_MS,
-  INVESTMENT_EARLY_FEE,
-  INVESTMENT_DEPOSIT_LOCK_MS,
-  INSURANCE_COST,
-} from './bank-config';
+import { getLiveBankConfig } from './live-bank-config';
 import { getUserGuildRoles, classifyUserRoles } from './discord-roles';
 import { deductLunari, creditLunari, getBalance, checkDebt, addToBankReserve, logTransaction } from '@/lib/bazaar/lunari-ops';
 import type { LoanRecord, InvestmentRecord, BankDashboardData } from '@/types/bank';
@@ -82,23 +66,23 @@ export async function getUserLevel(userId: string): Promise<number> {
 
 export async function getDebtAmount(userId: string): Promise<number> {
   const db = await getDb();
-  const doc = await db.collection('system').findOne({ _id: `debt_${userId}` as any });
-  if (doc?.value == null) return 0;
-  return typeof doc.value === 'number' ? doc.value : 0;
+  const doc = await db.collection('debt').findOne({ _id: userId as any });
+  if (doc?.amount == null) return 0;
+  return typeof doc.amount === 'number' ? doc.amount : 0;
 }
 
 export async function clearDebt(userId: string): Promise<void> {
   const db = await getDb();
-  await db.collection('system').deleteOne({ _id: `debt_${userId}` as any });
+  await db.collection('debt').deleteOne({ _id: userId as any });
 }
 
 // ── Loans ──
 
 export async function getUserLoans(userId: string): Promise<LoanRecord[]> {
   const db = await getDb();
-  const doc = await db.collection('system').findOne({ _id: `loans_${userId}` as any });
-  if (!doc?.value) return [];
-  return Array.isArray(doc.value) ? doc.value : [];
+  const doc = await db.collection('bank').findOne({ _id: userId as any });
+  if (!doc?.loans) return [];
+  return Array.isArray(doc.loans) ? doc.loans : [];
 }
 
 export async function getActiveLoan(userId: string): Promise<LoanRecord | null> {
@@ -111,8 +95,10 @@ export async function createLoan(
   tierAmount: number,
   isVip: boolean
 ): Promise<{ loan: LoanRecord; balanceAfter: number }> {
+  const config = await getLiveBankConfig();
+
   // Validate tier
-  if (!LOAN_TIERS.includes(tierAmount as any)) {
+  if (!config.loanTiers.includes(tierAmount)) {
     throw new Error('Invalid loan tier');
   }
 
@@ -128,9 +114,9 @@ export async function createLoan(
 
   if (activeLoan) throw new Error('You already have an active loan');
   if (hasDebt) throw new Error('You have outstanding debt');
-  if (level < LOAN_MIN_LEVEL) throw new Error(`You must be at least level ${LOAN_MIN_LEVEL}`);
+  if (level < config.loanMinLevel) throw new Error(`You must be at least level ${config.loanMinLevel}`);
 
-  const interestRate = isVip ? LOAN_VIP_INTEREST_RATE : LOAN_INTEREST_RATE;
+  const interestRate = isVip ? config.loanVipInterestRate : config.loanInterestRate;
   const interest = Math.floor(tierAmount * interestRate);
   const now = Date.now();
 
@@ -140,7 +126,7 @@ export async function createLoan(
     repaymentAmount: tierAmount + interest,
     interestRate,
     isVIP: isVip,
-    dueDate: now + LOAN_DURATION_MS,
+    dueDate: now + config.loanDurationMs,
     active: true,
     takenAt: now,
     overdue: false,
@@ -149,13 +135,11 @@ export async function createLoan(
   // Credit the loan amount to user
   const { balanceAfter } = await creditLunari(userId, tierAmount);
 
-  // Push loan record to system.loans_${userId}
+  // Push loan record to bank collection
   const db = await getDb();
-  const existingLoans = await getUserLoans(userId);
-  existingLoans.push(loan);
-  await db.collection('system').updateOne(
-    { _id: `loans_${userId}` as any },
-    { $set: { value: existingLoans } },
+  await db.collection('bank').updateOne(
+    { _id: userId as any },
+    { $push: { loans: loan } as any, $set: { updatedAt: new Date() } },
     { upsert: true }
   );
 
@@ -182,9 +166,9 @@ export async function fixOverdueLoanState(userId: string): Promise<void> {
   });
 
   const db = await getDb();
-  await db.collection('system').updateOne(
-    { _id: `loans_${userId}` as any },
-    { $set: { value: fixed } }
+  await db.collection('bank').updateOne(
+    { _id: userId as any },
+    { $set: { loans: fixed, updatedAt: new Date() } }
   );
 }
 
@@ -217,9 +201,9 @@ export async function repayLoan(
   };
 
   const db = await getDb();
-  await db.collection('system').updateOne(
-    { _id: `loans_${userId}` as any },
-    { $set: { value: loans } }
+  await db.collection('bank').updateOne(
+    { _id: userId as any },
+    { $set: { loans, updatedAt: new Date() } }
   );
 
   // Only add interest portion to bank reserve (not the full repayment)
@@ -260,7 +244,8 @@ export async function partialRepayLoan(
   const newRepaymentAmount = loan.repaymentAmount - amount;
 
   // Add interest portion of this payment to bank reserve
-  const interestRate = loan.interestRate || LOAN_INTEREST_RATE;
+  const cfg = await getLiveBankConfig();
+  const interestRate = loan.interestRate || cfg.loanInterestRate;
   const interestPortion = Math.floor(amount * (interestRate / (1 + interestRate)));
   if (interestPortion > 0) {
     await addToBankReserve(interestPortion);
@@ -286,9 +271,9 @@ export async function partialRepayLoan(
   }
 
   const db = await getDb();
-  await db.collection('system').updateOne(
-    { _id: `loans_${userId}` as any },
-    { $set: { value: loans } }
+  await db.collection('bank').updateOne(
+    { _id: userId as any },
+    { $set: { loans, updatedAt: new Date() } }
   );
 
   return { newRepaymentAmount, balanceAfter: deductResult.balanceAfter, fullyPaid };
@@ -328,17 +313,17 @@ export async function payDebt(
         return loan;
       });
       const db = await getDb();
-      await db.collection('system').updateOne(
-        { _id: `loans_${userId}` as any },
-        { $set: { value: updated } }
+      await db.collection('bank').updateOne(
+        { _id: userId as any },
+        { $set: { loans: updated, updatedAt: new Date() } }
       );
     }
   } else {
     // Partial — update remaining debt
     const db = await getDb();
-    await db.collection('system').updateOne(
-      { _id: `debt_${userId}` as any },
-      { $set: { value: remainingDebt } },
+    await db.collection('debt').updateOne(
+      { _id: userId as any },
+      { $set: { amount: remainingDebt, updatedAt: new Date() } },
       { upsert: true }
     );
   }
@@ -350,9 +335,9 @@ export async function payDebt(
 
 export async function getInvestment(userId: string): Promise<InvestmentRecord | null> {
   const db = await getDb();
-  const doc = await db.collection('system').findOne({ _id: `investment_${userId}` as any });
-  if (!doc?.value) return null;
-  const data = doc.value;
+  const doc = await db.collection('bank').findOne({ _id: userId as any });
+  if (!doc?.investment) return null;
+  const data = doc.investment;
   if (!data.active) return null;
   return data as InvestmentRecord;
 }
@@ -361,8 +346,10 @@ export async function depositInvestment(
   userId: string,
   amount: number
 ): Promise<{ investment: InvestmentRecord; balanceAfter: number }> {
-  if (amount < INVESTMENT_MIN_AMOUNT) {
-    throw new Error(`Minimum deposit is ${INVESTMENT_MIN_AMOUNT.toLocaleString()} Lunari`);
+  const config = await getLiveBankConfig();
+
+  if (amount < config.investmentMinAmount) {
+    throw new Error(`Minimum deposit is ${config.investmentMinAmount.toLocaleString()} Lunari`);
   }
 
   const existing = await getInvestment(userId);
@@ -372,7 +359,7 @@ export async function depositInvestment(
     // Check deposit lock — can only add within 7 days of start
     const startDate = new Date(existing.startDate);
     const elapsed = now.getTime() - startDate.getTime();
-    if (elapsed > INVESTMENT_DEPOSIT_LOCK_MS) {
+    if (elapsed > config.investmentDepositLockMs) {
       throw new Error('Deposit window has closed (7 days after initial deposit)');
     }
   }
@@ -402,9 +389,9 @@ export async function depositInvestment(
     };
   }
 
-  await db.collection('system').updateOne(
-    { _id: `investment_${userId}` as any },
-    { $set: { value: investment } },
+  await db.collection('bank').updateOne(
+    { _id: userId as any },
+    { $set: { investment, updatedAt: new Date() } },
     { upsert: true }
   );
 
@@ -420,21 +407,20 @@ export async function withdrawInvestment(
   const investment = await getInvestment(userId);
   if (!investment) throw new Error('No active investment');
 
+  const config = await getLiveBankConfig();
   const now = Date.now();
   const startDate = new Date(investment.startDate).getTime();
   const elapsed = now - startDate;
-  const isMature = elapsed >= INVESTMENT_MATURITY_MS;
+  const isMature = elapsed >= config.investmentMaturityMs;
 
   let payout: number;
   let profit: number;
 
   if (isMature) {
-    // Mature payout: principal + 30%
-    payout = Math.floor(investment.amount * (1 + INVESTMENT_PROFIT_RATE));
+    payout = Math.floor(investment.amount * (1 + config.investmentProfitRate));
     profit = payout - investment.amount;
   } else {
-    // Early withdrawal: principal - 5,000 fee
-    payout = Math.max(0, investment.amount - INVESTMENT_EARLY_FEE);
+    payout = Math.max(0, investment.amount - config.investmentEarlyFee);
     profit = payout - investment.amount; // negative
   }
 
@@ -443,9 +429,9 @@ export async function withdrawInvestment(
 
   // Clear investment record
   const db = await getDb();
-  await db.collection('system').updateOne(
-    { _id: `investment_${userId}` as any },
-    { $set: { value: { ...investment, active: false } } }
+  await db.collection('bank').updateOne(
+    { _id: userId as any },
+    { $set: { investment: { ...investment, active: false }, updatedAt: new Date() } }
   );
 
   return { payout, profit, early: !isMature, balanceAfter };
@@ -463,10 +449,11 @@ export async function hasInsurance(userId: string): Promise<boolean> {
 export async function purchaseInsurance(
   userId: string
 ): Promise<{ balanceAfter: number }> {
+  const config = await getLiveBankConfig();
   const alreadyHas = await hasInsurance(userId);
   if (alreadyHas) throw new Error('You already have theft protection');
 
-  const deductResult = await deductLunari(userId, INSURANCE_COST);
+  const deductResult = await deductLunari(userId, config.insuranceCost);
   if (!deductResult.success) throw new Error('Insufficient balance');
 
   const db = await getDb();
@@ -485,7 +472,7 @@ export async function purchaseInsurance(
     { upsert: true }
   );
 
-  await addToBankReserve(INSURANCE_COST);
+  await addToBankReserve(config.insuranceCost);
 
   return { balanceAfter: deductResult.balanceAfter };
 }

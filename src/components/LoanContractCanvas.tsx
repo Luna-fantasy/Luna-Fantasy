@@ -11,18 +11,42 @@ interface LoanContractCanvasProps {
   onClick?: () => void;
 }
 
-const AMOUNT_TEXT: Record<number, string> = {
-  5000: 'Five Thousand Lunari Only',
-  10000: 'Ten Thousand Lunari Only',
-  15000: 'Fifteen Thousand Lunari Only',
-  20000: 'Twenty Thousand Lunari Only',
-  25000: 'Twenty Five Thousand Lunari Only',
-  30000: 'Thirty Thousand Lunari Only',
-  40000: 'Forty Thousand Lunari Only',
-  50000: 'Fifty Thousand Lunari Only',
-  75000: 'Seventy Five Thousand Lunari Only',
-  100000: 'One Hundred Thousand Lunari Only',
-};
+const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+  'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+function numberToWords(n: number): string {
+  if (n === 0) return 'Zero';
+  if (n < 0) return `Minus ${numberToWords(-n)}`;
+
+  const parts: string[] = [];
+
+  if (n >= 1_000_000) {
+    parts.push(`${numberToWords(Math.floor(n / 1_000_000))} Million`);
+    n %= 1_000_000;
+  }
+  if (n >= 1_000) {
+    parts.push(`${numberToWords(Math.floor(n / 1_000))} Thousand`);
+    n %= 1_000;
+  }
+  if (n >= 100) {
+    parts.push(`${ONES[Math.floor(n / 100)]} Hundred`);
+    n %= 100;
+  }
+  if (n >= 20) {
+    const t = TENS[Math.floor(n / 10)];
+    const o = ONES[n % 10];
+    parts.push(o ? `${t} ${o}` : t);
+  } else if (n > 0) {
+    parts.push(ONES[n]);
+  }
+
+  return parts.join(' ');
+}
+
+function amountToText(amount: number): string {
+  return `${numberToWords(amount)} Lunari Only`;
+}
 
 // Positions matching the grid layout (928x1239 base image)
 const POS = {
@@ -75,8 +99,7 @@ export function LoanContractCanvas({
         );
 
         // Amount as text
-        const text =
-          AMOUNT_TEXT[loanAmount] || `${loanAmount.toLocaleString()} Lunari Only`;
+        const text = amountToText(loanAmount);
         ctx.font = `bold ${POS.amountText.fontSize}px ${FONT_FAMILY}`;
         ctx.fillText(text, POS.amountText.x, POS.amountText.y);
       }

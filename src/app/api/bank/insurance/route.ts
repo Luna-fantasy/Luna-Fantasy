@@ -4,7 +4,7 @@ import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { checkDebt, getBalance, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { purchaseInsurance } from '@/lib/bank/bank-ops';
-import { INSURANCE_COST } from '@/lib/bank/bank-config';
+import { getLiveBankConfig } from '@/lib/bank/live-bank-config';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -33,13 +33,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'You have outstanding debt' }, { status: 403 });
     }
 
+    const config = await getLiveBankConfig();
     const balanceBefore = await getBalance(discordId);
     const { balanceAfter } = await purchaseInsurance(discordId);
 
     await logTransaction({
       discordId,
       type: 'bank_insurance',
-      amount: -INSURANCE_COST,
+      amount: -config.insuranceCost,
       balanceBefore,
       balanceAfter,
       metadata: {

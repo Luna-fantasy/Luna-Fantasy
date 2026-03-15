@@ -4,7 +4,7 @@ import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { getBalance, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { createLoan, repayLoan, partialRepayLoan } from '@/lib/bank/bank-ops';
-import { LOAN_TIERS } from '@/lib/bank/bank-config';
+import { getLiveBankConfig } from '@/lib/bank/live-bank-config';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -28,9 +28,10 @@ export async function POST(request: Request) {
   }
 
   try {
+    const config = await getLiveBankConfig();
     const { tier, isVip } = await request.json();
 
-    if (!LOAN_TIERS.includes(tier)) {
+    if (!config.loanTiers.includes(tier)) {
       return NextResponse.json({ error: 'Invalid loan tier' }, { status: 400 });
     }
 

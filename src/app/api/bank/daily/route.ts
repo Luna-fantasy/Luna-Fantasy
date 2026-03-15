@@ -4,7 +4,7 @@ import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { creditLunari, getBalance, checkDebt, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { checkCooldown, setCooldown, getInvestment } from '@/lib/bank/bank-ops';
-import { DAILY_BASE, DAILY_VIP_BONUS, DAILY_COOLDOWN_MS, INVESTMENT_MIN_AMOUNT } from '@/lib/bank/bank-config';
+import { getLiveBankConfig } from '@/lib/bank/live-bank-config';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -28,25 +28,27 @@ export async function POST(request: Request) {
   }
 
   try {
+    const config = await getLiveBankConfig();
+
     const hasDebt = await checkDebt(discordId);
     if (hasDebt) {
       return NextResponse.json({ error: 'You have outstanding debt. Pay your debts first.' }, { status: 403 });
     }
 
-    const cooldown = await checkCooldown('daily', discordId, DAILY_COOLDOWN_MS);
+    const cooldown = await checkCooldown('daily', discordId, config.dailyCooldownMs);
     if (cooldown.onCooldown) {
       return NextResponse.json(
-        { error: 'Daily salary already claimed', nextClaimAt: (cooldown.lastUsed ?? 0) + DAILY_COOLDOWN_MS },
+        { error: 'Daily salary already claimed', nextClaimAt: (cooldown.lastUsed ?? 0) + config.dailyCooldownMs },
         { status: 429 }
       );
     }
 
     // VIP check — user has active investment with >= 20K
     const investment = await getInvestment(discordId);
-    const isVip = !!investment && investment.amount >= INVESTMENT_MIN_AMOUNT;
+    const isVip = !!investment && investment.amount >= config.investmentMinAmount;
 
-    const baseAmount = DAILY_BASE;
-    const vipBonus = isVip ? DAILY_VIP_BONUS : 0;
+    const baseAmount = config.dailyBase;
+    const vipBonus = isVip ? config.dailyVipBonus : 0;
     const totalAmount = baseAmount + vipBonus;
 
     const balanceBefore = await getBalance(discordId);
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
       amount: baseAmount,
       vipBonus,
       newBalance: balanceAfter,
-      nextClaimAt: Date.now() + DAILY_COOLDOWN_MS,
+      nextClaimAt: Date.now() + config.dailyCooldownMs,
     });
     return refreshCsrf(res);
   } catch (err) {
