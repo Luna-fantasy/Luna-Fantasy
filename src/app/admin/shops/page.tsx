@@ -47,7 +47,7 @@ interface TicketPackage {
   price: number;
 }
 
-type ShopTab = 'luckbox' | 'stonebox' | 'tickets';
+type ShopTab = 'mells' | 'luckbox' | 'stonebox' | 'tickets';
 
 const VALID_RARITIES = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden'] as const;
 const RARITY_COLORS: Record<string, string> = {
@@ -72,7 +72,7 @@ function formatLunari(n: number): string {
 // ── Main Page ──
 
 export default function ShopsPage() {
-  const [activeTab, setActiveTab] = useState<ShopTab>('luckbox');
+  const [activeTab, setActiveTab] = useState<ShopTab>('mells');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -80,6 +80,12 @@ export default function ShopsPage() {
   const [luckboxTiers, setLuckboxTiers] = useState<LuckboxBox[]>([]);
   const [stoneBox, setStoneBox] = useState<StoneBoxConfig>({ price: 2000, refundAmount: 1000, stones: [] });
   const [ticketPackages, setTicketPackages] = useState<TicketPackage[]>([]);
+
+  // Mells Selvair state
+  const [mellsItems, setMellsItems] = useState<any[]>([]);
+  const [mellsOriginal, setMellsOriginal] = useState<any[]>([]);
+  const [mellsSaving, setMellsSaving] = useState(false);
+  const [editingMellsItem, setEditingMellsItem] = useState<any | null>(null);
 
   // Edit states
   const [editingLuckbox, setEditingLuckbox] = useState<LuckboxBox | null>(null);
@@ -106,6 +112,10 @@ export default function ShopsPage() {
       setLuckboxTiers(data.luckbox ?? []);
       if (data.stonebox) setStoneBox(data.stonebox);
       setTicketPackages(data.tickets ?? []);
+      if (data.mells) {
+        setMellsItems(data.mells);
+        setMellsOriginal(data.mells);
+      }
     } catch {
       toast('Failed to load shop config', 'error');
     } finally {
@@ -340,6 +350,10 @@ export default function ShopsPage() {
       {/* Tabs */}
       <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="admin-tabs" style={{ paddingLeft: '24px' }}>
+          <button className={`admin-tab ${activeTab === 'mells' ? 'admin-tab-active' : ''}`}
+            onClick={() => setActiveTab('mells')}>
+            Mells Selvair
+          </button>
           <button className={`admin-tab ${activeTab === 'luckbox' ? 'admin-tab-active' : ''}`}
             onClick={() => setActiveTab('luckbox')}>
             Luckboxes (Kael)
@@ -355,6 +369,48 @@ export default function ShopsPage() {
         </div>
 
         <div style={{ padding: '24px' }}>
+          {/* ── Mells Selvair Tab ── */}
+          {activeTab === 'mells' && (
+            <div className="admin-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 className="admin-card-title" style={{ margin: 0 }}>Background Shop Items</h3>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{mellsItems.length} items</span>
+              </div>
+
+              {mellsItems.length === 0 ? (
+                <div className="admin-empty">
+                  <p>No shop items configured. Seed the database with Butler&apos;s config items first.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+                  {mellsItems.map((item, i) => (
+                    <div key={item.id || i} style={{
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      background: 'var(--bg-deep)',
+                    }}>
+                      <div style={{ height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-void)', padding: '4px' }}>
+                        {item.backgroundUrl ? (
+                          <img src={item.backgroundUrl} alt={item.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} loading="lazy" />
+                        ) : (
+                          <span style={{ fontSize: '32px', color: 'var(--text-muted)' }}>&#x1F5BC;&#xFE0F;</span>
+                        )}
+                      </div>
+                      <div style={{ padding: '8px' }}>
+                        <p style={{ fontWeight: 600, fontSize: '12px', marginBottom: '2px' }}>{item.name}</p>
+                        <p style={{ fontSize: '11px', color: 'var(--accent-legendary)' }}>{item.price?.toLocaleString()} Lunari</p>
+                        {item.description && (
+                          <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.3 }}>{item.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Luckbox Tab ── */}
           {activeTab === 'luckbox' && (
             <>

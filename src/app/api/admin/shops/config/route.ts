@@ -7,10 +7,13 @@ import {
   getLuckboxShopConfigAll,
   getStoneBoxConfig,
   getTicketShopConfig,
+  getMellsShopConfig,
   saveLuckboxConfig,
   saveStoneBoxConfig,
   saveTicketConfig,
+  saveMellsConfig,
 } from '@/lib/bazaar/shop-config';
+import type { MellsShopItem } from '@/lib/bazaar/shop-config';
 import type { LuckboxBoxConfig, StoneConfig, TicketPackage } from '@/types/bazaar';
 
 // ── Validation helpers ──
@@ -200,13 +203,14 @@ export async function GET() {
   if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
 
   try {
-    const [luckbox, stonebox, tickets] = await Promise.all([
+    const [luckbox, stonebox, tickets, mells] = await Promise.all([
       getLuckboxShopConfigAll(),
       getStoneBoxConfig(),
       getTicketShopConfig(),
+      getMellsShopConfig(),
     ]);
 
-    return NextResponse.json({ luckbox, stonebox, tickets });
+    return NextResponse.json({ luckbox, stonebox, tickets, mells });
   } catch (error) {
     console.error('[admin/shops] GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -301,6 +305,37 @@ export async function PUT(request: NextRequest) {
         });
 
         return NextResponse.json({ success: true, packages: validation.data });
+      }
+
+      case 'mells': {
+        if (!Array.isArray(config)) {
+          return NextResponse.json({ error: 'Mells config must be an array of items' }, { status: 400 });
+        }
+
+        // Validate items
+        for (const item of config) {
+          if (!item.id || !item.name || typeof item.price !== 'number') {
+            return NextResponse.json({ error: 'Each item must have id, name, and price' }, { status: 400 });
+          }
+          if (item.price < 0 || item.price > MAX_PRICE * 10) {
+            return NextResponse.json({ error: `Invalid price for "${item.name}"` }, { status: 400 });
+          }
+        }
+
+        const before = await getMellsShopConfig();
+        await saveMellsConfig(config as MellsShopItem[]);
+
+        await logAdminAction({
+          adminDiscordId: adminId,
+          adminUsername: adminName,
+          action: 'shop_config_update',
+          before: { shop: 'mells', items: before },
+          after: { shop: 'mells', items: config },
+          metadata: { shop: 'mells', itemCount: config.length },
+          ip,
+        });
+
+        return NextResponse.json({ success: true, items: config });
       }
 
       default:

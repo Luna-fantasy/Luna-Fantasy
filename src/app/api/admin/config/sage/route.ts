@@ -1,0 +1,165 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireMastermindApi } from '@/lib/admin/auth';
+import { logAdminAction } from '@/lib/admin/audit';
+import { validateCsrf } from '@/lib/bazaar/csrf';
+import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import clientPromise from '@/lib/mongodb';
+
+const DB_NAME = 'Database';
+
+const ALLOWED_SECTIONS = new Set([
+  'provider', 'model', 'google_model', 'openrouter_model',
+  'enable_search', 'thread_slowmode',
+  'thread_welcome', 'panel_title', 'panel_description', 'panel_image',
+  'system_prompt', 'privileged_roles', 'lunarian_role_id', 'lunarian_access',
+  'all_known_roles',
+]);
+
+// Maps dashboard section names → bot_config document _id + data field path
+const SECTION_MAP: Record<string, { docId: string; field: string }> = {
+  provider:           { docId: 'sage_settings', field: 'provider' },
+  model:              { docId: 'sage_settings', field: 'model' },
+  google_model:       { docId: 'sage_settings', field: 'google_model' },
+  openrouter_model:   { docId: 'sage_settings', field: 'openrouter_model' },
+  enable_search:      { docId: 'sage_settings', field: 'enable_search' },
+  thread_slowmode:    { docId: 'sage_settings', field: 'thread_slowmode' },
+  thread_welcome:     { docId: 'sage_settings', field: 'thread_welcome' },
+  panel_title:        { docId: 'sage_settings', field: 'panel_title' },
+  panel_description:  { docId: 'sage_settings', field: 'panel_description' },
+  panel_image:        { docId: 'sage_settings', field: 'panel_image' },
+  system_prompt:      { docId: 'sage_system_prompt', field: 'prompt' },
+  privileged_roles:   { docId: 'sage_privileges', field: 'privilegedRoles' },
+  lunarian_role_id:   { docId: 'sage_privileges', field: 'lunarianRoleId' },
+  lunarian_access:    { docId: 'sage_privileges', field: 'lunarianAccess' },
+  all_known_roles:    { docId: 'sage_privileges', field: 'allKnownRoles' },
+};
+
+export async function GET() {
+  const auth = await requireMastermindApi();
+  if (!auth.authorized) return auth.response;
+
+  try {
+    const client = await clientPromise;
+    const col = client.db(DB_NAME).collection('bot_config');
+
+    // Load all Sage config documents in parallel
+    const [settings, systemPrompt, privileges] = await Promise.all([
+      col.findOne({ _id: 'sage_settings' as any }),
+      col.findOne({ _id: 'sage_system_prompt' as any }),
+      col.findOne({ _id: 'sage_privileges' as any }),
+    ]);
+
+    const sections: Record<string, any> = {};
+
+    // Settings
+    if (settings?.data) {
+      sections.provider = settings.data.provider;
+      sections.model = settings.data.model;
+      sections.google_model = settings.data.google_model;
+      sections.openrouter_model = settings.data.openrouter_model;
+      sections.enable_search = settings.data.enable_search;
+      sections.thread_slowmode = settings.data.thread_slowmode;
+      sections.thread_welcome = settings.data.thread_welcome;
+      sections.panel_title = settings.data.panel_title;
+      sections.panel_description = settings.data.panel_description;
+      sections.panel_image = settings.data.panel_image;
+    }
+
+    // System prompt
+    if (systemPrompt?.data) {
+      sections.system_prompt = systemPrompt.data.prompt;
+    }
+
+    // Privileges
+    if (privileges?.data) {
+      sections.privileged_roles = privileges.data.privilegedRoles;
+      sections.lunarian_role_id = privileges.data.lunarianRoleId;
+      sections.lunarian_access = privileges.data.lunarianAccess;
+      sections.all_known_roles = privileges.data.allKnownRoles;
+    }
+
+    return NextResponse.json({ sections });
+  } catch (err: any) {
+    console.error('[admin/config/sage GET] Error:', err);
+    return NextResponse.json({ error: 'Failed to read config' }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  const auth = await requireMastermindApi();
+  if (!auth.authorized) return auth.response;
+
+  const csrfValid = await validateCsrf(req);
+  if (!csrfValid) {
+    return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+  }
+
+  const { section, value } = await req.json();
+
+  if (!section || value === undefined) {
+    return NextResponse.json({ error: 'section and value required' }, { status: 400 });
+  }
+
+  if (!ALLOWED_SECTIONS.has(section)) {
+    return NextResponse.json({ error: `Invalid section: ${section}` }, { status: 400 });
+  }
+
+  // NoSQL injection check
+  if (value !== null && typeof value === 'object') {
+    const json = JSON.stringify(value);
+    if (json.length > 500_000) {
+      return NextResponse.json({ error: 'Config value too large' }, { status: 400 });
+    }
+    if (json.includes('"$')) {
+      return NextResponse.json({ error: 'Invalid characters in config value' }, { status: 400 });
+    }
+  }
+
+  const adminId = auth.session.user.discordId!;
+  const { allowed } = checkRateLimit('sage_config', adminId, 5, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many config changes. Wait a moment.' }, { status: 429 });
+  }
+
+  try {
+    const mapping = SECTION_MAP[section];
+    if (!mapping) {
+      return NextResponse.json({ error: `No mapping for section: ${section}` }, { status: 400 });
+    }
+
+    const client = await clientPromise;
+    const col = client.db(DB_NAME).collection('bot_config');
+
+    // Read current value for audit
+    const currentDoc = await col.findOne({ _id: mapping.docId as any });
+    const before = currentDoc?.data?.[mapping.field] ?? null;
+
+    // Write to MongoDB — updates the specific field within the data object
+    await col.updateOne(
+      { _id: mapping.docId as any },
+      {
+        $set: {
+          [`data.${mapping.field}`]: value,
+          updatedAt: new Date(),
+          updatedBy: adminId,
+        },
+      },
+      { upsert: true }
+    );
+
+    await logAdminAction({
+      adminDiscordId: adminId,
+      adminUsername: auth.session.user.username ?? 'unknown',
+      action: 'config_sage_update',
+      metadata: { section, docId: mapping.docId },
+      before,
+      after: value,
+      ip: req.headers.get('x-forwarded-for') ?? 'unknown',
+    });
+
+    return NextResponse.json({ saved: true });
+  } catch (err: any) {
+    console.error('[admin/config/sage PUT] Error:', err);
+    return NextResponse.json({ error: 'Failed to write config' }, { status: 500 });
+  }
+}

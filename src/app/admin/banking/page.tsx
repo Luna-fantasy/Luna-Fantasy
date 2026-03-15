@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import ConfigSection from '../components/ConfigSection';
 import NumberInput from '../components/NumberInput';
 import ConfigTable from '../components/ConfigTable';
@@ -64,7 +65,7 @@ interface InsuranceConfig {
   cost: number;
 }
 
-type Tab = 'settings' | 'overview';
+type Tab = 'settings' | 'loans' | 'overview';
 
 export default function BankingPage() {
   const [tab, setTab] = useState<Tab>('settings');
@@ -100,6 +101,11 @@ export default function BankingPage() {
   const [insuranceOriginal, setInsuranceOriginal] = useState<InsuranceConfig>({ cost: 500000 });
   const [configLoading, setConfigLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Loans tab state
+  const [loans, setLoans] = useState<any[]>([]);
+  const [loansLoading, setLoansLoading] = useState(false);
+  const [loanActionLoading, setLoanActionLoading] = useState('');
 
   // Overview state
   const [overview, setOverview] = useState<EconomyOverview | null>(null);
@@ -156,6 +162,20 @@ export default function BankingPage() {
     }
   }, [toast]);
 
+  const fetchLoans = useCallback(async () => {
+    setLoansLoading(true);
+    try {
+      const res = await fetch('/api/admin/banking/loans');
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      setLoans(data.loans ?? []);
+    } catch {
+      console.error('Failed to load loans');
+    } finally {
+      setLoansLoading(false);
+    }
+  }, []);
+
   // Fetch economy overview for overview tab
   const fetchOverview = useCallback(async () => {
     try {
@@ -173,6 +193,14 @@ export default function BankingPage() {
   useEffect(() => {
     fetchConfig();
   }, [fetchConfig]);
+
+  useEffect(() => {
+    if (tab === 'loans') {
+      fetchLoans();
+      const interval = setInterval(fetchLoans, 30_000);
+      return () => clearInterval(interval);
+    }
+  }, [tab, fetchLoans]);
 
   useEffect(() => {
     if (tab === 'overview') {
@@ -244,6 +272,27 @@ export default function BankingPage() {
     }
   }
 
+  async function handleLoanAction(action: string, discordId: string, extra?: Record<string, any>) {
+    setLoanActionLoading(`${action}_${discordId}`);
+    try {
+      const res = await fetch('/api/admin/banking/loans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify({ action, discordId, ...extra }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Action failed');
+      }
+      toast(`Loan ${action} successful`, 'success');
+      await fetchLoans();
+    } catch (err: any) {
+      toast(err.message, 'error');
+    } finally {
+      setLoanActionLoading('');
+    }
+  }
+
   const secondsAgo = Math.floor((now - lastUpdated) / 1000);
 
   if (configLoading) {
@@ -272,6 +321,12 @@ export default function BankingPage() {
           onClick={() => setTab('settings')}
         >
           Settings
+        </button>
+        <button
+          className={`admin-tab ${tab === 'loans' ? 'admin-tab-active' : ''}`}
+          onClick={() => setTab('loans')}
+        >
+          Loans
         </button>
         <button
           className={`admin-tab ${tab === 'overview' ? 'admin-tab-active' : ''}`}
@@ -437,6 +492,124 @@ export default function BankingPage() {
             onSave={saveConfig}
             projectName="Butler"
           />
+        </>
+      )}
+
+      {/* Loans Tab */}
+      {tab === 'loans' && (
+        <>
+          {loansLoading ? (
+            <div className="admin-loading"><div className="admin-spinner" />Loading loans...</div>
+          ) : loans.length === 0 ? (
+            <div className="admin-empty">
+              <div className="admin-empty-icon">#</div>
+              <p>No active or overdue loans</p>
+            </div>
+          ) : (
+            <div className="admin-table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Loan Amount</th>
+                    <th>Repayment</th>
+                    <th>Interest</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loans.map((loan, i) => {
+                    const isOverdue = loan.isOverdue || loan.overdue;
+                    const dueDate = new Date(loan.dueDate);
+                    const daysLeft = Math.ceil((loan.dueDate - Date.now()) / 86_400_000);
+                    return (
+                      <tr key={`${loan.discordId}-${i}`}>
+                        <td>
+                          <Link href={`/admin/users/${loan.discordId}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
+                            {loan.avatar && (
+                              <img src={loan.avatar} alt="" width={28} height={28} style={{ borderRadius: '50%', flexShrink: 0 }} />
+                            )}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                              {loan.username && <span style={{ fontWeight: 600, fontSize: '13px' }}>{loan.username}</span>}
+                              <span style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--text-muted)', opacity: 0.7 }}>{loan.discordId}</span>
+                            </div>
+                          </Link>
+                        </td>
+                        <td style={{ fontWeight: 600 }}>{loan.amount?.toLocaleString()}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--accent-legendary)' }}>{loan.repaymentAmount?.toLocaleString()}</td>
+                        <td>{Math.round((loan.interestRate ?? 0) * 100)}%</td>
+                        <td style={{ fontSize: '13px', color: isOverdue ? '#f43f5e' : 'var(--text-secondary)' }}>
+                          {dueDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                          {isOverdue
+                            ? <span style={{ color: '#f43f5e', fontWeight: 600 }}> (Overdue {Math.abs(daysLeft)}d)</span>
+                            : <span style={{ color: 'var(--text-muted)' }}> ({daysLeft}d left)</span>
+                          }
+                        </td>
+                        <td>
+                          <span className={`admin-badge ${isOverdue ? 'admin-badge-warning' : 'admin-badge-success'}`}>
+                            {isOverdue ? 'Overdue' : 'Active'}
+                          </span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              className="admin-btn admin-btn-ghost"
+                              style={{ padding: '2px 8px', fontSize: 11 }}
+                              disabled={loanActionLoading === `absolve_${loan.discordId}`}
+                              onClick={() => {
+                                if (confirm(`Absolve ${loan.username || loan.discordId}'s loan of ${loan.repaymentAmount?.toLocaleString()} Lunari?`)) {
+                                  handleLoanAction('absolve', loan.discordId, { reason: 'Admin absolved' });
+                                }
+                              }}
+                            >
+                              {loanActionLoading === `absolve_${loan.discordId}` ? '...' : 'Absolve'}
+                            </button>
+                            <button
+                              className="admin-btn admin-btn-ghost"
+                              style={{ padding: '2px 8px', fontSize: 11 }}
+                              disabled={!!loanActionLoading}
+                              onClick={() => {
+                                const input = prompt(`Reduce repayment to (current: ${loan.repaymentAmount?.toLocaleString()}):`);
+                                if (input) {
+                                  const newAmt = parseInt(input, 10);
+                                  if (!isNaN(newAmt) && newAmt >= 0) {
+                                    handleLoanAction('reduce', loan.discordId, { newAmount: newAmt, reason: 'Admin reduced' });
+                                  }
+                                }
+                              }}
+                            >
+                              Reduce
+                            </button>
+                            <button
+                              className="admin-btn admin-btn-ghost"
+                              style={{ padding: '2px 8px', fontSize: 11 }}
+                              disabled={!!loanActionLoading}
+                              onClick={() => {
+                                const days = prompt('Extend by how many days?');
+                                if (days) {
+                                  const d = parseInt(days, 10);
+                                  if (!isNaN(d) && d > 0) {
+                                    handleLoanAction('extend', loan.discordId, {
+                                      newDueDate: Date.now() + d * 86_400_000,
+                                      reason: `Extended by ${d} days`,
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              Extend
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
 
