@@ -12,6 +12,11 @@ interface RaritySlot {
   percentage: number;
 }
 
+interface CardOverride {
+  name: string;
+  weight: number;
+}
+
 interface LuckboxBox {
   id: string;
   label: string;
@@ -19,6 +24,7 @@ interface LuckboxBox {
   rarities: RaritySlot[];
   enabled: boolean;
   order: number;
+  cardOverrides?: Record<string, CardOverride[]>;
 }
 
 interface StoneConfig {
@@ -43,7 +49,7 @@ interface TicketPackage {
 
 type ShopTab = 'luckbox' | 'stonebox' | 'tickets';
 
-const VALID_RARITIES = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret'] as const;
+const VALID_RARITIES = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden'] as const;
 const RARITY_COLORS: Record<string, string> = {
   common: '#4ade80',
   rare: '#0077FF',
@@ -51,6 +57,7 @@ const RARITY_COLORS: Record<string, string> = {
   unique: '#FF3366',
   legendary: '#FFD54F',
   secret: '#FFD27F',
+  forbidden: '#ff4444',
 };
 
 function getCsrfToken(): string {
@@ -80,6 +87,10 @@ export default function ShopsPage() {
   const [editingTicket, setEditingTicket] = useState<TicketPackage | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: string } | null>(null);
 
+  // Cards catalog for luckbox card overrides
+  const [cardsCatalog, setCardsCatalog] = useState<Record<string, { name: string; weight: number }[]>>({});
+  const [cardsLoaded, setCardsLoaded] = useState(false);
+
   // Stonebox price editing
   const [editStonePrice, setEditStonePrice] = useState(false);
   const [stonePriceInput, setStonePriceInput] = useState('');
@@ -103,6 +114,25 @@ export default function ShopsPage() {
   }, [toast]);
 
   useEffect(() => { fetchData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch cards catalog when luckbox modal opens (for card overrides)
+  useEffect(() => {
+    if (editingLuckbox && !cardsLoaded) {
+      fetch('/api/admin/cards/config')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.rarities) {
+            const catalog: Record<string, { name: string; weight: number }[]> = {};
+            for (const { rarity, items } of data.rarities) {
+              catalog[rarity.toUpperCase()] = items.map((c: any) => ({ name: c.name, weight: c.weight }));
+            }
+            setCardsCatalog(catalog);
+            setCardsLoaded(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [editingLuckbox, cardsLoaded]);
 
   // ── Save helpers ──
 
@@ -699,6 +729,120 @@ export default function ShopsPage() {
                   </div>
                 );
               })()}
+            </div>
+
+            {/* Card Overrides — pick specific cards per rarity with custom weights */}
+            <div style={{ marginTop: '20px' }}>
+              <label className="admin-form-label" style={{ marginBottom: '8px', display: 'block' }}>
+                Card Overrides (optional — leave empty to use all cards from each rarity)
+              </label>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                Pick specific cards and set custom weights for this box only. Cards not listed use default weights.
+              </p>
+
+              {editingLuckbox.rarities.map((slot) => {
+                const rarity = slot.rarity.toUpperCase();
+                const available = cardsCatalog[rarity] ?? [];
+                const overrides = editingLuckbox.cardOverrides?.[rarity] ?? [];
+
+                if (available.length === 0) return null;
+
+                return (
+                  <div key={rarity} style={{ marginBottom: '12px', padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: RARITY_COLORS[slot.rarity] ?? '#fff' }}>
+                        {rarity} {overrides.length > 0 ? `(${overrides.length} selected)` : '(all cards)'}
+                      </span>
+                      {overrides.length === 0 ? (
+                        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => {
+                          setEditingLuckbox({
+                            ...editingLuckbox,
+                            cardOverrides: {
+                              ...editingLuckbox.cardOverrides,
+                              [rarity]: available.map(c => ({ name: c.name, weight: c.weight })),
+                            },
+                          });
+                        }}>
+                          Customize Cards
+                        </button>
+                      ) : (
+                        <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => {
+                          const updated = { ...editingLuckbox.cardOverrides };
+                          delete updated[rarity];
+                          setEditingLuckbox({ ...editingLuckbox, cardOverrides: Object.keys(updated).length > 0 ? updated : undefined });
+                        }}>
+                          Reset to All
+                        </button>
+                      )}
+                    </div>
+
+                    {overrides.length > 0 && (
+                      <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                        {overrides.map((card, ci) => (
+                          <div key={ci} style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '4px' }}>
+                            <select className="admin-select" style={{ flex: 1, fontSize: '12px' }}
+                              value={card.name}
+                              onChange={e => {
+                                const updated = [...overrides];
+                                updated[ci] = { ...updated[ci], name: e.target.value };
+                                setEditingLuckbox({
+                                  ...editingLuckbox,
+                                  cardOverrides: { ...editingLuckbox.cardOverrides, [rarity]: updated },
+                                });
+                              }}>
+                              {available.map(c => (
+                                <option key={c.name} value={c.name}>{c.name}</option>
+                              ))}
+                            </select>
+                            <input className="admin-form-input" type="number" min={0} step={0.1}
+                              style={{ width: '70px', fontSize: '12px' }} value={card.weight}
+                              title="Weight (higher = more likely to be drawn)"
+                              onChange={e => {
+                                const updated = [...overrides];
+                                updated[ci] = { ...updated[ci], weight: parseFloat(e.target.value) || 0 };
+                                setEditingLuckbox({
+                                  ...editingLuckbox,
+                                  cardOverrides: { ...editingLuckbox.cardOverrides, [rarity]: updated },
+                                });
+                              }} />
+                            <button className="admin-btn admin-btn-danger admin-btn-sm" style={{ fontSize: '11px', padding: '2px 6px' }}
+                              onClick={() => {
+                                const updated = overrides.filter((_, j) => j !== ci);
+                                setEditingLuckbox({
+                                  ...editingLuckbox,
+                                  cardOverrides: {
+                                    ...editingLuckbox.cardOverrides,
+                                    [rarity]: updated.length > 0 ? updated : undefined as any,
+                                  },
+                                });
+                                // Clean up empty overrides
+                                if (updated.length === 0) {
+                                  const cleaned = { ...editingLuckbox.cardOverrides };
+                                  delete cleaned[rarity];
+                                  setEditingLuckbox({ ...editingLuckbox, cardOverrides: Object.keys(cleaned).length > 0 ? cleaned : undefined });
+                                }
+                              }}>X</button>
+                          </div>
+                        ))}
+                        <button className="admin-btn admin-btn-ghost admin-btn-sm" style={{ marginTop: '4px', fontSize: '11px' }}
+                          onClick={() => {
+                            const firstAvailable = available.find(c => !overrides.some(o => o.name === c.name));
+                            if (!firstAvailable) return;
+                            setEditingLuckbox({
+                              ...editingLuckbox,
+                              cardOverrides: {
+                                ...editingLuckbox.cardOverrides,
+                                [rarity]: [...overrides, { name: firstAvailable.name, weight: firstAvailable.weight }],
+                              },
+                            });
+                          }}>
+                          + Add Card
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="admin-modal-actions" style={{ marginTop: '20px' }}>

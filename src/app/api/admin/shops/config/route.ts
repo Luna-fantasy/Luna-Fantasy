@@ -75,6 +75,27 @@ function validateLuckboxTiers(tiers: unknown): { valid: boolean; error?: string;
       return { valid: false, error: `Tier ${i}: rarity percentages cannot exceed 100 (got ${totalPct})` };
     }
 
+    // Validate and pass through card overrides if present
+    let cardOverrides: Record<string, { name: string; weight: number }[]> | undefined;
+    if (t.cardOverrides && typeof t.cardOverrides === 'object') {
+      cardOverrides = {};
+      for (const [rarity, cards] of Object.entries(t.cardOverrides)) {
+        if (!Array.isArray(cards) || cards.length === 0) continue;
+        const validCards: { name: string; weight: number }[] = [];
+        for (const c of cards as any[]) {
+          if (!c?.name || typeof c.name !== 'string') continue;
+          validCards.push({
+            name: sanitizeString(String(c.name), 50),
+            weight: Math.max(0, Number(c.weight) || 0),
+          });
+        }
+        if (validCards.length > 0) {
+          cardOverrides[rarity.toUpperCase()] = validCards;
+        }
+      }
+      if (Object.keys(cardOverrides).length === 0) cardOverrides = undefined;
+    }
+
     result.push({
       id,
       label,
@@ -82,6 +103,7 @@ function validateLuckboxTiers(tiers: unknown): { valid: boolean; error?: string;
       rarities,
       enabled: t.enabled !== false,
       order: typeof t.order === 'number' ? t.order : i,
+      ...(cardOverrides ? { cardOverrides } : {}),
     });
   }
 

@@ -9,6 +9,42 @@ export interface LuckboxTierConfig {
   label: string;
 }
 
+/** Multi-rarity luckbox: a single box that can contain cards from different rarities */
+export interface RaritySlot {
+  rarity: string;
+  percentage: number;
+}
+
+export interface CardOverride {
+  name: string;
+  weight: number;
+}
+
+export interface LuckboxBoxConfig {
+  id: string;
+  label: string;
+  price: number;
+  rarities: RaritySlot[];
+  enabled: boolean;
+  order: number;
+  cardOverrides?: Record<string, CardOverride[]>;
+}
+
+/** DB-stored shop configs */
+export interface LuckboxShopConfig {
+  tiers: LuckboxBoxConfig[];
+}
+
+export interface StoneShopConfig {
+  price: number;
+  refundAmount: number;
+  stones: StoneConfig[];
+}
+
+export interface TicketShopConfig {
+  packages: TicketPackage[];
+}
+
 export interface StoneConfig {
   name: string;
   weight: number;
@@ -92,11 +128,13 @@ export interface StripeCheckoutRequest {
 // ── Transaction Types ──
 
 export type TransactionType =
+  // Website Lunari
   | 'stripe_purchase'
   | 'luckbox_spend'
   | 'stonebox_spend'
   | 'ticket_spend'
   | 'refund'
+  // Banking
   | 'bank_daily'
   | 'bank_loan_taken'
   | 'bank_loan_repaid'
@@ -105,14 +143,41 @@ export type TransactionType =
   | 'bank_investment_withdraw'
   | 'bank_insurance'
   | 'bank_debt_paid'
+  // Marketplace
   | 'marketplace_buy'
   | 'marketplace_sell'
   | 'trade_win'
   | 'trade_loss'
+  | 'swap_received'
+  // Web vendors
   | 'seluna_purchase'
   | 'brimor_purchase'
   | 'mells_purchase'
-  | 'swap_received';
+  // Card transactions (from Discord bots)
+  | 'card_pull'
+  | 'card_luckbox'
+  | 'card_seluna'
+  | 'card_sell'
+  | 'card_buy'
+  | 'card_auction'
+  | 'card_swap'
+  | 'card_gift'
+  // Stone transactions (from Discord bots)
+  | 'stone_chest'
+  | 'stone_seluna'
+  | 'stone_sell'
+  | 'stone_buy'
+  | 'stone_auction'
+  | 'stone_swap'
+  | 'stone_gift'
+  | 'stone_forbidden_gift'
+  // Bot Lunari transactions
+  | 'lunari_added'
+  | 'lunari_spent'
+  | 'game_win'
+  | 'game_loss'
+  // Admin
+  | 'admin_reversal';
 
 export interface TransactionRecord {
   _id?: string;
@@ -130,10 +195,19 @@ export interface TransactionRecord {
     itemRarity?: string;
     isDuplicate?: boolean;
     refundAmount?: number;
+    cardName?: string;
+    stoneName?: string;
+    buyerId?: string;
+    sellerId?: string;
+    winnerId?: string;
+    swapperId?: string;
+    otherItem?: string;
+    reason?: string;
     [key: string]: unknown;
   };
   createdAt: Date;
-  source: 'web';
+  source: 'web' | 'discord' | 'admin';
+  status?: 'pending' | 'completed';
 }
 
 // ── Reveal Modal Types ──
