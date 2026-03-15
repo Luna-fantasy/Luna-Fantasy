@@ -180,6 +180,13 @@ function NavIcon({ name }: { name: string }) {
         <line x1="16" y1="16" x2="16.01" y2="16" />
       </svg>
     ),
+    external: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" y1="14" x2="21" y2="3" />
+      </svg>
+    ),
   };
   return icons[name] ?? null;
 }
@@ -219,7 +226,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
       </button>
       <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}>
         <div className="admin-sidebar-header">
-          <div className="admin-sidebar-logo">Luna</div>
+          <Link href="/admin" className="admin-sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }}>Luna</Link>
           <div className="admin-sidebar-subtitle">Admin Dashboard</div>
         </div>
 
@@ -252,6 +259,13 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
             </div>
           ))}
         </nav>
+
+        <div className="admin-sidebar-back">
+          <a href="/" className="admin-nav-link">
+            <NavIcon name="external" />
+            <span>Back to Website</span>
+          </a>
+        </div>
 
         <div className="admin-sidebar-footer">
           {user.image && (

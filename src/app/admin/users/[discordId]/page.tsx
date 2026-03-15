@@ -9,6 +9,7 @@ import CardManager from './components/CardManager';
 import StoneManager from './components/StoneManager';
 import InventoryManager from './components/InventoryManager';
 import UserOverview from './components/UserOverview';
+import { getTransactionTypeInfo } from '@/lib/admin/transaction-types';
 
 const tabs = ['Overview', 'Cards', 'Stones', 'Inventory', 'Transactions', 'Actions'] as const;
 type Tab = typeof tabs[number];
@@ -69,14 +70,31 @@ export default function UserDetailPage() {
         <button className="admin-btn admin-btn-ghost" onClick={() => router.push('/admin/users')} style={{ padding: '6px 10px' }}>
           &larr;
         </button>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%',
+          border: '2px solid rgba(0,212,255,0.3)',
+          background: 'rgba(0,212,255,0.08)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden', flexShrink: 0,
+        }}>
+          {profile.image ? (
+            <img src={profile.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ fontSize: 22, color: 'var(--accent-primary)', fontWeight: 700 }}>
+              {(profile.globalName || profile.username || '?').charAt(0).toUpperCase()}
+            </span>
+          )}
+        </div>
         <div>
-          <h1 className="admin-page-title" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {profile.image && (
-              <img src={profile.image} alt="" style={{ width: 36, height: 36, borderRadius: '50%', border: '2px solid rgba(0,212,255,0.3)' }} />
-            )}
-            {profile.globalName || profile.username || discordId}
+          <h1 className="admin-page-title">
+            {profile.globalName || profile.username || 'Unknown User'}
           </h1>
-          <p className="admin-page-subtitle" style={{ fontFamily: 'monospace' }}>{discordId}</p>
+          <p className="admin-page-subtitle" style={{ fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 8 }}>
+            {discordId}
+            {profile.username && profile.globalName && profile.username !== profile.globalName && (
+              <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>@{profile.username}</span>
+            )}
+          </p>
         </div>
       </div>
 
@@ -134,8 +152,22 @@ function TransactionsTab({ transactions }: { transactions: any[] }) {
         <tbody>
           {transactions.map((t: any, i: number) => (
             <tr key={t._id ?? i}>
-              <td><span className="admin-badge cyan">{t.type}</span></td>
-              <td style={{ color: t.amount >= 0 ? 'var(--common)' : '#f43f5e', fontWeight: 600 }}>
+              <td>
+                {(() => {
+                  const info = getTransactionTypeInfo(t.type);
+                  return (
+                    <span className={`admin-badge ${info.color}`} style={{ gap: 4 }}>
+                      <span style={{ fontSize: 12 }}>{info.icon}</span>
+                      {info.label}
+                    </span>
+                  );
+                })()}
+              </td>
+              <td style={{
+                color: t.amount >= 0 ? 'var(--common)' : '#f43f5e',
+                fontWeight: 600,
+                textShadow: t.amount >= 0 ? '0 0 8px rgba(74, 222, 128, 0.3)' : '0 0 8px rgba(244, 63, 94, 0.3)',
+              }}>
                 {t.amount >= 0 ? '+' : ''}{t.amount?.toLocaleString()}
               </td>
               <td>{t.balanceBefore?.toLocaleString() ?? '-'}</td>

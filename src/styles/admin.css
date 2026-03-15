@@ -289,6 +289,20 @@
   color: var(--text-muted);
 }
 
+.admin-sidebar-back {
+  padding: 8px 14px;
+  border-top: 1px solid rgba(0, 212, 255, 0.06);
+}
+
+.admin-sidebar-back .admin-nav-link {
+  opacity: 0.6;
+  font-size: 13px;
+}
+
+.admin-sidebar-back .admin-nav-link:hover {
+  opacity: 1;
+}
+
 .admin-sidebar-footer {
   padding: 16px 14px;
   border-top: 1px solid rgba(0, 212, 255, 0.06);

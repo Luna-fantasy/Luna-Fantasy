@@ -823,8 +823,9 @@ function AchievementsSection({
         {BADGE_DEFS.map((badge) => {
           const timestamp = badges?.[badge.id];
           const isEarned = !!timestamp && timestamp > 0;
+          const ts = isEarned ? (timestamp > 1e12 ? timestamp : timestamp * 1000) : 0;
           const earnedDate = isEarned
-            ? new Date(timestamp * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+            ? new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
             : null;
 
           return (

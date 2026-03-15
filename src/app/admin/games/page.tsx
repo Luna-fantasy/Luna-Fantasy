@@ -42,7 +42,6 @@ interface JesterSections {
   rps?: JesterGameBase;
   bombroulette?: JesterGameBase;
   guessthecountry?: JesterGameBase;
-  magicbot?: JesterGameBase;
   LunaFantasy?: JesterGameBase;
   LunaFantasyEvent?: JesterGameBase;
   GrandFantasy?: JesterGameBase;
@@ -72,7 +71,6 @@ interface PointsSettings {
   FactionWar_bot: number;
   FactionWar_bonus_bot: number;
   FactionWar_double_bot: number;
-  magicbot: number;
   [key: string]: any;
 }
 
@@ -100,7 +98,6 @@ const JESTER_GAMES: GameMeta[] = [
   { key: 'rps', displayName: 'Luna RPS', description: 'Multiplayer Rock Paper Scissors tournament. Players compete in rounds until one remains.' },
   { key: 'bombroulette', displayName: 'Luna Bomber', description: 'A bomb is passed between players. If it explodes on your turn, you\'re out!' },
   { key: 'guessthecountry', displayName: 'Guess The Country', description: 'Geography trivia. Players see clues and race to guess the country first.' },
-  { key: 'magicbot', displayName: 'Magic Pull', description: 'Spend tickets to pull a random magic card. Rarer cards are harder to find.' },
   { key: 'LunaFantasy', displayName: 'Luna Fantasy (Duel)', description: '1v1 card battle. Pick your best cards from your collection and duel another player.' },
   { key: 'LunaFantasyEvent', displayName: 'Luna Fantasy Event', description: 'Special event version of Luna Fantasy. Winners earn Lunari prizes.' },
   { key: 'GrandFantasy', displayName: 'Grand Fantasy', description: 'Full hand card battle using your entire collection. Play against others or the bot.' },
@@ -170,7 +167,7 @@ export default function GamesManagementPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const sections = data.sections || {};
-      const gameKeys = ['roulette', 'mafia', 'rps', 'bombroulette', 'guessthecountry', 'magicbot', 'LunaFantasy', 'LunaFantasyEvent', 'GrandFantasy', 'FactionWar'];
+      const gameKeys = ['roulette', 'mafia', 'rps', 'bombroulette', 'guessthecountry', 'LunaFantasy', 'LunaFantasyEvent', 'GrandFantasy', 'FactionWar'];
       const filtered: JesterSections = {};
       for (const k of gameKeys) {
           if (sections[k]) (filtered as any)[k] = sections[k];
@@ -672,13 +669,6 @@ export default function GamesManagementPage() {
                   min={0}
                   description="Double victory reward"
                 />
-                <NumberInput
-                  label="Magic Pull"
-                  value={pointsSettings.magicbot ?? 0}
-                  onChange={(v) => updatePoints('magicbot', v)}
-                  min={0}
-                  description="Lunari awarded per magic card pull"
-                />
                 <BotBadge bot="jester" />
               </ConfigSection>
 
@@ -808,13 +798,6 @@ function renderJesterGameFields(
         <>
           <NumberInput label="Rounds" value={game.rounds ?? 5} onChange={(v) => update(key, { ...game, rounds: v })} min={1} description="How many rounds each game lasts" />
           <NumberInput label="Guess Time" value={game.guess_time ?? 30} onChange={(v) => update(key, { ...game, guess_time: v })} min={0} description="Seconds players have to guess each round" />
-          {channelRoleInputs}
-        </>
-      );
-    case 'magicbot':
-      return (
-        <>
-          <NumberInput label="Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to play (0 = free)" />
           {channelRoleInputs}
         </>
       );
