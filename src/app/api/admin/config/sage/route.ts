@@ -12,7 +12,8 @@ const ALLOWED_SECTIONS = new Set([
   'enable_search', 'enable_image_generation', 'thread_slowmode',
   'thread_welcome', 'panel_title', 'panel_description', 'panel_image',
   'system_prompt', 'privileged_roles', 'lunarian_role_id', 'lunarian_access',
-  'all_known_roles',
+  'all_known_roles', 'image_generation_model', 'sage_prefix', 'owner_role_ids',
+  'image_gen_roles',
 ]);
 
 // Maps dashboard section names → bot_config document _id + data field path
@@ -32,6 +33,10 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   lunarian_role_id:   { docId: 'sage_privileges', field: 'lunarianRoleId' },
   lunarian_access:    { docId: 'sage_privileges', field: 'lunarianAccess' },
   all_known_roles:    { docId: 'sage_privileges', field: 'allKnownRoles' },
+  image_generation_model: { docId: 'sage_settings', field: 'image_generation_model' },
+  sage_prefix:        { docId: 'sage_settings', field: 'sage_prefix' },
+  owner_role_ids:     { docId: 'sage_settings', field: 'owner_role_ids' },
+  image_gen_roles:    { docId: 'sage_settings', field: 'image_gen_roles' },
 };
 
 export async function GET() {
@@ -63,6 +68,10 @@ export async function GET() {
       sections.panel_title = settings.data.panel_title;
       sections.panel_description = settings.data.panel_description;
       sections.panel_image = settings.data.panel_image;
+      sections.image_generation_model = settings.data.image_generation_model ?? null;
+      sections.sage_prefix = settings.data.sage_prefix ?? null;
+      sections.owner_role_ids = settings.data.owner_role_ids ?? null;
+      sections.image_gen_roles = settings.data.image_gen_roles ?? null;
     }
 
     // System prompt
