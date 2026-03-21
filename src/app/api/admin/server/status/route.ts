@@ -6,10 +6,14 @@ export async function GET() {
   const auth = await requireMastermindApi();
   if (!auth.authorized) return auth.response;
 
-  const res = await agentFetch('/pm2/list');
+  const res = await agentFetch('/pm2/list', { timeout: 8000 });
   if (!res.ok) {
     console.error('[server/status] VPS agent error:', res.data?.error);
     return NextResponse.json({ error: 'Failed to reach VPS agent' }, { status: 502 });
   }
-  return NextResponse.json(res.data);
+
+  // Normalize response — ensure { processes: Process[] } shape
+  const raw = res.data;
+  const processes = Array.isArray(raw) ? raw : Array.isArray(raw?.processes) ? raw.processes : [];
+  return NextResponse.json({ processes });
 }

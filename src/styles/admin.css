@@ -1366,16 +1366,60 @@ textarea.admin-rich-textarea {
 }
 
 /* ── Process Card (Server Management) ── */
+/* ── Process Grid ── */
+.admin-process-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.admin-process-card-wrapper {
+  animation: adminCardFadeIn 0.4s ease both;
+}
+
+@keyframes adminCardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Process Card ── */
 .admin-process-card {
   background: var(--bg-elevated);
   border: 1px solid rgba(0, 212, 255, 0.08);
   border-radius: var(--radius-md);
-  padding: 20px;
-  transition: var(--transition-fast);
+  padding: 20px 20px 20px 24px;
+  transition: all 0.25s ease;
+  border-left: 3px solid transparent;
+  position: relative;
+}
+
+.admin-process-card-online {
+  border-left-color: #4ade80;
+}
+
+.admin-process-card-offline {
+  border-left-color: #f43f5e;
 }
 
 .admin-process-card:hover {
   border-color: rgba(0, 212, 255, 0.15);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 212, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.admin-process-card-online:hover {
+  border-left-color: #4ade80;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 0 20px rgba(74, 222, 128, 0.06);
+}
+
+.admin-process-card-offline:hover {
+  border-left-color: #f43f5e;
 }
 
 .admin-process-header {
@@ -1389,33 +1433,61 @@ textarea.admin-rich-textarea {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: 0.01em;
 }
 
 .admin-process-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-sm);
 }
 
 .admin-process-stat-label {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
 }
 
 .admin-process-stat-value {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-process-actions {
   display: flex;
   gap: 8px;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid rgba(0, 212, 255, 0.06);
+}
+
+.admin-process-actions .admin-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ── Button spinner ── */
+.admin-btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: adminBtnSpin 0.6s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+@keyframes adminBtnSpin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Memory Bar ── */
@@ -1435,34 +1507,196 @@ textarea.admin-rich-textarea {
   background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
 }
 
+.admin-memory-bar-low .admin-memory-bar-fill {
+  background: linear-gradient(90deg, #4ade80, #22d3ee);
+}
+
+.admin-memory-bar-medium .admin-memory-bar-fill {
+  background: linear-gradient(90deg, #fbbf24, #f97316);
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.2);
+}
+
+.admin-memory-bar-high .admin-memory-bar-fill {
+  background: linear-gradient(90deg, #f43f5e, #ef4444);
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.3);
+}
+
 /* ── Log Viewer ── */
-.admin-log-viewer {
-  background: var(--bg-void);
+.admin-log-titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(0, 212, 255, 0.08);
-  border-radius: var(--radius-sm);
-  padding: 16px;
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  margin-bottom: 0;
+}
+
+.admin-log-titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-log-titlebar-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.admin-log-titlebar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-log-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #4ade80;
+  padding: 2px 8px;
+  background: rgba(74, 222, 128, 0.08);
+  border-radius: 10px;
+}
+
+.admin-log-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #4ade80;
+  animation: admin-live-pulse 1.5s ease-in-out infinite;
+}
+
+.admin-log-viewer {
+  background: #0a0e14;
+  border: 1px solid rgba(0, 212, 255, 0.08);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  padding: 12px 0;
   max-height: 500px;
   overflow-y: auto;
   font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.7;
 }
 
 .admin-log-line {
+  display: flex;
+  padding: 0 16px 0 0;
+  transition: background 0.15s ease;
+}
+
+.admin-log-line:hover {
+  background: rgba(0, 212, 255, 0.03);
+}
+
+.admin-log-line-number {
+  display: inline-block;
+  min-width: 48px;
+  padding: 0 12px;
+  text-align: right;
+  color: rgba(255, 255, 255, 0.15);
+  user-select: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  margin-right: 12px;
+  font-size: 11px;
+}
+
+.admin-log-line-text {
   white-space: pre-wrap;
   word-break: break-all;
+  flex: 1;
 }
 
-.admin-log-line-error {
-  color: var(--admin-danger);
+.admin-log-line-error .admin-log-line-text {
+  color: #f87171;
 }
 
-.admin-log-line-warn {
+.admin-log-line-warn .admin-log-line-text {
   color: var(--accent-legendary);
 }
 
-.admin-log-line-info {
-  color: var(--text-secondary);
+.admin-log-line-info .admin-log-line-text {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── Server Summary Bar ── */
+.admin-server-summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-server-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(0, 212, 255, 0.08);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+
+.admin-server-summary-value {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-server-summary-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-server-summary-online .admin-server-summary-value {
+  color: #4ade80;
+}
+
+.admin-server-summary-offline .admin-server-summary-value {
+  color: #f43f5e;
+}
+
+/* ── Server Offline State ── */
+.admin-server-offline {
+  text-align: center;
+  padding: 60px 20px;
+  border: 1px dashed rgba(244, 63, 94, 0.15);
+  border-radius: var(--radius-md);
+  background: rgba(244, 63, 94, 0.02);
+}
+
+.admin-server-offline-icon {
+  color: rgba(244, 63, 94, 0.4);
+  margin-bottom: 20px;
+  animation: adminOfflinePulse 3s ease-in-out infinite;
+}
+
+@keyframes adminOfflinePulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.admin-server-offline-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.admin-server-offline-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 420px;
+  margin: 0 auto;
 }
 
 /* ── Config Editor ── */
@@ -1775,23 +2009,35 @@ textarea.admin-rich-textarea {
 .admin-connection-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 12px 18px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 500;
   margin-bottom: 20px;
 }
 
 .admin-connection-banner-connected {
-  background: rgba(74, 222, 128, 0.08);
-  border: 1px solid rgba(74, 222, 128, 0.2);
-  color: var(--common);
+  background: rgba(74, 222, 128, 0.06);
+  border: 1px solid rgba(74, 222, 128, 0.15);
+  color: #4ade80;
 }
 
 .admin-connection-banner-disconnected {
-  background: rgba(244, 63, 94, 0.08);
-  border: 1px solid rgba(244, 63, 94, 0.2);
-  color: var(--admin-danger);
+  background: rgba(244, 63, 94, 0.06);
+  border: 1px solid rgba(244, 63, 94, 0.15);
+  color: #f87171;
+}
+
+.admin-connection-banner-disconnected::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f43f5e;
+  box-shadow: 0 0 8px #f43f5e;
+  animation: adminPulse 2s ease infinite;
+  flex-shrink: 0;
 }
 
 /* ── Upload Zone ── */
@@ -2604,19 +2850,14 @@ textarea.admin-rich-textarea {
   background: linear-gradient(135deg, rgba(17, 24, 34, 0.9), rgba(0, 212, 255, 0.04));
 }
 
-/* Process card glow on hover */
-.admin-process-card:hover {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 212, 255, 0.08);
-}
-
-/* Connection banner pulse */
+/* Connection banner pulse (connected) */
 .admin-connection-banner-connected::before {
   content: '';
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--common);
-  box-shadow: 0 0 8px var(--common);
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
   animation: adminPulse 2s ease infinite;
   flex-shrink: 0;
 }
