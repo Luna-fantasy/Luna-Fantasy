@@ -54,8 +54,11 @@ export async function POST(req: NextRequest) {
     // Build email content parts
     const content: { type: string; value: string }[] = [];
 
+    // Escape HTML entities to prevent injection via user input
+    const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
     // HTML version with inline images
-    const htmlLines = bodyLines.map((l) => (l === '' ? '<br>' : `<p>${l.replace(/\n/g, '<br>')}</p>`));
+    const htmlLines = bodyLines.map((l) => (l === '' ? '<br>' : `<p>${escapeHtml(l).replace(/\n/g, '<br>')}</p>`));
 
     const inlineImages: { name: string; type: string; content: string }[] = [];
     for (const file of validFiles) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
+import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 import { creditLunari, getBalance } from '@/lib/bazaar/lunari-ops';
@@ -60,7 +61,7 @@ export async function POST(
 
     await col.updateOne(
       { _id: discordId as any },
-      { $set: { items: updatedItems } },
+      { $set: { items: updatedItems }, $unset: { data: '' } },
       { upsert: true }
     );
 
@@ -72,7 +73,7 @@ export async function POST(
       before: { itemCount: currentItems.length },
       after: { itemCount: updatedItems.length, item: newItem },
       metadata: { reason, itemName: newItem.name },
-      ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+      ip: getClientIp(request),
     });
 
     return NextResponse.json({ success: true, item: newItem });
@@ -114,17 +115,33 @@ export async function DELETE(
     const doc = await col.findOne({ _id: discordId as any });
     if (!doc) return NextResponse.json({ error: 'User has no inventory' }, { status: 404 });
 
+    // Migrate legacy st.db format (data field) → canonical items field
+    // Same pattern used by Butler's InventoryManager.addItem()
+    if (!Array.isArray(doc.items) && doc.data !== undefined) {
+      const migrated = parseInventory(doc.data);
+      await col.updateOne(
+        { _id: discordId as any },
+        { $set: { items: migrated }, $unset: { data: '' } }
+      );
+    }
+
     const currentItems = parseInventory(doc.items ?? doc.data);
-    const itemIndex = currentItems.findIndex((it: any) => it.id === itemId);
-    if (itemIndex === -1) return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+    const removedItem = currentItems.find((it: any) => it.id === itemId);
+    if (!removedItem) return NextResponse.json({ error: 'Item not found' }, { status: 404 });
 
-    const removedItem = currentItems[itemIndex];
-    const updatedItems = currentItems.filter((_: any, i: number) => i !== itemIndex);
-
-    await col.updateOne(
-      { _id: discordId as any },
-      { $set: { items: updatedItems } }
+    // Atomic $pull — prevents double-refund race conditions.
+    // Uses findOneAndUpdate to get accurate post-pull document state.
+    const result = await col.findOneAndUpdate(
+      { _id: discordId as any, 'items.id': itemId },
+      { $pull: { items: { id: itemId } } as any },
+      { returnDocument: 'after' }
     );
+
+    if (!result) {
+      return NextResponse.json({ error: 'Item already removed' }, { status: 404 });
+    }
+
+    const afterCount = Array.isArray(result.items) ? result.items.length : 0;
 
     // Handle refund if requested and item has a price
     let refundResult: { amount: number; balanceAfter: number } | null = null;
@@ -157,9 +174,9 @@ export async function DELETE(
       action: refund ? 'inventory_remove_refund' : 'inventory_remove',
       targetDiscordId: discordId,
       before: { itemCount: currentItems.length, item: removedItem },
-      after: { itemCount: updatedItems.length, ...(refundResult ? { refund: refundResult } : {}) },
+      after: { itemCount: afterCount, ...(refundResult ? { refund: refundResult } : {}) },
       metadata: { reason, itemName: removedItem.name, ...(refundResult ? { refundAmount: refundResult.amount } : {}) },
-      ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+      ip: getClientIp(request),
     });
 
     return NextResponse.json({ success: true, removedItem, refund: refundResult });

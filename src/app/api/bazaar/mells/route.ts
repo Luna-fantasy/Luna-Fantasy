@@ -10,7 +10,8 @@ import {
 } from '@/lib/bazaar/lunari-ops';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
-import { getVendorItems, findVendorItem } from '@/lib/bazaar/vendor-config';
+import { getMellsShopConfig } from '@/lib/bazaar/shop-config';
+import type { MellsShopItem } from '@/lib/bazaar/shop-config';
 
 // In-memory purchase lock to prevent double purchases
 const activePurchases = new Set<string>();
@@ -22,7 +23,8 @@ export async function GET() {
   const session = await auth();
   const discordId = session?.user?.discordId;
 
-  const items = await getVendorItems('mells_selvair');
+  const allItems = await getMellsShopConfig();
+  const items = allItems.filter(item => !item.exclusive);
 
   if (items.length === 0) {
     return NextResponse.json({ items: [], user: null });
@@ -58,9 +60,15 @@ export async function GET() {
   }
 
   const enrichedItems = items.map((item) => ({
-    ...item,
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    description: item.description,
+    imageUrl: item.backgroundUrl,
+    type: item.type ?? 'profile',
+    roleId: item.roleId,
     owned: ownedItemIds.has(item.id),
-    active: item.type === 'rank'
+    active: (item.type ?? 'profile') === 'rank'
       ? activeRankBackground === item.id
       : activeBackground === item.id,
   }));
@@ -130,10 +138,20 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
 
   try {
     // 1. Find item in DB
-    const item = await findVendorItem('mells_selvair', itemId);
-    if (!item) {
+    const allItems = await getMellsShopConfig();
+    const mellsItem = allItems.find(i => i.id === itemId && i.enabled !== false);
+    if (!mellsItem) {
       return NextResponse.json({ error: 'Invalid item' }, { status: 400 });
     }
+    const item = {
+      id: mellsItem.id,
+      name: mellsItem.name,
+      price: mellsItem.price,
+      imageUrl: mellsItem.backgroundUrl,
+      type: mellsItem.type ?? 'profile',
+      roleId: mellsItem.roleId,
+      description: mellsItem.description,
+    };
 
     // 2. Check not already owned
     const client = await clientPromise;
@@ -240,10 +258,20 @@ async function handleEquip(discordId: string, itemId: string) {
   }
 
   // 1. Find item in DB
-  const item = await findVendorItem('mells_selvair', itemId);
-  if (!item) {
+  const allItems = await getMellsShopConfig();
+  const mellsItem = allItems.find(i => i.id === itemId && i.enabled !== false);
+  if (!mellsItem) {
     return NextResponse.json({ error: 'Invalid item' }, { status: 400 });
   }
+  const item = {
+    id: mellsItem.id,
+    name: mellsItem.name,
+    price: mellsItem.price,
+    imageUrl: mellsItem.backgroundUrl,
+    type: mellsItem.type ?? 'profile',
+    roleId: mellsItem.roleId,
+    description: mellsItem.description,
+  };
 
   const client = await clientPromise;
   const db = client.db('Database');

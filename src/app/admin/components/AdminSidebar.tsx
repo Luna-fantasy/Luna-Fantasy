@@ -39,8 +39,12 @@ const navItems: { section: string; items: NavItem[] }[] = [
       { label: 'Cards', href: '/admin/cards', icon: 'layers' },
       { label: 'Stones', href: '/admin/stones', icon: 'gem' },
       { label: 'Games', href: '/admin/games', icon: 'gamepad' },
+      { label: 'Commands', href: '/admin/commands', icon: 'terminal' },
       { label: 'Shops', href: '/admin/shops', icon: 'box' },
-      { label: 'Vendors', href: '/admin/vendors', icon: 'store' },
+      { label: 'Luna Map', href: '/admin/luna-map', icon: 'map' },
+      { label: 'Shop Items', href: '/admin/vendors', icon: 'store' },
+      { label: 'Tickets', href: '/admin/tickets', icon: 'shield' },
+      { label: 'Applications', href: '/admin/applications', icon: 'users' },
     ],
   },
   {
@@ -54,13 +58,16 @@ const navItems: { section: string; items: NavItem[] }[] = [
     section: 'Content',
     items: [
       { label: 'Announce', href: '/admin/announce', icon: 'megaphone' },
+      { label: 'Canvas Editor', href: '/admin/canvas-editor', icon: 'image' },
       { label: 'Assets (R2)', href: '/admin/assets', icon: 'image' },
       { label: 'Website', href: '/admin/content', icon: 'globe' },
+      { label: 'Partners', href: '/admin/partners', icon: 'users' },
     ],
   },
   {
     section: 'System',
     items: [
+      { label: 'Settings', href: '/admin/settings', icon: 'settings' },
       { label: 'Server', href: '/admin/server', icon: 'server', statusDot: true },
       { label: 'Deploy', href: '/admin/deploy', icon: 'rocket' },
     ],
@@ -115,6 +122,13 @@ function NavIcon({ name }: { name: string }) {
         <line x1="12" y1="22" x2="6" y2="9" /><line x1="12" y1="22" x2="18" y2="9" />
       </svg>
     ),
+    map: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+        <line x1="8" y1="2" x2="8" y2="18" />
+        <line x1="16" y1="6" x2="16" y2="22" />
+      </svg>
+    ),
     store: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" />
@@ -148,6 +162,11 @@ function NavIcon({ name }: { name: string }) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    ),
+    terminal: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
       </svg>
     ),
     gamepad: (
@@ -215,6 +234,13 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
     return pathname.startsWith(href);
   };
 
+  const handleNavKeyDown = (e: React.KeyboardEvent) => {
+    const links = Array.from(e.currentTarget.querySelectorAll('.admin-nav-link:not([style*="pointer-events"])')) as HTMLElement[];
+    const idx = links.indexOf(document.activeElement as HTMLElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); links[(idx + 1) % links.length]?.focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); links[(idx - 1 + links.length) % links.length]?.focus(); }
+  };
+
   return (
     <>
       <button
@@ -226,11 +252,11 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
       </button>
       <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}>
         <div className="admin-sidebar-header">
-          <Link href="/admin" className="admin-sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }}>Luna</Link>
+          <Link href="/" className="admin-sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }}>Luna</Link>
           <div className="admin-sidebar-subtitle">Admin Dashboard</div>
         </div>
 
-        <nav className="admin-sidebar-nav">
+        <nav className="admin-sidebar-nav" role="navigation" aria-label="Admin navigation" onKeyDown={handleNavKeyDown}>
           {navItems.map((group) => (
             <div key={group.section}>
               <div className="admin-nav-section">{group.section}</div>
@@ -241,6 +267,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                   className={`admin-nav-link ${isActive(item.href) ? 'active' : ''} ${item.disabled ? 'disabled' : ''}`}
                   onClick={() => setMobileOpen(false)}
                   style={item.disabled ? { opacity: 0.35, pointerEvents: 'none' } : undefined}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
                 >
                   <NavIcon name={item.icon} />
                   <span>{item.label}</span>

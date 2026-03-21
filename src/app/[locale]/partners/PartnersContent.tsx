@@ -3,6 +3,8 @@
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { E } from '@/components/edit-mode/EditableText';
+import { EImg } from '@/components/edit-mode/EditableImage';
 import type { Partner } from "@/lib/partners";
 
 // Social media icons
@@ -77,7 +79,9 @@ export function PartnersContent({ locale }: PartnersContentProps) {
       {/* Hero Section */}
       <section className="partners-hero">
         <div className="partners-hero-bg">
-          <Image
+          <EImg
+            editId="partners-hero-bg"
+            source="r2"
             src="https://assets.lunarian.app/partners/partners-hero.png"
             alt="Luna Partners"
             fill
@@ -86,8 +90,8 @@ export function PartnersContent({ locale }: PartnersContentProps) {
           />
         </div>
         <div className="partners-hero-content">
-          <h1 className="partners-hero-title">{t("title")}</h1>
-          <p className="partners-hero-desc">{t("subtitle")}</p>
+          <h1 className="partners-hero-title"><E ns="partnersPage" k="title">{t("title")}</E></h1>
+          <p className="partners-hero-desc"><E ns="partnersPage" k="subtitle">{t("subtitle")}</E></p>
         </div>
       </section>
 
@@ -95,8 +99,8 @@ export function PartnersContent({ locale }: PartnersContentProps) {
       <section className="partners-section">
         <div className="wrap">
           <div className="partners-header">
-            <h2 className="section-title">{t("meetPartners")}</h2>
-            <p className="section-subtitle">{t("meetPartnersDesc")}</p>
+            <h2 className="section-title"><E ns="partnersPage" k="meetPartners">{t("meetPartners")}</E></h2>
+            <p className="section-subtitle"><E ns="partnersPage" k="meetPartnersDesc">{t("meetPartnersDesc")}</E></p>
           </div>
 
           <div className="partners-grid">
@@ -182,7 +186,7 @@ export function PartnersContent({ locale }: PartnersContentProps) {
                       className="partner-website"
                     >
                       <WebsiteIcon />
-                      {t("visitWebsite")}
+                      <E ns="partnersPage" k="visitWebsite">{t("visitWebsite")}</E>
                     </a>
                   )}
                 </div>
@@ -196,8 +200,8 @@ export function PartnersContent({ locale }: PartnersContentProps) {
       <section className="partners-cta-section">
         <div className="wrap">
           <div className="partners-cta-content">
-            <h2 className="partners-cta-title">{t("ctaTitle")}</h2>
-            <p className="partners-cta-desc">{t("ctaDesc")}</p>
+            <h2 className="partners-cta-title"><E ns="partnersPage" k="ctaTitle">{t("ctaTitle")}</E></h2>
+            <p className="partners-cta-desc"><E ns="partnersPage" k="ctaDesc">{t("ctaDesc")}</E></p>
             <a
               href="https://discord.gg/lunarian"
               target="_blank"
@@ -205,7 +209,7 @@ export function PartnersContent({ locale }: PartnersContentProps) {
               className="partners-cta-btn"
             >
               <DiscordIcon />
-              {t("ctaBtn")}
+              <E ns="partnersPage" k="ctaBtn">{t("ctaBtn")}</E>
             </a>
           </div>
         </div>

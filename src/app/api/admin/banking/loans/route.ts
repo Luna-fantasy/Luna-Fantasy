@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
+import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
@@ -120,7 +121,8 @@ export async function POST(req: NextRequest) {
 
     const loans = bankDoc.loans;
     // Find the active/overdue loan
-    const idx = loanIndex ?? loans.findIndex((l: any) => l.active && !l.paidAt);
+    const rawIdx = loanIndex ?? loans.findIndex((l: any) => l.active && !l.paidAt);
+    const idx = typeof rawIdx === 'number' && Number.isInteger(rawIdx) && rawIdx >= 0 ? rawIdx : -1;
     if (idx < 0 || idx >= loans.length) {
       return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
     }
@@ -185,7 +187,7 @@ export async function POST(req: NextRequest) {
       metadata: { reason: reason ?? '', loanIndex: idx },
       before,
       after: loans[idx],
-      ip: req.headers.get('x-forwarded-for') ?? 'unknown',
+      ip: getClientIp(req),
     });
 
     return NextResponse.json({ success: true, loan: loans[idx] });

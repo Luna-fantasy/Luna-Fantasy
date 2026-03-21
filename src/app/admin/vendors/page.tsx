@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import ConfirmModal from '../components/ConfirmModal';
 import AdminLightbox from '../components/AdminLightbox';
+import SaveDeployBar from '../components/SaveDeployBar';
+import ImagePicker from '../components/ImagePicker';
+import RichTextArea from '../components/RichTextArea';
+import RolePicker from '../components/RolePicker';
+import { SkeletonCard, SkeletonTable } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
+import { useGuildData } from '../utils/useGuildData';
+import { getCsrfToken } from '../utils/csrf';
+import { computeConfigDiff } from '../utils/computeConfigDiff';
 
 // ── Types ──
 
@@ -22,23 +30,20 @@ interface SelunaItem {
   backgroundType?: 'profile' | 'rank' | 'both';
 }
 
-interface VendorItem {
+interface ShopItem {
   id: string;
   name: string;
   price: number;
   roleId?: string;
   description?: string;
-  stock?: number;
+  gradientColors?: string[];
 }
 
-interface VendorConfig {
-  id: string;
-  data: {
-    title: string;
-    description: string;
-    image?: string;
-    items: VendorItem[];
-  };
+interface ShopConfig {
+  title: string;
+  description: string;
+  image?: string;
+  items: ShopItem[];
 }
 
 interface ActiveShop {
@@ -47,6 +52,13 @@ interface ActiveShop {
   endTime: number;
   isDev?: boolean;
 }
+
+type VendorId = 'brimor' | 'broker';
+
+const VENDOR_TABS: { id: VendorId; label: string }[] = [
+  { id: 'brimor', label: 'Brimor' },
+  { id: 'broker', label: 'Broker' },
+];
 
 const RARITIES = ['COMMON', 'RARE', 'EPIC', 'UNIQUE', 'LEGENDARY', 'SECRET'] as const;
 const ITEM_TYPES = ['Card', 'Stone', 'Role', 'Tickets', 'Background'] as const;
@@ -58,10 +70,7 @@ const TYPE_ICONS: Record<string, string> = {
   Card: '\uD83C\uDCCF', Stone: '\uD83D\uDC8E', Role: '\uD83C\uDFC5', Tickets: '\uD83C\uDFAB', Background: '\uD83D\uDDBC\uFE0F',
 };
 
-function getCsrfToken(): string {
-  const match = document.cookie.match(/(?:^|;\s*)bazaar_csrf=([^;]*)/);
-  return match ? decodeURIComponent(match[1]) : '';
-}
+const EMPTY_SHOP: ShopConfig = { title: '', description: '', image: '', items: [] };
 
 function formatLunari(n: number): string {
   return n.toLocaleString() + ' \u20BD';
@@ -75,29 +84,52 @@ function formatTimeLeft(endTime: number): string {
   return `${h}h ${m}m left`;
 }
 
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 // ── Main Page ──
 
 export default function VendorsPage() {
-  const [vendors, setVendors] = useState<VendorConfig[]>([]);
+  // Seluna state (unchanged)
   const [selunaItems, setSelunaItems] = useState<SelunaItem[]>([]);
   const [selunaOpen, setSelunaOpen] = useState(false);
   const [activeShop, setActiveShop] = useState<ActiveShop | null>(null);
+
+  // Brimor / Broker state (new: from jester config API)
+  const [brimor, setBrimor] = useState<ShopConfig>(deepClone(EMPTY_SHOP));
+  const [brimorOrig, setBrimorOrig] = useState<ShopConfig>(deepClone(EMPTY_SHOP));
+  const [broker, setBroker] = useState<ShopConfig>(deepClone(EMPTY_SHOP));
+  const [brokerOrig, setBrokerOrig] = useState<ShopConfig>(deepClone(EMPTY_SHOP));
+
+  // UI state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeVendorTab, setActiveVendorTab] = useState<string>('');
+  const [activeVendorTab, setActiveVendorTab] = useState<VendorId>('brimor');
 
-  // Modals
-  const [showAddItem, setShowAddItem] = useState(false);
-  const [editingItem, setEditingItem] = useState<SelunaItem | null>(null);
-  const [confirmRemoveItem, setConfirmRemoveItem] = useState<string | null>(null);
+  // Seluna modals
+  const [showAddSelunaItem, setShowAddSelunaItem] = useState(false);
+  const [editingSelunaItem, setEditingSelunaItem] = useState<SelunaItem | null>(null);
+  const [confirmRemoveSelunaItem, setConfirmRemoveSelunaItem] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
 
-  // Vendor item editing
-  const [editingVendorItem, setEditingVendorItem] = useState<{ vendorId: string; itemIdx: number } | null>(null);
-  const [vendorItemPrice, setVendorItemPrice] = useState('');
-  const [vendorItemName, setVendorItemName] = useState('');
+  // Vendor modals
+  const [editingProfile, setEditingProfile] = useState<VendorId | null>(null);
+  const [showAddVendorItem, setShowAddVendorItem] = useState(false);
+  const [editingVendorItemIdx, setEditingVendorItemIdx] = useState<number | null>(null);
+  const [confirmDeleteVendorItem, setConfirmDeleteVendorItem] = useState<number | null>(null);
 
-  // Add item form
+  // Vendor item form
+  const [itemForm, setItemForm] = useState({ name: '', price: '', roleId: '', description: '' });
+
+  // Seluna schedule
+  const [selunaDuration, setSelunaDuration] = useState(24);
+  const [selunaDurationOrig, setSelunaDurationOrig] = useState(24);
+  const [selunaReappear, setSelunaReappear] = useState(30);
+  const [selunaReappearOrig, setSelunaReappearOrig] = useState(30);
+  const [selunaScheduleSaving, setSelunaScheduleSaving] = useState(false);
+
+  // Seluna add item form
   const [newItem, setNewItem] = useState({
     type: 'Card' as SelunaItem['type'],
     name: '', price: '', stock: '-1', rarity: 'LEGENDARY', roleId: '', amount: '1', description: '',
@@ -108,22 +140,48 @@ export default function VendorsPage() {
   const [bgImagePreview, setBgImagePreview] = useState<string | null>(null);
 
   const { toast } = useToast();
+  const { roles } = useGuildData();
+
+  // Role resolution helper
+  const roleMap = useMemo(() => {
+    const m = new Map<string, { name: string; color: string }>();
+    for (const r of roles) {
+      m.set(r.id, { name: r.name, color: r.color ? `#${r.color.toString(16).padStart(6, '0')}` : '#6b7280' });
+    }
+    return m;
+  }, [roles]);
+
+  // Active vendor data accessors
+  const activeShopData = activeVendorTab === 'brimor' ? brimor : broker;
+  const setActiveShopData = activeVendorTab === 'brimor' ? setBrimor : setBroker;
+
+  // ── Data Fetching ──
 
   const fetchData = useCallback(async () => {
     try {
-      const [vendorRes, selunaRes] = await Promise.all([
-        fetch('/api/admin/vendors'),
+      const [jesterRes, selunaRes] = await Promise.all([
+        fetch('/api/admin/config/jester'),
         fetch('/api/admin/vendors/seluna'),
       ]);
-      if (vendorRes.ok) {
-        const data = await vendorRes.json();
-        const vList = (data.vendors ?? []).map((v: any) => ({
-          id: typeof v.id === 'object' ? v.id.toString() : v.id,
-          data: v.data ?? { title: v.id, description: '', items: [] },
-        }));
-        setVendors(vList);
-        if (vList.length > 0 && !activeVendorTab) setActiveVendorTab(vList[0].id);
+
+      if (jesterRes.ok) {
+        const data = await jesterRes.json();
+        const b = data.sections?.shop_brimor ?? deepClone(EMPTY_SHOP);
+        const k = data.sections?.shop_broker ?? deepClone(EMPTY_SHOP);
+        setBrimor(deepClone(b));
+        setBrimorOrig(deepClone(b));
+        setBroker(deepClone(k));
+        setBrokerOrig(deepClone(k));
+        // Seluna schedule
+        const ss = data.sections?.seluna_schedule;
+        if (ss) {
+          setSelunaDuration(ss.duration_hours ?? 24);
+          setSelunaDurationOrig(ss.duration_hours ?? 24);
+          setSelunaReappear(ss.reappear_days ?? 30);
+          setSelunaReappearOrig(ss.reappear_days ?? 30);
+        }
       }
+
       if (selunaRes.ok) {
         const data = await selunaRes.json();
         setSelunaItems(data.inventoryItems ?? []);
@@ -135,13 +193,159 @@ export default function VendorsPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast, activeVendorTab]);
+  }, [toast]);
 
-  useEffect(() => { fetchData(); }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Seluna Actions ──
+  // ── Change Detection ──
 
-  async function handleAddItem() {
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(brimor) !== JSON.stringify(brimorOrig)
+      || JSON.stringify(broker) !== JSON.stringify(brokerOrig);
+  }, [brimor, brimorOrig, broker, brokerOrig]);
+
+  const diff = useMemo(() => {
+    const entries = [];
+    if (JSON.stringify(brimor) !== JSON.stringify(brimorOrig)) {
+      entries.push(...computeConfigDiff(brimorOrig as any, brimor as any, 'Brimor'));
+    }
+    if (JSON.stringify(broker) !== JSON.stringify(brokerOrig)) {
+      entries.push(...computeConfigDiff(brokerOrig as any, broker as any, 'Broker'));
+    }
+    return entries;
+  }, [brimor, brimorOrig, broker, brokerOrig]);
+
+  // ── Save / Discard ──
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const promises: Promise<Response>[] = [];
+      const csrf = getCsrfToken();
+
+      if (JSON.stringify(brimor) !== JSON.stringify(brimorOrig)) {
+        promises.push(fetch('/api/admin/config/jester', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+          body: JSON.stringify({ section: 'shop_brimor', value: brimor }),
+        }));
+      }
+      if (JSON.stringify(broker) !== JSON.stringify(brokerOrig)) {
+        promises.push(fetch('/api/admin/config/jester', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+          body: JSON.stringify({ section: 'shop_broker', value: broker }),
+        }));
+      }
+
+      const results = await Promise.all(promises);
+      for (const res of results) {
+        if (!res.ok) {
+          const d = await res.json();
+          throw new Error(d.error || 'Save failed');
+        }
+      }
+
+      setBrimorOrig(deepClone(brimor));
+      setBrokerOrig(deepClone(broker));
+      toast('Saved! Bot picks up changes within 30 seconds.', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Save failed', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleDiscard() {
+    setBrimor(deepClone(brimorOrig));
+    setBroker(deepClone(brokerOrig));
+    toast('Changes discarded', 'info');
+  }
+
+  // ── Vendor Item CRUD ──
+
+  function updateShopField(vendor: VendorId, field: keyof ShopConfig, value: any) {
+    const setter = vendor === 'brimor' ? setBrimor : setBroker;
+    setter(prev => ({ ...prev, [field]: value }));
+  }
+
+  function openAddItem() {
+    setItemForm({ name: '', price: '', roleId: '', description: '' });
+    setEditingVendorItemIdx(null);
+    setShowAddVendorItem(true);
+  }
+
+  function openEditItem(idx: number) {
+    const item = activeShopData.items[idx];
+    setItemForm({
+      name: item.name,
+      price: String(item.price),
+      roleId: item.roleId || '',
+      description: item.description || '',
+    });
+    setEditingVendorItemIdx(idx);
+    setShowAddVendorItem(true);
+  }
+
+  function handleItemFormSave() {
+    if (!itemForm.name.trim()) {
+      toast('Name is required', 'error');
+      return;
+    }
+    const price = parseInt(itemForm.price);
+    if (!price || price < 1 || price > 10_000_000) {
+      toast('Price must be between 1 and 10,000,000', 'error');
+      return;
+    }
+
+    setActiveShopData(prev => {
+      const items = [...prev.items];
+      if (editingVendorItemIdx !== null) {
+        // Edit existing — preserve gradientColors and other fields
+        items[editingVendorItemIdx] = {
+          ...items[editingVendorItemIdx],
+          name: itemForm.name.trim(),
+          price,
+          roleId: itemForm.roleId || undefined,
+          description: itemForm.description.trim() || undefined,
+        };
+      } else {
+        // Add new
+        const id = itemForm.name.trim().replace(/\s+/g, '');
+        items.push({
+          id,
+          name: itemForm.name.trim(),
+          price,
+          roleId: itemForm.roleId || undefined,
+          description: itemForm.description.trim() || undefined,
+        });
+      }
+      return { ...prev, items };
+    });
+    setShowAddVendorItem(false);
+  }
+
+  function handleDeleteItem(idx: number) {
+    setActiveShopData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== idx),
+    }));
+    setConfirmDeleteVendorItem(null);
+  }
+
+  function moveItem(fromIdx: number, toIdx: number) {
+    if (toIdx < 0 || toIdx >= activeShopData.items.length) return;
+    setActiveShopData(prev => {
+      const items = [...prev.items];
+      const [moved] = items.splice(fromIdx, 1);
+      items.splice(toIdx, 0, moved);
+      return { ...prev, items };
+    });
+  }
+
+  // ── Seluna Actions (unchanged) ──
+
+  async function handleAddSelunaItem() {
     if (!newItem.name || !newItem.price) {
       toast('Name and price are required', 'error');
       return;
@@ -159,7 +363,6 @@ export default function VendorsPage() {
       if (newItem.type === 'Tickets') item.amount = parseInt(newItem.amount) || 1;
       if (newItem.description) item.description = newItem.description;
 
-      // Background-specific fields
       if (newItem.type === 'Background') {
         item.backgroundType = newItem.backgroundType;
         if (newItem.rankBackgroundUrl) item.rankBackgroundUrl = newItem.rankBackgroundUrl;
@@ -182,9 +385,10 @@ export default function VendorsPage() {
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
       const data = await res.json();
       setSelunaItems(prev => [...prev, data.item]);
-      setShowAddItem(false);
+      setShowAddSelunaItem(false);
       setNewItem({ type: 'Card', name: '', price: '', stock: '-1', rarity: 'LEGENDARY', roleId: '', amount: '1', description: '', backgroundType: 'profile', rankBackgroundUrl: '' });
       setBgImageFile(null);
+      if (bgImagePreview) URL.revokeObjectURL(bgImagePreview);
       setBgImagePreview(null);
       toast('Item added to Seluna inventory', 'success');
     } catch (err: any) {
@@ -194,18 +398,18 @@ export default function VendorsPage() {
     }
   }
 
-  async function handleUpdateItem() {
-    if (!editingItem) return;
+  async function handleUpdateSelunaItem() {
+    if (!editingSelunaItem) return;
     setSaving(true);
     try {
       const res = await fetch('/api/admin/vendors/seluna', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
-        body: JSON.stringify({ action: 'update_item', itemId: editingItem.id, updates: editingItem }),
+        body: JSON.stringify({ action: 'update_item', itemId: editingSelunaItem.id, updates: editingSelunaItem }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      setSelunaItems(prev => prev.map(i => i.id === editingItem.id ? editingItem : i));
-      setEditingItem(null);
+      setSelunaItems(prev => prev.map(i => i.id === editingSelunaItem.id ? editingSelunaItem : i));
+      setEditingSelunaItem(null);
       toast('Item updated', 'success');
     } catch (err: any) {
       toast(err.message || 'Failed to update', 'error');
@@ -214,7 +418,7 @@ export default function VendorsPage() {
     }
   }
 
-  async function handleRemoveItem(itemId: string) {
+  async function handleRemoveSelunaItem(itemId: string) {
     setSaving(true);
     try {
       const res = await fetch('/api/admin/vendors/seluna', {
@@ -224,7 +428,7 @@ export default function VendorsPage() {
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
       setSelunaItems(prev => prev.filter(i => i.id !== itemId));
-      setConfirmRemoveItem(null);
+      setConfirmRemoveSelunaItem(null);
       toast('Item removed', 'success');
     } catch (err: any) {
       toast(err.message || 'Failed to remove', 'error');
@@ -253,46 +457,17 @@ export default function VendorsPage() {
     }
   }
 
-  // ── Vendor Item Save ──
-
-  async function handleVendorItemSave(vendorId: string, itemIdx: number) {
-    const vendor = vendors.find(v => v.id === vendorId);
-    if (!vendor) return;
-    setSaving(true);
-    try {
-      const updatedItems = [...vendor.data.items];
-      updatedItems[itemIdx] = {
-        ...updatedItems[itemIdx],
-        name: vendorItemName || updatedItems[itemIdx].name,
-        price: parseInt(vendorItemPrice) || updatedItems[itemIdx].price,
-      };
-      const updatedData = { ...vendor.data, items: updatedItems };
-      const res = await fetch('/api/admin/vendors', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
-        body: JSON.stringify({ vendorId, data: updatedData }),
-      });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
-      setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, data: updatedData } : v));
-      setEditingVendorItem(null);
-      toast('Item updated', 'success');
-    } catch (err: any) {
-      toast(err.message || 'Save failed', 'error');
-    } finally {
-      setSaving(false);
-    }
-  }
-
   // ── Render ──
 
   if (loading) {
     return (
       <>
         <div className="admin-page-header">
-          <h1 className="admin-page-title">Vendors & Seluna</h1>
+          <h1 className="admin-page-title"><span className="emoji-float">🏬</span> Shop Items</h1>
           <p className="admin-page-subtitle">Manage vendor inventory, prices, and the rare trader</p>
         </div>
-        <div className="admin-loading"><div className="admin-spinner" />Loading vendors...</div>
+        <SkeletonCard count={3} />
+        <SkeletonTable rows={4} />
       </>
     );
   }
@@ -300,16 +475,16 @@ export default function VendorsPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Vendors & Seluna</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">🏬</span> Shop Items</h1>
         <p className="admin-page-subtitle">Manage vendor inventory, prices, and the rare trader</p>
       </div>
 
-      {/* ── Seluna Section ── */}
+      {/* ── Seluna Section (unchanged) ── */}
       <div className="admin-card vendor-seluna-card" style={{ marginBottom: '32px' }}>
         <div className="vendor-seluna-header">
           <div className="vendor-seluna-title-area">
             <div className="vendor-avatar-glow vendor-avatar-seluna">
-              <span className="vendor-avatar-icon">\uD83C\uDF19</span>
+              <img src="https://assets.lunarian.app/jester/icons/seluna.png" alt="Seluna" className="vendor-avatar-img" />
             </div>
             <div>
               <h3 className="admin-card-title" style={{ marginBottom: '2px' }}>Seluna — Rare Trader</h3>
@@ -333,11 +508,11 @@ export default function VendorsPage() {
 
         {/* Inventory */}
         <div style={{ marginTop: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h4 style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-              Inventory ({selunaItems.length} items)
+          <div className="vendor-section-header">
+            <h4 className="vendor-section-title">
+              Inventory <span className="vendor-section-count">({selunaItems.length} items)</span>
             </h4>
-            <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => setShowAddItem(true)}>
+            <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => setShowAddSelunaItem(true)}>
               + Add Item
             </button>
           </div>
@@ -381,11 +556,11 @@ export default function VendorsPage() {
                   </div>
                   <div className="vendor-item-actions">
                     <button className="admin-btn admin-btn-ghost admin-btn-sm"
-                      onClick={() => setEditingItem({ ...item })}>
+                      onClick={() => setEditingSelunaItem({ ...item })}>
                       Edit
                     </button>
                     <button className="admin-btn admin-btn-danger admin-btn-sm"
-                      onClick={() => setConfirmRemoveItem(item.id)}>
+                      onClick={() => setConfirmRemoveSelunaItem(item.id)}>
                       Remove
                     </button>
                   </div>
@@ -395,145 +570,304 @@ export default function VendorsPage() {
           )}
         </div>
 
+        {/* Seluna Schedule */}
+        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(0, 212, 255, 0.06)' }}>
+          <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px', color: 'var(--text-primary)' }}>Schedule</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '12px', alignItems: 'end' }}>
+            <div className="admin-form-group" style={{ margin: 0 }}>
+              <label className="admin-form-label">Duration (hours)</label>
+              <input className="admin-form-input" type="number" min={1} max={168} value={selunaDuration}
+                onChange={e => setSelunaDuration(Math.max(1, parseInt(e.target.value) || 1))} />
+            </div>
+            <div className="admin-form-group" style={{ margin: 0 }}>
+              <label className="admin-form-label">Reappear After (days)</label>
+              <input className="admin-form-input" type="number" min={1} max={365} value={selunaReappear}
+                onChange={e => setSelunaReappear(Math.max(1, parseInt(e.target.value) || 1))} />
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                className={`admin-btn admin-btn-primary admin-btn-sm ${selunaScheduleSaving ? 'admin-btn-loading' : ''}`}
+                disabled={selunaScheduleSaving || (selunaDuration === selunaDurationOrig && selunaReappear === selunaReappearOrig)}
+                onClick={async () => {
+                  setSelunaScheduleSaving(true);
+                  try {
+                    const res = await fetch('/api/admin/config/jester', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+                      body: JSON.stringify({ section: 'seluna_schedule', value: { duration_hours: selunaDuration, reappear_days: selunaReappear } }),
+                    });
+                    if (!res.ok) throw new Error('Save failed');
+                    setSelunaDurationOrig(selunaDuration);
+                    setSelunaReappearOrig(selunaReappear);
+                    toast('Seluna schedule saved!', 'success');
+                  } catch {
+                    toast('Failed to save schedule', 'error');
+                  } finally {
+                    setSelunaScheduleSaving(false);
+                  }
+                }}
+              >
+                {selunaScheduleSaving ? '...' : 'Save'}
+              </button>
+              {(selunaDuration !== selunaDurationOrig || selunaReappear !== selunaReappearOrig) && (
+                <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => { setSelunaDuration(selunaDurationOrig); setSelunaReappear(selunaReappearOrig); }}>
+                  Discard
+                </button>
+              )}
+            </div>
+          </div>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6, display: 'block' }}>
+            Shop stays open for {selunaDuration}h, then reappears after {selunaReappear} day{selunaReappear !== 1 ? 's' : ''}. Changes apply to the next cycle.
+          </span>
+        </div>
+
         {/* Seluna Actions */}
-        <div style={{ display: 'flex', gap: '8px', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(0, 212, 255, 0.06)' }}>
+        <div style={{ display: 'flex', gap: '8px', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(0, 212, 255, 0.06)' }}>
           {selunaOpen ? (
             <button className="admin-btn admin-btn-danger" onClick={() => setConfirmClose(true)}>
               Force Close Shop
             </button>
           ) : (
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)', padding: '8px 0' }}>
+            <span className="vendor-info-text">
               Shop opens automatically on full moon via the bot. Use inventory above to manage items.
             </span>
           )}
         </div>
       </div>
 
-      {/* ── Vendor Shops ── */}
-      <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '20px 24px 0' }}>
-          <h3 className="admin-card-title" style={{ marginBottom: '16px' }}>Vendor Shops</h3>
+      {/* ── Vendor Shops (Brimor / Broker) ── */}
+      <div className="admin-tabs" style={{ marginBottom: '24px' }}>
+        {VENDOR_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            className={`admin-tab ${activeVendorTab === tab.id ? 'admin-tab-active' : ''}`}
+            onClick={() => { setActiveVendorTab(tab.id); setEditingProfile(null); }}
+          >
+            {(tab.id === 'brimor' ? brimor : broker).title || tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Vendor Profile Hero Card */}
+      <div className="admin-card vendor-profile-hero">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <div className="vendor-avatar-glow" style={{ width: 72, height: 72, flexShrink: 0 }}>
+            {activeShopData.image ? (
+              <img src={activeShopData.image} alt={activeShopData.title} className="vendor-avatar-img" />
+            ) : (
+              <span className="vendor-avatar-placeholder">?</span>
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 className="vendor-hero-name">
+              {activeShopData.title || activeVendorTab}
+            </h3>
+            {activeShopData.description && (
+              <p className="vendor-hero-desc">
+                {activeShopData.description}
+              </p>
+            )}
+          </div>
+          <button
+            className="admin-btn admin-btn-ghost admin-btn-sm"
+            onClick={() => setEditingProfile(editingProfile === activeVendorTab ? null : activeVendorTab)}
+          >
+            {editingProfile === activeVendorTab ? 'Close' : 'Edit Profile'}
+          </button>
         </div>
 
-        {vendors.length > 0 && (
-          <>
-            <div className="admin-tabs" style={{ paddingLeft: '24px' }}>
-              {vendors.map((v) => (
-                <button
-                  key={v.id}
-                  className={`admin-tab ${activeVendorTab === v.id ? 'admin-tab-active' : ''}`}
-                  onClick={() => setActiveVendorTab(v.id)}
-                >
-                  {v.data.title || v.id}
-                </button>
-              ))}
-            </div>
-
-            {vendors.filter(v => v.id === activeVendorTab).map((vendor) => (
-              <div key={vendor.id} style={{ padding: '24px' }}>
-                {/* Vendor header */}
-                <div className="vendor-shop-header">
-                  {vendor.data.image && (
-                    <div className="vendor-avatar-glow">
-                      <img src={vendor.data.image} alt={vendor.data.title} className="vendor-avatar-img" />
-                    </div>
-                  )}
-                  <div>
-                    <h4 style={{ fontSize: '18px', margin: '0 0 4px', color: 'var(--text-primary)' }}>
-                      {vendor.data.title}
-                    </h4>
-                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
-                      {vendor.data.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Items table */}
-                {vendor.data.items && vendor.data.items.length > 0 ? (
-                  <div className="admin-table-wrap" style={{ marginTop: '16px' }}>
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th>Item</th>
-                          <th>Price</th>
-                          {vendor.data.items.some(i => i.roleId) && <th>Role ID</th>}
-                          <th style={{ width: '120px' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {vendor.data.items.map((item, idx) => (
-                          <tr key={item.id || idx}>
-                            <td style={{ fontWeight: 500 }}>{item.name}</td>
-                            <td>
-                              {editingVendorItem?.vendorId === vendor.id && editingVendorItem.itemIdx === idx ? (
-                                <input
-                                  type="number"
-                                  className="admin-form-input"
-                                  value={vendorItemPrice}
-                                  onChange={(e) => setVendorItemPrice(e.target.value)}
-                                  style={{ width: '120px', padding: '4px 8px', fontSize: '13px' }}
-                                />
-                              ) : (
-                                <span className="vendor-price">{formatLunari(item.price)}</span>
-                              )}
-                            </td>
-                            {vendor.data.items.some(i => i.roleId) && (
-                              <td style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                                {item.roleId || '—'}
-                              </td>
-                            )}
-                            <td>
-                              {editingVendorItem?.vendorId === vendor.id && editingVendorItem.itemIdx === idx ? (
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                  <button className="admin-btn admin-btn-primary admin-btn-sm"
-                                    onClick={() => handleVendorItemSave(vendor.id, idx)} disabled={saving}>
-                                    Save
-                                  </button>
-                                  <button className="admin-btn admin-btn-ghost admin-btn-sm"
-                                    onClick={() => setEditingVendorItem(null)}>
-                                    Cancel
-                                  </button>
-                                </div>
-                              ) : (
-                                <button className="admin-btn admin-btn-ghost admin-btn-sm"
-                                  onClick={() => {
-                                    setEditingVendorItem({ vendorId: vendor.id, itemIdx: idx });
-                                    setVendorItemPrice(String(item.price));
-                                    setVendorItemName(item.name);
-                                  }}>
-                                  Edit Price
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="admin-empty" style={{ padding: '24px' }}>
-                    <p>No items configured for this vendor</p>
-                  </div>
-                )}
+        {/* Profile edit form (state-driven, not DOM toggle) */}
+        {editingProfile === activeVendorTab && (
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(0, 212, 255, 0.06)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="admin-form-group">
+                <label className="admin-form-label">✏️ Vendor Name</label>
+                <input
+                  type="text"
+                  className="admin-form-input"
+                  value={activeShopData.title}
+                  onChange={(e) => updateShopField(activeVendorTab, 'title', e.target.value)}
+                  style={{ fontSize: '14px', fontWeight: 600 }}
+                />
               </div>
-            ))}
-          </>
-        )}
-
-        {vendors.length === 0 && (
-          <div className="admin-empty" style={{ padding: '40px' }}>
-            <p>No vendor configurations found in the database</p>
+              <ImagePicker
+                label="🖼️ Vendor Image"
+                value={activeShopData.image || ''}
+                onChange={(url) => updateShopField(activeVendorTab, 'image', url)}
+                uploadPrefix="shops/"
+              />
+              <div style={{ gridColumn: '1 / -1' }}>
+                <RichTextArea
+                  label="📝 Description"
+                  value={activeShopData.description}
+                  onChange={(v) => updateShopField(activeVendorTab, 'description', v)}
+                  rows={3}
+                  minHeight="100px"
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* ── Add Item Modal ── */}
-      <AdminLightbox isOpen={showAddItem} onClose={() => setShowAddItem(false)} title="Add Item to Seluna" size="lg">
+      {/* Items Grid */}
+      <div style={{ marginTop: '20px' }}>
+        <div className="vendor-section-header">
+          <h4 className="vendor-section-title">
+            Items <span className="vendor-section-count">({activeShopData.items?.length ?? 0})</span>
+          </h4>
+          <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={openAddItem}>
+            + Add Item
+          </button>
+        </div>
+
+        {activeShopData.items && activeShopData.items.length > 0 ? (
+          <div className="vendor-shop-items-grid">
+            {activeShopData.items.map((item, idx) => {
+              const role = item.roleId ? roleMap.get(item.roleId) : null;
+              return (
+                <div key={item.id || idx} className="vendor-shop-item-card">
+                  <div className="vendor-shop-item-name">{item.name}</div>
+                  {item.description && (
+                    <div className="vendor-shop-item-desc">{item.description}</div>
+                  )}
+                  <div className="vendor-shop-item-price">{formatLunari(item.price)}</div>
+                  {item.roleId && (
+                    <div className="vendor-shop-item-role" style={role ? {
+                      color: role.color,
+                      borderLeft: `3px solid ${role.color}`,
+                      paddingLeft: '8px',
+                      fontFamily: 'inherit',
+                      background: `${role.color}10`,
+                    } : undefined}>
+                      {role ? role.name : item.roleId}
+                    </div>
+                  )}
+                  <div className="vendor-shop-item-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div className="vendor-item-reorder">
+                      <button
+                        className="admin-btn admin-btn-ghost"
+                        disabled={idx === 0}
+                        onClick={() => moveItem(idx, idx - 1)}
+                        title="Move up"
+                      >
+                        &#9650;
+                      </button>
+                      <button
+                        className="admin-btn admin-btn-ghost"
+                        disabled={idx === activeShopData.items.length - 1}
+                        onClick={() => moveItem(idx, idx + 1)}
+                        title="Move down"
+                      >
+                        &#9660;
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => openEditItem(idx)}>
+                        Edit
+                      </button>
+                      <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => setConfirmDeleteVendorItem(idx)}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="admin-empty" style={{ padding: '32px' }}>
+            <p>No items configured for this vendor</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── SaveDeployBar ── */}
+      <SaveDeployBar
+        hasChanges={hasChanges}
+        saving={saving}
+        onSave={handleSave}
+        onDiscard={handleDiscard}
+        projectName="Vendor Shops"
+        diff={diff}
+      />
+
+      {/* ── Add/Edit Vendor Item Modal ── */}
+      <AdminLightbox
+        isOpen={showAddVendorItem}
+        onClose={() => setShowAddVendorItem(false)}
+        title={editingVendorItemIdx !== null ? 'Edit Item' : 'Add Item'}
+        size="md"
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="admin-form-group">
+            <label className="admin-form-label">✏️ Name</label>
+            <input
+              className="admin-form-input"
+              placeholder="e.g. Sapphire"
+              value={itemForm.name}
+              onChange={(e) => setItemForm(p => ({ ...p, name: e.target.value }))}
+            />
+          </div>
+          <div className="admin-form-group">
+            <label className="admin-form-label">💰 Price (Lunari)</label>
+            <input
+              className="admin-form-input"
+              type="number"
+              min={1}
+              max={10_000_000}
+              placeholder="500000"
+              value={itemForm.price}
+              onChange={(e) => setItemForm(p => ({ ...p, price: e.target.value }))}
+            />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <RolePicker
+              label="🛡️ Role"
+              description="The Discord role granted on purchase"
+              value={itemForm.roleId}
+              onChange={(val) => setItemForm(p => ({ ...p, roleId: typeof val === 'string' ? val : val[0] ?? '' }))}
+              placeholder="Select a role (optional)"
+            />
+          </div>
+          <div className="admin-form-group" style={{ gridColumn: '1 / -1' }}>
+            <label className="admin-form-label">📝 Description</label>
+            <input
+              className="admin-form-input"
+              placeholder="Brief description"
+              dir="auto"
+              value={itemForm.description}
+              onChange={(e) => setItemForm(p => ({ ...p, description: e.target.value }))}
+            />
+          </div>
+        </div>
+        <div className="admin-modal-actions" style={{ marginTop: '20px' }}>
+          <button className="admin-btn admin-btn-ghost" onClick={() => setShowAddVendorItem(false)}>Cancel</button>
+          <button className="admin-btn admin-btn-primary" onClick={handleItemFormSave}>
+            {editingVendorItemIdx !== null ? '💾 Save Changes' : 'Add Item'}
+          </button>
+        </div>
+      </AdminLightbox>
+
+      {/* ── Confirm Delete Vendor Item ── */}
+      {confirmDeleteVendorItem !== null && (
+        <ConfirmModal
+          title="Delete Item"
+          message={`Delete "${activeShopData.items[confirmDeleteVendorItem]?.name}" from ${activeShopData.title || activeVendorTab}? This won't take effect until you save.`}
+          confirmLabel="Delete"
+          variant="danger"
+          onConfirm={() => handleDeleteItem(confirmDeleteVendorItem)}
+          onCancel={() => setConfirmDeleteVendorItem(null)}
+        />
+      )}
+
+      {/* ── Seluna: Add Item Modal ── */}
+      <AdminLightbox isOpen={showAddSelunaItem} onClose={() => { if (bgImagePreview) URL.revokeObjectURL(bgImagePreview); setBgImagePreview(null); setBgImageFile(null); setShowAddSelunaItem(false); }} title="Add Item to Seluna" size="lg">
             <p className="admin-modal-message">Add a new item to Seluna&apos;s rare trader inventory.</p>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="admin-form-group">
-                <label className="admin-form-label">Type</label>
+                <label className="admin-form-label">🔵 Type</label>
                 <select className="admin-select" value={newItem.type}
                   onChange={(e) => setNewItem(p => ({ ...p, type: e.target.value as any }))}>
                   {ITEM_TYPES.map(t => <option key={t} value={t}>{TYPE_ICONS[t]} {t}</option>)}
@@ -541,26 +875,27 @@ export default function VendorsPage() {
               </div>
 
               <div className="admin-form-group">
-                <label className="admin-form-label">Name</label>
+                <label className="admin-form-label">✏️ Name</label>
                 <input className="admin-form-input" placeholder="e.g. Luna Sentinel"
                   value={newItem.name} onChange={(e) => setNewItem(p => ({ ...p, name: e.target.value }))} />
               </div>
 
               <div className="admin-form-group">
-                <label className="admin-form-label">Price (Lunari)</label>
+                <label className="admin-form-label">💰 Price (Lunari)</label>
                 <input className="admin-form-input" type="number" placeholder="50000"
                   value={newItem.price} onChange={(e) => setNewItem(p => ({ ...p, price: e.target.value }))} />
               </div>
 
               <div className="admin-form-group">
-                <label className="admin-form-label">Stock<span className="admin-tooltip-trigger" data-tooltip="-1 = unlimited stock">?</span></label>
+                <label className="admin-form-label">📦 Stock<span className="admin-tooltip-trigger" data-tooltip="-1 = unlimited stock">?</span></label>
                 <input className="admin-form-input" type="number" placeholder="-1"
                   value={newItem.stock} onChange={(e) => setNewItem(p => ({ ...p, stock: e.target.value }))} />
+                <span className="admin-form-description">How many available. -1 = unlimited</span>
               </div>
 
               {newItem.type === 'Card' && (
                 <div className="admin-form-group">
-                  <label className="admin-form-label">Rarity</label>
+                  <label className="admin-form-label">💎 Rarity</label>
                   <select className="admin-select" value={newItem.rarity}
                     onChange={(e) => setNewItem(p => ({ ...p, rarity: e.target.value }))}>
                     {RARITIES.map(r => <option key={r} value={r}>{r}</option>)}
@@ -570,7 +905,7 @@ export default function VendorsPage() {
 
               {newItem.type === 'Role' && (
                 <div className="admin-form-group">
-                  <label className="admin-form-label">Discord Role ID</label>
+                  <label className="admin-form-label">🛡️ Role</label>
                   <input className="admin-form-input" placeholder="Role ID"
                     value={newItem.roleId} onChange={(e) => setNewItem(p => ({ ...p, roleId: e.target.value }))} />
                 </div>
@@ -605,6 +940,7 @@ export default function VendorsPage() {
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
                         setBgImageFile(file);
+                        if (bgImagePreview) URL.revokeObjectURL(bgImagePreview);
                         if (file) {
                           const url = URL.createObjectURL(file);
                           setBgImagePreview(url);
@@ -621,10 +957,13 @@ export default function VendorsPage() {
                   </div>
 
                   {(newItem.backgroundType === 'rank' || newItem.backgroundType === 'both') && (
-                    <div className="admin-form-group" style={{ gridColumn: '1 / -1' }}>
-                      <label className="admin-form-label">Rank Background URL (optional, if different from main image)</label>
-                      <input className="admin-form-input" placeholder="https://assets.lunarian.app/..."
-                        value={newItem.rankBackgroundUrl} onChange={(e) => setNewItem(p => ({ ...p, rankBackgroundUrl: e.target.value }))} />
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <ImagePicker
+                        label="Rank Background (optional, if different from main image)"
+                        value={newItem.rankBackgroundUrl}
+                        onChange={(url) => setNewItem(p => ({ ...p, rankBackgroundUrl: url }))}
+                        uploadPrefix="profiles/"
+                      />
                     </div>
                   )}
                 </>
@@ -638,78 +977,79 @@ export default function VendorsPage() {
             </div>
 
             <div className="admin-modal-actions" style={{ marginTop: '20px' }}>
-              <button className="admin-btn admin-btn-ghost" onClick={() => setShowAddItem(false)}>Cancel</button>
-              <button className="admin-btn admin-btn-primary" onClick={handleAddItem} disabled={saving}>
+              <button className="admin-btn admin-btn-ghost" onClick={() => setShowAddSelunaItem(false)}>Cancel</button>
+              <button className="admin-btn admin-btn-primary" onClick={handleAddSelunaItem} disabled={saving}>
                 {saving ? 'Adding...' : 'Add Item'}
               </button>
             </div>
       </AdminLightbox>
 
-      {/* ── Edit Item Modal ── */}
-      <AdminLightbox isOpen={editingItem !== null} onClose={() => setEditingItem(null)} title="Edit Item" size="lg">
-        {editingItem && (
+      {/* ── Seluna: Edit Item Modal ── */}
+      <AdminLightbox isOpen={editingSelunaItem !== null} onClose={() => setEditingSelunaItem(null)} title="Edit Item" size="lg">
+        {editingSelunaItem && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="admin-form-group">
-                <label className="admin-form-label">Name</label>
-                <input className="admin-form-input" value={editingItem.name}
-                  onChange={(e) => setEditingItem(p => p ? { ...p, name: e.target.value } : p)} />
+                <label className="admin-form-label">✏️ Name</label>
+                <input className="admin-form-input" value={editingSelunaItem.name}
+                  onChange={(e) => setEditingSelunaItem(p => p ? { ...p, name: e.target.value } : p)} />
               </div>
 
               <div className="admin-form-group">
-                <label className="admin-form-label">Price (Lunari)</label>
-                <input className="admin-form-input" type="number" value={editingItem.price}
-                  onChange={(e) => setEditingItem(p => p ? { ...p, price: parseInt(e.target.value) || 0 } : p)} />
+                <label className="admin-form-label">💰 Price (Lunari)</label>
+                <input className="admin-form-input" type="number" value={editingSelunaItem.price}
+                  onChange={(e) => setEditingSelunaItem(p => p ? { ...p, price: parseInt(e.target.value) || 0 } : p)} />
               </div>
 
               <div className="admin-form-group">
-                <label className="admin-form-label">Stock<span className="admin-tooltip-trigger" data-tooltip="-1 = unlimited stock">?</span></label>
-                <input className="admin-form-input" type="number" value={editingItem.stock}
-                  onChange={(e) => setEditingItem(p => p ? { ...p, stock: parseInt(e.target.value) } : p)} />
+                <label className="admin-form-label">📦 Stock<span className="admin-tooltip-trigger" data-tooltip="-1 = unlimited stock">?</span></label>
+                <input className="admin-form-input" type="number" value={editingSelunaItem.stock}
+                  onChange={(e) => setEditingSelunaItem(p => p ? { ...p, stock: parseInt(e.target.value) } : p)} />
+                <span className="admin-form-description">How many available. -1 = unlimited</span>
               </div>
 
-              {editingItem.type === 'Card' && (
+              {editingSelunaItem.type === 'Card' && (
                 <div className="admin-form-group">
-                  <label className="admin-form-label">Rarity</label>
-                  <select className="admin-select" value={editingItem.rarity ?? 'COMMON'}
-                    onChange={(e) => setEditingItem(p => p ? { ...p, rarity: e.target.value } : p)}>
+                  <label className="admin-form-label">💎 Rarity</label>
+                  <select className="admin-select" value={editingSelunaItem.rarity ?? 'COMMON'}
+                    onChange={(e) => setEditingSelunaItem(p => p ? { ...p, rarity: e.target.value } : p)}>
                     {RARITIES.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
               )}
 
-              {editingItem.type === 'Tickets' && (
+              {editingSelunaItem.type === 'Tickets' && (
                 <div className="admin-form-group">
                   <label className="admin-form-label">Ticket Amount</label>
-                  <input className="admin-form-input" type="number" value={editingItem.amount ?? 1}
-                    onChange={(e) => setEditingItem(p => p ? { ...p, amount: parseInt(e.target.value) || 1 } : p)} />
+                  <input className="admin-form-input" type="number" value={editingSelunaItem.amount ?? 1}
+                    onChange={(e) => setEditingSelunaItem(p => p ? { ...p, amount: parseInt(e.target.value) || 1 } : p)} />
                 </div>
               )}
             </div>
 
             <div className="admin-modal-actions" style={{ marginTop: '20px' }}>
-              <button className="admin-btn admin-btn-ghost" onClick={() => setEditingItem(null)}>Cancel</button>
-              <button className="admin-btn admin-btn-primary" onClick={handleUpdateItem} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Changes'}
+              <button className="admin-btn admin-btn-ghost" onClick={() => setEditingSelunaItem(null)}>Cancel</button>
+              <button className="admin-btn admin-btn-primary" onClick={handleUpdateSelunaItem} disabled={saving}>
+                {saving ? 'Saving...' : '💾 Save Changes'}
               </button>
             </div>
           </>
         )}
       </AdminLightbox>
 
-      {/* ── Confirm Remove ── */}
-      {confirmRemoveItem && (
+      {/* ── Seluna: Confirm Remove ── */}
+      {confirmRemoveSelunaItem && (
         <ConfirmModal
           title="Remove Item"
-          message={`Remove "${selunaItems.find(i => i.id === confirmRemoveItem)?.name}" from Seluna's inventory?`}
+          message={`Remove "${selunaItems.find(i => i.id === confirmRemoveSelunaItem)?.name}" from Seluna's inventory?`}
           confirmLabel="Remove"
           variant="danger"
-          onConfirm={() => handleRemoveItem(confirmRemoveItem)}
-          onCancel={() => setConfirmRemoveItem(null)}
+          onConfirm={() => handleRemoveSelunaItem(confirmRemoveSelunaItem)}
+          onCancel={() => setConfirmRemoveSelunaItem(null)}
         />
       )}
 
-      {/* ── Confirm Close ── */}
+      {/* ── Seluna: Confirm Close ── */}
       {confirmClose && (
         <ConfirmModal
           title="Close Seluna Shop"

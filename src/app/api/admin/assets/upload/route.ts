@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
+import { getClientIp } from '@/lib/admin/sanitize';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { uploadObject, isR2Configured } from '@/lib/admin/r2';
@@ -42,7 +43,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 400 });
     }
 
+    const validImageTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'];
+    if (!file.type || !validImageTypes.includes(file.type)) {
+      return NextResponse.json({ error: 'Only image files allowed (PNG, JPEG, WebP, GIF, SVG)' }, { status: 400 });
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Validate file magic bytes (don't trust MIME type alone) — SVG is text-based, skip magic check
+    if (file.type !== 'image/svg+xml') {
+      const head = buffer.subarray(0, 12);
+      const isPng = head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4E && head[3] === 0x47;
+      const isJpeg = head[0] === 0xFF && head[1] === 0xD8 && head[2] === 0xFF;
+      const isWebp = head[8] === 0x57 && head[9] === 0x45 && head[10] === 0x42 && head[11] === 0x50;
+      const isGif = head[0] === 0x47 && head[1] === 0x49 && head[2] === 0x46;
+      if (!isPng && !isJpeg && !isWebp && !isGif) {
+        return NextResponse.json({ error: 'File content does not match an image format' }, { status: 400 });
+      }
+    }
+
     const url = await uploadObject(key, buffer, file.type || 'application/octet-stream');
 
     await logAdminAction({
@@ -52,7 +71,7 @@ export async function POST(request: NextRequest) {
       before: null,
       after: { key, size: file.size, type: file.type },
       metadata: { url },
-      ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+      ip: getClientIp(request),
     });
 
     return NextResponse.json({ success: true, url, key });

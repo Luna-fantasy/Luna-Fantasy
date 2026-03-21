@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import ConfirmModal from '../components/ConfirmModal';
 import AdminLightbox from '../components/AdminLightbox';
+import ImagePicker from '../components/ImagePicker';
+import RichTextArea from '../components/RichTextArea';
 import { useToast } from '../components/Toast';
 
 // ── Types ──
@@ -47,7 +49,19 @@ interface TicketPackage {
   price: number;
 }
 
-type ShopTab = 'mells' | 'luckbox' | 'stonebox' | 'tickets';
+interface MellsItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  roleId: string;
+  backgroundUrl: string;
+  type: 'profile' | 'rank';
+  exclusive?: boolean;
+  enabled?: boolean;
+}
+
+type ShopTab = 'mells' | 'luckbox' | 'stonebox' | 'tickets' | 'trade';
 
 const VALID_RARITIES = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden'] as const;
 const RARITY_COLORS: Record<string, string> = {
@@ -82,10 +96,11 @@ export default function ShopsPage() {
   const [ticketPackages, setTicketPackages] = useState<TicketPackage[]>([]);
 
   // Mells Selvair state
-  const [mellsItems, setMellsItems] = useState<any[]>([]);
-  const [mellsOriginal, setMellsOriginal] = useState<any[]>([]);
+  const [mellsItems, setMellsItems] = useState<MellsItem[]>([]);
+  const [mellsOriginal, setMellsOriginal] = useState<MellsItem[]>([]);
   const [mellsSaving, setMellsSaving] = useState(false);
-  const [editingMellsItem, setEditingMellsItem] = useState<any | null>(null);
+  const [editingMellsItem, setEditingMellsItem] = useState<MellsItem | null>(null);
+  const [mellsSubTab, setMellsSubTab] = useState<'profile' | 'rank'>('profile');
 
   // Edit states
   const [editingLuckbox, setEditingLuckbox] = useState<LuckboxBox | null>(null);
@@ -102,6 +117,11 @@ export default function ShopsPage() {
   const [stonePriceInput, setStonePriceInput] = useState('');
   const [stoneRefundInput, setStoneRefundInput] = useState('');
 
+  // Trade config
+  const [auctionDurationHours, setAuctionDurationHours] = useState(24);
+  const [auctionDurationOrig, setAuctionDurationOrig] = useState(24);
+  const [tradeSaving, setTradeSaving] = useState(false);
+
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
@@ -116,6 +136,19 @@ export default function ShopsPage() {
         setMellsItems(data.mells);
         setMellsOriginal(data.mells);
       }
+      // Load trade config from Jester config
+      try {
+        const jesterRes = await fetch('/api/admin/config/jester');
+        if (jesterRes.ok) {
+          const jesterData = await jesterRes.json();
+          const tradeSection = jesterData.sections?.trade;
+          if (tradeSection?.auction_duration_ms) {
+            const hours = Math.round(tradeSection.auction_duration_ms / 3_600_000);
+            setAuctionDurationHours(hours);
+            setAuctionDurationOrig(hours);
+          }
+        }
+      } catch { /* trade config is optional */ }
     } catch {
       toast('Failed to load shop config', 'error');
     } finally {
@@ -140,7 +173,7 @@ export default function ShopsPage() {
             setCardsLoaded(true);
           }
         })
-        .catch(() => {});
+        .catch(() => { setCardsLoaded(true); });
     }
   }, [editingLuckbox, cardsLoaded]);
 
@@ -157,7 +190,7 @@ export default function ShopsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
       setLuckboxTiers(data.tiers);
-      toast('Luckbox config saved', 'success');
+      toast('Saved! Changes take effect within 30 seconds.', 'success');
     } catch (err: any) {
       toast(err.message, 'error');
     } finally {
@@ -176,7 +209,7 @@ export default function ShopsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
       setStoneBox(data.config);
-      toast('Stone box config saved', 'success');
+      toast('Saved! Changes take effect within 30 seconds.', 'success');
     } catch (err: any) {
       toast(err.message, 'error');
     } finally {
@@ -195,7 +228,7 @@ export default function ShopsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
       setTicketPackages(data.packages);
-      toast('Ticket packages saved', 'success');
+      toast('Saved! Changes take effect within 30 seconds.', 'success');
     } catch (err: any) {
       toast(err.message, 'error');
     } finally {
@@ -225,8 +258,8 @@ export default function ShopsPage() {
     }
 
     const totalPct = box.rarities.reduce((s, r) => s + r.percentage, 0);
-    if (totalPct > 100.01) {
-      toast(`Rarity percentages cannot exceed 100 (currently ${totalPct})`, 'error');
+    if (Math.abs(totalPct - 100) > 0.1) {
+      toast(`Rarity percentages must total 100% (currently ${totalPct.toFixed(1)}%)`, 'error');
       return;
     }
 
@@ -258,8 +291,10 @@ export default function ShopsPage() {
   // ── Stonebox handlers ──
 
   function handleSaveStonePrices() {
-    const price = parseInt(stonePriceInput) || stoneBox.price;
-    const refundAmount = parseInt(stoneRefundInput) || stoneBox.refundAmount;
+    const parsedPrice = parseInt(stonePriceInput, 10);
+    const price = isNaN(parsedPrice) ? stoneBox.price : parsedPrice;
+    const parsedRefund = parseInt(stoneRefundInput, 10);
+    const refundAmount = isNaN(parsedRefund) ? stoneBox.refundAmount : parsedRefund;
     saveStoneBox({ ...stoneBox, price, refundAmount });
     setEditStonePrice(false);
   }
@@ -332,7 +367,7 @@ export default function ShopsPage() {
     return (
       <>
         <div className="admin-page-header">
-          <h1 className="admin-page-title">Shop Configuration</h1>
+          <h1 className="admin-page-title"><span className="emoji-float">🛒</span> Shop Configuration</h1>
           <p className="admin-page-subtitle">Manage luckbox tiers, stone boxes, and ticket packages</p>
         </div>
         <div className="admin-loading"><div className="admin-spinner" />Loading...</div>
@@ -343,7 +378,7 @@ export default function ShopsPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Shop Configuration</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">🛒</span> Shop Configuration</h1>
         <p className="admin-page-subtitle">Manage luckbox tiers, stone boxes, and ticket packages</p>
       </div>
 
@@ -366,60 +401,318 @@ export default function ShopsPage() {
             onClick={() => setActiveTab('tickets')}>
             Tickets (Zoldar)
           </button>
+          <button className={`admin-tab ${activeTab === 'trade' ? 'admin-tab-active' : ''}`}
+            onClick={() => setActiveTab('trade')}>
+            Trade Config
+          </button>
         </div>
 
         <div style={{ padding: '24px' }}>
           {/* ── Mells Selvair Tab ── */}
           {activeTab === 'mells' && (
-            <div className="admin-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 className="admin-card-title" style={{ margin: 0 }}>Background Shop Items</h3>
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{mellsItems.length} items</span>
+            <div>
+              {/* Stat summary */}
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                {mellsItems.length} {mellsItems.length === 1 ? 'item' : 'items'} configured
               </div>
 
-              {mellsItems.length === 0 ? (
-                <div className="admin-empty">
-                  <p>No shop items configured. Seed the database with Butler&apos;s config items first.</p>
+              {/* Sub-tabs for Profile vs Rank */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    className={`admin-btn admin-btn-sm ${mellsSubTab === 'profile' ? 'admin-btn-primary' : 'admin-btn-ghost'}`}
+                    onClick={() => setMellsSubTab('profile')}
+                  >
+                    Profile Backgrounds ({mellsItems.filter(i => (i.type ?? 'profile') === 'profile').length})
+                  </button>
+                  <button
+                    className={`admin-btn admin-btn-sm ${mellsSubTab === 'rank' ? 'admin-btn-primary' : 'admin-btn-ghost'}`}
+                    onClick={() => setMellsSubTab('rank')}
+                  >
+                    Rank Backgrounds ({mellsItems.filter(i => i.type === 'rank').length})
+                  </button>
                 </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
-                  {mellsItems.map((item, i) => (
-                    <div key={item.id || i} style={{
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      background: 'var(--bg-deep)',
-                    }}>
-                      <div style={{ height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-void)', padding: '4px' }}>
-                        {item.backgroundUrl ? (
-                          <img src={item.backgroundUrl} alt={item.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} loading="lazy" />
-                        ) : (
-                          <span style={{ fontSize: '32px', color: 'var(--text-muted)' }}>&#x1F5BC;&#xFE0F;</span>
-                        )}
-                      </div>
-                      <div style={{ padding: '8px' }}>
-                        <p style={{ fontWeight: 600, fontSize: '12px', marginBottom: '2px' }}>{item.name}</p>
-                        <p style={{ fontSize: '11px', color: 'var(--accent-legendary)' }}>{item.price?.toLocaleString()} Lunari</p>
-                        {item.description && (
-                          <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.3 }}>{item.description}</p>
-                        )}
-                      </div>
+                <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={() => {
+                  setEditingMellsItem({
+                    id: `bg_${mellsSubTab}_${Date.now()}`,
+                    name: '',
+                    description: '',
+                    price: 5000,
+                    backgroundUrl: '',
+                    roleId: '',
+                    type: mellsSubTab,
+                    exclusive: false,
+                    enabled: true,
+                  });
+                }}>+ Add {mellsSubTab === 'profile' ? 'Profile' : 'Rank'} Background</button>
+              </div>
+
+              {/* Filtered items grid */}
+              {(() => {
+                const filtered = mellsItems.filter(i => (i.type ?? 'profile') === mellsSubTab);
+                if (filtered.length === 0) {
+                  return (
+                    <div className="admin-empty">
+                      <div className="admin-empty-icon">{mellsSubTab === 'profile' ? '\uD83D\uDDBC\uFE0F' : '\uD83C\uDFC5'}</div>
+                      <p>No {mellsSubTab} backgrounds configured</p>
+                      <p className="admin-empty-hint">Click &quot;Add {mellsSubTab === 'profile' ? 'Profile' : 'Rank'} Background&quot; to create one</p>
                     </div>
-                  ))}
+                  );
+                }
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                    {filtered.map((item) => (
+                      <div key={item.id} style={{
+                        border: item.exclusive
+                          ? '1px solid rgba(255, 213, 79, 0.3)'
+                          : '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        background: 'var(--bg-deep)',
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s, transform 0.15s',
+                        opacity: item.enabled === false ? 0.5 : 1,
+                        position: 'relative',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = item.exclusive ? 'rgba(255, 213, 79, 0.6)' : 'rgba(255,255,255,0.2)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = item.exclusive ? 'rgba(255, 213, 79, 0.3)' : 'rgba(255,255,255,0.08)'; }}
+                      onClick={() => setEditingMellsItem({ ...item })}
+                      >
+                        {/* Image preview with aspect ratio */}
+                        <div style={{
+                          height: mellsSubTab === 'profile' ? '160px' : '80px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'var(--bg-void)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}>
+                          {item.backgroundUrl ? (
+                            <img src={item.backgroundUrl} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                          ) : (
+                            <span style={{ fontSize: '32px', color: 'var(--text-muted)' }}>&#x1F5BC;&#xFE0F;</span>
+                          )}
+                          {/* Dark gradient overlay */}
+                          <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '50%',
+                            background: 'linear-gradient(transparent, rgba(0,0,0,0.6))',
+                            pointerEvents: 'none',
+                          }} />
+                          {/* Disabled badge */}
+                          {item.enabled === false && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '6px',
+                              right: '6px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              background: 'rgba(244, 63, 94, 0.8)',
+                              color: '#fff',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                            }}>DISABLED</div>
+                          )}
+                          {/* Exclusive badge */}
+                          {item.exclusive && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '6px',
+                              left: '6px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              background: 'rgba(255, 213, 79, 0.15)',
+                              border: '1px solid rgba(255, 213, 79, 0.4)',
+                              color: '#FFD54F',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                            }}>EXCLUSIVE</div>
+                          )}
+                        </div>
+                        {/* Info */}
+                        <div style={{ padding: '10px' }}>
+                          <p style={{ fontWeight: 600, fontSize: '13px', marginBottom: '4px' }}>{item.name || 'Unnamed'}</p>
+                          <p style={{ fontSize: '12px', color: '#FFD54F', fontWeight: 600 }}>{(item.price ?? 0).toLocaleString()} Lunari</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Mells Save Bar */}
+              {JSON.stringify(mellsItems) !== JSON.stringify(mellsOriginal) && (
+                <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button className="admin-btn admin-btn-ghost" onClick={() => setMellsItems(mellsOriginal)}>Discard</button>
+                  <button className="admin-btn admin-btn-primary" disabled={mellsSaving} onClick={async () => {
+                    setMellsSaving(true);
+                    try {
+                      const res = await fetch('/api/admin/shops/config', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+                        body: JSON.stringify({ shop: 'mells', config: mellsItems }),
+                      });
+                      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+                      setMellsOriginal([...mellsItems]);
+                      toast('Saved! Changes take effect within 30 seconds.', 'success');
+                    } catch (err: any) {
+                      toast(err.message || 'Save failed', 'error');
+                    } finally {
+                      setMellsSaving(false);
+                    }
+                  }}>
+                    {mellsSaving ? 'Saving...' : '💾 Save Changes'}
+                  </button>
                 </div>
               )}
             </div>
           )}
 
+          {/* ── Mells Edit Modal ── */}
+          {editingMellsItem && (
+            <AdminLightbox isOpen={true} title={mellsItems.some(i => i.id === editingMellsItem.id) ? 'Edit Background' : 'Add Background'} onClose={() => setEditingMellsItem(null)} size="md">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Image Preview */}
+                <div style={{
+                  height: editingMellsItem.type === 'rank' ? '100px' : '200px',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  background: 'var(--bg-void)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {editingMellsItem.backgroundUrl ? (
+                    <img src={editingMellsItem.backgroundUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ fontSize: '32px', color: 'var(--text-muted)' }}>&#x1F5BC;&#xFE0F;</span>
+                  )}
+                </div>
+
+                {/* Two-column layout for ID + Name */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="admin-form-group" style={{ margin: 0 }}>
+                    <label className="admin-form-label">✏️ ID</label>
+                    <input className="admin-form-input" value={editingMellsItem.id ?? ''} onChange={(e) => setEditingMellsItem({ ...editingMellsItem, id: e.target.value })} placeholder="bg_my_background" />
+                  </div>
+                  <div className="admin-form-group" style={{ margin: 0 }}>
+                    <label className="admin-form-label">✏️ Name</label>
+                    <input className="admin-form-input" value={editingMellsItem.name ?? ''} onChange={(e) => setEditingMellsItem({ ...editingMellsItem, name: e.target.value })} />
+                  </div>
+                </div>
+
+                <RichTextArea
+                  label="📝 Description"
+                  value={editingMellsItem.description ?? ''}
+                  onChange={(v) => setEditingMellsItem({ ...editingMellsItem, description: v })}
+                  rows={3}
+                  minHeight="100px"
+                />
+
+                {/* Two-column: Price + Role ID */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="admin-form-group" style={{ margin: 0 }}>
+                    <label className="admin-form-label">💰 Price (Lunari)</label>
+                    <input className="admin-form-input" type="number" value={editingMellsItem.price ?? 0} onChange={(e) => setEditingMellsItem({ ...editingMellsItem, price: parseInt(e.target.value) || 0 })} min={0} />
+                  </div>
+                  <div className="admin-form-group" style={{ margin: 0 }}>
+                    <label className="admin-form-label">🛡️ Role ID</label>
+                    <input className="admin-form-input" value={editingMellsItem.roleId ?? ''} onChange={(e) => setEditingMellsItem({ ...editingMellsItem, roleId: e.target.value })} placeholder="Discord role ID" />
+                  </div>
+                </div>
+
+                {/* Background URL */}
+                <ImagePicker
+                  label="🖼️ Background Image"
+                  value={editingMellsItem.backgroundUrl ?? ''}
+                  onChange={(url) => setEditingMellsItem({ ...editingMellsItem, backgroundUrl: url })}
+                  uploadPrefix="profiles/"
+                />
+
+                {/* Type selector */}
+                <div className="admin-form-group" style={{ margin: 0 }}>
+                  <label className="admin-form-label">🔵 Type</label>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+                      <input type="radio" name="mells-type" checked={editingMellsItem.type === 'profile'} onChange={() => setEditingMellsItem({ ...editingMellsItem, type: 'profile' })} />
+                      Profile Background
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
+                      <input type="radio" name="mells-type" checked={editingMellsItem.type === 'rank'} onChange={() => setEditingMellsItem({ ...editingMellsItem, type: 'rank' })} />
+                      Rank Background
+                    </label>
+                  </div>
+                </div>
+
+                {/* Toggles row */}
+                <div style={{ display: 'flex', gap: 24 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+                    <input type="checkbox" checked={editingMellsItem.exclusive ?? false}
+                      onChange={(e) => setEditingMellsItem({ ...editingMellsItem, exclusive: e.target.checked })} />
+                    <div>
+                      <span style={{ fontWeight: 600, color: '#FFD54F' }}>⚡ Mastermind Only</span>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Hidden from public shop</p>
+                    </div>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+                    <input type="checkbox" checked={editingMellsItem.enabled !== false}
+                      onChange={(e) => setEditingMellsItem({ ...editingMellsItem, enabled: e.target.checked })} />
+                    <div>
+                      <span style={{ fontWeight: 600 }}>⚡ Enabled</span>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>Visible and purchasable</p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', marginTop: 4 }}>
+                  <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => {
+                    setMellsItems(prev => prev.filter(i => i.id !== editingMellsItem.id));
+                    setEditingMellsItem(null);
+                  }}>
+                    Delete Item
+                  </button>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="admin-btn admin-btn-ghost" onClick={() => setEditingMellsItem(null)}>Cancel</button>
+                    <button className="admin-btn admin-btn-primary" onClick={() => {
+                      const existing = mellsItems.findIndex(i => i.id === editingMellsItem.id);
+                      if (existing >= 0) {
+                        setMellsItems(prev => prev.map(i => i.id === editingMellsItem.id ? editingMellsItem : i));
+                      } else {
+                        setMellsItems(prev => [...prev, editingMellsItem]);
+                      }
+                      setEditingMellsItem(null);
+                    }}>
+                      {mellsItems.some(i => i.id === editingMellsItem.id) ? 'Update' : 'Add'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </AdminLightbox>
+          )}
+
           {/* ── Luckbox Tab ── */}
           {activeTab === 'luckbox' && (
             <>
+              {/* Stat summary */}
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                {luckboxTiers.length} {luckboxTiers.length === 1 ? 'tier' : 'tiers'} configured
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div>
-                  <h3 style={{ margin: '0 0 4px', color: 'var(--text-primary)', fontSize: '16px' }}>
-                    Luckbox Tiers
-                  </h3>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h3 className="admin-section-title" style={{ margin: 0 }}>
+                      Luckbox Tiers
+                    </h3>
+                    <span className="admin-badge admin-badge-muted">{luckboxTiers.length}</span>
+                  </div>
+                  <p className="admin-section-desc" style={{ marginBottom: 0, marginTop: '4px' }}>
                     Each box can contain cards from one or multiple rarities with custom percentages.
                   </p>
                 </div>
@@ -428,72 +721,84 @@ export default function ShopsPage() {
                 </button>
               </div>
 
-              <div className="vendor-items-grid">
-                {luckboxTiers.map((box) => (
-                  <div key={box.id} className={`vendor-item-card ${!box.enabled ? 'vendor-item-disabled' : ''}`}
-                    style={{ opacity: box.enabled ? 1 : 0.5 }}>
-                    <div className="vendor-item-header">
-                      <span className="vendor-item-type-icon" style={{ fontSize: '18px' }}>
-                        {box.rarities.length > 1 ? '\uD83C\uDFB2' : '\uD83C\uDFF0'}
-                      </span>
-                      <span className="vendor-item-name">{box.label}</span>
-                      {!box.enabled && (
-                        <span className="admin-badge admin-badge-muted" style={{ fontSize: '10px' }}>DISABLED</span>
-                      )}
-                    </div>
+              {luckboxTiers.length > 0 ? (
+                <div className="vendor-items-grid">
+                  {luckboxTiers.map((box) => {
+                    // Determine the primary rarity color for the left border accent
+                    const primaryRarity = box.rarities.reduce((best, r) => r.percentage > best.percentage ? r : best, box.rarities[0]);
+                    const accentColor = primaryRarity ? (RARITY_COLORS[primaryRarity.rarity] ?? 'rgba(0, 212, 255, 0.3)') : 'rgba(0, 212, 255, 0.3)';
 
-                    <div className="vendor-item-details">
-                      <div className="vendor-item-detail">
-                        <span className="vendor-item-detail-label">Price</span>
-                        <span className="vendor-item-detail-value vendor-price">{formatLunari(box.price)}</span>
-                      </div>
-                      <div className="vendor-item-detail">
-                        <span className="vendor-item-detail-label">ID</span>
-                        <span className="vendor-item-detail-value" style={{ fontFamily: 'monospace', fontSize: '12px' }}>{box.id}</span>
-                      </div>
-                    </div>
-
-                    {/* Rarity breakdown */}
-                    <div style={{ marginTop: '8px' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                        Rarities:
-                      </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        {box.rarities.map((r, i) => (
-                          <span key={i} style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
-                            color: RARITY_COLORS[r.rarity] ?? '#fff',
-                            border: `1px solid ${RARITY_COLORS[r.rarity] ?? '#555'}`,
-                            background: `${RARITY_COLORS[r.rarity] ?? '#555'}15`,
-                          }}>
-                            {r.rarity.toUpperCase()} {r.percentage}%
+                    return (
+                      <div key={box.id} className={`admin-stat-card ${!box.enabled ? 'vendor-item-disabled' : ''}`}
+                        style={{
+                          borderLeft: `3px solid ${accentColor}`,
+                          opacity: box.enabled ? 1 : 0.5,
+                          padding: '18px',
+                        }}>
+                        <div className="vendor-item-header">
+                          <span className="vendor-item-type-icon" style={{ fontSize: '18px' }}>
+                            {box.rarities.length > 1 ? '\uD83C\uDFB2' : '\uD83C\uDFF0'}
                           </span>
-                        ))}
+                          <span className="vendor-item-name">{box.label}</span>
+                          {!box.enabled && (
+                            <span className="admin-badge admin-badge-muted" style={{ fontSize: '10px' }}>DISABLED</span>
+                          )}
+                        </div>
+
+                        <div className="vendor-item-details">
+                          <div className="vendor-item-detail">
+                            <span className="vendor-item-detail-label">Price</span>
+                            <span className="vendor-item-detail-value vendor-price">{formatLunari(box.price)}</span>
+                          </div>
+                          <div className="vendor-item-detail">
+                            <span className="vendor-item-detail-label">ID</span>
+                            <span className="vendor-item-detail-value" style={{ fontFamily: 'monospace', fontSize: '12px' }}>{box.id}</span>
+                          </div>
+                        </div>
+
+                        {/* Rarity breakdown */}
+                        <div style={{ marginTop: '8px' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Rarities:
+                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            {box.rarities.map((r, i) => (
+                              <span key={i} style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                                color: RARITY_COLORS[r.rarity] ?? '#fff',
+                                border: `1px solid ${RARITY_COLORS[r.rarity] ?? '#555'}`,
+                                background: `${RARITY_COLORS[r.rarity] ?? '#555'}15`,
+                              }}>
+                                {r.rarity.toUpperCase()} {r.percentage}%
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="vendor-item-actions" style={{ marginTop: '12px' }}>
+                          <button className="admin-btn admin-btn-ghost admin-btn-sm"
+                            onClick={() => setEditingLuckbox({ ...box })}>
+                            Edit
+                          </button>
+                          <button className={`admin-btn admin-btn-sm ${box.enabled ? 'admin-btn-ghost' : 'admin-btn-primary'}`}
+                            onClick={() => handleToggleLuckbox(box.id)} disabled={saving}>
+                            {box.enabled ? 'Disable' : 'Enable'}
+                          </button>
+                          <button className="admin-btn admin-btn-danger admin-btn-sm"
+                            onClick={() => setConfirmDelete({ type: 'luckbox', id: box.id })}>
+                            Delete
+                          </button>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="vendor-item-actions" style={{ marginTop: '12px' }}>
-                      <button className="admin-btn admin-btn-ghost admin-btn-sm"
-                        onClick={() => setEditingLuckbox({ ...box })}>
-                        Edit
-                      </button>
-                      <button className={`admin-btn admin-btn-sm ${box.enabled ? 'admin-btn-ghost' : 'admin-btn-primary'}`}
-                        onClick={() => handleToggleLuckbox(box.id)} disabled={saving}>
-                        {box.enabled ? 'Disable' : 'Enable'}
-                      </button>
-                      <button className="admin-btn admin-btn-danger admin-btn-sm"
-                        onClick={() => setConfirmDelete({ type: 'luckbox', id: box.id })}>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {luckboxTiers.length === 0 && (
-                <div className="admin-empty" style={{ padding: '40px' }}>
-                  <p>No luckbox tiers configured. Click &quot;Add Box&quot; to create one, or the default hardcoded tiers will be used.</p>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="admin-empty">
+                  <div className="admin-empty-icon">{'\uD83C\uDFB0'}</div>
+                  <p>No luckbox tiers configured</p>
+                  <p className="admin-empty-hint">Click &quot;Add Box&quot; to create one, or the default hardcoded tiers will be used</p>
                 </div>
               )}
             </>
@@ -502,13 +807,21 @@ export default function ShopsPage() {
           {/* ── Stonebox Tab ── */}
           {activeTab === 'stonebox' && (
             <>
+              {/* Stat summary */}
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                {stoneBox.stones.length} {stoneBox.stones.length === 1 ? 'stone' : 'stones'} configured
+              </div>
+
               {/* Price config */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                 <div>
-                  <h3 style={{ margin: '0 0 4px', color: 'var(--text-primary)', fontSize: '16px' }}>
-                    Stone Box Configuration
-                  </h3>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h3 className="admin-section-title" style={{ margin: 0 }}>
+                      Stone Box Configuration
+                    </h3>
+                    <span className="admin-badge admin-badge-muted">{stoneBox.stones.length}</span>
+                  </div>
+                  <p className="admin-section-desc" style={{ marginBottom: 0, marginTop: '4px' }}>
                     50% chance to get a stone, 50% partial refund. Manage stones and their drop weights.
                   </p>
                 </div>
@@ -521,7 +834,7 @@ export default function ShopsPage() {
               {/* Price / Refund row */}
               <div className="admin-card" style={{ padding: '16px', marginBottom: '20px', background: 'rgba(0,212,255,0.03)' }}>
                 {editStonePrice ? (
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
                     <div className="admin-form-group" style={{ margin: 0, flex: 1 }}>
                       <label className="admin-form-label">Box Price</label>
                       <input className="admin-form-input" type="number" value={stonePriceInput}
@@ -533,7 +846,7 @@ export default function ShopsPage() {
                         onChange={e => setStoneRefundInput(e.target.value)} />
                     </div>
                     <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={handleSaveStonePrices} disabled={saving}>
-                      Save
+                      💾 Save
                     </button>
                     <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => setEditStonePrice(false)}>
                       Cancel
@@ -616,8 +929,10 @@ export default function ShopsPage() {
                   </table>
                 </div>
               ) : (
-                <div className="admin-empty" style={{ padding: '32px' }}>
-                  <p>No stones configured. Default hardcoded stones will be used.</p>
+                <div className="admin-empty">
+                  <div className="admin-empty-icon">{'\uD83D\uDC8E'}</div>
+                  <p>No stones configured</p>
+                  <p className="admin-empty-hint">Click &quot;Add Stone&quot; to create one, or the default hardcoded stones will be used</p>
                 </div>
               )}
             </>
@@ -626,12 +941,20 @@ export default function ShopsPage() {
           {/* ── Tickets Tab ── */}
           {activeTab === 'tickets' && (
             <>
+              {/* Stat summary */}
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                {ticketPackages.length} {ticketPackages.length === 1 ? 'package' : 'packages'} configured
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div>
-                  <h3 style={{ margin: '0 0 4px', color: 'var(--text-primary)', fontSize: '16px' }}>
-                    Ticket Packages
-                  </h3>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h3 className="admin-section-title" style={{ margin: 0 }}>
+                      Ticket Packages
+                    </h3>
+                    <span className="admin-badge admin-badge-muted">{ticketPackages.length}</span>
+                  </div>
+                  <p className="admin-section-desc" style={{ marginBottom: 0, marginTop: '4px' }}>
                     Manage Zoldar&apos;s ticket packages: name, price, and ticket count.
                   </p>
                 </div>
@@ -641,48 +964,108 @@ export default function ShopsPage() {
               </div>
 
               {ticketPackages.length > 0 ? (
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Tickets</th>
-                        <th>Price</th>
-                        <th style={{ width: '120px' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ticketPackages.map((pkg) => (
-                        <tr key={pkg.id}>
-                          <td style={{ fontFamily: 'monospace', fontSize: '12px', color: 'var(--text-muted)' }}>{pkg.id}</td>
-                          <td style={{ fontWeight: 500 }}>{pkg.name}</td>
-                          <td>{pkg.tickets}</td>
-                          <td className="vendor-price">{formatLunari(pkg.price)}</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              <button className="admin-btn admin-btn-ghost admin-btn-sm"
-                                onClick={() => setEditingTicket({ ...pkg })}>
-                                Edit
-                              </button>
-                              <button className="admin-btn admin-btn-danger admin-btn-sm"
-                                onClick={() => setConfirmDelete({ type: 'ticket', id: pkg.id })}>
-                                Del
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="vendor-items-grid">
+                  {ticketPackages.map((pkg) => (
+                    <div key={pkg.id} className="admin-stat-card" style={{ padding: '18px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                        <span style={{ fontSize: '20px' }}>{'\uD83C\uDFAB'}</span>
+                        <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-primary)' }}>{pkg.name}</span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                        <div>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Tickets</span>
+                          <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent-primary)' }}>{pkg.tickets}</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>Price</span>
+                          <span className="vendor-price" style={{ fontSize: '16px', fontWeight: 600 }}>{formatLunari(pkg.price)}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace', marginBottom: '12px' }}>
+                        ID: {pkg.id}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button className="admin-btn admin-btn-ghost admin-btn-sm"
+                          onClick={() => setEditingTicket({ ...pkg })}>
+                          Edit
+                        </button>
+                        <button className="admin-btn admin-btn-danger admin-btn-sm"
+                          onClick={() => setConfirmDelete({ type: 'ticket', id: pkg.id })}>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="admin-empty" style={{ padding: '32px' }}>
-                  <p>No ticket packages configured. Default hardcoded packages will be used.</p>
+                <div className="admin-empty">
+                  <div className="admin-empty-icon">{'\uD83C\uDFAB'}</div>
+                  <p>No ticket packages configured</p>
+                  <p className="admin-empty-hint">Click &quot;Add Package&quot; to create one, or the default hardcoded packages will be used</p>
                 </div>
               )}
             </>
           )}
+
+          {/* ── Trade Config Tab ── */}
+          {activeTab === 'trade' && (
+            <div>
+              <div className="admin-stat-card" style={{ maxWidth: 480 }}>
+                <h3 className="admin-section-title">Auction & Trade Duration</h3>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+                  How long card and stone trades/auctions stay active before expiring.
+                </p>
+                <div className="admin-form-group">
+                  <label className="admin-form-label">Duration (hours)</label>
+                  <input
+                    className="admin-form-input"
+                    type="number"
+                    min={1}
+                    max={168}
+                    value={auctionDurationHours}
+                    onChange={e => setAuctionDurationHours(Math.max(1, parseInt(e.target.value) || 1))}
+                  />
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                    Currently: {auctionDurationHours} hour{auctionDurationHours !== 1 ? 's' : ''} ({(auctionDurationHours * 60).toLocaleString()} minutes)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                  <button
+                    className={`admin-btn admin-btn-primary ${tradeSaving ? 'admin-btn-loading' : ''}`}
+                    disabled={tradeSaving || auctionDurationHours === auctionDurationOrig}
+                    onClick={async () => {
+                      setTradeSaving(true);
+                      try {
+                        const res = await fetch('/api/admin/config/jester', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+                          body: JSON.stringify({ section: 'trade', value: auctionDurationHours * 3_600_000 }),
+                        });
+                        if (!res.ok) throw new Error('Save failed');
+                        setAuctionDurationOrig(auctionDurationHours);
+                        toast('Auction duration saved! Takes effect within 30 seconds.', 'success');
+                      } catch {
+                        toast('Failed to save trade config', 'error');
+                      } finally {
+                        setTradeSaving(false);
+                      }
+                    }}
+                  >
+                    {tradeSaving ? 'Saving...' : 'Save'}
+                  </button>
+                  {auctionDurationHours !== auctionDurationOrig && (
+                    <button className="admin-btn admin-btn-ghost" onClick={() => setAuctionDurationHours(auctionDurationOrig)}>
+                      Discard
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 
@@ -696,7 +1079,7 @@ export default function ShopsPage() {
         {editingLuckbox && (
           <>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="admin-form-group">
                 <label className="admin-form-label">Box ID</label>
                 <input className="admin-form-input" value={editingLuckbox.id}
@@ -851,7 +1234,7 @@ export default function ShopsPage() {
                               ))}
                             </select>
                             <input className="admin-form-input" type="number" min={0} step={0.1}
-                              style={{ width: '70px', fontSize: '12px' }} value={card.weight}
+                              style={{ width: '80px', fontSize: '12px' }} value={card.weight}
                               title="Weight (higher = more likely to be drawn)"
                               onChange={e => {
                                 const updated = [...overrides];
@@ -861,6 +1244,12 @@ export default function ShopsPage() {
                                   cardOverrides: { ...editingLuckbox.cardOverrides, [rarity]: updated },
                                 });
                               }} />
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                              {(() => {
+                                const totalW = overrides.reduce((s, c) => s + c.weight, 0);
+                                return totalW > 0 ? `${((card.weight / totalW) * 100).toFixed(1)}%` : '\u2014';
+                              })()}
+                            </span>
                             <button className="admin-btn admin-btn-danger admin-btn-sm" style={{ fontSize: '11px', padding: '2px 6px' }}
                               onClick={() => {
                                 const updated = overrides.filter((_, j) => j !== ci);
@@ -904,7 +1293,7 @@ export default function ShopsPage() {
             <div className="admin-modal-actions" style={{ marginTop: '20px' }}>
               <button className="admin-btn admin-btn-ghost" onClick={() => setEditingLuckbox(null)}>Cancel</button>
               <button className="admin-btn admin-btn-primary" onClick={handleSaveLuckbox} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? 'Saving...' : '💾 Save'}
               </button>
             </div>
           </>
@@ -921,7 +1310,7 @@ export default function ShopsPage() {
         {editingStone && (
           <>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="admin-form-group" style={{ gridColumn: '1 / -1' }}>
                 <label className="admin-form-label">Name</label>
                 <input className="admin-form-input" value={editingStone.stone.name}
@@ -949,7 +1338,7 @@ export default function ShopsPage() {
             <div className="admin-modal-actions" style={{ marginTop: '20px' }}>
               <button className="admin-btn admin-btn-ghost" onClick={() => setEditingStone(null)}>Cancel</button>
               <button className="admin-btn admin-btn-primary" onClick={handleSaveStone} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? 'Saving...' : '💾 Save'}
               </button>
             </div>
           </>
@@ -966,7 +1355,7 @@ export default function ShopsPage() {
         {editingTicket && (
           <>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="admin-form-group">
                 <label className="admin-form-label">ID</label>
                 <input className="admin-form-input" value={editingTicket.id}
@@ -995,7 +1384,7 @@ export default function ShopsPage() {
             <div className="admin-modal-actions" style={{ marginTop: '20px' }}>
               <button className="admin-btn admin-btn-ghost" onClick={() => setEditingTicket(null)}>Cancel</button>
               <button className="admin-btn admin-btn-primary" onClick={handleSaveTicket} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? 'Saving...' : '💾 Save'}
               </button>
             </div>
           </>

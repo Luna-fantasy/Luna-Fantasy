@@ -3,9 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import ConfigSection from '../components/ConfigSection';
 import DurationInput from '../components/DurationInput';
+import NumberInput from '../components/NumberInput';
 import SaveDeployBar from '../components/SaveDeployBar';
 import BotBadge from '../components/BotBadge';
 import ToggleSwitch from '../components/ToggleSwitch';
+import ImagePicker from '../components/ImagePicker';
+import RichTextArea from '../components/RichTextArea';
+import RolePicker from '../components/RolePicker';
+import { SkeletonCard, SkeletonTable } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { getCsrfToken } from '../utils/csrf';
 
@@ -35,6 +40,8 @@ interface SageSettings {
   panelTitle: string;
   panelDescription: string;
   panelImageUrl: string;
+  channelContextLimit: number;
+  threadHistoryLimit: number;
 }
 
 interface SagePrivileges {
@@ -59,6 +66,8 @@ const DEFAULT_SETTINGS: SageSettings = {
   panelTitle: '',
   panelDescription: '',
   panelImageUrl: '',
+  channelContextLimit: 50,
+  threadHistoryLimit: 200,
 };
 
 const DEFAULT_PRIVILEGES: SagePrivileges = {
@@ -68,7 +77,7 @@ const DEFAULT_PRIVILEGES: SagePrivileges = {
   allKnownRoles: [],
 };
 
-type Tab = 'settings' | 'system_prompt' | 'privileges';
+type Tab = 'settings' | 'system_prompt' | 'lore' | 'privileges';
 
 export default function SagePage() {
   const [tab, setTab] = useState<Tab>('settings');
@@ -80,6 +89,10 @@ export default function SagePage() {
   // System prompt state
   const [systemPrompt, setSystemPrompt] = useState('');
   const [systemPromptOriginal, setSystemPromptOriginal] = useState('');
+
+  // Lore state
+  const [loreText, setLoreText] = useState('');
+  const [loreTextOriginal, setLoreTextOriginal] = useState('');
 
   // Privileges state
   const [privileges, setPrivileges] = useState<SagePrivileges>({ ...DEFAULT_PRIVILEGES });
@@ -113,6 +126,8 @@ export default function SagePage() {
         panelTitle: s.panel_title ?? DEFAULT_SETTINGS.panelTitle,
         panelDescription: s.panel_description ?? DEFAULT_SETTINGS.panelDescription,
         panelImageUrl: s.panel_image ?? DEFAULT_SETTINGS.panelImageUrl,
+        channelContextLimit: s.channel_context_limit ?? DEFAULT_SETTINGS.channelContextLimit,
+        threadHistoryLimit: s.thread_history_limit ?? DEFAULT_SETTINGS.threadHistoryLimit,
       };
       setSettings(settingsData);
       setSettingsOriginal(settingsData);
@@ -121,6 +136,12 @@ export default function SagePage() {
         const prompt = typeof s.system_prompt === 'string' ? s.system_prompt : '';
         setSystemPrompt(prompt);
         setSystemPromptOriginal(prompt);
+      }
+
+      if (s.lore_text !== undefined) {
+        const lore = typeof s.lore_text === 'string' ? s.lore_text : '';
+        setLoreText(lore);
+        setLoreTextOriginal(lore);
       }
 
       const privData: SagePrivileges = {
@@ -145,8 +166,9 @@ export default function SagePage() {
   // Change detection
   const settingsChanged = JSON.stringify(settings) !== JSON.stringify(settingsOriginal);
   const systemPromptChanged = systemPrompt !== systemPromptOriginal;
+  const loreChanged = loreText !== loreTextOriginal;
   const privilegesChanged = JSON.stringify(privileges) !== JSON.stringify(privilegesOriginal);
-  const hasChanges = settingsChanged || systemPromptChanged || privilegesChanged;
+  const hasChanges = settingsChanged || systemPromptChanged || loreChanged || privilegesChanged;
 
   // Save helper — sends individual field PUTs to match API's per-field design
   async function saveConfig() {
@@ -183,9 +205,16 @@ export default function SagePage() {
           toSave.push({ section: 'sage_prefix', value: settings.sagePrefixes });
         if (JSON.stringify(settings.ownerRoleIds) !== JSON.stringify(settingsOriginal.ownerRoleIds))
           toSave.push({ section: 'owner_role_ids', value: settings.ownerRoleIds });
+        if (settings.channelContextLimit !== settingsOriginal.channelContextLimit)
+          toSave.push({ section: 'channel_context_limit', value: settings.channelContextLimit });
+        if (settings.threadHistoryLimit !== settingsOriginal.threadHistoryLimit)
+          toSave.push({ section: 'thread_history_limit', value: settings.threadHistoryLimit });
       }
       if (systemPromptChanged) {
         toSave.push({ section: 'system_prompt', value: systemPrompt });
+      }
+      if (loreChanged) {
+        toSave.push({ section: 'lore_text', value: loreText });
       }
       if (privilegesChanged) {
         if (privileges.lunarianAccess !== privilegesOriginal.lunarianAccess)
@@ -213,6 +242,7 @@ export default function SagePage() {
 
       if (settingsChanged) setSettingsOriginal({ ...settings });
       if (systemPromptChanged) setSystemPromptOriginal(systemPrompt);
+      if (loreChanged) setLoreTextOriginal(loreText);
       if (privilegesChanged) setPrivilegesOriginal(JSON.parse(JSON.stringify(privileges)));
 
       toast('Saved! Changes take effect within 30 seconds.', 'success');
@@ -224,6 +254,22 @@ export default function SagePage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  function discardSettings() {
+    setSettings({ ...settingsOriginal });
+  }
+
+  function discardSystemPrompt() {
+    setSystemPrompt(systemPromptOriginal);
+  }
+
+  function discardLore() {
+    setLoreText(loreTextOriginal);
+  }
+
+  function discardPrivileges() {
+    setPrivileges(JSON.parse(JSON.stringify(privilegesOriginal)));
   }
 
   // Privileged roles helpers
@@ -255,10 +301,11 @@ export default function SagePage() {
     return (
       <>
         <div className="admin-page-header">
-          <h1 className="admin-page-title">Luna Sage</h1>
+          <h1 className="admin-page-title"><span className="emoji-float">🧙</span> Luna Sage</h1>
           <p className="admin-page-subtitle">AI assistant bot configuration</p>
         </div>
-        <div className="admin-loading"><div className="admin-spinner" />Loading Sage config...</div>
+        <SkeletonCard count={4} />
+        <SkeletonTable rows={4} />
       </>
     );
   }
@@ -266,7 +313,7 @@ export default function SagePage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Luna Sage</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">🧙</span> Luna Sage</h1>
         <p className="admin-page-subtitle">AI assistant bot configuration</p>
       </div>
 
@@ -323,6 +370,13 @@ export default function SagePage() {
           {systemPromptChanged && <span style={{ marginLeft: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-legendary)', display: 'inline-block' }} />}
         </button>
         <button
+          className={`admin-tab ${tab === 'lore' ? 'admin-tab-active' : ''}`}
+          onClick={() => setTab('lore')}
+        >
+          World Lore
+          {loreChanged && <span style={{ marginLeft: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-legendary)', display: 'inline-block' }} />}
+        </button>
+        <button
           className={`admin-tab ${tab === 'privileges' ? 'admin-tab-active' : ''}`}
           onClick={() => setTab('privileges')}
         >
@@ -335,7 +389,7 @@ export default function SagePage() {
         <>
           <ConfigSection title="AI Provider" description="Which AI service to use for responses">
             <div style={{ marginBottom: '12px' }}>
-              <label className="admin-number-input-label">Provider</label>
+              <label className="admin-number-input-label">🔵 Provider</label>
               <select
                 className="admin-number-input"
                 value={settings.provider}
@@ -349,7 +403,7 @@ export default function SagePage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
               <div className="admin-number-input-wrap">
                 <label className="admin-number-input-label">
-                  Google Model
+                  🤖 Google Model
                   {settings.provider === 'google' && <span style={{ marginLeft: 6, fontSize: '10px', color: '#34d399' }}>active</span>}
                 </label>
                 <input
@@ -364,7 +418,7 @@ export default function SagePage() {
               </div>
               <div className="admin-number-input-wrap">
                 <label className="admin-number-input-label">
-                  OpenRouter Model
+                  🤖 OpenRouter Model
                   {settings.provider === 'openrouter' && <span style={{ marginLeft: 6, fontSize: '10px', color: '#34d399' }}>active</span>}
                 </label>
                 <input
@@ -380,12 +434,12 @@ export default function SagePage() {
             </div>
             <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <ToggleSwitch
-                label="Web Search"
+                label="⚡ Web Search"
                 checked={settings.webSearch}
                 onChange={(v) => setSettings({ ...settings, webSearch: v })}
               />
               <ToggleSwitch
-                label="Image Generation"
+                label="⚡ Image Generation"
                 checked={settings.imageGeneration}
                 onChange={(v) => setSettings({ ...settings, imageGeneration: v })}
               />
@@ -401,7 +455,7 @@ export default function SagePage() {
                     </span>
                   )}
                   <div className="admin-number-input-wrap" style={{ marginTop: '4px' }}>
-                    <label className="admin-number-input-label">Image Generation Model</label>
+                    <label className="admin-number-input-label">🤖 Image Gen Model</label>
                     <input
                       type="text"
                       className="admin-input"
@@ -412,18 +466,13 @@ export default function SagePage() {
                     />
                     <span className="admin-number-input-desc">Model used for image generation requests</span>
                   </div>
-                  <div className="admin-number-input-wrap">
-                    <label className="admin-number-input-label">Image Generation Roles (comma-separated)</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={settings.imageGenRoles.join(', ')}
-                      onChange={(e) => setSettings({ ...settings, imageGenRoles: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                      placeholder="Leave empty to allow all users"
-                      style={{ width: '100%', maxWidth: '400px', fontFamily: 'monospace' }}
-                    />
-                    <span className="admin-number-input-desc">Roles allowed to generate images. Empty = all Sage users can generate.</span>
-                  </div>
+                  <RolePicker
+                    label="🛡️ Image Gen Roles"
+                    description="Roles allowed to generate images. Empty = all Sage users can generate."
+                    value={settings.imageGenRoles}
+                    onChange={(v) => setSettings({ ...settings, imageGenRoles: v as string[] })}
+                    multi
+                  />
                 </div>
               )}
             </div>
@@ -432,7 +481,7 @@ export default function SagePage() {
 
           <ConfigSection title="Bot Configuration" description="Sage prefix triggers and owner role permissions">
             <div className="admin-form-group">
-              <label className="admin-number-input-label">Sage Prefixes (comma-separated)</label>
+              <label className="admin-number-input-label">✏️ Sage Prefixes</label>
               <input
                 type="text"
                 className="admin-input"
@@ -443,30 +492,25 @@ export default function SagePage() {
               />
               <span className="admin-number-input-desc">Text prefixes that trigger Sage responses (e.g. !sage, سيج)</span>
             </div>
-            <div className="admin-form-group" style={{ marginTop: '12px' }}>
-              <label className="admin-number-input-label">Owner Role IDs (comma-separated)</label>
-              <input
-                type="text"
-                className="admin-input"
-                value={settings.ownerRoleIds.join(', ')}
-                onChange={(e) => setSettings({ ...settings, ownerRoleIds: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                placeholder="Role ID, Role ID, ..."
-                style={{ width: '100%', maxWidth: '400px', fontFamily: 'monospace' }}
-              />
-              <span className="admin-number-input-desc">Roles with full admin access to Sage commands (!setai, etc.)</span>
-            </div>
+            <RolePicker
+              label="🛡️ Owner Roles"
+              description="Roles with full admin access to Sage commands (!setai, etc.)"
+              value={settings.ownerRoleIds}
+              onChange={(v) => setSettings({ ...settings, ownerRoleIds: v as string[] })}
+              multi
+            />
             <BotBadge bot="sage" />
           </ConfigSection>
 
           <ConfigSection title="Thread Settings" description="Thread behavior when Sage creates conversation threads">
             <DurationInput
-              label="Slowmode"
+              label="⏱️ Slowmode"
               value={settings.threadSlowmode * 1000}
               onChange={(ms) => setSettings({ ...settings, threadSlowmode: Math.round(ms / 1000) })}
               description="Delay between messages in new threads (0 = disabled)"
             />
             <div className="admin-number-input-wrap" style={{ marginTop: '12px' }}>
-              <label className="admin-number-input-label">Welcome Message</label>
+              <label className="admin-number-input-label">📝 Welcome Message</label>
               <textarea
                 className="admin-input"
                 rows={3}
@@ -474,9 +518,27 @@ export default function SagePage() {
                 onChange={(e) => setSettings({ ...settings, threadWelcomeMessage: e.target.value })}
                 placeholder="أهلاً بك {mention} في محادثتك الخاصة..."
                 style={{ width: '100%', resize: 'vertical' }}
-                dir="rtl"
+                dir="auto"
               />
               <span className="admin-number-input-desc">Message sent when a new thread is created. Use {'{mention}'} for the user mention.</span>
+            </div>
+            <div className="admin-config-grid" style={{ marginTop: '12px' }}>
+              <NumberInput
+                label="🔢 Channel Context"
+                value={settings.channelContextLimit}
+                onChange={(v) => setSettings({ ...settings, channelContextLimit: v })}
+                min={0}
+                max={100}
+                description="Number of recent channel messages included as context when Sage is triggered (0 = none)"
+              />
+              <NumberInput
+                label="🔢 Thread History"
+                value={settings.threadHistoryLimit}
+                onChange={(v) => setSettings({ ...settings, threadHistoryLimit: v })}
+                min={10}
+                max={500}
+                description="Maximum conversation messages sent to the AI per thread (higher = more context, more tokens)"
+              />
             </div>
             <BotBadge bot="sage" />
           </ConfigSection>
@@ -485,7 +547,7 @@ export default function SagePage() {
             <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
               <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div className="admin-number-input-wrap">
-                  <label className="admin-number-input-label">Title</label>
+                  <label className="admin-number-input-label">✏️ Panel Title</label>
                   <input
                     type="text"
                     className="admin-number-input"
@@ -495,30 +557,21 @@ export default function SagePage() {
                     style={{ width: '100%' }}
                   />
                 </div>
-                <div className="admin-number-input-wrap">
-                  <label className="admin-number-input-label">Description</label>
-                  <textarea
-                    className="admin-input"
-                    rows={3}
-                    value={settings.panelDescription}
-                    onChange={(e) => setSettings({ ...settings, panelDescription: e.target.value })}
-                    placeholder="Panel description"
-                    style={{ width: '100%', resize: 'vertical' }}
-                    dir="rtl"
-                  />
-                </div>
-                <div className="admin-number-input-wrap">
-                  <label className="admin-number-input-label">Image URL</label>
-                  <input
-                    type="text"
-                    className="admin-number-input"
-                    value={settings.panelImageUrl}
-                    onChange={(e) => setSettings({ ...settings, panelImageUrl: e.target.value })}
-                    placeholder="https://..."
-                    style={{ width: '100%' }}
-                  />
-                  <span className="admin-number-input-desc">Image displayed in the panel embed</span>
-                </div>
+                <RichTextArea
+                  label="📝 Panel Description"
+                  value={settings.panelDescription}
+                  onChange={(v) => setSettings({ ...settings, panelDescription: v })}
+                  rows={3}
+                  minHeight="100px"
+                  placeholder="Panel description"
+                />
+                <ImagePicker
+                  label="🖼️ Panel Image"
+                  description="Image displayed in the panel embed"
+                  value={settings.panelImageUrl}
+                  onChange={(url) => setSettings({ ...settings, panelImageUrl: url })}
+                  uploadPrefix="sage/"
+                />
               </div>
               {/* Panel preview */}
               {(settings.panelTitle || settings.panelDescription) && (
@@ -572,6 +625,7 @@ export default function SagePage() {
             hasChanges={settingsChanged}
             saving={saving}
             onSave={saveConfig}
+            onDiscard={discardSettings}
             projectName="Sage"
           />
         </>
@@ -653,6 +707,71 @@ export default function SagePage() {
             hasChanges={systemPromptChanged}
             saving={saving}
             onSave={saveConfig}
+            onDiscard={discardSystemPrompt}
+            projectName="Sage"
+          />
+        </>
+      )}
+
+      {/* World Lore Tab */}
+      {tab === 'lore' && (
+        <>
+          <div className="admin-stat-card" style={{ marginBottom: 16, padding: '16px 20px', fontSize: 13, lineHeight: 1.7, color: 'var(--text-secondary)' }}>
+            <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: 8 }}>How Lore Works</strong>
+            The lore text below is appended to every AI request as pinned context. Sage uses it to answer questions about the Luna world, characters, factions, merchants, games, and economy.
+            If this field is empty, Sage falls back to the built-in lore file in the bot code.
+            <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>
+              Format: Markdown headings (## Category, ### Sub-item) work best. Arabic text is fully supported.
+            </div>
+          </div>
+
+          <ConfigSection title="Luna World Lore" description="Complete world-building data injected into every Sage AI prompt">
+            <div style={{ position: 'relative' }}>
+              <textarea
+                className="admin-number-input"
+                value={loreText}
+                onChange={(e) => setLoreText(e.target.value)}
+                placeholder="# Luna World - خريطة عالم لونا&#10;&#10;## قصة لونا&#10;..."
+                style={{
+                  width: '100%',
+                  minHeight: '500px',
+                  resize: 'vertical',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                  lineHeight: '1.6',
+                  padding: '12px',
+                }}
+                dir="auto"
+              />
+              <div style={{
+                marginTop: '8px',
+                fontSize: '12px',
+                color: 'var(--text-muted)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>{loreText.length.toLocaleString()} characters</span>
+                  {loreText.length > 50000 && (
+                    <span style={{ color: '#f59e0b', fontSize: '11px' }}>
+                      Large lore — may increase AI token usage significantly
+                    </span>
+                  )}
+                </div>
+                {loreChanged && (
+                  <span style={{ color: 'var(--accent-legendary)' }}>Unsaved changes</span>
+                )}
+              </div>
+            </div>
+            <BotBadge bot="sage" />
+          </ConfigSection>
+
+          <SaveDeployBar
+            hasChanges={loreChanged}
+            saving={saving}
+            onSave={saveConfig}
+            onDiscard={discardLore}
             projectName="Sage"
           />
         </>
@@ -667,18 +786,12 @@ export default function SagePage() {
               checked={privileges.lunarianAccess}
               onChange={(v) => setPrivileges({ ...privileges, lunarianAccess: v })}
             />
-            <div className="admin-number-input-wrap" style={{ marginTop: '12px' }}>
-              <label className="admin-number-input-label">Lunarian Role ID</label>
-              <input
-                type="text"
-                className="admin-number-input"
-                value={privileges.lunarianRoleId}
-                onChange={(e) => setPrivileges({ ...privileges, lunarianRoleId: e.target.value })}
-                placeholder="Discord Role ID"
-                style={{ width: '100%', maxWidth: '300px', fontFamily: 'monospace' }}
-              />
-              <span className="admin-number-input-desc">The Discord role ID for Lunarian members</span>
-            </div>
+            <RolePicker
+              label="Lunarian Role"
+              description="The Discord role for Lunarian community members"
+              value={privileges.lunarianRoleId}
+              onChange={(v) => setPrivileges({ ...privileges, lunarianRoleId: v as string })}
+            />
             <BotBadge bot="sage" />
           </ConfigSection>
 
@@ -688,7 +801,7 @@ export default function SagePage() {
               <div>
                 <span style={{ color: 'var(--accent-legendary)', fontWeight: 600 }}>Mastermind</span>
                 {privileges.privilegedRoles[0]?.title && (
-                  <span style={{ marginLeft: 6, color: 'var(--text-muted)', fontStyle: 'italic' }} dir="rtl">&quot;{privileges.privilegedRoles[0].title}&quot;</span>
+                  <span style={{ marginLeft: 6, color: 'var(--text-muted)', fontStyle: 'italic' }} dir="auto">&quot;{privileges.privilegedRoles[0].title}&quot;</span>
                 )}
                 <span style={{ marginLeft: 8 }}>— Full expressive/deferential tone, must answer everything</span>
               </div>
@@ -703,7 +816,7 @@ export default function SagePage() {
               </div>
               <div>
                 <span style={{ color: 'var(--common)', fontWeight: 600 }}>Lunarian</span>
-                <span style={{ marginLeft: 6, color: 'var(--text-muted)', fontStyle: 'italic' }} dir="rtl">&quot;يا اللوناري،&quot;</span>
+                <span style={{ marginLeft: 6, color: 'var(--text-muted)', fontStyle: 'italic' }} dir="auto">&quot;يا اللوناري،&quot;</span>
                 <span style={{ marginLeft: 8 }}>— Friendly tone, gets follow-up Luna topic suggestions</span>
               </div>
               <div>
@@ -753,20 +866,12 @@ export default function SagePage() {
                     }}>
                       {index + 1}
                     </div>
-                    <div className="admin-number-input-wrap">
-                      <label className="admin-number-input-label">
-                        Role ID
-                        {index === 0 && <span style={{ marginLeft: 6, fontSize: '10px', color: 'var(--accent-legendary)' }}>Mastermind</span>}
-                      </label>
-                      <input
-                        type="text"
-                        className="admin-number-input"
-                        value={role.id}
-                        onChange={(e) => updatePrivilegedRole(index, 'id', e.target.value)}
-                        placeholder="Discord Role ID"
-                        style={{ width: '100%', fontFamily: 'monospace' }}
-                      />
-                    </div>
+                    <RolePicker
+                      label={index === 0 ? 'Role (Mastermind)' : 'Role'}
+                      value={role.id}
+                      onChange={(v) => updatePrivilegedRole(index, 'id', v as string)}
+                      compact
+                    />
                     <div className="admin-number-input-wrap">
                       <label className="admin-number-input-label">Title (Arabic honorific)</label>
                       <input
@@ -776,7 +881,7 @@ export default function SagePage() {
                         onChange={(e) => updatePrivilegedRole(index, 'title', e.target.value)}
                         placeholder="سيدي العقل المدبر"
                         style={{ width: '100%' }}
-                        dir="rtl"
+                        dir="auto"
                       />
                     </div>
                     <div className="admin-number-input-wrap">
@@ -850,20 +955,16 @@ export default function SagePage() {
                     }}>
                       {index + 1}
                     </div>
-                    <div className="admin-number-input-wrap">
-                      <label className="admin-number-input-label">Role ID</label>
-                      <input
-                        type="text"
-                        className="admin-input"
-                        value={role.id}
-                        onChange={(e) => {
-                          const copy = [...privileges.allKnownRoles];
-                          copy[index] = { ...copy[index], id: e.target.value };
-                          setPrivileges({ ...privileges, allKnownRoles: copy });
-                        }}
-                        style={{ fontFamily: 'monospace' }}
-                      />
-                    </div>
+                    <RolePicker
+                      label="Role"
+                      value={role.id}
+                      onChange={(v) => {
+                        const copy = [...privileges.allKnownRoles];
+                        copy[index] = { ...copy[index], id: v as string };
+                        setPrivileges({ ...privileges, allKnownRoles: copy });
+                      }}
+                      compact
+                    />
                     <div className="admin-number-input-wrap">
                       <label className="admin-number-input-label">Name</label>
                       <input
@@ -904,6 +1005,7 @@ export default function SagePage() {
             hasChanges={privilegesChanged}
             saving={saving}
             onSave={saveConfig}
+            onDiscard={discardPrivileges}
             projectName="Sage"
           />
         </>

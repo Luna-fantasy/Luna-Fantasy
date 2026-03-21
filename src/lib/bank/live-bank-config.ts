@@ -99,12 +99,22 @@ export interface LiveBankConfig {
 
   // Insurance
   insuranceCost: number;
+
+  // Steal system (from butler_games)
+  stealSystem: {
+    enabled: boolean;
+    chance: number;
+    min_amount: number;
+    max_amount: number;
+    cooldown: number;
+  } | null;
 }
 
 export async function getLiveBankConfig(): Promise<LiveBankConfig> {
-  const [banking, economy] = await Promise.all([
+  const [banking, economy, games] = await Promise.all([
     readBotConfig('butler_banking'),
     readBotConfig('butler_economy'),
+    readBotConfig('butler_games'),
   ]);
 
   // Extract loan tiers from the full tier objects
@@ -133,6 +143,9 @@ export async function getLiveBankConfig(): Promise<LiveBankConfig> {
   // Insurance config
   const insurance = banking?.insurance;
 
+  // Steal system config
+  const steal = games?.steal_system;
+
   return {
     // Loans
     loanTiers: tierAmounts,
@@ -146,7 +159,7 @@ export async function getLiveBankConfig(): Promise<LiveBankConfig> {
 
     // Daily
     dailyBase: daily?.min ?? DAILY_BASE,
-    dailyMax: daily?.max ?? DAILY_BASE,
+    dailyMax: daily?.max ?? DAILY_BASE * 2,
     dailyCooldownMs: daily?.cooldown ?? DAILY_COOLDOWN_MS,
 
     // VIP
@@ -174,5 +187,14 @@ export async function getLiveBankConfig(): Promise<LiveBankConfig> {
 
     // Insurance
     insuranceCost: insurance?.cost ?? INSURANCE_COST,
+
+    // Steal system
+    stealSystem: steal ? {
+      enabled: steal.enabled ?? false,
+      chance: steal.chance ?? 0.5,
+      min_amount: steal.min_amount ?? 100,
+      max_amount: steal.max_amount ?? 5000,
+      cooldown: steal.cooldown ?? 3600000,
+    } : null,
   };
 }

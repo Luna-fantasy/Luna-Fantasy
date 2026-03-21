@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import DataTable, { type Column } from '../components/DataTable';
+import { SkeletonCard } from '../components/Skeleton';
+import { useToast } from '../components/Toast';
 import type { AdminUserSearchResult } from '@/types/admin';
 
 interface RecentUser {
@@ -34,6 +36,7 @@ export default function UsersPage() {
   // Recent users
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [recentLoading, setRecentLoading] = useState(true);
+  const { toast } = useToast();
 
   const fetchRecentUsers = useCallback(async () => {
     try {
@@ -42,7 +45,7 @@ export default function UsersPage() {
       const data = await res.json();
       setRecentUsers(data.users ?? []);
     } catch {
-      console.error('Failed to load recent users');
+      toast('Failed to load recent users', 'error');
     } finally {
       setRecentLoading(false);
     }
@@ -63,6 +66,7 @@ export default function UsersPage() {
       setResults(data.results);
     } catch (err) {
       console.error('Search error:', err);
+      toast('Search failed. Try again.', 'error');
       setResults([]);
     } finally {
       setLoading(false);
@@ -88,9 +92,18 @@ export default function UsersPage() {
     },
     {
       key: 'username',
-      label: 'Username',
+      label: 'User',
       render: (row) => (
-        <span>{row.globalName || row.username || '-'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {row.image ? (
+            <img src={row.image} alt="" style={{ width: 24, height: 24, borderRadius: '50%', flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--bg-void)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, color: 'var(--text-muted)' }}>
+              {(row.globalName || row.username || '?').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span>{row.globalName || row.username || '-'}</span>
+        </div>
       ),
     },
     {
@@ -127,7 +140,7 @@ export default function UsersPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Users</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">👥</span> Users</h1>
         <p className="admin-page-subtitle">Search and manage user accounts</p>
       </div>
 
@@ -135,7 +148,7 @@ export default function UsersPage() {
         <input
           type="text"
           className="admin-input"
-          placeholder="Search by Discord ID or username..."
+          placeholder="🔍 Search by username or Discord ID..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -145,6 +158,12 @@ export default function UsersPage() {
           {loading ? 'Searching...' : 'Search'}
         </button>
       </div>
+
+      {query.trim().length === 1 && (
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          Type at least 2 characters to search
+        </p>
+      )}
 
       {loading ? (
         <div className="admin-loading">
@@ -166,9 +185,7 @@ export default function UsersPage() {
           <div className="admin-card" style={{ marginTop: 8 }}>
             <h3 className="admin-card-title" style={{ marginBottom: 16 }}>Recent Activity</h3>
             {recentLoading ? (
-              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                Loading recent users...
-              </div>
+              <SkeletonCard count={6} />
             ) : recentUsers.length === 0 ? (
               <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                 No recent activity found
@@ -183,26 +200,7 @@ export default function UsersPage() {
                   <Link
                     key={user.discordId}
                     href={`/admin/users/${user.discordId}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      background: 'var(--bg-deep)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)',
-                      textDecoration: 'none',
-                      color: 'inherit',
-                      transition: 'border-color 0.2s, background 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
-                      e.currentTarget.style.background = 'var(--bg-deep)';
-                    }}
+                    className="admin-user-card"
                   >
                     {user.image ? (
                       <img
@@ -229,14 +227,17 @@ export default function UsersPage() {
                       </div>
                     )}
                     <div style={{ overflow: 'hidden', flex: 1 }}>
-                      <div style={{
-                        fontWeight: 600,
-                        fontSize: '13px',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        color: 'var(--text-primary)',
-                      }}>
+                      <div
+                        data-tooltip={user.globalName || user.username || user.discordId}
+                        style={{
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
                         {user.globalName || user.username || user.discordId}
                       </div>
                       <div style={{

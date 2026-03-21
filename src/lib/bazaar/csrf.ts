@@ -44,10 +44,8 @@ export async function validateCsrf(request: Request): Promise<boolean> {
   const cookieToken = cookieStore.get(CSRF_COOKIE_NAME)?.value;
   if (!cookieToken) return false;
 
-  // Constant-time comparison to prevent timing attacks
-  if (headerToken.length !== cookieToken.length) return false;
-  return crypto.timingSafeEqual(
-    Buffer.from(headerToken),
-    Buffer.from(cookieToken)
-  );
+  // Constant-time comparison — pad to fixed length to avoid leaking token length
+  const a = Buffer.from(headerToken.padEnd(64, '\0'));
+  const b = Buffer.from(cookieToken.padEnd(64, '\0'));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }

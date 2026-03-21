@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
+import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 import { uploadObject, deleteObject, isR2Configured } from '@/lib/admin/r2';
@@ -234,7 +235,7 @@ export async function POST(request: NextRequest) {
         before,
         after: targetArr[stoneIdx],
         metadata: { stoneName: name, isForbidden },
-        ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+        ip: getClientIp(request),
       });
 
       return NextResponse.json({ success: true, stone: targetArr[stoneIdx] });
@@ -322,7 +323,7 @@ export async function POST(request: NextRequest) {
         before: { name, imageUrl: oldImageUrl },
         after: { name, imageUrl: publicUrl },
         metadata: { stoneName: name, r2Key, userRecordsUpdated: updateResult.modifiedCount },
-        ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+        ip: getClientIp(request),
       });
 
       return NextResponse.json({ success: true, imageUrl: publicUrl, userRecordsUpdated: updateResult.modifiedCount });
@@ -359,16 +360,27 @@ export async function POST(request: NextRequest) {
       const isForbidden = type === 'forbidden';
 
       if (isForbidden) {
+        const { hint, gift_role_id, giver_title } = stone;
+        if (!hint || typeof hint !== 'string' || !hint.trim()) {
+          return NextResponse.json({ error: 'Hint is required for forbidden stones' }, { status: 400 });
+        }
+        if (!gift_role_id || typeof gift_role_id !== 'string' || !/^\d{17,20}$/.test(gift_role_id)) {
+          return NextResponse.json({ error: 'Valid gift_role_id is required for forbidden stones' }, { status: 400 });
+        }
+        if (!giver_title || typeof giver_title !== 'string' || !giver_title.trim()) {
+          return NextResponse.json({ error: 'Giver title is required for forbidden stones' }, { status: 400 });
+        }
+
         const newForbidden: ForbiddenStone = {
           name: name.trim(),
           imageUrl: '',
           weight: Number(weight),
-          hint: '',
+          hint: hint.trim(),
           sell_price: Number(sell_price),
-          gift_role_id: '',
+          gift_role_id,
           emoji_id: emoji_id ? String(emoji_id) : '',
           give_command: [],
-          giver_title: '',
+          giver_title: giver_title.trim(),
         };
         moonStones.forbidden_stones.push(newForbidden);
       } else {
@@ -391,7 +403,7 @@ export async function POST(request: NextRequest) {
         before: null,
         after: isForbidden ? moonStones.forbidden_stones[moonStones.forbidden_stones.length - 1] : moonStones.stones[moonStones.stones.length - 1],
         metadata: { stoneName: name.trim(), isForbidden },
-        ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+        ip: getClientIp(request),
       });
 
       return NextResponse.json({ success: true, name: name.trim() });
@@ -435,7 +447,7 @@ export async function POST(request: NextRequest) {
         before: deleted,
         after: null,
         metadata: { stoneName: name, isForbidden },
-        ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+        ip: getClientIp(request),
       });
 
       return NextResponse.json({ success: true });

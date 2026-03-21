@@ -248,7 +248,8 @@ export interface MellsShopItem {
   price: number;
   roleId: string;
   backgroundUrl: string;
-  rankBackgroundUrl?: string;
+  type: 'profile' | 'rank';
+  exclusive?: boolean;
   enabled?: boolean;
 }
 
@@ -263,8 +264,24 @@ export async function getMellsShopConfig(): Promise<MellsShopItem[]> {
     const doc = await db.collection('bot_config').findOne({ _id: 'butler_shop' as any });
 
     if (doc?.data?.items && Array.isArray(doc.data.items)) {
-      setCache('mells', doc.data.items);
-      return doc.data.items;
+      const items: MellsShopItem[] = (doc.data.items as any[]).map(item => {
+        // Backward compat: if item has no type, default to 'profile'
+        // If item has rankBackgroundUrl but no backgroundUrl, treat as rank type
+        let type: 'profile' | 'rank' = item.type ?? 'profile';
+        let backgroundUrl = item.backgroundUrl ?? '';
+        if (!backgroundUrl && item.rankBackgroundUrl) {
+          backgroundUrl = item.rankBackgroundUrl;
+          type = 'rank';
+        }
+        return {
+          ...item,
+          type,
+          backgroundUrl,
+          exclusive: item.exclusive ?? false,
+        };
+      });
+      setCache('mells', items);
+      return items;
     }
   } catch (err) {
     console.error('[shop-config] Failed to load mells config from DB:', err);
@@ -280,6 +297,77 @@ export async function saveMellsConfig(items: MellsShopItem[]): Promise<void> {
   await db.collection('bot_config').updateOne(
     { _id: 'butler_shop' as any },
     { $set: { data: { items }, updatedAt: new Date() } },
+    { upsert: true }
+  );
+  invalidateShopConfigCache();
+}
+
+// ── Luna Map Config (Jester roadmap) ──
+
+export interface LunaMapMenuItem {
+  label: string;
+  label_en?: string;
+  content: string;
+  content_en?: string;
+  image: string;
+}
+
+export interface LunaMapButton {
+  name: string;
+  name_en?: string;
+  btnStyle: number;
+  emojiId: string;
+  content?: string;
+  content_en?: string;
+  image?: string;
+  menu?: LunaMapMenuItem[];
+}
+
+export interface LunaMapConfig {
+  title: string;
+  title_en?: string;
+  description: string;
+  description_en?: string;
+  image: string;
+  buttons: LunaMapButton[];
+}
+
+/** Get Luna Map config (from bot_config, fallback null) */
+export async function getLunaMapConfig(): Promise<LunaMapConfig | null> {
+  const cached = getCached<LunaMapConfig>('luna_map');
+  if (cached) return cached;
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(DB_NAME);
+    const doc = await db.collection('bot_config').findOne({ _id: 'jester_luna_map' as any });
+
+    if (doc?.data?.buttons && Array.isArray(doc.data.buttons)) {
+      const config: LunaMapConfig = {
+        title: doc.data.title ?? '',
+        title_en: doc.data.title_en ?? '',
+        description: doc.data.description ?? '',
+        description_en: doc.data.description_en ?? '',
+        image: doc.data.image ?? '',
+        buttons: doc.data.buttons,
+      };
+      setCache('luna_map', config);
+      return config;
+    }
+  } catch (err) {
+    console.error('[shop-config] Failed to load luna map config from DB:', err);
+  }
+
+  return null;
+}
+
+/** Save Luna Map config to DB */
+export async function saveLunaMapConfig(config: LunaMapConfig): Promise<void> {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  await db.collection('bot_config').updateOne(
+    { _id: 'jester_luna_map' as any },
+    { $set: { data: config, updatedAt: new Date() } },
     { upsert: true }
   );
   invalidateShopConfigCache();

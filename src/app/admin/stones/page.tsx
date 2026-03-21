@@ -436,7 +436,7 @@ export default function StonesPage() {
     return (
       <>
         <div className="admin-page-header">
-          <h1 className="admin-page-title">Moon Stones</h1>
+          <h1 className="admin-page-title"><span className="emoji-float">💎</span> Moon Stones</h1>
           <p className="admin-page-subtitle">Stone catalog, drop rates, ownership, and configuration</p>
         </div>
         <div className="admin-loading"><div className="admin-spinner" />Loading stone data...</div>
@@ -451,7 +451,7 @@ export default function StonesPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Moon Stones</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">💎</span> Moon Stones</h1>
         <p className="admin-page-subtitle">Stone catalog, drop rates, ownership, and configuration</p>
       </div>
 
@@ -519,7 +519,6 @@ export default function StonesPage() {
                     {rarity}
                   </span>
                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
-                    <span>Weight: {stone.weight}</span>
                     <span>Drop: {stone.dropPercent > 0 ? `${stone.dropPercent}%` : 'Admin only'}</span>
                     <span>Sell: {stone.sell_price > 0 ? `${stone.sell_price.toLocaleString()} L` : 'N/A'}</span>
                     <span>Owned: {dist ? `${dist.count} (${dist.ownerCount} users)` : '0'}</span>
@@ -618,26 +617,35 @@ export default function StonesPage() {
 
             <div className="admin-form-group">
               <label className="admin-form-label">
-                Weight
+                🎯 Weight
                 <span className="admin-tooltip-trigger" data-tooltip="Drop rarity: ≥15=Common, ≥5=Uncommon, ≥1=Rare, ≥0.1=Epic, >0=Legendary, 0=Special">?</span>
               </label>
               <input type="number" className="admin-form-input" value={editWeight} onChange={(e) => setEditWeight(e.target.value)} step="0.01" min="0" />
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Higher weight = more common drop. 0 = not drawable.</p>
+              <p style={{ fontSize: '12px', color: 'var(--accent-primary)', marginTop: '4px', fontWeight: 600 }}>
+                Drop rate: {(() => {
+                  const w = Number(editWeight);
+                  if (w <= 0) return '0.0';
+                  const totalW = stones.reduce((sum, s) => sum + (s.name === editStone?.name ? w : s.weight), 0);
+                  return totalW > 0 ? ((w / totalW) * 100).toFixed(1) : '0.0';
+                })()}%
+              </p>
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Drop chance weight — higher means more common</p>
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Sell Price (Lunari)</label>
+              <label className="admin-form-label">💰 Sell Price</label>
               <input type="number" className="admin-form-input" value={editSellPrice} onChange={(e) => setEditSellPrice(e.target.value)} min="0" step="1" />
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Lunari received when selling this stone</p>
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Emoji ID</label>
+              <label className="admin-form-label">😀 Emoji ID</label>
               <input type="text" className="admin-form-input" value={editEmojiId} onChange={(e) => setEditEmojiId(e.target.value)} placeholder="Discord emoji ID" />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '20px' }}>
               <button className="admin-btn admin-btn-ghost" onClick={closeEditModal} disabled={saving}>Cancel</button>
-              <button className="admin-btn admin-btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</button>
+              <button className="admin-btn admin-btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : '💾 Save Changes'}</button>
             </div>
           </>
         )}
@@ -693,7 +701,7 @@ export default function StonesPage() {
 
         {/* Stone Name */}
         <div className="admin-form-group">
-          <label className="admin-form-label">Stone Name</label>
+          <label className="admin-form-label">✏️ Name</label>
           <input
             className="admin-form-input"
             value={newStoneName}
@@ -724,7 +732,7 @@ export default function StonesPage() {
         {/* Weight */}
         <div className="admin-form-group">
           <label className="admin-form-label">
-            Weight
+            🎯 Weight
           </label>
           <input
             type="number"
@@ -735,7 +743,7 @@ export default function StonesPage() {
             min="0"
           />
           <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-            Controls drop rarity. Higher = more common.
+            Drop chance weight — higher means more common.
             {Number(newStoneWeight) >= 0 && (
               <span style={{ color: getRarityColor(Number(newStoneWeight)), fontWeight: 600, marginLeft: '6px' }}>
                 {getWeightRarityHint(Number(newStoneWeight))}
@@ -749,7 +757,7 @@ export default function StonesPage() {
 
         {/* Sell Price */}
         <div className="admin-form-group">
-          <label className="admin-form-label">Sell Price (Lunari)</label>
+          <label className="admin-form-label">💰 Sell Price</label>
           <input
             type="number"
             className="admin-form-input"
@@ -759,13 +767,13 @@ export default function StonesPage() {
             step="1"
           />
           <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-            How much Lunari a player receives when selling this stone. Set to 0 if not sellable.
+            Lunari received when selling this stone. Set to 0 if not sellable.
           </p>
         </div>
 
         {/* Emoji ID */}
         <div className="admin-form-group">
-          <label className="admin-form-label">Emoji ID (optional)</label>
+          <label className="admin-form-label">😀 Emoji ID (optional)</label>
           <input
             type="text"
             className="admin-form-input"
@@ -784,7 +792,7 @@ export default function StonesPage() {
             Cancel
           </button>
           <button className="admin-btn admin-btn-primary" onClick={handleAddStone} disabled={saving || !newStoneName.trim()}>
-            {saving ? 'Adding...' : 'Add Stone'}
+            {saving ? 'Adding...' : '💾 Add Stone'}
           </button>
         </div>
       </AdminLightbox>

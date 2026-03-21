@@ -3,6 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
+import { E } from '@/components/edit-mode/EditableText';
+import { EImg } from '@/components/edit-mode/EditableImage';
 
 export function Footer() {
   const t = useTranslations('footer');
@@ -15,16 +17,17 @@ export function Footer() {
         <div className="footer-top">
           <div className="footer-brand">
             <div className="footer-brand-row">
-              <Image
+              <EImg
+                editId="footer-brand-logo"
                 src="/images/logo.png"
                 alt="Luna Logo"
                 width={40}
                 height={40}
                 className="footer-logo"
               />
-              <h3>{brand('name')}</h3>
+              <h3><E ns="brand" k="name">{brand('name')}</E></h3>
             </div>
-            <p>{t('desc')}</p>
+            <p><E ns="footer" k="desc">{t('desc')}</E></p>
           </div>
         </div>
 
@@ -32,40 +35,40 @@ export function Footer() {
         <div className="footer-columns">
           {/* Explore */}
           <div className="footer-col">
-            <h4>{t('explore')}</h4>
+            <h4><E ns="footer" k="explore">{t('explore')}</E></h4>
             <ul className="footer-links">
-              <li><Link href="/">{t('home')}</Link></li>
-              <li><Link href="/story">{t('story')}</Link></li>
-              <li><Link href="/characters">{t('characters')}</Link></li>
-              <li><Link href="/partners">{t('partners')}</Link></li>
-              <li><Link href="/members">{t('members')}</Link></li>
-              <li><Link href="/bank">{t('bank')}</Link></li>
+              <li><Link href="/"><E ns="footer" k="home">{t('home')}</E></Link></li>
+              <li><Link href="/story"><E ns="footer" k="story">{t('story')}</E></Link></li>
+              <li><Link href="/characters"><E ns="footer" k="characters">{t('characters')}</E></Link></li>
+              <li><Link href="/partners"><E ns="footer" k="partners">{t('partners')}</E></Link></li>
+              <li><Link href="/members"><E ns="footer" k="members">{t('members')}</E></Link></li>
+              <li><Link href="/bank"><E ns="footer" k="bank">{t('bank')}</E></Link></li>
             </ul>
           </div>
 
           {/* Games */}
           <div className="footer-col">
-            <h4>{t('games')}</h4>
+            <h4><E ns="footer" k="games">{t('games')}</E></h4>
             <ul className="footer-links">
-              <li><Link href="/luna-fantasy">{t('lunaFantasy')}</Link></li>
-              <li><Link href="/grand-fantasy">{t('grandFantasy')}</Link></li>
-              <li><Link href="/faction-war">{t('factionWar')}</Link></li>
+              <li><Link href="/luna-fantasy"><E ns="footer" k="lunaFantasy">{t('lunaFantasy')}</E></Link></li>
+              <li><Link href="/grand-fantasy"><E ns="footer" k="grandFantasy">{t('grandFantasy')}</E></Link></li>
+              <li><Link href="/faction-war"><E ns="footer" k="factionWar">{t('factionWar')}</E></Link></li>
             </ul>
           </div>
 
           {/* Merchants */}
           <div className="footer-col">
-            <h4>{t('merchants')}</h4>
+            <h4><E ns="footer" k="merchants">{t('merchants')}</E></h4>
             <ul className="footer-links">
-              <li><Link href="/bazaar/kael">{t('kael')}</Link></li>
-              <li><Link href="/bazaar/meluna">{t('meluna')}</Link></li>
-              <li><Link href="/bazaar/zoldar">{t('zoldar')}</Link></li>
+              <li><Link href="/bazaar/kael"><E ns="footer" k="kael">{t('kael')}</E></Link></li>
+              <li><Link href="/bazaar/meluna"><E ns="footer" k="meluna">{t('meluna')}</E></Link></li>
+              <li><Link href="/bazaar/zoldar"><E ns="footer" k="zoldar">{t('zoldar')}</E></Link></li>
             </ul>
           </div>
 
           {/* Community */}
           <div className="footer-col">
-            <h4>{t('community')}</h4>
+            <h4><E ns="footer" k="community">{t('community')}</E></h4>
             <ul className="footer-links">
               <li>
                 <a href="https://discord.gg/lunarian" target="_blank" rel="noopener noreferrer">
@@ -124,22 +127,22 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="footer-bottom">
-          <span className="footer-copyright">{t('copyright')}</span>
+          <span className="footer-copyright"><E ns="footer" k="copyright">{t('copyright')}</E></span>
           <div className="footer-legal">
-            <Link href="/terms">{t('terms')}</Link>
+            <Link href="/terms"><E ns="footer" k="terms">{t('terms')}</E></Link>
             <span className="footer-legal-dot">·</span>
-            <Link href="/privacy">{t('privacy')}</Link>
+            <Link href="/privacy"><E ns="footer" k="privacy">{t('privacy')}</E></Link>
             <span className="footer-legal-dot">·</span>
-            <Link href="/refund">{t('refund')}</Link>
+            <Link href="/refund"><E ns="footer" k="refund">{t('refund')}</E></Link>
             <span className="footer-legal-dot">·</span>
-            <Link href="/faq">{t('faq')}</Link>
+            <Link href="/faq"><E ns="footer" k="faq">{t('faq')}</E></Link>
             <span className="footer-legal-dot">·</span>
-            <Link href="/contact">{t('contact')}</Link>
+            <Link href="/contact"><E ns="footer" k="contact">{t('contact')}</E></Link>
             <span className="footer-legal-dot">·</span>
-            <Link href="/about">{t('about')}</Link>
+            <Link href="/about"><E ns="footer" k="about">{t('about')}</E></Link>
           </div>
           <a href="https://buriedgames.com" target="_blank" rel="noopener noreferrer" className="footer-built-by">
-            {t('builtBy')}
+            <E ns="footer" k="builtBy">{t('builtBy')}</E>
           </a>
         </div>
       </div>

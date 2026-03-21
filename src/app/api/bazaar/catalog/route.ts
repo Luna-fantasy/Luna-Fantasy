@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { LUCKBOX_TIERS } from '@/lib/bazaar/luckbox-config';
-import { getStoneDropRates, STONE_BOX_PRICE, TICKET_PACKAGES } from '@/lib/bazaar/stone-config';
+import { getLuckboxShopConfig, boxToLegacyTier, getStoneBoxConfig, getTicketShopConfig } from '@/lib/bazaar/shop-config';
 import { LUNARI_PACKAGES } from '@/lib/stripe';
 import { getBalance, checkDebt } from '@/lib/bazaar/lunari-ops';
 import { getUserTickets } from '@/lib/bazaar/ticket-ops';
@@ -13,10 +12,20 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db('Database');
 
+    // Get luckbox config from DB (falls back to hardcoded)
+    const boxes = await getLuckboxShopConfig();
+
+    // Collect all unique rarities across all boxes
+    const allRarities = new Set<string>();
+    for (const box of boxes) {
+      for (const r of box.rarities) {
+        allRarities.add(r.rarity);
+      }
+    }
+
     // Get card counts per rarity from catalog
-    const rarities = LUCKBOX_TIERS.map((t) => t.rarity);
     const rarityCounts = await Promise.all(
-      rarities.map(async (rarity) => {
+      Array.from(allRarities).map(async (rarity) => {
         const doc = await db.collection('cards_config').findOne({ _id: rarity.toUpperCase() as any });
         let count = 0;
         if (doc?.items) {
@@ -26,16 +35,35 @@ export async function GET() {
       })
     );
 
-    const luckboxTiers = LUCKBOX_TIERS.map((t) => ({
-      ...t,
-      cardCount: rarityCounts.find((r) => r.rarity === t.rarity)?.count ?? 0,
-    }));
+    const luckboxTiers = boxes.map((box) => {
+      const legacy = boxToLegacyTier(box);
+      // Sum card counts across all rarities in this box
+      const cardCount = box.rarities.reduce((sum, r) => {
+        return sum + (rarityCounts.find((rc) => rc.rarity === r.rarity)?.count ?? 0);
+      }, 0);
+      return { ...legacy, cardCount, rarities: box.rarities };
+    });
 
-    // Stone drop rates
+    // Stone config from DB (falls back to hardcoded)
+    const stoneConfig = await getStoneBoxConfig();
+    const totalWeight = stoneConfig.stones.filter((s) => s.weight > 0)
+      .reduce((sum, s) => sum + Math.max(1, Math.round(s.weight * 1000)), 0);
+
     const stoneBox = {
-      price: STONE_BOX_PRICE,
-      stones: getStoneDropRates(),
+      price: stoneConfig.price,
+      stones: stoneConfig.stones.map((s) => {
+        if (s.weight === 0) return { name: s.name, weight: s.weight, dropPercent: 0 };
+        const entries = Math.max(1, Math.round(s.weight * 1000));
+        return {
+          name: s.name,
+          weight: s.weight,
+          dropPercent: Math.round((entries / totalWeight) * 10000) / 100,
+        };
+      }),
     };
+
+    // Ticket packages from DB (falls back to hardcoded)
+    const ticketPackages = await getTicketShopConfig();
 
     // Optional auth for user data
     let user: { balance: number; tickets: number; hasDebt: boolean } | undefined;
@@ -66,7 +94,7 @@ export async function GET() {
     const response = NextResponse.json({
       luckboxTiers,
       stoneBox,
-      ticketPackages: TICKET_PACKAGES,
+      ticketPackages,
       lunariPackages,
       user,
     });

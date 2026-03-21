@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef } from 'react';
 import type { LuckboxTierConfig, RevealData } from '@/types/bazaar';
 import LunariIcon from '@/components/LunariIcon';
+import { E } from '@/components/edit-mode/EditableText';
 
 interface VendorKaelProps {
   tiers: (LuckboxTierConfig & { cardCount: number })[];
@@ -79,9 +80,9 @@ export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurc
   return (
     <div className="vendor-section">
       <div className="vendor-header">
-        <h2 className="vendor-name">{t('kael.name')}</h2>
-        <p className="vendor-title">{t('kael.title')}</p>
-        <p className="vendor-desc">{t('kael.desc')}</p>
+        <h2 className="vendor-name"><E ns="bazaarPage" k="kael.name">{t('kael.name')}</E></h2>
+        <p className="vendor-title"><E ns="bazaarPage" k="kael.title">{t('kael.title')}</E></p>
+        <p className="vendor-desc"><E ns="bazaarPage" k="kael.desc">{t('kael.desc')}</E></p>
       </div>
 
       {error && (
@@ -126,11 +127,11 @@ export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurc
                 {buying === tier.tier ? (
                   <span className="luckbox-spinner" />
                 ) : hasDebt ? (
-                  t('inDebt')
+                  <E ns="bazaarPage" k="inDebt">{t('inDebt')}</E>
                 ) : !canAfford ? (
-                  t('insufficientBalance')
+                  <E ns="bazaarPage" k="insufficientBalance">{t('insufficientBalance')}</E>
                 ) : (
-                  t('kael.openBox')
+                  <E ns="bazaarPage" k="kael.openBox">{t('kael.openBox')}</E>
                 )}
               </button>
             </div>

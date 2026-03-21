@@ -66,22 +66,23 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
   const db = await getDb();
 
   const [
-    totalUsersResult,
+    memberCountDoc,
     lunariResult,
     systemDoc,
     activeLoansResult,
     debtResult,
     recentTransactions,
   ] = await Promise.all([
-    // Total unique users across points collection
-    db.collection('points').countDocuments(),
+    // Server member count from system collection (written by Butler every 5 min)
+    db.collection('system').findOne({ _id: 'guild_member_count' as any }),
 
-    // Total Lunari in circulation (balance field is the canonical numeric value)
+    // Total Lunari held by all users + count of holders
     db.collection('points').aggregate([
       {
         $group: {
           _id: null,
           total: { $sum: { $ifNull: ['$balance', 0] } },
+          holders: { $sum: { $cond: [{ $gt: [{ $ifNull: ['$balance', 0] }, 0] }, 1, 0] } },
         },
       },
     ]).toArray(),
@@ -97,7 +98,7 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
         $group: {
           _id: null,
           count: { $sum: 1 },
-          totalValue: { $sum: { $toDouble: '$loans.repaymentAmount' } },
+          totalValue: { $sum: { $toDouble: { $ifNull: ['$loans.repaymentAmount', 0] } } },
         },
       },
     ]).toArray(),
@@ -107,20 +108,27 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
       {
         $group: {
           _id: null,
-          total: { $sum: { $toDouble: '$amount' } },
+          total: { $sum: { $toDouble: { $ifNull: ['$amount', 0] } } },
         },
       },
     ]).toArray(),
 
-    // Recent transactions (last 20)
+    // Recent transactions (last 100)
     db.collection('lunari_transactions')
       .find()
       .sort({ createdAt: -1 })
-      .limit(20)
+      .limit(100)
       .toArray(),
   ]);
 
+  // Server members: prefer guild_member_count, fallback to levels collection count
+  let serverMembers = memberCountDoc?.value ?? 0;
+  if (!serverMembers) {
+    serverMembers = await db.collection('levels').countDocuments();
+  }
+
   const totalLunari = lunariResult[0]?.total ?? 0;
+  const activeHolders = lunariResult[0]?.holders ?? 0;
   const bankReserveRaw = systemDoc?.value ?? systemDoc?.data;
   const bankReserve = typeof bankReserveRaw === 'number'
     ? bankReserveRaw
@@ -129,8 +137,9 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
       : 0;
 
   return {
-    totalUsers: totalUsersResult ?? 0,
+    totalUsers: serverMembers,
     totalLunariCirculation: Math.round(totalLunari),
+    activeHolders,
     bankReserve: Math.round(bankReserve),
     activeLoans: activeLoansResult[0]?.count ?? 0,
     activeLoanValue: Math.round(activeLoansResult[0]?.totalValue ?? 0),
@@ -143,7 +152,7 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
  * Parse a value that may be a number or stringified number.
  */
 function parseNumericValue(val: unknown): number {
-  if (typeof val === 'number') return val;
+  if (typeof val === 'number') return Number.isNaN(val) ? 0 : val;
   if (typeof val === 'string') return parseFloat(val) || 0;
   return 0;
 }
@@ -175,39 +184,104 @@ export async function searchUsers(query: string): Promise<AdminUserSearchResult[
     // Escape regex metacharacters to prevent ReDoS attacks
     const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(escaped, 'i');
-    userDocs = await db.collection('users').find({
-      $or: [{ username: regex }, { globalName: regex }, { name: regex }],
-    }).limit(20).toArray();
-  }
 
-  // Also check points collection for IDs without accounts
-  if (isId && userDocs.length === 0) {
-    const pointsDoc = await db.collection('points').findOne({ _id: query as any });
-    if (pointsDoc) {
-      userDocs = [{ discordId: query }];
+    // Search both website users and bot's discord_users cache in parallel
+    const [webResults, discordResults] = await Promise.all([
+      db.collection('users').find({
+        $or: [{ username: regex }, { globalName: regex }, { name: regex }],
+      }).limit(50).toArray(),
+      db.collection('discord_users').find({
+        $or: [{ username: regex }, { globalName: regex }],
+      }).limit(50).toArray(),
+    ]);
+
+    // Merge and deduplicate by Discord ID (website users take priority)
+    const seen = new Set<string>();
+    for (const u of webResults) {
+      const id = u.discordId ?? String(u._id);
+      if (!seen.has(id)) {
+        seen.add(id);
+        userDocs.push(u);
+      }
+    }
+    for (const u of discordResults) {
+      const id = String(u._id);
+      if (!seen.has(id)) {
+        seen.add(id);
+        userDocs.push({
+          discordId: id,
+          username: u.username,
+          globalName: u.globalName,
+          image: u.avatar
+            ? `https://cdn.discordapp.com/avatars/${id}/${u.avatar}.png?size=128`
+            : undefined,
+        });
+      }
     }
   }
+
+  // Also check points/levels/cards/discord_users collections for IDs without website accounts
+  if (isId && userDocs.length === 0) {
+    const [pointsDoc, discordUserDoc, levelsDoc, cardsDoc] = await Promise.all([
+      db.collection('points').findOne({ _id: query as any }),
+      db.collection('discord_users').findOne({ _id: query as any }),
+      db.collection('levels').findOne({ _id: query as any }),
+      db.collection('cards').findOne({ _id: query as any }),
+    ]);
+    if (pointsDoc || discordUserDoc || levelsDoc || cardsDoc) {
+      userDocs = [{
+        discordId: query,
+        username: discordUserDoc?.username,
+        globalName: discordUserDoc?.globalName,
+        image: discordUserDoc?.avatar
+          ? `https://cdn.discordapp.com/avatars/${query}/${discordUserDoc.avatar}.png?size=128`
+          : undefined,
+      }];
+    }
+  }
+
+  // Batch fetch supplementary data for all results at once (avoid N+1 queries)
+  const discordIds = userDocs.map(u => u.discordId ?? u._id?.toString()).filter(Boolean) as string[];
+  if (discordIds.length === 0) return [];
+
+  const [pointsDocs, levelsDocs, cardsDocs] = await Promise.all([
+    db.collection('points').find({ _id: { $in: discordIds } as any }).toArray(),
+    db.collection('levels').find({ _id: { $in: discordIds } as any }).toArray(),
+    db.collection('cards').find({ _id: { $in: discordIds } as any }).toArray(),
+  ]);
+
+  const pointsMap = new Map(pointsDocs.map(d => [String(d._id), d]));
+  const levelsMap = new Map(levelsDocs.map(d => [String(d._id), d]));
+  const cardsMap = new Map(cardsDocs.map(d => [String(d._id), d]));
 
   const results: AdminUserSearchResult[] = [];
   for (const user of userDocs) {
     const discordId = user.discordId ?? user._id?.toString();
     if (!discordId) continue;
 
-    const [pointsDoc, levelsDoc, cardsDoc] = await Promise.all([
-      db.collection('points').findOne({ _id: discordId as any }),
-      db.collection('levels').findOne({ _id: discordId as any }),
-      db.collection('cards').findOne({ _id: discordId as any }),
-    ]);
+    const pointsDoc = pointsMap.get(discordId);
+    const levelsDoc = levelsMap.get(discordId);
+    const cardsDoc = cardsMap.get(discordId);
 
-    const balance = pointsDoc?.balance ?? parseNumericValue(pointsDoc?.data) ?? 0;
-    const levelData = levelsDoc?.data;
-    const level = typeof levelData === 'object' && levelData !== null ? levelData.level : undefined;
+    const rawBalance = pointsDoc?.balance ?? parseNumericValue(pointsDoc?.data);
+    const balance = typeof rawBalance === 'number' && !Number.isNaN(rawBalance) ? rawBalance : 0;
+    // Level: check root fields first (native format), then legacy data field
+    let level: number | undefined;
+    if (levelsDoc) {
+      if (levelsDoc.level !== undefined) {
+        level = levelsDoc.level;
+      } else if (levelsDoc.data) {
+        const raw = typeof levelsDoc.data === 'string' ? (() => { try { return JSON.parse(levelsDoc.data); } catch { return null; } })() : levelsDoc.data;
+        level = raw?.level;
+      }
+    }
     const cardsArr = cardsDoc ? parseArrayField(cardsDoc.cards ?? cardsDoc.data) : [];
 
     results.push({
       discordId,
       username: user.username,
       globalName: user.globalName ?? user.name,
+      image: user.image,
       balance: Math.round(balance),
       level,
       cardCount: cardsArr.length,
@@ -223,10 +297,12 @@ export async function searchUsers(query: string): Promise<AdminUserSearchResult[
 export async function getUserProfile(discordId: string): Promise<AdminUserProfile | null> {
   const db = await getDb();
 
-  const [userDoc, pointsDoc, levelsDoc, cardsDoc, stonesDoc, inventoryDoc, cooldownsDoc, debtDoc, loansDoc, transactionsArr] = await Promise.all([
+  const [userDoc, discordUserDoc, pointsDoc, levelsDoc, ticketsDoc, cardsDoc, stonesDoc, inventoryDoc, cooldownsDoc, debtDoc, loansDoc, transactionsArr] = await Promise.all([
     db.collection('users').findOne({ discordId }),
+    db.collection('discord_users').findOne({ _id: discordId as any }),
     db.collection('points').findOne({ _id: discordId as any }),
     db.collection('levels').findOne({ _id: discordId as any }),
+    db.collection('tickets').findOne({ _id: discordId as any }),
     db.collection('cards').findOne({ _id: discordId as any }),
     db.collection('stones').findOne({ _id: discordId as any }),
     db.collection('inventory').findOne({ _id: discordId as any }),
@@ -241,12 +317,35 @@ export async function getUserProfile(discordId: string): Promise<AdminUserProfil
   ]);
 
   // If user doesn't exist anywhere
-  if (!userDoc && !pointsDoc && !levelsDoc && !cardsDoc) return null;
+  if (!userDoc && !discordUserDoc && !pointsDoc && !levelsDoc && !cardsDoc) return null;
 
-  const balance = pointsDoc?.balance ?? parseNumericValue(pointsDoc?.data);
-  const levelData = levelsDoc?.data;
-  const level = typeof levelData === 'object' && levelData !== null ? levelData.level : undefined;
-  const xp = typeof levelData === 'object' && levelData !== null ? levelData.xp : undefined;
+  const rawBalance = pointsDoc?.balance ?? parseNumericValue(pointsDoc?.data);
+  const balance = typeof rawBalance === 'number' && !Number.isNaN(rawBalance) ? rawBalance : 0;
+
+  // Levels: Butler writes root-level fields { xp, level, messages, voiceTime }
+  // Legacy st.db format stores them under { data: { xp, level, ... } } or { data: "json string" }
+  let level: number | undefined;
+  let xp: number | undefined;
+  let messages: number | undefined;
+  let voiceTime: number | undefined;
+  if (levelsDoc) {
+    if (levelsDoc.xp !== undefined || levelsDoc.level !== undefined) {
+      // Native format (Butler's setUserData writes root fields)
+      level = levelsDoc.level ?? 0;
+      xp = levelsDoc.xp ?? 0;
+      messages = levelsDoc.messages ?? 0;
+      voiceTime = levelsDoc.voiceTime ?? 0;
+    } else if (levelsDoc.data !== undefined) {
+      // Legacy st.db format
+      const raw = typeof levelsDoc.data === 'string' ? (() => { try { return JSON.parse(levelsDoc.data); } catch { return null; } })() : levelsDoc.data;
+      if (raw && typeof raw === 'object') {
+        level = raw.level ?? 0;
+        xp = raw.xp ?? 0;
+        messages = raw.messages ?? 0;
+        voiceTime = raw.voiceTime ?? 0;
+      }
+    }
+  }
 
   // Cards: stored as doc.cards (array) or legacy doc.data
   const cards = cardsDoc ? parseArrayField(cardsDoc.cards ?? cardsDoc.data) : [];
@@ -280,14 +379,24 @@ export async function getUserProfile(discordId: string): Promise<AdminUserProfil
   const debt = parseNumericValue(debtDoc?.amount ?? 0);
   const loans = loansDoc ? (Array.isArray(loansDoc.loans) ? loansDoc.loans : []) : [];
 
+  // Resolve username/avatar: prefer website users, fall back to bot's discord_users cache
+  const resolvedUsername = userDoc?.username ?? discordUserDoc?.username;
+  const resolvedGlobalName = userDoc?.globalName ?? userDoc?.name ?? discordUserDoc?.globalName;
+  const resolvedImage = userDoc?.image ?? (discordUserDoc?.avatar
+    ? `https://cdn.discordapp.com/avatars/${discordId}/${discordUserDoc.avatar}.png?size=128`
+    : undefined);
+
   return {
     discordId,
-    username: userDoc?.username,
-    globalName: userDoc?.globalName ?? userDoc?.name,
-    image: userDoc?.image,
+    username: resolvedUsername,
+    globalName: resolvedGlobalName,
+    image: resolvedImage,
     balance: Math.round(balance),
+    tickets: typeof ticketsDoc?.balance === 'number' ? ticketsDoc.balance : 0,
     level,
     xp,
+    messages,
+    voiceTime,
     cards,
     stones,
     inventory,

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
+import { E } from '@/components/edit-mode/EditableText';
+import { EImg } from '@/components/edit-mode/EditableImage';
 import type { MemberListItem, MembersResponse } from '@/types/members';
 import LunariIcon from '@/components/LunariIcon';
 
@@ -66,10 +68,10 @@ export default function MembersContent() {
       {/* Hero */}
       <section className="members-hero">
         <div className="members-hero-bg">
-          <Image src="https://assets.lunarian.app/backgrounds/Members_Hero.png" alt="Members" fill priority className="members-hero-bg-image" />
+          <EImg editId="members-hero-bg" source="r2" src="https://assets.lunarian.app/backgrounds/Members_Hero.png" alt="Members" fill priority className="members-hero-bg-image" />
         </div>
-        <h1 className="members-hero-title">{t('title')}</h1>
-        <p className="members-hero-subtitle">{t('subtitle')}</p>
+        <h1 className="members-hero-title"><E ns="membersPage" k="title">{t('title')}</E></h1>
+        <p className="members-hero-subtitle"><E ns="membersPage" k="subtitle">{t('subtitle')}</E></p>
         {total > 0 && (
           <div className="members-count-badge">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -126,7 +128,7 @@ export default function MembersContent() {
             <circle cx="9" cy="7" r="4" />
             <line x1="23" y1="11" x2="17" y2="11" />
           </svg>
-          <p>{t('noResults')}</p>
+          <p><E ns="membersPage" k="noResults">{t('noResults')}</E></p>
         </div>
       ) : (
         <>

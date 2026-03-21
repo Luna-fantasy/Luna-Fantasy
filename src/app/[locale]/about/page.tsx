@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
+import { E } from '@/components/edit-mode/EditableText';
 import '@/styles/about.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -53,23 +54,23 @@ function AboutContent() {
       <div className="about-hero">
         <div className="about-hero-glow" />
         <div className="wrap">
-          <span className="about-badge">{t('badge')}</span>
-          <h1>{t('title')}</h1>
-          <p className="about-subtitle">{t('subtitle')}</p>
+          <span className="about-badge"><E ns="aboutPage" k="badge">{t('badge')}</E></span>
+          <h1><E ns="aboutPage" k="title">{t('title')}</E></h1>
+          <p className="about-subtitle"><E ns="aboutPage" k="subtitle">{t('subtitle')}</E></p>
         </div>
       </div>
 
       {/* Origin Story */}
       <div className="wrap">
         <div className="about-origin">
-          <div className="about-origin-label">{t('originLabel')}</div>
-          <h2>{t('originTitle')}</h2>
-          <p>{t('originP1')}</p>
-          <p>{t('originP2')}</p>
+          <div className="about-origin-label"><E ns="aboutPage" k="originLabel">{t('originLabel')}</E></div>
+          <h2><E ns="aboutPage" k="originTitle">{t('originTitle')}</E></h2>
+          <p><E ns="aboutPage" k="originP1">{t('originP1')}</E></p>
+          <p><E ns="aboutPage" k="originP2">{t('originP2')}</E></p>
           <blockquote className="about-quote">
-            {t('originQuote')}
+            <E ns="aboutPage" k="originQuote">{t('originQuote')}</E>
           </blockquote>
-          <p>{t('originP3')}</p>
+          <p><E ns="aboutPage" k="originP3">{t('originP3')}</E></p>
         </div>
 
         {/* Stats strip */}
@@ -98,48 +99,48 @@ function AboutContent() {
                   </svg>
                 )}
               </div>
-              <span className="about-stat-value">{t(`${key}.value`)}</span>
-              <span className="about-stat-label">{t(`${key}.label`)}</span>
+              <span className="about-stat-value"><E ns="aboutPage" k={`${key}.value`}>{t(`${key}.value`)}</E></span>
+              <span className="about-stat-label"><E ns="aboutPage" k={`${key}.label`}>{t(`${key}.label`)}</E></span>
             </div>
           ))}
         </div>
 
         {/* What is Lunarian */}
         <div className="about-section">
-          <h2>{t('whatTitle')}</h2>
-          <p>{t('whatP1')}</p>
-          <p>{t('whatP2')}</p>
+          <h2><E ns="aboutPage" k="whatTitle">{t('whatTitle')}</E></h2>
+          <p><E ns="aboutPage" k="whatP1">{t('whatP1')}</E></p>
+          <p><E ns="aboutPage" k="whatP2">{t('whatP2')}</E></p>
         </div>
 
         {/* Four Pillars */}
         <div className="about-pillars">
           {pillars.map((key) => (
             <div key={key} className="about-pillar">
-              <h3>{t(`pillars.${key}.title`)}</h3>
-              <p>{t(`pillars.${key}.desc`)}</p>
+              <h3><E ns="aboutPage" k={`pillars.${key}.title`}>{t(`pillars.${key}.title`)}</E></h3>
+              <p><E ns="aboutPage" k={`pillars.${key}.desc`}>{t(`pillars.${key}.desc`)}</E></p>
             </div>
           ))}
         </div>
 
         {/* Vision */}
         <div className="about-section about-vision">
-          <h2>{t('visionTitle')}</h2>
-          <p>{t('visionP1')}</p>
+          <h2><E ns="aboutPage" k="visionTitle">{t('visionTitle')}</E></h2>
+          <p><E ns="aboutPage" k="visionP1">{t('visionP1')}</E></p>
           <blockquote className="about-quote">
-            {t('visionQuote')}
+            <E ns="aboutPage" k="visionQuote">{t('visionQuote')}</E>
           </blockquote>
         </div>
 
         {/* CTA */}
         <div className="about-cta">
-          <h2>{t('ctaTitle')}</h2>
-          <p>{t('ctaDesc')}</p>
+          <h2><E ns="aboutPage" k="ctaTitle">{t('ctaTitle')}</E></h2>
+          <p><E ns="aboutPage" k="ctaDesc">{t('ctaDesc')}</E></p>
           <div className="about-cta-buttons">
             <a href="https://discord.gg/lunarian" target="_blank" rel="noopener noreferrer" className="about-btn about-btn-primary">
-              {t('ctaJoin')}
+              <E ns="aboutPage" k="ctaJoin">{t('ctaJoin')}</E>
             </a>
             <Link href="/story" className="about-btn about-btn-secondary">
-              {t('ctaStory')}
+              <E ns="aboutPage" k="ctaStory">{t('ctaStory')}</E>
             </Link>
           </div>
         </div>

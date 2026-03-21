@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import Image from 'next/image';
+import { E } from '@/components/edit-mode/EditableText';
+import { EImg } from '@/components/edit-mode/EditableImage';
 import '@/styles/story.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -52,9 +53,9 @@ function StoryContent() {
       <section className="story-hero">
         <div className="story-hero-bg"></div>
         <div className="story-hero-content">
-          <span className="hero-badge">{hero('badge')}</span>
-          <h1 className="story-hero-title">{t('title')}</h1>
-          <p className="story-hero-desc">{t('desc')}</p>
+          <span className="hero-badge"><E ns="hero" k="badge">{hero('badge')}</E></span>
+          <h1 className="story-hero-title"><E ns="storyPage" k="title">{t('title')}</E></h1>
+          <p className="story-hero-desc"><E ns="storyPage" k="desc">{t('desc')}</E></p>
         </div>
       </section>
 
@@ -64,16 +65,16 @@ function StoryContent() {
           {/* Chapter 1 */}
           <article className="chapter" id="chapter-1">
             <div className="chapter-header">
-              <span className="chapter-label">{t('chapter1.label')}</span>
-              <h2 className="chapter-title">{t('chapter1.title')}</h2>
+              <span className="chapter-label"><E ns="storyPage" k="chapter1.label">{t('chapter1.label')}</E></span>
+              <h2 className="chapter-title"><E ns="storyPage" k="chapter1.title">{t('chapter1.title')}</E></h2>
             </div>
             <div className="chapter-content">
-              <p>{t('chapter1.p1')}</p>
-              <p>{t('chapter1.p2')}</p>
+              <p><E ns="storyPage" k="chapter1.p1">{t('chapter1.p1')}</E></p>
+              <p><E ns="storyPage" k="chapter1.p2">{t('chapter1.p2')}</E></p>
               <blockquote className="story-quote">
-                {t('chapter1.quote')}
+                <E ns="storyPage" k="chapter1.quote">{t('chapter1.quote')}</E>
               </blockquote>
-              <p>{t('chapter1.p3')}</p>
+              <p><E ns="storyPage" k="chapter1.p3">{t('chapter1.p3')}</E></p>
             </div>
           </article>
 
@@ -82,12 +83,13 @@ function StoryContent() {
           {/* Chapter 2 */}
           <article className="chapter" id="chapter-2">
             <div className="chapter-header">
-              <span className="chapter-label">{t('chapter2.label')}</span>
-              <h2 className="chapter-title">{t('chapter2.title')}</h2>
+              <span className="chapter-label"><E ns="storyPage" k="chapter2.label">{t('chapter2.label')}</E></span>
+              <h2 className="chapter-title"><E ns="storyPage" k="chapter2.title">{t('chapter2.title')}</E></h2>
             </div>
             <div className="chapter-content">
               <div className="chapter-image">
-                <Image
+                <EImg
+                  editId="storyPage.chapter2.image"
                   src="/story/champion.png"
                   alt="The Chaos War"
                   width={600}
@@ -95,12 +97,12 @@ function StoryContent() {
                   loading="lazy"
                 />
               </div>
-              <p>{t('chapter2.p1')}</p>
-              <p>{t('chapter2.p2')}</p>
+              <p><E ns="storyPage" k="chapter2.p1">{t('chapter2.p1')}</E></p>
+              <p><E ns="storyPage" k="chapter2.p2">{t('chapter2.p2')}</E></p>
               <blockquote className="story-quote">
-                {t('chapter2.quote')}
+                <E ns="storyPage" k="chapter2.quote">{t('chapter2.quote')}</E>
               </blockquote>
-              <p>{t('chapter2.p3')}</p>
+              <p><E ns="storyPage" k="chapter2.p3">{t('chapter2.p3')}</E></p>
             </div>
           </article>
 
@@ -109,25 +111,25 @@ function StoryContent() {
           {/* Chapter 3 */}
           <article className="chapter" id="chapter-3">
             <div className="chapter-header">
-              <span className="chapter-label">{t('chapter3.label')}</span>
-              <h2 className="chapter-title">{t('chapter3.title')}</h2>
+              <span className="chapter-label"><E ns="storyPage" k="chapter3.label">{t('chapter3.label')}</E></span>
+              <h2 className="chapter-title"><E ns="storyPage" k="chapter3.title">{t('chapter3.title')}</E></h2>
             </div>
             <div className="chapter-content">
-              <p>{t('chapter3.p1')}</p>
-              <p>{t('chapter3.p2')}</p>
+              <p><E ns="storyPage" k="chapter3.p1">{t('chapter3.p1')}</E></p>
+              <p><E ns="storyPage" k="chapter3.p2">{t('chapter3.p2')}</E></p>
               <blockquote className="story-quote">
-                {t('chapter3.quote')}
+                <E ns="storyPage" k="chapter3.quote">{t('chapter3.quote')}</E>
               </blockquote>
-              <p>{t('chapter3.p3')}</p>
+              <p><E ns="storyPage" k="chapter3.p3">{t('chapter3.p3')}</E></p>
             </div>
           </article>
 
           {/* Coming Soon */}
           <div className="coming-soon">
-            <h3>{t('moreChapters')}</h3>
-            <p>{t('moreChaptersDesc')}</p>
+            <h3><E ns="storyPage" k="moreChapters">{t('moreChapters')}</E></h3>
+            <p><E ns="storyPage" k="moreChaptersDesc">{t('moreChaptersDesc')}</E></p>
             <a href="https://discord.gg/lunarian" target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-              {hero('joinBtn')}
+              <E ns="hero" k="joinBtn">{hero('joinBtn')}</E>
             </a>
           </div>
         </div>

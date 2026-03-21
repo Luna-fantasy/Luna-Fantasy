@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import type { RevealData } from '@/types/bazaar';
 import LunariIcon from '@/components/LunariIcon';
+import { E } from '@/components/edit-mode/EditableText';
 
 interface DuplicateStone {
   name: string;
@@ -185,9 +186,9 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
   return (
     <div className="vendor-section">
       <div className="vendor-header">
-        <h2 className="vendor-name">{t('meluna.name')}</h2>
-        <p className="vendor-title">{t('meluna.title')}</p>
-        <p className="vendor-desc">{t('meluna.desc')}</p>
+        <h2 className="vendor-name"><E ns="bazaarPage" k="meluna.name">{t('meluna.name')}</E></h2>
+        <p className="vendor-title"><E ns="bazaarPage" k="meluna.title">{t('meluna.title')}</E></p>
+        <p className="vendor-desc"><E ns="bazaarPage" k="meluna.desc">{t('meluna.desc')}</E></p>
       </div>
 
       {error && (
@@ -209,12 +210,12 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
               <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z" />
             </svg>
           </div>
-          <h3 className="stonebox-title">{t('meluna.boxTitle')}</h3>
+          <h3 className="stonebox-title"><E ns="bazaarPage" k="meluna.boxTitle">{t('meluna.boxTitle')}</E></h3>
           <div className="stonebox-price">
             <LunariIcon size={16} />
             {formatNumber(stoneBox.price)}
           </div>
-          <p className="stonebox-duplicate-info">{t('meluna.duplicateInfo')}</p>
+          <p className="stonebox-duplicate-info"><E ns="bazaarPage" k="meluna.duplicateInfo">{t('meluna.duplicateInfo')}</E></p>
           <button
             className="stonebox-buy-btn"
             disabled={disabled}
@@ -223,11 +224,11 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
             {buying ? (
               <span className="luckbox-spinner" />
             ) : hasDebt ? (
-              t('inDebt')
+              <E ns="bazaarPage" k="inDebt">{t('inDebt')}</E>
             ) : !canAfford ? (
-              t('insufficientBalance')
+              <E ns="bazaarPage" k="insufficientBalance">{t('insufficientBalance')}</E>
             ) : (
-              t('meluna.openBox')
+              <E ns="bazaarPage" k="meluna.openBox">{t('meluna.openBox')}</E>
             )}
           </button>
         </div>
@@ -238,7 +239,7 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
             className="stonebox-droprates-toggle"
             onClick={() => setShowDropRates(!showDropRates)}
           >
-            <span>{t('meluna.dropRates')}</span>
+            <span><E ns="bazaarPage" k="meluna.dropRates">{t('meluna.dropRates')}</E></span>
             <svg
               width="16"
               height="16"
@@ -270,7 +271,7 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
               className="stonebox-droprates-toggle"
               onClick={handleToggleDuplicates}
             >
-              <span>{t('meluna.sellDuplicates')}</span>
+              <span><E ns="bazaarPage" k="meluna.sellDuplicates">{t('meluna.sellDuplicates')}</E></span>
               <svg
                 width="16"
                 height="16"
@@ -291,7 +292,7 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
                   </div>
                 )}
                 {!dupsLoading && duplicates.length === 0 && (
-                  <p className="stonebox-sell-empty">{t('meluna.noDuplicates')}</p>
+                  <p className="stonebox-sell-empty"><E ns="bazaarPage" k="meluna.noDuplicates">{t('meluna.noDuplicates')}</E></p>
                 )}
                 {sellError && (
                   <div className="vendor-error" style={{ marginBottom: 8 }}>

@@ -13,7 +13,7 @@ export async function getFactionWarFactions(): Promise<FactionWarFaction[]> {
   const client = await clientPromise;
   const db = client.db("Database");
 
-  const docs = await db.collection("luna_pairs_config").find({}).toArray();
+  const docs = await db.collection("luna_pairs_config").find({}).limit(500).toArray();
 
   const factions: FactionWarFaction[] = docs.map((doc) => {
     const data = typeof doc.data === "string" ? JSON.parse(doc.data) : doc.data;

@@ -97,7 +97,9 @@ export async function POST(request: Request) {
 
   // 12. Credit seller + Add card to buyer + Log transactions
   try {
+    const sellerBalanceBefore = await getBalance(listing.sellerId);
     await creditLunari(listing.sellerId, listing.price);
+    const sellerBalanceAfter = await getBalance(listing.sellerId);
 
     await addCardToUser(
       discordId,
@@ -133,8 +135,8 @@ export async function POST(request: Request) {
       discordId: listing.sellerId,
       type: 'marketplace_sell',
       amount: listing.price,
-      balanceBefore: 0,
-      balanceAfter: 0, // Unknown from here
+      balanceBefore: sellerBalanceBefore,
+      balanceAfter: sellerBalanceAfter,
       source: 'web',
       metadata: {
         listingId,

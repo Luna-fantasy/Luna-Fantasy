@@ -8,13 +8,14 @@ import VendorKael from '../VendorKael';
 import VendorMeluna from '../VendorMeluna';
 import VendorZoldar from '../VendorZoldar';
 import VendorSeluna from '../VendorSeluna';
-import Image from 'next/image';
 import VendorBrimor from '../VendorBrimor';
 import VendorMells from '../VendorMells';
 import RevealModal from '../RevealModal';
 import type { CatalogResponse, RevealData } from '@/types/bazaar';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
 import LunariIcon from '@/components/LunariIcon';
+import { E } from '@/components/edit-mode/EditableText';
+import { EImg } from '@/components/edit-mode/EditableImage';
 
 type MerchantSlug = 'kael' | 'meluna' | 'zoldar' | 'seluna' | 'brimor' | 'mells';
 
@@ -117,11 +118,11 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
       {/* Hero */}
       <section className="bazaar-hero">
         <div className="bazaar-hero-bg">
-          <Image src="https://assets.lunarian.app/backgrounds/BazaarHero.png" alt="Bazaar" fill priority className="bazaar-hero-bg-image" />
+          <EImg editId={`merchant-hero-bg-${merchant}`} src="https://assets.lunarian.app/backgrounds/BazaarHero.png" alt="Bazaar" fill priority className="bazaar-hero-bg-image" />
         </div>
         <div className="bazaar-hero-content">
-          <h1 className="bazaar-hero-title">{t(config.nameKey)}</h1>
-          <p className="bazaar-hero-desc">{t(config.titleKey)}</p>
+          <h1 className="bazaar-hero-title"><E ns="bazaarPage" k={config.nameKey}>{t(config.nameKey)}</E></h1>
+          <p className="bazaar-hero-desc"><E ns="bazaarPage" k={config.titleKey}>{t(config.titleKey)}</E></p>
         </div>
       </section>
 
@@ -131,7 +132,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          {t('backToBazaar')}
+          <E ns="bazaarPage" k="backToBazaar">{t('backToBazaar')}</E>
         </Link>
 
         {/* Merchant Hero */}
@@ -142,9 +143,9 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
             className="merchant-hero-img"
           />
           <div className="merchant-hero-info">
-            <h2 className="merchant-hero-name">{t(config.nameKey)}</h2>
-            <span className="merchant-hero-title">{t(config.titleKey)}</span>
-            <p className="merchant-hero-desc">{t(config.descKey)}</p>
+            <h2 className="merchant-hero-name"><E ns="bazaarPage" k={config.nameKey}>{t(config.nameKey)}</E></h2>
+            <span className="merchant-hero-title"><E ns="bazaarPage" k={config.titleKey}>{t(config.titleKey)}</E></span>
+            <p className="merchant-hero-desc"><E ns="bazaarPage" k={config.descKey}>{t(config.descKey)}</E></p>
           </div>
         </div>
 
@@ -153,12 +154,12 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
           <div className="bazaar-balance-bar" style={{ marginBottom: 24 }}>
             <div className="bazaar-balance-info">
               <LunariIcon size={20} />
-              <span className="bazaar-balance-label">{t('balance')}:</span>
+              <span className="bazaar-balance-label"><E ns="bazaarPage" k="balance">{t('balance')}</E>:</span>
               <span className="bazaar-balance-value">{isLoading ? '...' : formatNumber(balance)}</span>
-              <span className="bazaar-balance-currency">{t('lunariLabel')}</span>
+              <span className="bazaar-balance-currency"><E ns="bazaarPage" k="lunariLabel">{t('lunariLabel')}</E></span>
             </div>
             {hasDebt && (
-              <span className="bazaar-debt-badge">{t('inDebt')}</span>
+              <span className="bazaar-debt-badge"><E ns="bazaarPage" k="inDebt">{t('inDebt')}</E></span>
             )}
           </div>
         )}

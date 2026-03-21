@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
+import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 import {
@@ -8,12 +9,14 @@ import {
   getStoneBoxConfig,
   getTicketShopConfig,
   getMellsShopConfig,
+  getLunaMapConfig,
   saveLuckboxConfig,
   saveStoneBoxConfig,
   saveTicketConfig,
   saveMellsConfig,
+  saveLunaMapConfig,
 } from '@/lib/bazaar/shop-config';
-import type { MellsShopItem } from '@/lib/bazaar/shop-config';
+import type { MellsShopItem, LunaMapConfig, LunaMapButton } from '@/lib/bazaar/shop-config';
 import type { LuckboxBoxConfig, StoneConfig, TicketPackage } from '@/types/bazaar';
 
 // ── Validation helpers ──
@@ -74,8 +77,8 @@ function validateLuckboxTiers(tiers: unknown): { valid: boolean; error?: string;
       rarities.push({ rarity, percentage: pct });
     }
 
-    if (totalPct > 100.01) {
-      return { valid: false, error: `Tier ${i}: rarity percentages cannot exceed 100 (got ${totalPct})` };
+    if (Math.abs(totalPct - 100) > 0.1) {
+      return { valid: false, error: `Tier ${i}: rarity percentages must total 100 (got ${totalPct.toFixed(1)})` };
     }
 
     // Validate and pass through card overrides if present
@@ -150,7 +153,13 @@ function validateStoneConfig(body: unknown): { valid: boolean; error?: string; d
       return { valid: false, error: `Stone ${i}: sell_price must be 0-${MAX_PRICE}` };
     }
 
-    const imageUrl = sanitizeString(String(s.imageUrl ?? ''), 500);
+    let imageUrl = sanitizeString(String(s.imageUrl ?? ''), 500);
+    if (imageUrl) {
+      try {
+        const parsed = new URL(imageUrl);
+        if (!['http:', 'https:'].includes(parsed.protocol)) imageUrl = '';
+      } catch { imageUrl = ''; }
+    }
 
     stones.push({ name, weight, sell_price, imageUrl });
   }
@@ -203,14 +212,15 @@ export async function GET() {
   if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
 
   try {
-    const [luckbox, stonebox, tickets, mells] = await Promise.all([
+    const [luckbox, stonebox, tickets, mells, lunaMap] = await Promise.all([
       getLuckboxShopConfigAll(),
       getStoneBoxConfig(),
       getTicketShopConfig(),
       getMellsShopConfig(),
+      getLunaMapConfig(),
     ]);
 
-    return NextResponse.json({ luckbox, stonebox, tickets, mells });
+    return NextResponse.json({ luckbox, stonebox, tickets, mells, lunaMap });
   } catch (error) {
     console.error('[admin/shops] GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -242,7 +252,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'shop and config required' }, { status: 400 });
   }
 
-  const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
+  const ip = getClientIp(request);
   const adminName = authResult.session.user?.globalName ?? 'Unknown';
 
   try {
@@ -311,31 +321,182 @@ export async function PUT(request: NextRequest) {
         if (!Array.isArray(config)) {
           return NextResponse.json({ error: 'Mells config must be an array of items' }, { status: 400 });
         }
+        if (config.length > 100) {
+          return NextResponse.json({ error: 'Maximum 100 items allowed' }, { status: 400 });
+        }
 
-        // Validate items
+        // Validate and sanitize items (same pattern as luckbox/stonebox/tickets)
+        const mellsIds = new Set<string>();
+        const sanitizedMells: MellsShopItem[] = [];
         for (const item of config) {
-          if (!item.id || !item.name || typeof item.price !== 'number') {
-            return NextResponse.json({ error: 'Each item must have id, name, and price' }, { status: 400 });
+          if (!item.id || typeof item.id !== 'string' || !item.name || typeof item.name !== 'string' || typeof item.price !== 'number') {
+            return NextResponse.json({ error: 'Each item must have id (string), name (string), and price (number)' }, { status: 400 });
           }
+          const id = sanitizeString(String(item.id), 50);
+          const name = sanitizeString(String(item.name), MAX_NAME_LEN);
+          if (!id) return NextResponse.json({ error: 'Item id required after sanitization' }, { status: 400 });
+          if (!name) return NextResponse.json({ error: 'Item name required after sanitization' }, { status: 400 });
+          if (mellsIds.has(id)) {
+            return NextResponse.json({ error: `Duplicate item id: "${id}"` }, { status: 400 });
+          }
+          mellsIds.add(id);
           if (item.price < 0 || item.price > MAX_PRICE * 10) {
-            return NextResponse.json({ error: `Invalid price for "${item.name}"` }, { status: 400 });
+            return NextResponse.json({ error: `Invalid price for "${name}"` }, { status: 400 });
           }
+          if (item.description && typeof item.description !== 'string') {
+            return NextResponse.json({ error: `Description for "${name}" must be a string` }, { status: 400 });
+          }
+          // Validate imageUrl protocol (prevent javascript: URLs)
+          if (item.imageUrl && typeof item.imageUrl === 'string') {
+            if (item.imageUrl.length > 500) {
+              return NextResponse.json({ error: `Image URL for "${name}" is too long` }, { status: 400 });
+            }
+            try {
+              const parsed = new URL(item.imageUrl);
+              if (!['http:', 'https:'].includes(parsed.protocol)) {
+                return NextResponse.json({ error: `Image URL for "${name}" must use http or https` }, { status: 400 });
+              }
+            } catch {
+              return NextResponse.json({ error: `Invalid image URL for "${name}"` }, { status: 400 });
+            }
+          }
+          let validatedBackgroundUrl = '';
+          if (item.backgroundUrl && typeof item.backgroundUrl === 'string') {
+            validatedBackgroundUrl = sanitizeString(String(item.backgroundUrl), 500);
+            if (validatedBackgroundUrl) {
+              try {
+                const parsed = new URL(validatedBackgroundUrl);
+                if (!['http:', 'https:'].includes(parsed.protocol)) validatedBackgroundUrl = '';
+              } catch { validatedBackgroundUrl = ''; }
+            }
+          }
+          const validTypes = ['profile', 'rank'];
+          const itemType = validTypes.includes(item.type) ? item.type : 'profile';
+          const exclusive = typeof item.exclusive === 'boolean' ? item.exclusive : false;
+
+          sanitizedMells.push({
+            id,
+            name,
+            description: item.description ? sanitizeString(String(item.description), 500) : '',
+            price: Math.round(item.price),
+            roleId: item.roleId ? sanitizeString(String(item.roleId), 30) : '',
+            backgroundUrl: validatedBackgroundUrl,
+            type: itemType as 'profile' | 'rank',
+            exclusive,
+            enabled: item.enabled !== false,
+          });
         }
 
         const before = await getMellsShopConfig();
-        await saveMellsConfig(config as MellsShopItem[]);
+        await saveMellsConfig(sanitizedMells);
 
         await logAdminAction({
           adminDiscordId: adminId,
           adminUsername: adminName,
           action: 'shop_config_update',
           before: { shop: 'mells', items: before },
-          after: { shop: 'mells', items: config },
-          metadata: { shop: 'mells', itemCount: config.length },
+          after: { shop: 'mells', items: sanitizedMells },
+          metadata: { shop: 'mells', itemCount: sanitizedMells.length },
           ip,
         });
 
-        return NextResponse.json({ success: true, items: config });
+        return NextResponse.json({ success: true, items: sanitizedMells });
+      }
+
+      case 'lunamap': {
+        if (!config || typeof config !== 'object') {
+          return NextResponse.json({ error: 'Invalid luna map config' }, { status: 400 });
+        }
+
+        const mapConfig = config as any;
+        const buttons = mapConfig.buttons;
+        if (!Array.isArray(buttons) || buttons.length === 0 || buttons.length > 15) {
+          return NextResponse.json({ error: 'buttons must be an array of 1-15 items' }, { status: 400 });
+        }
+
+        const sanitizedButtons: LunaMapButton[] = [];
+        for (let i = 0; i < buttons.length; i++) {
+          const b = buttons[i];
+          const name = sanitizeString(String(b.name ?? ''), 80);
+          if (!name) return NextResponse.json({ error: `Button ${i}: name required` }, { status: 400 });
+
+          const btnStyle = Number(b.btnStyle);
+          if (!Number.isInteger(btnStyle) || btnStyle < 1 || btnStyle > 4) {
+            return NextResponse.json({ error: `Button ${i}: btnStyle must be 1-4` }, { status: 400 });
+          }
+
+          const emojiId = sanitizeString(String(b.emojiId ?? ''), 25);
+          if (emojiId && !/^\d*$/.test(emojiId)) {
+            return NextResponse.json({ error: `Button ${i}: emojiId must be digits only` }, { status: 400 });
+          }
+
+          const btn: LunaMapButton = { name, btnStyle, emojiId };
+
+          // Optional English name
+          if (b.name_en) btn.name_en = sanitizeString(String(b.name_en), 80);
+
+          if (b.menu && Array.isArray(b.menu)) {
+            if (b.menu.length === 0 || b.menu.length > 25) {
+              return NextResponse.json({ error: `Button ${i}: menu must have 1-25 entries` }, { status: 400 });
+            }
+            const menuItems = [];
+            for (let j = 0; j < b.menu.length; j++) {
+              const m = b.menu[j];
+              const label = sanitizeString(String(m.label ?? ''), 80);
+              if (!label) return NextResponse.json({ error: `Button ${i} menu ${j}: label required` }, { status: 400 });
+              const content = sanitizeString(String(m.content ?? ''), 4000);
+              let image = sanitizeString(String(m.image ?? ''), 500);
+              if (image) {
+                try {
+                  const parsed = new URL(image);
+                  if (!['http:', 'https:'].includes(parsed.protocol)) image = '';
+                } catch { image = ''; }
+              }
+              // Optional English fields
+              const label_en = m.label_en ? sanitizeString(String(m.label_en), 80) : undefined;
+              const content_en = m.content_en ? sanitizeString(String(m.content_en), 4000) : undefined;
+              menuItems.push({ label, content, image, ...(label_en ? { label_en } : {}), ...(content_en ? { content_en } : {}) });
+            }
+            btn.menu = menuItems;
+          } else {
+            if (b.content) btn.content = sanitizeString(String(b.content), 4000);
+            if (b.content_en) btn.content_en = sanitizeString(String(b.content_en), 4000);
+            if (b.image) {
+              let image = sanitizeString(String(b.image), 500);
+              try {
+                const parsed = new URL(image);
+                if (!['http:', 'https:'].includes(parsed.protocol)) image = '';
+              } catch { image = ''; }
+              btn.image = image;
+            }
+          }
+
+          sanitizedButtons.push(btn);
+        }
+
+        const sanitizedMap: LunaMapConfig = {
+          title: sanitizeString(String(mapConfig.title ?? ''), 200),
+          ...(mapConfig.title_en ? { title_en: sanitizeString(String(mapConfig.title_en), 200) } : {}),
+          description: sanitizeString(String(mapConfig.description ?? ''), 4000),
+          ...(mapConfig.description_en ? { description_en: sanitizeString(String(mapConfig.description_en), 4000) } : {}),
+          image: sanitizeString(String(mapConfig.image ?? ''), 500),
+          buttons: sanitizedButtons,
+        };
+
+        const before = await getLunaMapConfig();
+        await saveLunaMapConfig(sanitizedMap);
+
+        await logAdminAction({
+          adminDiscordId: adminId,
+          adminUsername: adminName,
+          action: 'shop_config_update',
+          before: { shop: 'lunamap', config: before },
+          after: { shop: 'lunamap', config: sanitizedMap },
+          metadata: { shop: 'lunamap', buttonCount: sanitizedButtons.length },
+          ip,
+        });
+
+        return NextResponse.json({ success: true, config: sanitizedMap });
       }
 
       default:

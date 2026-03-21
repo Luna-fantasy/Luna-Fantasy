@@ -177,7 +177,11 @@ export type TransactionType =
   | 'game_win'
   | 'game_loss'
   // Admin
-  | 'admin_reversal';
+  | 'admin_reversal'
+  | 'admin_refund'
+  | 'admin_credit'
+  | 'admin_debit'
+  | 'reserve_withdrawal';
 
 export interface TransactionRecord {
   _id?: string;

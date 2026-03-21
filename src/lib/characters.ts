@@ -11,7 +11,7 @@ export async function getCharacters(faction?: string): Promise<Character[]> {
   const db = client.db("Database");
 
   const filter = faction ? { faction } : {};
-  const docs = await db.collection("characters").find(filter).toArray();
+  const docs = await db.collection("characters").find(filter).limit(500).toArray();
 
   const characters: Character[] = docs.map((doc) => ({
     id: doc.id,

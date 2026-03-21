@@ -4,6 +4,10 @@ import type { MarketplaceListing, ListingFilters, ListingsResponse, AuctionBid, 
 const LISTING_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const LISTINGS_PER_PAGE = 20;
 
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function getDb() {
   return clientPromise.then((client) => client.db('Database'));
 }
@@ -34,6 +38,7 @@ export async function returnExpiredCards(): Promise<void> {
 
   const expiredListings = await collection
     .find({ status: 'expired', cardReturned: false })
+    .project({ _id: 1, listingId: 1, sellerId: 1, card: 1 })
     .toArray();
 
   for (const listing of expiredListings) {
@@ -70,13 +75,13 @@ export async function getActiveListings(filters: ListingFilters): Promise<Listin
   const query: Record<string, any> = { status: 'active' };
 
   if (filters.rarity) {
-    query['card.rarity'] = { $regex: new RegExp(`^${filters.rarity}$`, 'i') };
+    query['card.rarity'] = { $regex: new RegExp(`^${escapeRegex(filters.rarity)}$`, 'i') };
   }
   if (filters.game) {
     query['card.game'] = filters.game;
   }
   if (filters.search) {
-    query['card.name'] = { $regex: new RegExp(filters.search, 'i') };
+    query['card.name'] = { $regex: new RegExp(escapeRegex(filters.search), 'i') };
   }
   if (filters.type) {
     query.type = filters.type;
@@ -485,7 +490,9 @@ export async function markNotificationsRead(
   const query: Record<string, any> = { userId };
   if (notificationIds && notificationIds.length > 0) {
     const { ObjectId } = await import('mongodb');
-    query._id = { $in: notificationIds.map((id) => new ObjectId(id)) };
+    const validIds = notificationIds.filter((id) => /^[0-9a-fA-F]{24}$/.test(id));
+    if (validIds.length === 0) return;
+    query._id = { $in: validIds.map((id) => new ObjectId(id)) };
   }
   await collection.updateMany(query, { $set: { read: true } });
 }

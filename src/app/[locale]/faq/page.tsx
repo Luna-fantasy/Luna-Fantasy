@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { E } from '@/components/edit-mode/EditableText';
 import '@/styles/legal.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -43,14 +44,14 @@ function FaqContent() {
     <section className="faq-page">
       <div className="wrap">
         <div className="faq-header">
-          <h1>{t('title')}</h1>
-          <p>{t('subtitle')}</p>
+          <h1><E ns="faq" k="title">{t('title')}</E></h1>
+          <p><E ns="faq" k="subtitle">{t('subtitle')}</E></p>
         </div>
         <div className="faq-list">
           {questions.map((key) => (
             <div key={key} className="faq-item">
-              <h3>{t(`${key}.question`)}</h3>
-              <p>{t(`${key}.answer`)}</p>
+              <h3><E ns="faq" k={`${key}.question`}>{t(`${key}.question`)}</E></h3>
+              <p><E ns="faq" k={`${key}.answer`}>{t(`${key}.answer`)}</E></p>
             </div>
           ))}
         </div>

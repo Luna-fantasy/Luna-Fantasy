@@ -31,3 +31,10 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Wrangler cache
+.wrangler/
+
+# Dev scripts with credentials
+scripts/tmp.js
+scripts/seed-bot-config.mjs

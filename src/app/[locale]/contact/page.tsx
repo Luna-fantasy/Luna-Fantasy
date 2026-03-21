@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import ContactForm from './ContactForm';
+import { E } from '@/components/edit-mode/EditableText';
 import '@/styles/legal.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -42,8 +43,8 @@ function ContactContent() {
     <section className="contact-page">
       <div className="wrap">
         <div className="contact-header">
-          <h1>{t('title')}</h1>
-          <p>{t('subtitle')}</p>
+          <h1><E ns="contactPage" k="title">{t('title')}</E></h1>
+          <p><E ns="contactPage" k="subtitle">{t('subtitle')}</E></p>
         </div>
         <ContactForm />
       </div>

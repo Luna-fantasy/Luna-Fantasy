@@ -8,8 +8,9 @@ import { Link } from '@/i18n/routing';
 // import LunariStore from './LunariStore'; // hidden — Stripe not yet active
 import type { CatalogResponse } from '@/types/bazaar';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
-import Image from 'next/image';
 import LunariIcon from '@/components/LunariIcon';
+import { E } from '@/components/edit-mode/EditableText';
+import { EImg } from '@/components/edit-mode/EditableImage';
 
 const MERCHANTS = [
   {
@@ -115,11 +116,11 @@ export default function BazaarContent() {
       {/* Hero */}
       <section className="bazaar-hero">
         <div className="bazaar-hero-bg">
-          <Image src="https://assets.lunarian.app/backgrounds/BazaarHero.png" alt="Bazaar" fill priority className="bazaar-hero-bg-image" />
+          <EImg editId="bazaar-hero-bg" src="https://assets.lunarian.app/backgrounds/BazaarHero.png" alt="Bazaar" fill priority className="bazaar-hero-bg-image" />
         </div>
         <div className="bazaar-hero-content">
-          <h1 className="bazaar-hero-title">{t('title')}</h1>
-          <p className="bazaar-hero-desc">{t('subtitle')}</p>
+          <h1 className="bazaar-hero-title"><E ns="bazaarPage" k="title">{t('title')}</E></h1>
+          <p className="bazaar-hero-desc"><E ns="bazaarPage" k="subtitle">{t('subtitle')}</E></p>
         </div>
       </section>
 
@@ -131,19 +132,19 @@ export default function BazaarContent() {
           <div className="bazaar-balance-bar" style={{ marginBottom: 24 }}>
             <div className="bazaar-balance-info">
               <LunariIcon size={20} />
-              <span className="bazaar-balance-label">{t('balance')}:</span>
+              <span className="bazaar-balance-label"><E ns="bazaarPage" k="balance">{t('balance')}</E>:</span>
               <span className="bazaar-balance-value">{isLoading ? '...' : formatNumber(balance)}</span>
-              <span className="bazaar-balance-currency">{t('lunariLabel')}</span>
+              <span className="bazaar-balance-currency"><E ns="bazaarPage" k="lunariLabel">{t('lunariLabel')}</E></span>
             </div>
             {hasDebt && (
-              <span className="bazaar-debt-badge">{t('inDebt')}</span>
+              <span className="bazaar-debt-badge"><E ns="bazaarPage" k="inDebt">{t('inDebt')}</E></span>
             )}
           </div>
         )}
 
         {/* Merchant Showcase */}
         <section className="merchants-section">
-          <h2 className="merchants-heading">{t('merchantsHeading')}</h2>
+          <h2 className="merchants-heading"><E ns="bazaarPage" k="merchantsHeading">{t('merchantsHeading')}</E></h2>
 
           <div className="merchant-showcase">
             {MERCHANTS.map((merchant) => (
@@ -159,12 +160,12 @@ export default function BazaarContent() {
                   loading="lazy"
                 />
                 <div className="merchant-card-info">
-                  <span className="merchant-card-name">{t(merchant.nameKey)}</span>
-                  <span className="merchant-card-title">{t(merchant.titleKey)}</span>
+                  <span className="merchant-card-name"><E ns="bazaarPage" k={merchant.nameKey}>{t(merchant.nameKey)}</E></span>
+                  <span className="merchant-card-title"><E ns="bazaarPage" k={merchant.titleKey}>{t(merchant.titleKey)}</E></span>
                 </div>
-                <p className="merchant-card-desc">{t(merchant.descKey)}</p>
+                <p className="merchant-card-desc"><E ns="bazaarPage" k={merchant.descKey}>{t(merchant.descKey)}</E></p>
                 <span className="merchant-card-cta">
-                  {t('visitShop')}
+                  <E ns="bazaarPage" k="visitShop">{t('visitShop')}</E>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>

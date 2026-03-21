@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import { E } from '@/components/edit-mode/EditableText';
 
 const REASONS = ['bugReport', 'featureRequest', 'paymentIssue', 'accountIssue', 'complaint', 'partnership'] as const;
 const AREAS = ['lunaFantasy', 'bank', 'bazaar', 'marketplace', 'auth', 'website', 'other'] as const;
@@ -111,17 +112,17 @@ export default function ContactForm() {
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
           </div>
-          <h2>{t('successTitle')}</h2>
-          <p>{t('successDesc')}</p>
+          <h2><E ns="contactPage" k="successTitle">{t('successTitle')}</E></h2>
+          <p><E ns="contactPage" k="successDesc">{t('successDesc')}</E></p>
           <button className="contact-btn" type="button" onClick={() => setStatus('idle')}>
-            {t('sendAnother')}
+            <E ns="contactPage" k="sendAnother">{t('sendAnother')}</E>
           </button>
         </div>
       ) : (
         <form className="contact-form" onSubmit={handleSubmit} noValidate>
           {/* Discord ID / Username */}
           <div className={`contact-field${errors.discord ? ' has-error' : ''}`}>
-            <label htmlFor="contact-discord">{t('discord')}</label>
+            <label htmlFor="contact-discord"><E ns="contactPage" k="discord">{t('discord')}</E></label>
             <input
               id="contact-discord"
               type="text"
@@ -131,45 +132,45 @@ export default function ContactForm() {
               disabled={isLoggedIn}
               className={isLoggedIn ? 'contact-input-locked' : ''}
             />
-            {errors.discord && <span className="contact-error">{t('required')}</span>}
+            {errors.discord && <span className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
           </div>
 
           {/* Reason + Area row */}
           <div className="contact-row">
             <div className={`contact-field${errors.reason ? ' has-error' : ''}`}>
-              <label htmlFor="contact-reason">{t('reason')}</label>
+              <label htmlFor="contact-reason"><E ns="contactPage" k="reason">{t('reason')}</E></label>
               <select
                 id="contact-reason"
                 value={form.reason}
                 onChange={(e) => update('reason', e.target.value)}
               >
-                <option value="" disabled>{t('selectReason')}</option>
+                <option value="" disabled><E ns="contactPage" k="selectReason">{t('selectReason')}</E></option>
                 {REASONS.map((r) => (
-                  <option key={r} value={r}>{t(`reasons.${r}`)}</option>
+                  <option key={r} value={r}><E ns="contactPage" k={`reasons.${r}`}>{t(`reasons.${r}`)}</E></option>
                 ))}
               </select>
-              {errors.reason && <span className="contact-error">{t('required')}</span>}
+              {errors.reason && <span className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
             </div>
 
             <div className={`contact-field${errors.area ? ' has-error' : ''}`}>
-              <label htmlFor="contact-area">{t('area')}</label>
+              <label htmlFor="contact-area"><E ns="contactPage" k="area">{t('area')}</E></label>
               <select
                 id="contact-area"
                 value={form.area}
                 onChange={(e) => update('area', e.target.value)}
               >
-                <option value="" disabled>{t('selectArea')}</option>
+                <option value="" disabled><E ns="contactPage" k="selectArea">{t('selectArea')}</E></option>
                 {AREAS.map((a) => (
-                  <option key={a} value={a}>{t(`areas.${a}`)}</option>
+                  <option key={a} value={a}><E ns="contactPage" k={`areas.${a}`}>{t(`areas.${a}`)}</E></option>
                 ))}
               </select>
-              {errors.area && <span className="contact-error">{t('required')}</span>}
+              {errors.area && <span className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
             </div>
           </div>
 
           {/* Message */}
           <div className={`contact-field${errors.message ? ' has-error' : ''}`}>
-            <label htmlFor="contact-message">{t('message')}</label>
+            <label htmlFor="contact-message"><E ns="contactPage" k="message">{t('message')}</E></label>
             <textarea
               id="contact-message"
               rows={6}
@@ -177,12 +178,12 @@ export default function ContactForm() {
               onChange={(e) => update('message', e.target.value)}
               placeholder={t('messagePlaceholder')}
             />
-            {errors.message && <span className="contact-error">{t('required')}</span>}
+            {errors.message && <span className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
           </div>
 
           {/* Image attachments */}
           <div className="contact-field">
-            <label>{t('attachments')}</label>
+            <label><E ns="contactPage" k="attachments">{t('attachments')}</E></label>
             <div
               className="contact-dropzone"
               onClick={() => fileRef.current?.click()}
@@ -203,8 +204,8 @@ export default function ContactForm() {
                 <circle cx="8.5" cy="8.5" r="1.5" />
                 <path d="m21 15-5-5L5 21" />
               </svg>
-              <span className="contact-dropzone-text">{t('attachHint')}</span>
-              <span className="contact-dropzone-limit">{t('attachLimit')}</span>
+              <span className="contact-dropzone-text"><E ns="contactPage" k="attachHint">{t('attachHint')}</E></span>
+              <span className="contact-dropzone-limit"><E ns="contactPage" k="attachLimit">{t('attachLimit')}</E></span>
             </div>
 
             {previews.length > 0 && (
@@ -230,18 +231,18 @@ export default function ContactForm() {
           </div>
 
           {status === 'error' && (
-            <div className="contact-error-banner">{t('errorMsg')}</div>
+            <div className="contact-error-banner"><E ns="contactPage" k="errorMsg">{t('errorMsg')}</E></div>
           )}
 
           <button className="contact-btn" type="submit" disabled={status === 'sending'}>
-            {status === 'sending' ? t('sending') : t('send')}
+            {status === 'sending' ? <E ns="contactPage" k="sending">{t('sending')}</E> : <E ns="contactPage" k="send">{t('send')}</E>}
           </button>
         </form>
       )}
 
       {/* OR Discord CTA */}
       <div className="contact-divider">
-        <span>{t('orDivider')}</span>
+        <span><E ns="contactPage" k="orDivider">{t('orDivider')}</E></span>
       </div>
       <div className="contact-discord-cta">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--accent-primary)">
@@ -249,9 +250,9 @@ export default function ContactForm() {
         </svg>
         <div>
           <a href="https://discord.gg/lunarian" target="_blank" rel="noopener noreferrer" className="contact-discord-link">
-            {t('discordCta')}
+            <E ns="contactPage" k="discordCta">{t('discordCta')}</E>
           </a>
-          <p>{t('discordCtaDesc')}</p>
+          <p><E ns="contactPage" k="discordCtaDesc">{t('discordCtaDesc')}</E></p>
         </div>
       </div>
     </>

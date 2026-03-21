@@ -2,6 +2,7 @@ import createMiddleware from "next-intl/middleware";
 import { auth } from "@/auth";
 import { routing } from "@/i18n/routing";
 import { NextResponse } from "next/server";
+import { isMastermind } from "@/lib/admin/auth";
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -11,6 +12,28 @@ export default auth((req) => {
   // Skip API routes
   if (pathname.startsWith("/api")) {
     return NextResponse.next();
+  }
+
+  // Admin routes — bypass i18n, require Mastermind
+  if (pathname.startsWith("/admin")) {
+    const discordId = (req.auth?.user as any)?.discordId;
+    if (!isMastermind(discordId)) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Edit mode — require Mastermind on locale routes with editMode=1
+  if (req.nextUrl.searchParams.get('editMode') === '1') {
+    const isLocaleRoute = routing.locales.some((l) => pathname.startsWith(`/${l}`));
+    if (isLocaleRoute) {
+      const discordId = (req.auth?.user as any)?.discordId;
+      if (!isMastermind(discordId)) {
+        const cleanUrl = new URL(req.url);
+        cleanUrl.searchParams.delete('editMode');
+        return NextResponse.redirect(cleanUrl);
+      }
+    }
   }
 
   // Check protected routes — /profile and /bazaar under any locale

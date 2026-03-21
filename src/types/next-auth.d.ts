@@ -6,6 +6,7 @@ declare module "next-auth" {
       discordId?: string;
       username?: string;
       globalName?: string;
+      isMastermind?: boolean;
     } & DefaultSession["user"];
   }
 

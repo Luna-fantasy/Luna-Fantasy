@@ -6,6 +6,9 @@ import { ReactNode } from 'react';
 
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { EditModeProvider } from '@/lib/edit-mode/context';
+import { EditToolbar } from '@/components/edit-mode/EditToolbar';
+import '@/styles/edit-mode.css';
 
 type Props = {
   children: ReactNode;
@@ -87,7 +90,6 @@ export default async function LocaleLayout({ children, params }: Props) {
     notFound();
   }
 
-  // Enable static rendering
   setRequestLocale(locale);
 
   const messages = await getMessages();
@@ -133,19 +135,22 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <div lang={locale} dir={isRTL ? 'rtl' : 'ltr'}>
       <NextIntlClientProvider messages={messages}>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
-        <div className="epic-bg" />
-        <div className="particles-container" id="particles" />
-        <Navbar />
-        {children}
-        <Footer />
+        <EditModeProvider locale={locale}>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+          />
+          <div className="epic-bg" />
+          <div className="particles-container" id="particles" />
+          <EditToolbar />
+          <Navbar />
+          {children}
+          <Footer />
+        </EditModeProvider>
       </NextIntlClientProvider>
     </div>
   );

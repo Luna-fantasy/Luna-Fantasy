@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import StatCard from '../components/StatCard';
 import RecentTransactionsTable from '../components/RecentTransactionsTable';
+import { SkeletonCard } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import type { EconomyOverview } from '@/types/admin';
 
@@ -23,6 +24,7 @@ export default function EconomyPage() {
       setOverview(await res.json());
     } catch (err) {
       console.error('Economy overview error:', err);
+      toast('Failed to load economy data', 'error');
     } finally {
       setOverviewLoading(false);
     }
@@ -38,10 +40,10 @@ export default function EconomyPage() {
     return (
       <>
         <div className="admin-page-header">
-          <h1 className="admin-page-title">Economy</h1>
+          <h1 className="admin-page-title"><span className="emoji-float">💰</span> Economy</h1>
           <p className="admin-page-subtitle">Lunari circulation and transaction overview</p>
         </div>
-        <div className="admin-loading"><div className="admin-spinner" />Loading economy data...</div>
+        <SkeletonCard count={5} />
       </>
     );
   }
@@ -49,7 +51,7 @@ export default function EconomyPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Economy</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">💰</span> Economy</h1>
         <p className="admin-page-subtitle">Lunari circulation and transaction overview</p>
       </div>
 
@@ -65,8 +67,15 @@ export default function EconomyPage() {
       {/* Overview tab */}
       {tab === 'overview' && overview && (
         <div className="admin-stats-grid">
-          <StatCard label="Total Users" value={overview.totalUsers} icon="U" color="cyan" href="/admin/users" />
-          <StatCard label="Lunari in Circulation" value={overview.totalLunariCirculation} icon="L" color="gold" />
+          <StatCard label="Server Members" value={overview.totalUsers} icon="U" color="cyan" href="/admin/users" />
+          <StatCard
+            label="Total User Balances"
+            value={overview.totalLunariCirculation}
+            icon="L"
+            color="gold"
+            trend={`${overview.activeHolders.toLocaleString()} accounts with balance > 0`}
+            tooltip="Sum of all Lunari held by every user in the database"
+          />
           <StatCard label="Bank Reserve" value={overview.bankReserve} icon="B" color="purple" href="/admin/banking" />
           <StatCard label="Active Loans" value={overview.activeLoans} icon="#" color="green"
             trend={overview.activeLoanValue > 0 ? `${overview.activeLoanValue.toLocaleString()} total` : undefined}

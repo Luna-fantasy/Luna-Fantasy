@@ -1,0 +1,339 @@
+/* Edit Mode Toolbar */
+.edit-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 48px;
+  background: rgba(3, 3, 6, 0.95);
+  border-bottom: 1px solid var(--accent-primary);
+  backdrop-filter: blur(12px);
+  font-family: 'Outfit', sans-serif;
+  gap: 16px;
+}
+
+.edit-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-toolbar-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.edit-toolbar-back {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.edit-toolbar-back:hover {
+  color: var(--text-primary);
+}
+
+.edit-locale-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(0, 212, 255, 0.15);
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.edit-locale-toggle {
+  background: none;
+  border: 1px solid var(--text-muted);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-locale-toggle:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.edit-change-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.edit-change-badge.has-changes {
+  color: var(--accent-primary);
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.edit-change-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent-primary);
+  color: var(--bg-void);
+}
+
+.edit-btn-discard {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn-discard:hover {
+  border-color: #f43f5e;
+  color: #f43f5e;
+}
+
+.edit-btn-save {
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 6px;
+  color: var(--bg-void);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn-save:hover {
+  background: #33e0ff;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+}
+
+.edit-btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Push page content down when toolbar is active */
+body.edit-mode-active .topbar {
+  top: 48px;
+}
+
+body.edit-mode-active {
+  padding-top: 48px;
+}
+
+/*
+ * FIX: Gradient text uses -webkit-text-fill-color: transparent with
+ * background-clip: text. The <span> inside inherits transparent fill
+ * but has no gradient background, making text invisible. Reset it.
+ */
+body.edit-mode-active .editable-text {
+  -webkit-text-fill-color: currentColor !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+}
+
+/* Editable Text */
+.editable-text {
+  position: relative;
+  cursor: pointer;
+  transition: outline 0.15s, background 0.15s;
+  outline: 1px dashed transparent;
+  border-radius: 2px;
+  /* Inherit font properties from parent to match appearance */
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.editable-text:hover {
+  outline: 1px dashed rgba(0, 212, 255, 0.5);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.editable-text[contenteditable="true"] {
+  outline: 2px solid var(--accent-primary);
+  background: rgba(0, 212, 255, 0.08);
+  cursor: text;
+  min-width: 20px;
+  min-height: 1em;
+}
+
+.editable-text[contenteditable="true"]:focus {
+  outline: 2px solid var(--accent-primary);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
+}
+
+.editable-text.has-change {
+  outline: 2px solid rgba(0, 212, 255, 0.6);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+/*
+ * FIX: Prevent clicks on editable text inside links/buttons from
+ * triggering navigation. The text captures pointer events, and
+ * the parent link/button is neutralized in edit mode.
+ */
+body.edit-mode-active a .editable-text,
+body.edit-mode-active button .editable-text {
+  position: relative;
+  z-index: 2;
+}
+
+/* Editable Image */
+.editable-image-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.editable-image-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.editable-image-wrapper:hover .editable-image-overlay {
+  opacity: 1;
+}
+
+.editable-image-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.editable-image-icon svg {
+  width: 24px;
+  height: 24px;
+  opacity: 0.9;
+}
+
+.editable-image-wrapper.has-change {
+  outline: 2px solid var(--accent-primary);
+  border-radius: 4px;
+}
+
+/* Edit save modal overlay */
+.edit-save-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.edit-save-modal {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+.edit-save-modal h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.edit-save-modal p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.edit-save-modal .edit-modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .edit-toolbar {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .edit-toolbar-back {
+    display: none;
+  }
+
+  .edit-toolbar-label {
+    font-size: 12px;
+  }
+
+  .edit-change-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  .edit-btn-discard,
+  .edit-btn-save {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}

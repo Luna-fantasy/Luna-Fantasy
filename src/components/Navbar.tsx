@@ -9,6 +9,8 @@ import { onBalanceUpdate } from '@/lib/balance-events';
 import { NotificationBell } from '@/components/NotificationBell';
 import { FEATURE_FLAGS } from '@/lib/feature-flags';
 import LunariIcon from '@/components/LunariIcon';
+import { E } from '@/components/edit-mode/EditableText';
+import { EImg } from '@/components/edit-mode/EditableImage';
 
 export function Navbar() {
   const t = useTranslations('nav');
@@ -135,20 +137,21 @@ export function Navbar() {
         <nav className="navbar-island">
           <div className="brand">
             <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Image
+              <EImg
+                editId="nav-brand-logo"
                 src="/images/logo.png"
                 alt="Luna"
                 width={40}
                 height={40}
                 className="brand-logo-img"
               />
-              <span>{brand('name')}</span>
+              <span><E ns="brand" k="name">{brand('name')}</E></span>
             </Link>
           </div>
 
           <div className="nav">
             <Link href="/" className={`nav-link ${isActive('/') && pathname === '/' ? 'active' : ''}`}>
-              {t('home')}
+              <E ns="nav" k="home">{t('home')}</E>
             </Link>
 
             {/* Games Dropdown */}
@@ -158,7 +161,7 @@ export function Navbar() {
                 onClick={() => { setGamesDropdownOpen(!gamesDropdownOpen); setWorldDropdownOpen(false); setEconomyDropdownOpen(false); }}
                 onMouseEnter={() => { setGamesDropdownOpen(true); setWorldDropdownOpen(false); setEconomyDropdownOpen(false); }}
               >
-                {t('games')}
+                <E ns="nav" k="games">{t('games')}</E>
                 <ChevronIcon open={gamesDropdownOpen} />
               </button>
               {gamesDropdownOpen && (
@@ -171,21 +174,21 @@ export function Navbar() {
                     className={`games-dropdown-item ${isActive('/luna-fantasy') ? 'active' : ''}`}
                     onClick={() => setGamesDropdownOpen(false)}
                   >
-                    {t('lunaFantasy')}
+                    <E ns="nav" k="lunaFantasy">{t('lunaFantasy')}</E>
                   </Link>
                   <Link
                     href="/grand-fantasy"
                     className={`games-dropdown-item ${isActive('/grand-fantasy') ? 'active' : ''}`}
                     onClick={() => setGamesDropdownOpen(false)}
                   >
-                    {t('grandFantasy')}
+                    <E ns="nav" k="grandFantasy">{t('grandFantasy')}</E>
                   </Link>
                   <Link
                     href="/faction-war"
                     className={`games-dropdown-item ${isActive('/faction-war') ? 'active' : ''}`}
                     onClick={() => setGamesDropdownOpen(false)}
                   >
-                    {t('factionWar')}
+                    <E ns="nav" k="factionWar">{t('factionWar')}</E>
                   </Link>
                 </div>
               )}
@@ -198,7 +201,7 @@ export function Navbar() {
                 onClick={() => { setWorldDropdownOpen(!worldDropdownOpen); setGamesDropdownOpen(false); setEconomyDropdownOpen(false); }}
                 onMouseEnter={() => { setWorldDropdownOpen(true); setGamesDropdownOpen(false); setEconomyDropdownOpen(false); }}
               >
-                {t('world')}
+                <E ns="nav" k="world">{t('world')}</E>
                 <ChevronIcon open={worldDropdownOpen} />
               </button>
               {worldDropdownOpen && (
@@ -211,28 +214,28 @@ export function Navbar() {
                     className={`games-dropdown-item ${isActive('/story') ? 'active' : ''}`}
                     onClick={() => setWorldDropdownOpen(false)}
                   >
-                    {t('story')}
+                    <E ns="nav" k="story">{t('story')}</E>
                   </Link>
                   <Link
                     href="/characters"
                     className={`games-dropdown-item ${isActive('/characters') ? 'active' : ''}`}
                     onClick={() => setWorldDropdownOpen(false)}
                   >
-                    {t('characters')}
+                    <E ns="nav" k="characters">{t('characters')}</E>
                   </Link>
                   <Link
                     href="/partners"
                     className={`games-dropdown-item ${isActive('/partners') ? 'active' : ''}`}
                     onClick={() => setWorldDropdownOpen(false)}
                   >
-                    {t('partners')}
+                    <E ns="nav" k="partners">{t('partners')}</E>
                   </Link>
                   <Link
                     href="/members"
                     className={`games-dropdown-item ${isActive('/members') ? 'active' : ''}`}
                     onClick={() => setWorldDropdownOpen(false)}
                   >
-                    {t('members')}
+                    <E ns="nav" k="members">{t('members')}</E>
                   </Link>
                 </div>
               )}
@@ -245,7 +248,7 @@ export function Navbar() {
                 onClick={() => { setEconomyDropdownOpen(!economyDropdownOpen); setGamesDropdownOpen(false); setWorldDropdownOpen(false); }}
                 onMouseEnter={() => { setEconomyDropdownOpen(true); setGamesDropdownOpen(false); setWorldDropdownOpen(false); }}
               >
-                {t('economy')}
+                <E ns="nav" k="economy">{t('economy')}</E>
                 <ChevronIcon open={economyDropdownOpen} />
               </button>
               {economyDropdownOpen && (
@@ -258,21 +261,21 @@ export function Navbar() {
                     className={`games-dropdown-item ${isActive('/bank') ? 'active' : ''}`}
                     onClick={() => setEconomyDropdownOpen(false)}
                   >
-                    {t('bank')}
+                    <E ns="nav" k="bank">{t('bank')}</E>
                   </Link>
                   <Link
                     href="/bazaar"
                     className={`games-dropdown-item ${isActive('/bazaar') ? 'active' : ''}`}
                     onClick={() => setEconomyDropdownOpen(false)}
                   >
-                    {t('bazaar')}
+                    <E ns="nav" k="bazaar">{t('bazaar')}</E>
                   </Link>
                   <Link
                     href="/trading"
                     className={`games-dropdown-item ${isActive('/trading') ? 'active' : ''}`}
                     onClick={() => setEconomyDropdownOpen(false)}
                   >
-                    {t('trading')}
+                    <E ns="nav" k="trading">{t('trading')}</E>
                   </Link>
                   {FEATURE_FLAGS.marketplace && (
                     <Link
@@ -280,7 +283,7 @@ export function Navbar() {
                       className={`games-dropdown-item ${isActive('/marketplace') ? 'active' : ''}`}
                       onClick={() => setEconomyDropdownOpen(false)}
                     >
-                      {t('marketplace')}
+                      <E ns="nav" k="marketplace">{t('marketplace')}</E>
                     </Link>
                   )}
                 </div>
@@ -289,6 +292,17 @@ export function Navbar() {
           </div>
 
           <div className="actions-box">
+            {/* Admin Dashboard Link - Desktop */}
+            {session?.user?.isMastermind && (
+              <a href="/admin" className="nav-link" style={{ fontSize: 13, gap: 6, display: 'flex', alignItems: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                </svg>
+                Dashboard
+              </a>
+            )}
+
             {/* Auth Section - Desktop */}
             <div className="auth-section">
               {status === 'loading' ? (
@@ -331,7 +345,7 @@ export function Navbar() {
                   onClick={() => signIn('discord')}
                 >
                   <DiscordIcon />
-                  {t('signIn')}
+                  <E ns="nav" k="signIn">{t('signIn')}</E>
                 </button>
               )}
             </div>
@@ -369,14 +383,15 @@ export function Navbar() {
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-sidebar-header">
           <div className="brand">
-            <Image
+            <EImg
+              editId="nav-mobile-brand-logo"
               src="/images/logo.png"
               alt="Luna"
               width={36}
               height={36}
               className="brand-logo-img"
             />
-            <span>{brand('name')}</span>
+            <span><E ns="brand" k="name">{brand('name')}</E></span>
           </div>
           <button className="mobile-close-btn" onClick={closeMobileMenu} aria-label="Close menu">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -388,7 +403,7 @@ export function Navbar() {
 
         <nav className="mobile-nav">
           <Link href="/" className={`mobile-nav-link ${isActive('/') && pathname === '/' ? 'active' : ''}`} onClick={closeMobileMenu}>
-            {t('home')}
+            <E ns="nav" k="home">{t('home')}</E>
           </Link>
 
           {/* Mobile Games Group */}
@@ -397,7 +412,7 @@ export function Navbar() {
               className={`mobile-games-trigger ${isGamesActive ? 'active' : ''}`}
               onClick={() => setMobileGamesOpen(!mobileGamesOpen)}
             >
-              <span>{t('games')}</span>
+              <span><E ns="nav" k="games">{t('games')}</E></span>
               <ChevronIcon open={mobileGamesOpen} />
             </button>
             {mobileGamesOpen && (
@@ -407,21 +422,21 @@ export function Navbar() {
                   className={`mobile-nav-link ${isActive('/luna-fantasy') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('lunaFantasy')}
+                  <E ns="nav" k="lunaFantasy">{t('lunaFantasy')}</E>
                 </Link>
                 <Link
                   href="/grand-fantasy"
                   className={`mobile-nav-link ${isActive('/grand-fantasy') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('grandFantasy')}
+                  <E ns="nav" k="grandFantasy">{t('grandFantasy')}</E>
                 </Link>
                 <Link
                   href="/faction-war"
                   className={`mobile-nav-link ${isActive('/faction-war') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('factionWar')}
+                  <E ns="nav" k="factionWar">{t('factionWar')}</E>
                 </Link>
               </div>
             )}
@@ -433,7 +448,7 @@ export function Navbar() {
               className={`mobile-games-trigger ${isWorldActive ? 'active' : ''}`}
               onClick={() => setMobileWorldOpen(!mobileWorldOpen)}
             >
-              <span>{t('world')}</span>
+              <span><E ns="nav" k="world">{t('world')}</E></span>
               <ChevronIcon open={mobileWorldOpen} />
             </button>
             {mobileWorldOpen && (
@@ -443,28 +458,28 @@ export function Navbar() {
                   className={`mobile-nav-link ${isActive('/story') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('story')}
+                  <E ns="nav" k="story">{t('story')}</E>
                 </Link>
                 <Link
                   href="/characters"
                   className={`mobile-nav-link ${isActive('/characters') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('characters')}
+                  <E ns="nav" k="characters">{t('characters')}</E>
                 </Link>
                 <Link
                   href="/partners"
                   className={`mobile-nav-link ${isActive('/partners') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('partners')}
+                  <E ns="nav" k="partners">{t('partners')}</E>
                 </Link>
                 <Link
                   href="/members"
                   className={`mobile-nav-link ${isActive('/members') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('members')}
+                  <E ns="nav" k="members">{t('members')}</E>
                 </Link>
               </div>
             )}
@@ -476,7 +491,7 @@ export function Navbar() {
               className={`mobile-games-trigger ${isEconomyActive ? 'active' : ''}`}
               onClick={() => setMobileEconomyOpen(!mobileEconomyOpen)}
             >
-              <span>{t('economy')}</span>
+              <span><E ns="nav" k="economy">{t('economy')}</E></span>
               <ChevronIcon open={mobileEconomyOpen} />
             </button>
             {mobileEconomyOpen && (
@@ -486,21 +501,21 @@ export function Navbar() {
                   className={`mobile-nav-link ${isActive('/bank') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('bank')}
+                  <E ns="nav" k="bank">{t('bank')}</E>
                 </Link>
                 <Link
                   href="/bazaar"
                   className={`mobile-nav-link ${isActive('/bazaar') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('bazaar')}
+                  <E ns="nav" k="bazaar">{t('bazaar')}</E>
                 </Link>
                 <Link
                   href="/trading"
                   className={`mobile-nav-link ${isActive('/trading') ? 'active' : ''}`}
                   onClick={closeMobileMenu}
                 >
-                  {t('trading')}
+                  <E ns="nav" k="trading">{t('trading')}</E>
                 </Link>
                 {FEATURE_FLAGS.marketplace && (
                   <Link
@@ -508,7 +523,7 @@ export function Navbar() {
                     className={`mobile-nav-link ${isActive('/marketplace') ? 'active' : ''}`}
                     onClick={closeMobileMenu}
                   >
-                    {t('marketplace')}
+                    <E ns="nav" k="marketplace">{t('marketplace')}</E>
                   </Link>
                 )}
               </div>
@@ -546,13 +561,27 @@ export function Navbar() {
                   className="mobile-nav-link"
                   onClick={closeMobileMenu}
                 >
-                  {t('profile')}
+                  <E ns="nav" k="profile">{t('profile')}</E>
                 </Link>
+                {session.user?.isMastermind && (
+                  <a
+                    href="/admin"
+                    className="mobile-nav-link"
+                    onClick={closeMobileMenu}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+                      <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    Dashboard
+                  </a>
+                )}
                 <button
                   className="mobile-signout-btn"
                   onClick={() => { closeMobileMenu(); setShowSignOutModal(true); }}
                 >
-                  {t('signOut')}
+                  <E ns="nav" k="signOut">{t('signOut')}</E>
                 </button>
               </>
             ) : (
@@ -561,7 +590,7 @@ export function Navbar() {
                 onClick={() => { signIn('discord'); closeMobileMenu(); }}
               >
                 <DiscordIcon />
-                {t('signIn')}
+                <E ns="nav" k="signIn">{t('signIn')}</E>
               </button>
             )}
           </div>
@@ -587,14 +616,14 @@ export function Navbar() {
       {showSignOutModal && (
         <div className="signout-modal-overlay" onClick={() => setShowSignOutModal(false)}>
           <div className="signout-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="signout-modal-title">{t('signOutConfirmTitle')}</h3>
-            <p className="signout-modal-desc">{t('signOutConfirmDesc')}</p>
+            <h3 className="signout-modal-title"><E ns="nav" k="signOutConfirmTitle">{t('signOutConfirmTitle')}</E></h3>
+            <p className="signout-modal-desc"><E ns="nav" k="signOutConfirmDesc">{t('signOutConfirmDesc')}</E></p>
             <div className="signout-modal-actions">
               <button
                 className="signout-modal-cancel"
                 onClick={() => setShowSignOutModal(false)}
               >
-                {t('cancel')}
+                <E ns="nav" k="cancel">{t('cancel')}</E>
               </button>
               <button
                 className="signout-modal-confirm"
@@ -603,7 +632,7 @@ export function Navbar() {
                   window.location.href = '/';
                 }}
               >
-                {t('signOut')}
+                <E ns="nav" k="signOut">{t('signOut')}</E>
               </button>
             </div>
           </div>

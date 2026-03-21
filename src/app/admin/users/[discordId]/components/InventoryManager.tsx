@@ -53,8 +53,8 @@ export default function InventoryManager({ items, discordId, onUpdate }: Invento
 
   if (items.length === 0) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-        This user has no inventory items.
+      <div className="admin-empty">
+        <p>This user has no inventory items.</p>
       </div>
     );
   }
@@ -75,27 +75,26 @@ export default function InventoryManager({ items, discordId, onUpdate }: Invento
           {items.map((item) => (
             <tr key={item.id}>
               <td>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="admin-inventory-item-cell">
                   {item.backgroundUrl && (
-                    <img src={item.backgroundUrl} alt="" width={32} height={32} style={{ borderRadius: '4px', objectFit: 'cover' }} />
+                    <img src={item.backgroundUrl} alt="" className="admin-inventory-item-thumb" />
                   )}
-                  <span style={{ fontWeight: 600, fontSize: '13px' }}>{item.name}</span>
+                  <span className="admin-inventory-item-name">{item.name}</span>
                 </div>
               </td>
-              <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{item.shopId || '—'}</td>
-              <td style={{ fontWeight: 600, color: 'var(--accent-legendary)' }}>
+              <td className="admin-table-cell-muted">{item.shopId || '—'}</td>
+              <td className="admin-table-cell-price">
                 {item.price ? item.price.toLocaleString() : '—'}
               </td>
-              <td style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              <td className="admin-table-cell-muted">
                 {item.purchasedAt
                   ? new Date(item.purchasedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                   : '—'}
               </td>
               <td>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <div className="admin-inventory-actions">
                   <button
-                    className="admin-btn admin-btn-ghost"
-                    style={{ padding: '2px 8px', fontSize: 11 }}
+                    className="admin-btn admin-btn-ghost admin-btn-sm"
                     disabled={loading === item.id}
                     onClick={() => handleRevoke(item.id, item.name, false)}
                   >
@@ -103,8 +102,7 @@ export default function InventoryManager({ items, discordId, onUpdate }: Invento
                   </button>
                   {item.price && item.price > 0 && (
                     <button
-                      className="admin-btn admin-btn-ghost"
-                      style={{ padding: '2px 8px', fontSize: 11, color: 'var(--common)' }}
+                      className="admin-btn admin-btn-ghost admin-btn-sm admin-btn-refund"
                       disabled={loading === item.id}
                       onClick={() => handleRevoke(item.id, item.name, true)}
                     >

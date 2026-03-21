@@ -18,7 +18,7 @@ export async function getCardCatalog(game?: CardGame): Promise<Card[]> {
     const db = client.db("Database");
 
     const [configDocs, charDocs] = await Promise.all([
-      db.collection("cards_config").find({}).toArray(),
+      db.collection("cards_config").find({}).limit(500).toArray(),
       db
         .collection("characters")
         .find({}, { projection: { id: 1, name: 1 } })

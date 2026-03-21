@@ -73,6 +73,7 @@ const TYPE_MAP: Record<string, TransactionTypeInfo> = {
   admin_debit:               { label: 'Admin Debit',        icon: '\uD83D\uDC51', color: 'red' },
   admin_refund:              { label: 'Admin Refund',       icon: '\u21A9\uFE0F', color: 'admin-badge-warning' },
   admin_reversal:            { label: 'Admin Reversal',     icon: '\u21A9\uFE0F', color: 'admin-badge-warning' },
+  reserve_withdrawal:        { label: 'Reserve Withdraw',   icon: '\uD83C\uDFE6', color: 'gold' },
 };
 
 /**

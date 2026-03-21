@@ -40,6 +40,22 @@ export function getStoneSellPrice(stoneName: string): number {
   return STONES.find((s) => s.name === stoneName)?.sell_price ?? 0;
 }
 
+/**
+ * Async version that checks DB config first, then falls back to hardcoded.
+ * Use this in API routes that may have DB-configured stones.
+ */
+export async function getStoneSellPriceAsync(stoneName: string): Promise<number> {
+  try {
+    const { getStoneBoxConfig } = await import('./shop-config');
+    const config = await getStoneBoxConfig();
+    const found = config.stones.find((s) => s.name === stoneName);
+    if (found) return found.sell_price;
+  } catch {
+    // Fallback to hardcoded
+  }
+  return STONES.find((s) => s.name === stoneName)?.sell_price ?? 0;
+}
+
 export const TICKET_PACKAGES: TicketPackage[] = [
   { id: 'pack1', name: 'Moon Dust', tickets: 1, price: 1_000 },
   { id: 'pack2', name: 'Luna Potion', tickets: 2, price: 2_000 },

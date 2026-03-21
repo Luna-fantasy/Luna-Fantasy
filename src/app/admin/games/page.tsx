@@ -5,10 +5,13 @@ import ConfigSection from '../components/ConfigSection';
 import NumberInput from '../components/NumberInput';
 import DurationInput from '../components/DurationInput';
 import ToggleSwitch from '../components/ToggleSwitch';
-import IdChipInput from '../components/IdChipInput';
+import RolePicker from '../components/RolePicker';
+import ChannelPicker from '../components/ChannelPicker';
 import ConfigTable from '../components/ConfigTable';
+import StringArrayInput from '../components/StringArrayInput';
 import SaveDeployBar from '../components/SaveDeployBar';
 import BotBadge from '../components/BotBadge';
+import { SkeletonCard, SkeletonTable } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { getCsrfToken } from '../utils/csrf';
 
@@ -27,6 +30,7 @@ interface ButlerSections {
   hunt_game?: ButlerGameBase;
   roulette_game?: ButlerGameBase;
   luna21_game?: ButlerGameBase;
+  baloot_game?: ButlerGameBase;
 }
 
 // -- Jester game types --
@@ -90,6 +94,7 @@ const BUTLER_GAMES: GameMeta[] = [
   { key: 'hunt_game', displayName: 'Hunt', description: 'Go on a hunt with a chance to find Lunari. You might come back empty-handed or lose some.' },
   { key: 'roulette_game', displayName: 'Russian Roulette', description: 'Bet Lunari and spin the chamber. Survive and win big, or lose your bet.' },
   { key: 'luna21_game', displayName: 'Luna 21', description: 'Blackjack-style card game. Get as close to 21 as possible without going over.' },
+  { key: 'baloot_game', displayName: 'Baloot', description: 'Saudi-style Baloot card game. 2v2 teams compete in bidding, doubling, and trick-taking rounds.' },
 ];
 
 const JESTER_GAMES: GameMeta[] = [
@@ -111,6 +116,15 @@ const LOBBY_GAMES: { key: keyof Pick<PointsSettings, 'roulette' | 'bombroulette'
   { key: 'rps', displayName: 'Luna RPS' },
   { key: 'mafia', displayName: 'Blood Moon' },
 ];
+
+function getGameRewardPreview(game: any): string | null {
+  if (!game) return null;
+  if (game.win_reward) return `Win: ${game.win_reward.toLocaleString()} L`;
+  if (game.reward) return `Win: ${game.reward.toLocaleString()} L`;
+  if (game.max_bet) return `Bet: ${game.min_bet?.toLocaleString() ?? 0}–${game.max_bet.toLocaleString()} L`;
+  if (game.max_reward) return `Reward: ${game.min_reward?.toLocaleString() ?? 0}–${game.max_reward.toLocaleString()} L`;
+  return null;
+}
 
 type Tab = 'games' | 'rewards';
 
@@ -151,6 +165,10 @@ export default function GamesManagementPage() {
       const filtered: ButlerSections = {};
       for (const k of gameKeys) {
         if (sections[k]) (filtered as any)[k] = sections[k];
+      }
+      // Baloot stores reward separately — construct game object
+      if (sections.baloot_reward !== undefined) {
+        (filtered as any).baloot_game = { enabled: true, reward: sections.baloot_reward };
       }
       setButlerSections(filtered);
       setButlerOriginal(filtered);
@@ -235,10 +253,13 @@ export default function GamesManagementPage() {
       if (savingButler) {
         for (const key of Object.keys(butlerSections) as Array<keyof ButlerSections>) {
           if (JSON.stringify(butlerSections[key]) !== JSON.stringify(butlerOriginal[key])) {
+            // Baloot stores only the reward number, not the full game object
+            const section = key === 'baloot_game' ? 'baloot_reward' : key;
+            const value = key === 'baloot_game' ? (butlerSections[key] as any)?.reward ?? 20000 : butlerSections[key];
             const res = await fetch('/api/admin/config/butler', {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
-              body: JSON.stringify({ section: key, value: butlerSections[key] }),
+              body: JSON.stringify({ section, value }),
             });
             if (!res.ok) {
               const data = await res.json();
@@ -304,14 +325,24 @@ export default function GamesManagementPage() {
 
   const loading = butlerLoading || jesterLoading;
 
+  function discardGames() {
+    setButlerSections({ ...butlerOriginal });
+    setJesterSections({ ...jesterOriginal });
+  }
+
+  function discardPoints() {
+    setPointsSettings(pointsOriginal ? { ...pointsOriginal } : null);
+  }
+
   if (loading) {
     return (
       <>
         <div className="admin-page-header">
-          <h1 className="admin-page-title">Games Management</h1>
+          <h1 className="admin-page-title"><span className="emoji-float">🎮</span> Games Management</h1>
           <p className="admin-page-subtitle">Enable, disable, and configure all games across Butler and Jester</p>
         </div>
-        <div className="admin-loading"><div className="admin-spinner" />Loading game configs...</div>
+        <SkeletonCard count={4} />
+        <SkeletonTable rows={5} />
       </>
     );
   }
@@ -319,7 +350,7 @@ export default function GamesManagementPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Games Management</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">🎮</span> Games Management</h1>
         <p className="admin-page-subtitle">Enable, disable, and configure all games across Butler and Jester</p>
       </div>
 
@@ -343,222 +374,213 @@ export default function GamesManagementPage() {
       {tab === 'games' && (
         <>
           {/* Butler Games Section */}
-          <div style={{ marginBottom: '12px', marginTop: '24px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{
-                display: 'inline-block',
-                padding: '2px 10px',
-                borderRadius: '6px',
-                background: 'rgba(59, 130, 246, 0.15)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                color: '#60a5fa',
-                fontSize: '12px',
-                fontWeight: 600,
-                letterSpacing: '0.5px',
-              }}>
-                BUTLER
-              </span>
+          <div style={{ marginBottom: '16px', marginTop: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 className="admin-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
               Butler Games
-              <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 400 }}>({BUTLER_GAMES.length} games)</span>
+              <BotBadge bot="butler" />
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 400 }}>({BUTLER_GAMES.length} games)</span>
             </h2>
           </div>
 
-          {BUTLER_GAMES.map((meta) => {
-            const game = (butlerSections as any)[meta.key];
-            if (!game) return null;
-            const isExpanded = expanded[meta.key] ?? false;
-            const isEnabled = game.enabled ?? false;
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+            {BUTLER_GAMES.map((meta) => {
+              const game = (butlerSections as any)[meta.key];
+              if (!game) return null;
+              const isExpanded = expanded[meta.key] ?? false;
+              const isEnabled = game.enabled ?? false;
 
-            return (
-              <div
-                key={meta.key}
-                style={{
-                  marginBottom: '12px',
-                  border: `1px solid ${isEnabled ? 'rgba(255, 255, 255, 0.06)' : 'rgba(239, 68, 68, 0.2)'}`,
-                  borderRadius: '12px',
-                  background: isEnabled ? 'rgba(255, 255, 255, 0.02)' : 'rgba(239, 68, 68, 0.03)',
-                  opacity: isEnabled ? 1 : 0.7,
-                  transition: 'all 0.2s ease',
-                  overflow: 'hidden',
-                }}
-              >
-                {/* Game card header */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 20px',
-                  gap: '16px',
-                }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)' }}>{meta.displayName}</span>
-                      <span style={{
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        background: 'rgba(59, 130, 246, 0.15)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        color: '#60a5fa',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                      }}>
-                        Butler
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{meta.description}</div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
-                    <ToggleSwitch
-                      label={isEnabled ? 'Enabled' : 'Disabled'}
-                      checked={isEnabled}
-                      onChange={(v) => updateButler(meta.key, { ...game, enabled: v })}
-                    />
-                    <button
-                      onClick={() => toggleExpanded(meta.key)}
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px',
-                        color: 'var(--text-secondary)',
-                        padding: '6px 14px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {isExpanded ? 'Hide Settings' : 'Settings'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Expanded settings */}
-                {isExpanded && (
+              return (
+                <div
+                  key={meta.key}
+                  className="admin-stat-card"
+                  style={{
+                    opacity: isEnabled ? 1 : 0.7,
+                    transition: 'all 0.2s ease',
+                    overflow: 'hidden',
+                    padding: 0,
+                    ...(isExpanded ? { gridColumn: '1 / -1' } : {}),
+                  }}
+                >
+                  {/* Game card header */}
                   <div style={{
-                    padding: '0 20px 20px',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                    paddingTop: '16px',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    padding: '16px 20px',
+                    gap: '12px',
                   }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-                      {renderButlerGameFields(meta.key, game, updateButler)}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{meta.displayName}</span>
+                        <span className={`admin-badge ${isEnabled ? 'admin-badge-success' : 'admin-badge-muted'}`}>
+                          {isEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '8px' }}>{meta.description}</div>
+                      {getGameRewardPreview(game) && (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: 'rgba(255, 213, 79, 0.1)',
+                          border: '1px solid rgba(255, 213, 79, 0.2)',
+                          color: '#fbbf24',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                        }}>
+                          {getGameRewardPreview(game)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                      <ToggleSwitch
+                        label=""
+                        checked={isEnabled}
+                        onChange={(v) => updateButler(meta.key, { ...game, enabled: v })}
+                      />
+                      <button
+                        onClick={() => toggleExpanded(meta.key)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '6px',
+                          color: 'var(--text-secondary)',
+                          padding: '4px 10px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          transition: 'all 0.15s ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {isExpanded ? 'Hide' : 'Settings'}
+                      </button>
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
+
+                  {/* Expanded settings */}
+                  {isExpanded && (
+                    <div style={{
+                      padding: '0 20px 20px',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                      paddingTop: '16px',
+                    }}>
+                      <div className="admin-config-grid">
+                        {renderButlerGameFields(meta.key, game, updateButler)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           {/* Jester Games Section */}
-          <div style={{ marginBottom: '12px', marginTop: '36px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{
-                display: 'inline-block',
-                padding: '2px 10px',
-                borderRadius: '6px',
-                background: 'rgba(168, 85, 247, 0.15)',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
-                color: '#c084fc',
-                fontSize: '12px',
-                fontWeight: 600,
-                letterSpacing: '0.5px',
-              }}>
-                JESTER
-              </span>
+          <div style={{ marginBottom: '16px', marginTop: '32px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 className="admin-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
               Jester Games
-              <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontWeight: 400 }}>({JESTER_GAMES.length} games)</span>
+              <BotBadge bot="jester" />
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 400 }}>({JESTER_GAMES.length} games)</span>
             </h2>
           </div>
 
-          {JESTER_GAMES.map((meta) => {
-            const game = (jesterSections as any)[meta.key];
-            if (!game) return null;
-            const isExpanded = expanded[`jester_${meta.key}`] ?? false;
-            const isEnabled = game.enabled ?? true; // Jester games default to enabled if field missing
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+            {JESTER_GAMES.map((meta) => {
+              const game = (jesterSections as any)[meta.key];
+              if (!game) return null;
+              const isExpanded = expanded[`jester_${meta.key}`] ?? false;
+              const isEnabled = game.enabled ?? true; // Jester games default to enabled if field missing
 
-            return (
-              <div
-                key={meta.key}
-                style={{
-                  marginBottom: '12px',
-                  border: `1px solid ${isEnabled ? 'rgba(255, 255, 255, 0.06)' : 'rgba(239, 68, 68, 0.2)'}`,
-                  borderRadius: '12px',
-                  background: isEnabled ? 'rgba(255, 255, 255, 0.02)' : 'rgba(239, 68, 68, 0.03)',
-                  opacity: isEnabled ? 1 : 0.7,
-                  transition: 'all 0.2s ease',
-                  overflow: 'hidden',
-                }}
-              >
-                {/* Game card header */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 20px',
-                  gap: '16px',
-                }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)' }}>{meta.displayName}</span>
-                      <span style={{
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        background: 'rgba(168, 85, 247, 0.15)',
-                        border: '1px solid rgba(168, 85, 247, 0.3)',
-                        color: '#c084fc',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                      }}>
-                        Jester
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{meta.description}</div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
-                    <ToggleSwitch
-                      label={isEnabled ? 'Enabled' : 'Disabled'}
-                      checked={isEnabled}
-                      onChange={(v) => updateJester(meta.key, { ...game, enabled: v })}
-                    />
-                    <button
-                      onClick={() => toggleExpanded(`jester_${meta.key}`)}
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px',
-                        color: 'var(--text-secondary)',
-                        padding: '6px 14px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {isExpanded ? 'Hide Settings' : 'Settings'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Expanded settings */}
-                {isExpanded && (
+              return (
+                <div
+                  key={meta.key}
+                  className="admin-stat-card"
+                  style={{
+                    opacity: isEnabled ? 1 : 0.7,
+                    transition: 'all 0.2s ease',
+                    overflow: 'hidden',
+                    padding: 0,
+                    ...(isExpanded ? { gridColumn: '1 / -1' } : {}),
+                  }}
+                >
+                  {/* Game card header */}
                   <div style={{
-                    padding: '0 20px 20px',
-                    borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                    paddingTop: '16px',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    padding: '16px 20px',
+                    gap: '12px',
                   }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
-                      {renderJesterGameFields(meta.key, game, updateJester)}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>{meta.displayName}</span>
+                        <span className={`admin-badge ${isEnabled ? 'admin-badge-success' : 'admin-badge-muted'}`}>
+                          {isEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4', marginBottom: '8px' }}>{meta.description}</div>
+                      {game.ticket_cost > 0 && (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: 'rgba(255, 213, 79, 0.1)',
+                          border: '1px solid rgba(255, 213, 79, 0.2)',
+                          color: '#fbbf24',
+                          fontSize: '11px',
+                          fontWeight: 500,
+                        }}>
+                          Cost: {game.ticket_cost} tickets
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
+                      <ToggleSwitch
+                        label=""
+                        checked={isEnabled}
+                        onChange={(v) => updateJester(meta.key, { ...game, enabled: v })}
+                      />
+                      <button
+                        onClick={() => toggleExpanded(`jester_${meta.key}`)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '6px',
+                          color: 'var(--text-secondary)',
+                          padding: '4px 10px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          transition: 'all 0.15s ease',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {isExpanded ? 'Hide' : 'Settings'}
+                      </button>
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
+
+                  {/* Expanded settings */}
+                  {isExpanded && (
+                    <div style={{
+                      padding: '0 20px 20px',
+                      borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                      paddingTop: '16px',
+                    }}>
+                      <div className="admin-config-grid">
+                        {renderJesterGameFields(meta.key, game, updateJester)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           {/* Save bar for All Games */}
           <SaveDeployBar
             hasChanges={gamesHasChanges}
             saving={butlerSaving || jesterSaving}
             onSave={saveGamesConfig}
+            onDiscard={discardGames}
             projectName={
               butlerHasChanges && jesterHasChanges
                 ? 'Butler + Jester'
@@ -584,92 +606,123 @@ export default function GamesManagementPage() {
                 title="Lobby Game Rewards"
                 description="Lunari awarded to winners based on how many players joined the lobby"
               >
-                {LOBBY_GAMES.map(({ key, displayName }) => (
-                  <div key={key} style={{ marginBottom: '20px' }}>
-                    <h4 style={{
-                      fontSize: '15px',
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      marginBottom: '8px',
-                      marginTop: key !== 'roulette' ? '16px' : '0',
-                    }}>
-                      {displayName}
-                    </h4>
-                    <ConfigTable
-                      columns={[
-                        { key: 'players', label: 'Minimum Players', type: 'number' },
-                        { key: 'points', label: 'Reward (Lunari)', type: 'number' },
-                      ]}
-                      rows={pointsSettings[key] as PointsTier[]}
-                      onChange={(rows) => updatePointsTier(key, rows as PointsTier[])}
-                      addLabel="Add Tier"
-                    />
-                  </div>
-                ))}
-                <BotBadge bot="jester" />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                  {LOBBY_GAMES.map(({ key, displayName }) => (
+                    <div key={key} className="admin-stat-card" style={{ padding: '16px 20px', gridColumn: '1 / -1' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                        <h4 style={{
+                          fontSize: '15px',
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                          margin: 0,
+                        }}>
+                          {displayName}
+                        </h4>
+                        <BotBadge bot="jester" />
+                      </div>
+                      <ConfigTable
+                        columns={[
+                          { key: 'players', label: '🔢 Minimum Players', type: 'number' },
+                          { key: 'points', label: '🏆 Reward (Lunari)', type: 'number' },
+                        ]}
+                        rows={pointsSettings[key] as PointsTier[]}
+                        onChange={(rows) => updatePointsTier(key, rows as PointsTier[])}
+                        addLabel="Add Tier"
+                      />
+                    </div>
+                  ))}
+                </div>
               </ConfigSection>
 
               <ConfigSection
                 title="Direct Game Rewards"
                 description="Fixed Lunari amounts awarded for winning each game"
               >
-                <NumberInput
-                  label="Guess The Country"
-                  value={pointsSettings.guessthecountry ?? 0}
-                  onChange={(v) => updatePoints('guessthecountry', v)}
-                  min={0}
-                  description="Lunari for winning a round"
-                />
-                <NumberInput
-                  label="Luna Fantasy (vs Player)"
-                  value={pointsSettings.LunaFantasy ?? 0}
-                  onChange={(v) => updatePoints('LunaFantasy', v)}
-                  min={0}
-                  description="Lunari for winning a PvP duel"
-                />
-                <NumberInput
-                  label="Luna Fantasy (vs Bot)"
-                  value={pointsSettings.LunaFantasy_bot ?? 0}
-                  onChange={(v) => updatePoints('LunaFantasy_bot', v)}
-                  min={0}
-                  description="Lunari for beating the bot"
-                />
-                <NumberInput
-                  label="Grand Fantasy (vs Player)"
-                  value={pointsSettings.GrandFantasy ?? 0}
-                  onChange={(v) => updatePoints('GrandFantasy', v)}
-                  min={0}
-                  description="Lunari for winning a PvP match"
-                />
-                <NumberInput
-                  label="Grand Fantasy (vs Bot)"
-                  value={pointsSettings.GrandFantasy_bot ?? 0}
-                  onChange={(v) => updatePoints('GrandFantasy_bot', v)}
-                  min={0}
-                  description="Lunari for beating the bot"
-                />
-                <NumberInput
-                  label="Faction War (Base Prize)"
-                  value={pointsSettings.FactionWar ?? 0}
-                  onChange={(v) => updatePoints('FactionWar', v)}
-                  min={0}
-                  description="Standard win reward"
-                />
-                <NumberInput
-                  label="Faction War (Bonus Prize)"
-                  value={pointsSettings.FactionWar_bonus ?? 0}
-                  onChange={(v) => updatePoints('FactionWar_bonus', v)}
-                  min={0}
-                  description="Bonus victory reward"
-                />
-                <NumberInput
-                  label="Faction War (Double Prize)"
-                  value={pointsSettings.FactionWar_double ?? 0}
-                  onChange={(v) => updatePoints('FactionWar_double', v)}
-                  min={0}
-                  description="Double victory reward"
-                />
-                <BotBadge bot="jester" />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                  <div className="admin-stat-card" style={{ padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Guess The Country</h4>
+                      <BotBadge bot="jester" />
+                    </div>
+                    <NumberInput
+                      label="🏆 Win Reward"
+                      value={pointsSettings.guessthecountry ?? 0}
+                      onChange={(v) => updatePoints('guessthecountry', v)}
+                      min={0}
+                      description="Lunari for winning a round"
+                    />
+                  </div>
+
+                  <div className="admin-stat-card" style={{ padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Luna Fantasy</h4>
+                      <BotBadge bot="jester" />
+                    </div>
+                    <NumberInput
+                      label="🏆 vs Player"
+                      value={pointsSettings.LunaFantasy ?? 0}
+                      onChange={(v) => updatePoints('LunaFantasy', v)}
+                      min={0}
+                      description="Lunari for winning a PvP duel"
+                    />
+                    <NumberInput
+                      label="🏆 vs Bot"
+                      value={pointsSettings.LunaFantasy_bot ?? 0}
+                      onChange={(v) => updatePoints('LunaFantasy_bot', v)}
+                      min={0}
+                      description="Lunari for beating the bot"
+                    />
+                  </div>
+
+                  <div className="admin-stat-card" style={{ padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Grand Fantasy</h4>
+                      <BotBadge bot="jester" />
+                    </div>
+                    <NumberInput
+                      label="🏆 vs Player"
+                      value={pointsSettings.GrandFantasy ?? 0}
+                      onChange={(v) => updatePoints('GrandFantasy', v)}
+                      min={0}
+                      description="Lunari for winning a PvP match"
+                    />
+                    <NumberInput
+                      label="🏆 vs Bot"
+                      value={pointsSettings.GrandFantasy_bot ?? 0}
+                      onChange={(v) => updatePoints('GrandFantasy_bot', v)}
+                      min={0}
+                      description="Lunari for beating the bot"
+                    />
+                  </div>
+
+                  <div className="admin-stat-card" style={{ padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Faction War</h4>
+                      <BotBadge bot="jester" />
+                    </div>
+                    <NumberInput
+                      label="🏆 Base Prize"
+                      value={pointsSettings.FactionWar ?? 0}
+                      onChange={(v) => updatePoints('FactionWar', v)}
+                      min={0}
+                      description="Standard win reward"
+                    />
+                    <NumberInput
+                      label="🏆 Bonus Prize"
+                      value={pointsSettings.FactionWar_bonus ?? 0}
+                      onChange={(v) => updatePoints('FactionWar_bonus', v)}
+                      min={0}
+                      description="Bonus victory reward"
+                    />
+                    <NumberInput
+                      label="🏆 Double Prize"
+                      value={pointsSettings.FactionWar_double ?? 0}
+                      onChange={(v) => updatePoints('FactionWar_double', v)}
+                      min={0}
+                      description="Double victory reward"
+                    />
+                  </div>
+                </div>
               </ConfigSection>
 
               {/* Save bar for Rewards */}
@@ -677,6 +730,7 @@ export default function GamesManagementPage() {
                 hasChanges={pointsHasChanges}
                 saving={pointsSaving}
                 onSave={savePointsConfig}
+                onDiscard={discardPoints}
                 projectName="Jester"
               />
             </>
@@ -700,47 +754,76 @@ function renderButlerGameFields(
     case 'connect4_game':
       return (
         <>
-          <NumberInput label="Win Reward" value={game.win_reward} onChange={(v) => update(key, { ...game, win_reward: v })} min={0} description="Lunari awarded to the winner" />
-          <NumberInput label="Draw Reward" value={game.draw_reward} onChange={(v) => update(key, { ...game, draw_reward: v })} min={0} description="Lunari earned when both players draw" />
-          <DurationInput label="Timeout" value={game.timeout ?? 0} onChange={(v) => update(key, { ...game, timeout: v })} description="How long before the game expires if no one plays" />
+          <NumberInput label="🏆 Win Reward" value={game.win_reward} onChange={(v) => update(key, { ...game, win_reward: v })} min={0} description="Lunari awarded to the winner" />
+          <NumberInput label="🏆 Draw Reward" value={game.draw_reward} onChange={(v) => update(key, { ...game, draw_reward: v })} min={0} description="Lunari earned when both players draw" />
+          <DurationInput label="⏱️ Timeout" value={game.timeout ?? 0} onChange={(v) => update(key, { ...game, timeout: v })} description="How long before the game expires if no one plays" />
         </>
       );
     case 'coinflip_game':
       return (
         <>
-          <NumberInput label="Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
-          <NumberInput label="Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
-          <NumberInput label="Win Multiplier" value={game.win_multiplier} onChange={(v) => update(key, { ...game, win_multiplier: v })} step={0.1} min={0} description="Bet is multiplied by this on a win (e.g. 2.0 = double)" />
-          <DurationInput label="Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
+          <NumberInput label="🎲 Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
+          <NumberInput label="🎲 Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
+          <NumberInput label="📊 Win Multiplier" value={game.win_multiplier} onChange={(v) => update(key, { ...game, win_multiplier: v })} step={0.1} min={0} description="Bet is multiplied by this on a win (e.g. 2.0 = double)" />
+          <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
         </>
       );
     case 'hunt_game':
       return (
         <>
-          <NumberInput label="Success Chance (%)" value={game.success_chance} onChange={(v) => update(key, { ...game, success_chance: v })} min={0} max={100} description="Percentage chance the hunt succeeds (0-100)" />
-          <NumberInput label="Min Reward" value={game.min_reward} onChange={(v) => update(key, { ...game, min_reward: v })} min={0} description="Smallest Lunari reward on a successful hunt" />
-          <NumberInput label="Max Reward" value={game.max_reward} onChange={(v) => update(key, { ...game, max_reward: v })} min={0} description="Largest Lunari reward on a successful hunt" />
-          <NumberInput label="Min Loss" value={game.min_loss} onChange={(v) => update(key, { ...game, min_loss: v })} min={0} description="Smallest Lunari lost on a failed hunt" />
-          <NumberInput label="Max Loss" value={game.max_loss} onChange={(v) => update(key, { ...game, max_loss: v })} min={0} description="Largest Lunari lost on a failed hunt" />
-          <DurationInput label="Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between hunts" />
+          <NumberInput label="📊 Success Chance (%)" value={game.success_chance} onChange={(v) => update(key, { ...game, success_chance: v })} min={0} max={100} description="Percentage chance the hunt succeeds (0-100)" />
+          <NumberInput label="🏆 Min Reward" value={game.min_reward} onChange={(v) => update(key, { ...game, min_reward: v })} min={0} description="Smallest Lunari reward on a successful hunt" />
+          <NumberInput label="🏆 Max Reward" value={game.max_reward} onChange={(v) => update(key, { ...game, max_reward: v })} min={0} description="Largest Lunari reward on a successful hunt" />
+          <NumberInput label="💰 Min Loss" value={game.min_loss} onChange={(v) => update(key, { ...game, min_loss: v })} min={0} description="Smallest Lunari lost on a failed hunt" />
+          <NumberInput label="💰 Max Loss" value={game.max_loss} onChange={(v) => update(key, { ...game, max_loss: v })} min={0} description="Largest Lunari lost on a failed hunt" />
+          <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between hunts" />
+          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 250px' }}>
+              <StringArrayInput
+                label="📝 Hunt Animals"
+                description="Names of animals that can be caught on a successful hunt"
+                value={game.animals ?? []}
+                onChange={(v) => update(key, { ...game, animals: v })}
+                placeholder="e.g. Rabbit"
+                addLabel="Add Animal"
+              />
+            </div>
+            <div style={{ flex: '1 1 250px' }}>
+              <StringArrayInput
+                label="📝 Failure Messages"
+                description="Messages shown when the hunt fails"
+                value={game.failures ?? []}
+                onChange={(v) => update(key, { ...game, failures: v })}
+                placeholder="e.g. The animal escaped..."
+                addLabel="Add Message"
+                dir="auto"
+              />
+            </div>
+          </div>
         </>
       );
     case 'roulette_game':
       return (
         <>
-          <NumberInput label="Chambers" value={game.chambers} onChange={(v) => update(key, { ...game, chambers: v })} min={2} max={12} description="Number of chambers in the revolver (more = safer)" />
-          <NumberInput label="Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
-          <NumberInput label="Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
-          <NumberInput label="Reward Multiplier" value={game.reward_multiplier} onChange={(v) => update(key, { ...game, reward_multiplier: v })} step={0.1} description="Bet is multiplied by this if the player survives" />
-          <DurationInput label="Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
+          <NumberInput label="🔢 Chambers" value={game.chambers} onChange={(v) => update(key, { ...game, chambers: v })} min={2} max={12} description="Number of chambers in the revolver (more = safer)" />
+          <NumberInput label="🎲 Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
+          <NumberInput label="🎲 Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
+          <NumberInput label="📊 Reward Multiplier" value={game.reward_multiplier} onChange={(v) => update(key, { ...game, reward_multiplier: v })} step={0.1} description="Bet is multiplied by this if the player survives" />
+          <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
         </>
       );
     case 'luna21_game':
       return (
         <>
-          <NumberInput label="Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
-          <NumberInput label="Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
-          <DurationInput label="Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
+          <NumberInput label="🎲 Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
+          <NumberInput label="🎲 Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
+          <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
+        </>
+      );
+    case 'baloot_game':
+      return (
+        <>
+          <NumberInput label="🏆 Win Reward" value={game.reward ?? 20000} onChange={(v) => update(key, { ...game, reward: v })} min={0} description="Lunari awarded to each player on the winning team" />
         </>
       );
     default:
@@ -757,27 +840,27 @@ function renderJesterGameFields(
 ) {
   const commonMultiplayer = (
     <>
-      <NumberInput label="Waiting Time" value={game.waiting_time ?? 0} onChange={(v) => update(key, { ...game, waiting_time: v })} min={0} description="Seconds players can join before the game starts" />
-      <NumberInput label="Min Players" value={game.min_players ?? 2} onChange={(v) => update(key, { ...game, min_players: v })} min={1} description="Minimum players needed to start the game" />
-      <NumberInput label="Max Players" value={game.max_players ?? 10} onChange={(v) => update(key, { ...game, max_players: v })} min={1} description="Maximum players allowed in one game" />
+      <NumberInput label="⏱️ Waiting Time" value={game.waiting_time ?? 0} onChange={(v) => update(key, { ...game, waiting_time: v })} min={0} description="Seconds players can join before the game starts" />
+      <NumberInput label="🔢 Min Players" value={game.min_players ?? 2} onChange={(v) => update(key, { ...game, min_players: v })} min={1} description="Minimum players needed to start the game" />
+      <NumberInput label="🔢 Max Players" value={game.max_players ?? 10} onChange={(v) => update(key, { ...game, max_players: v })} min={1} description="Maximum players allowed in one game" />
     </>
   );
 
   const channelRoleInputs = (
     <>
-      <IdChipInput
-        label="Allowed Channels"
+      <ChannelPicker
+        label="📺 Allowed Channels"
         description="Only these channels can use this game. Leave empty to allow all channels."
-        ids={game.allowedChannels ?? []}
-        onChange={(ids) => update(key, { ...game, allowedChannels: ids })}
-        placeholder="Paste a Discord channel ID and press Enter"
+        value={game.allowedChannels ?? []}
+        onChange={(v) => update(key, { ...game, allowedChannels: v })}
+        multi
       />
-      <IdChipInput
-        label="Allowed Roles"
+      <RolePicker
+        label="🛡️ Allowed Roles"
         description="Only users with these roles can play. Leave empty to allow everyone."
-        ids={game.allowedRoles ?? []}
-        onChange={(ids) => update(key, { ...game, allowedRoles: ids })}
-        placeholder="Paste a Discord role ID and press Enter"
+        value={game.allowedRoles ?? []}
+        onChange={(v) => update(key, { ...game, allowedRoles: v })}
+        multi
       />
     </>
   );
@@ -796,47 +879,47 @@ function renderJesterGameFields(
     case 'guessthecountry':
       return (
         <>
-          <NumberInput label="Rounds" value={game.rounds ?? 5} onChange={(v) => update(key, { ...game, rounds: v })} min={1} description="How many rounds each game lasts" />
-          <NumberInput label="Guess Time" value={game.guess_time ?? 30} onChange={(v) => update(key, { ...game, guess_time: v })} min={0} description="Seconds players have to guess each round" />
+          <NumberInput label="🔢 Rounds" value={game.rounds ?? 5} onChange={(v) => update(key, { ...game, rounds: v })} min={1} description="How many rounds each game lasts" />
+          <NumberInput label="⏱️ Guess Time" value={game.guess_time ?? 30} onChange={(v) => update(key, { ...game, guess_time: v })} min={0} description="Seconds players have to guess each round" />
           {channelRoleInputs}
         </>
       );
     case 'LunaFantasy':
       return (
         <>
-          <NumberInput label="Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter a duel (0 = free)" />
-          <NumberInput label="Round Time" value={game.round_time ?? 30} onChange={(v) => update(key, { ...game, round_time: v })} min={0} description="Seconds each player has per round" />
-          <NumberInput label="Invite Timeout" value={game.pvp_invite_time ?? 60} onChange={(v) => update(key, { ...game, pvp_invite_time: v })} min={0} description="Seconds to accept a PvP challenge" />
+          <NumberInput label="🎟️ Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter a duel (0 = free)" />
+          <NumberInput label="⏱️ Round Time" value={game.round_time ?? 30} onChange={(v) => update(key, { ...game, round_time: v })} min={0} description="Seconds each player has per round" />
+          <NumberInput label="⏱️ Invite Timeout" value={game.pvp_invite_time ?? 60} onChange={(v) => update(key, { ...game, pvp_invite_time: v })} min={0} description="Seconds to accept a PvP challenge" />
           {channelRoleInputs}
         </>
       );
     case 'LunaFantasyEvent':
       return (
         <>
-          <NumberInput label="Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter (0 = free)" />
-          <NumberInput label="Lunari Reward" value={game.lunari_reward ?? 0} onChange={(v) => update(key, { ...game, lunari_reward: v })} min={0} description="Lunari awarded to the winner" />
-          <NumberInput label="Round Time" value={game.round_time ?? 30} onChange={(v) => update(key, { ...game, round_time: v })} min={0} description="Seconds each player has per round" />
+          <NumberInput label="🎟️ Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter (0 = free)" />
+          <NumberInput label="🏆 Lunari Reward" value={game.lunari_reward ?? 0} onChange={(v) => update(key, { ...game, lunari_reward: v })} min={0} description="Lunari awarded to the winner" />
+          <NumberInput label="⏱️ Round Time" value={game.round_time ?? 30} onChange={(v) => update(key, { ...game, round_time: v })} min={0} description="Seconds each player has per round" />
           {channelRoleInputs}
         </>
       );
     case 'GrandFantasy':
       return (
         <>
-          <NumberInput label="Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter (0 = free)" />
-          <NumberInput label="Prize" value={game.prize ?? 0} onChange={(v) => update(key, { ...game, prize: v })} min={0} description="Lunari awarded to the winner" />
-          <NumberInput label="Prize (vs Bot)" value={game.prize_bot ?? 0} onChange={(v) => update(key, { ...game, prize_bot: v })} min={0} description="Lunari awarded when winning against the bot" />
-          <NumberInput label="Round Time" value={game.round_time ?? 30} onChange={(v) => update(key, { ...game, round_time: v })} min={0} description="Seconds each player has per round" />
+          <NumberInput label="🎟️ Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter (0 = free)" />
+          <NumberInput label="🏆 Prize" value={game.prize ?? 0} onChange={(v) => update(key, { ...game, prize: v })} min={0} description="Lunari awarded to the winner" />
+          <NumberInput label="🏆 Prize (vs Bot)" value={game.prize_bot ?? 0} onChange={(v) => update(key, { ...game, prize_bot: v })} min={0} description="Lunari awarded when winning against the bot" />
+          <NumberInput label="⏱️ Round Time" value={game.round_time ?? 30} onChange={(v) => update(key, { ...game, round_time: v })} min={0} description="Seconds each player has per round" />
           {channelRoleInputs}
         </>
       );
     case 'FactionWar':
       return (
         <>
-          <NumberInput label="Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter (0 = free)" />
-          <NumberInput label="Turn Time" value={game.turn_time ?? 30} onChange={(v) => update(key, { ...game, turn_time: v })} min={0} description="Seconds per turn" />
-          <NumberInput label="Base Prize" value={game.prizes?.base ?? 0} onChange={(v) => update(key, { ...game, prizes: { ...game.prizes, base: v } })} min={0} description="Base Lunari reward for completing the game" />
-          <NumberInput label="Bonus Prize" value={game.prizes?.bonus ?? 0} onChange={(v) => update(key, { ...game, prizes: { ...game.prizes, bonus: v } })} min={0} description="Extra Lunari bonus for strong performance" />
-          <NumberInput label="Double Prize" value={game.prizes?.double ?? 0} onChange={(v) => update(key, { ...game, prizes: { ...game.prizes, double: v } })} min={0} description="Lunari awarded for completing a full double set" />
+          <NumberInput label="🎟️ Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter (0 = free)" />
+          <NumberInput label="⏱️ Turn Time" value={game.turn_time ?? 30} onChange={(v) => update(key, { ...game, turn_time: v })} min={0} description="Seconds per turn" />
+          <NumberInput label="🏆 Base Prize" value={game.prizes?.base ?? 0} onChange={(v) => update(key, { ...game, prizes: { ...game.prizes, base: v } })} min={0} description="Base Lunari reward for completing the game" />
+          <NumberInput label="🏆 Bonus Prize" value={game.prizes?.bonus ?? 0} onChange={(v) => update(key, { ...game, prizes: { ...game.prizes, bonus: v } })} min={0} description="Extra Lunari bonus for strong performance" />
+          <NumberInput label="🏆 Double Prize" value={game.prizes?.double ?? 0} onChange={(v) => update(key, { ...game, prizes: { ...game.prizes, double: v } })} min={0} description="Lunari awarded for completing a full double set" />
           {channelRoleInputs}
         </>
       );

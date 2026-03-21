@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import AdminLightbox from '../../components/AdminLightbox';
+import { SkeletonTable } from '../../components/Skeleton';
+import { getCsrfToken } from '../../utils/csrf';
 
 interface Transaction {
   _id: string;
@@ -27,12 +30,8 @@ export default function TransactionExplorerPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [reversingId, setReversingId] = useState('');
   const [reverseResult, setReverseResult] = useState('');
+  const [pendingReverse, setPendingReverse] = useState<{ tx: Transaction; reason: string } | null>(null);
   const limit = 50;
-
-  const getCsrfToken = () => {
-    const match = document.cookie.match(/bazaar_csrf=([^;]+)/);
-    return match?.[1] ?? '';
-  };
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -48,15 +47,19 @@ export default function TransactionExplorerPage() {
       const txs = data.transactions ?? [];
       const uniqueIds = Array.from(new Set(txs.map((t: any) => t.discordId).filter(Boolean)));
 
-      // Batch lookup usernames
+      // Batch lookup usernames by Discord ID
       if (uniqueIds.length > 0) {
         try {
-          const usersRes = await fetch(`/api/admin/users/recent`);
+          const usersRes = await fetch('/api/admin/users/batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: uniqueIds }),
+          });
           if (usersRes.ok) {
             const usersData = await usersRes.json();
             const userMap = new Map<string, { username: string; avatar: string | null }>();
             for (const u of usersData.users ?? []) {
-              userMap.set(u.discordId, { username: u.globalName || u.username, avatar: u.image });
+              userMap.set(u.discordId, { username: u.username, avatar: u.avatar });
             }
             for (const tx of txs) {
               const user = userMap.get(tx.discordId);
@@ -81,9 +84,9 @@ export default function TransactionExplorerPage() {
 
   useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
 
-  const reverseTransaction = async (txId: string) => {
-    const reason = prompt('Reason for reversal:');
+  const reverseTransaction = async (txId: string, reason: string) => {
     if (!reason || reason.trim().length < 3) return;
+    setPendingReverse(null);
     setReversingId(txId);
     setReverseResult('');
     try {
@@ -106,7 +109,7 @@ export default function TransactionExplorerPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Transaction Explorer</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">🔍</span> Transaction Explorer</h1>
         <p className="admin-page-subtitle">{total.toLocaleString()} total transactions</p>
       </div>
 
@@ -114,7 +117,7 @@ export default function TransactionExplorerPage() {
         <input
           type="text"
           className="admin-input"
-          placeholder="Filter by Discord ID..."
+          placeholder="🔍 Filter by Discord ID..."
           value={userId}
           onChange={(e) => { setUserId(e.target.value); setPage(1); }}
           style={{ maxWidth: 240 }}
@@ -122,7 +125,7 @@ export default function TransactionExplorerPage() {
         <input
           type="text"
           className="admin-input"
-          placeholder="Filter by type..."
+          placeholder="🔍 Filter by type..."
           value={typeFilter}
           onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
           style={{ maxWidth: 200 }}
@@ -136,7 +139,7 @@ export default function TransactionExplorerPage() {
       )}
 
       {loading ? (
-        <div className="admin-loading"><div className="admin-spinner" />Loading transactions...</div>
+        <SkeletonTable rows={8} />
       ) : (
         <div className="admin-table-container">
           <table className="admin-table">
@@ -183,10 +186,10 @@ export default function TransactionExplorerPage() {
                       <button
                         className="admin-btn admin-btn-danger"
                         style={{ padding: '2px 8px', fontSize: 11 }}
-                        onClick={() => reverseTransaction(t._id)}
+                        onClick={() => setPendingReverse({ tx: t, reason: '' })}
                         disabled={reversingId === t._id}
                       >
-                        {reversingId === t._id ? '...' : 'Reverse'}
+                        {reversingId === t._id ? '...' : '↩️ Reverse'}
                       </button>
                     )}
                   </td>
@@ -205,6 +208,59 @@ export default function TransactionExplorerPage() {
           )}
         </div>
       )}
+
+      <AdminLightbox
+        isOpen={!!pendingReverse}
+        onClose={() => setPendingReverse(null)}
+        title="Reverse Transaction"
+        size="sm"
+      >
+        {pendingReverse && (
+          <div style={{ padding: '16px 20px' }}>
+            <div style={{ marginBottom: '16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>User:</strong> {pendingReverse.tx.username || pendingReverse.tx.discordId}
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>Type:</strong> {pendingReverse.tx.type}
+              </div>
+              <div>
+                <strong>Amount:</strong>{' '}
+                <span style={{ color: pendingReverse.tx.amount >= 0 ? 'var(--common)' : '#f43f5e', fontWeight: 600 }}>
+                  {pendingReverse.tx.amount >= 0 ? '+' : ''}{pendingReverse.tx.amount?.toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              📝 Reason for reversal
+            </label>
+            <textarea
+              className="admin-input"
+              value={pendingReverse.reason}
+              onChange={(e) => setPendingReverse({ ...pendingReverse, reason: e.target.value })}
+              placeholder="Explain why this transaction is being reversed (min 3 characters)"
+              rows={3}
+              autoFocus
+              style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit', fontSize: '13px' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+              <button
+                className="admin-btn admin-btn-ghost"
+                onClick={() => setPendingReverse(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="admin-btn admin-btn-danger"
+                onClick={() => reverseTransaction(pendingReverse.tx._id, pendingReverse.reason)}
+                disabled={pendingReverse.reason.trim().length < 3}
+              >
+                Confirm Reversal
+              </button>
+            </div>
+          </div>
+        )}
+      </AdminLightbox>
     </>
   );
 }

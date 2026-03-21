@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import { E } from '@/components/edit-mode/EditableText';
 
 interface SelunaItem {
   id: string;
@@ -222,7 +223,7 @@ export default function VendorSeluna({ balance, hasDebt, isLoggedIn }: VendorSel
         {shop.active ? (
           <>
             <span className="seluna-status-dot open" />
-            <span className="seluna-status-label">{t('seluna.shopOpen')}</span>
+            <span className="seluna-status-label"><E ns="bazaarPage" k="seluna.shopOpen">{t('seluna.shopOpen')}</E></span>
             {countdownText && (
               <span className="seluna-countdown">
                 {t('seluna.closesIn', { time: countdownText })}
@@ -232,7 +233,7 @@ export default function VendorSeluna({ balance, hasDebt, isLoggedIn }: VendorSel
         ) : (
           <>
             <span className="seluna-status-dot closed" />
-            <span className="seluna-status-label">{t('seluna.shopClosed')}</span>
+            <span className="seluna-status-label"><E ns="bazaarPage" k="seluna.shopClosed">{t('seluna.shopClosed')}</E></span>
             {shop.nextOpenAt && (
               <span className="seluna-next-open">
                 {t('seluna.returnsIn', {
@@ -247,7 +248,7 @@ export default function VendorSeluna({ balance, hasDebt, isLoggedIn }: VendorSel
       {/* Closed state atmospheric message */}
       {!shop.active && (
         <div className="seluna-closed-message">
-          <p>{t('seluna.returnsMessage')}</p>
+          <p><E ns="bazaarPage" k="seluna.returnsMessage">{t('seluna.returnsMessage')}</E></p>
         </div>
       )}
 

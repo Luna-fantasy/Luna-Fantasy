@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { getExpiredAuctions, createNotification, generateNotificationId } from '@/lib/bazaar/marketplace-ops';
 import { addCardToUser } from '@/lib/bazaar/card-ops';
 import { processAuctionResolution } from '../resolve/route';
@@ -10,9 +11,12 @@ import clientPromise from '@/lib/mongodb';
  * Protected by secret header. Run every 5 minutes.
  */
 export async function POST(request: Request) {
-  // Verify cron secret
+  // Verify cron secret (timing-safe comparison)
   const cronSecret = request.headers.get('x-cron-secret');
-  if (cronSecret !== process.env.CRON_SECRET) {
+  const expected = process.env.CRON_SECRET;
+  if (!expected || !cronSecret ||
+      Buffer.byteLength(cronSecret) !== Buffer.byteLength(expected) ||
+      !timingSafeEqual(Buffer.from(cronSecret), Buffer.from(expected))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

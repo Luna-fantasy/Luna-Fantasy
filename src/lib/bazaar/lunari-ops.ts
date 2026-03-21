@@ -83,7 +83,10 @@ export async function deductLunari(
   const db = await getDb();
   const collection = db.collection('points');
 
-  // Atomic numeric deduction — balance field is always a number
+  // Atomic numeric deduction — requires balance to be numeric BSON type.
+  // Legacy string-type balances won't match and return { success: false }.
+  // This is by-design: both bots convert balances to numbers on write,
+  // so string balances only exist for users inactive since the migration.
   const result = await collection.findOneAndUpdate(
     { _id: discordId as any, balance: { $type: 'number', $gte: amount } },
     { $inc: { balance: -amount } },
@@ -154,9 +157,9 @@ export async function addToBankReserve(amount: number): Promise<void> {
  */
 export async function checkDebt(discordId: string): Promise<boolean> {
   const db = await getDb();
-  const debtDoc = await db.collection('system').findOne({ _id: `debt_${discordId}` as any });
-  const debt = debtDoc?.value || 0;
-  return typeof debt === 'number' ? debt > 0 : 0 > 0;
+  const debtDoc = await db.collection('debt').findOne({ _id: discordId as any });
+  const debt = debtDoc?.amount || 0;
+  return typeof debt === 'number' ? debt > 0 : false;
 }
 
 /**

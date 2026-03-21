@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
+import { hasMongoOperator, getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
@@ -13,7 +14,7 @@ const ALLOWED_SECTIONS = new Set([
   'thread_welcome', 'panel_title', 'panel_description', 'panel_image',
   'system_prompt', 'privileged_roles', 'lunarian_role_id', 'lunarian_access',
   'all_known_roles', 'image_generation_model', 'sage_prefix', 'owner_role_ids',
-  'image_gen_roles',
+  'image_gen_roles', 'lore_text', 'channel_context_limit', 'thread_history_limit',
 ]);
 
 // Maps dashboard section names → bot_config document _id + data field path
@@ -37,6 +38,9 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   sage_prefix:        { docId: 'sage_settings', field: 'sage_prefix' },
   owner_role_ids:     { docId: 'sage_settings', field: 'owner_role_ids' },
   image_gen_roles:    { docId: 'sage_settings', field: 'image_gen_roles' },
+  lore_text:          { docId: 'sage_lore', field: 'text' },
+  channel_context_limit: { docId: 'sage_settings', field: 'channel_context_limit' },
+  thread_history_limit:  { docId: 'sage_settings', field: 'thread_history_limit' },
 };
 
 export async function GET() {
@@ -48,10 +52,11 @@ export async function GET() {
     const col = client.db(DB_NAME).collection('bot_config');
 
     // Load all Sage config documents in parallel
-    const [settings, systemPrompt, privileges] = await Promise.all([
+    const [settings, systemPrompt, privileges, loreDoc] = await Promise.all([
       col.findOne({ _id: 'sage_settings' as any }),
       col.findOne({ _id: 'sage_system_prompt' as any }),
       col.findOne({ _id: 'sage_privileges' as any }),
+      col.findOne({ _id: 'sage_lore' as any }),
     ]);
 
     const sections: Record<string, any> = {};
@@ -72,11 +77,18 @@ export async function GET() {
       sections.sage_prefix = settings.data.sage_prefix ?? null;
       sections.owner_role_ids = settings.data.owner_role_ids ?? null;
       sections.image_gen_roles = settings.data.image_gen_roles ?? null;
+      sections.channel_context_limit = settings.data.channel_context_limit ?? null;
+      sections.thread_history_limit = settings.data.thread_history_limit ?? null;
     }
 
     // System prompt
     if (systemPrompt?.data) {
       sections.system_prompt = systemPrompt.data.prompt;
+    }
+
+    // Lore
+    if (loreDoc?.data) {
+      sections.lore_text = loreDoc.data.text ?? '';
     }
 
     // Privileges
@@ -119,7 +131,7 @@ export async function PUT(req: NextRequest) {
     if (json.length > 500_000) {
       return NextResponse.json({ error: 'Config value too large' }, { status: 400 });
     }
-    if (json.includes('"$')) {
+    if (hasMongoOperator(value)) {
       return NextResponse.json({ error: 'Invalid characters in config value' }, { status: 400 });
     }
   }
@@ -163,10 +175,10 @@ export async function PUT(req: NextRequest) {
       metadata: { section, docId: mapping.docId },
       before,
       after: value,
-      ip: req.headers.get('x-forwarded-for') ?? 'unknown',
+      ip: getClientIp(req),
     });
 
-    return NextResponse.json({ saved: true });
+    return NextResponse.json({ success: true, saved: true });
   } catch (err: any) {
     console.error('[admin/config/sage PUT] Error:', err);
     return NextResponse.json({ error: 'Failed to write config' }, { status: 500 });

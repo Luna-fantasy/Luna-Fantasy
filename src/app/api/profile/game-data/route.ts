@@ -60,12 +60,12 @@ export async function GET(request: Request) {
         db.collection("points").findOne({ _id: discordId as any }),
         db.collection("levels").findOne({ _id: discordId as any }),
         db.collection("game_wins").findOne({ id: discordId }),
-        db.collection("nemesis").find({ _id: { $regex: discordId } as any }).toArray(),
+        db.collection("nemesis").find({ $or: [{ _id: { $regex: `^${discordId}_` } as any }, { _id: { $regex: `_${discordId}$` } as any }] }).toArray(),
         db.collection("inventory").findOne({ _id: discordId as any }),
         db.collection("tickets").findOne({ _id: discordId as any }),
         db.collection("chat_stats").findOne({ _id: `universal_chat_${todayKey}` as any }),
         db.collection("chat_stats").findOne({ _id: `universal_voice_${todayKey}` as any }),
-        db.collection("cards_config").find({}).toArray(),
+        db.collection("cards_config").find({}).limit(500).toArray(),
         db.collection("badges").findOne({ _id: discordId as any }),
         db.collection("profiles").findOne({ _id: discordId as any }),
       ]);
@@ -209,16 +209,17 @@ export async function GET(request: Request) {
       chatActivity = { messagesToday, voiceMinutesToday };
     } catch {}
 
-    // Card catalog — cards_config: one doc per rarity, items is native array
+    // Card catalog — cards_config: one doc per rarity (_id = rarity name), items is native array
     const cardCatalog: CatalogCard[] = [];
     for (const doc of catalogDocs) {
+      const docRarity = String(doc._id).toLowerCase();
       const parsed = Array.isArray(doc.items) ? doc.items : [];
       if (parsed.length === 0) continue;
       for (const c of parsed) {
         cardCatalog.push({
           id: c.name,
           name: String(c.name ?? ""),
-          rarity: (c.rarity ?? "COMMON").toLowerCase(),
+          rarity: docRarity,
           imageUrl: c.imageUrl ?? "",
           attack: c.attack ?? 0,
           weight: c.weight,

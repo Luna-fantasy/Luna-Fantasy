@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import { E } from '@/components/edit-mode/EditableText';
 
 interface MellsItem {
   id: string;
@@ -190,7 +191,7 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn, userAvatar, 
             <circle cx="12" cy="10" r="3" />
             <path d="M7 21v-1a5 5 0 0 1 10 0v1" />
           </svg>
-          {t('mells.profileTab')}
+          <E ns="bazaarPage" k="mells.profileTab">{t('mells.profileTab')}</E>
           <span className="mells-tab-count">{profileCount}</span>
         </button>
         <button
@@ -201,7 +202,7 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn, userAvatar, 
             <rect x="2" y="7" width="20" height="5" rx="1" />
             <path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" />
           </svg>
-          {t('mells.rankTab')}
+          <E ns="bazaarPage" k="mells.rankTab">{t('mells.rankTab')}</E>
           <span className="mells-tab-count">{rankCount}</span>
         </button>
       </div>
@@ -245,7 +246,7 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn, userAvatar, 
                   <span className="mells-price-value">
                     {formatNumber(item.price)}
                   </span>
-                  <span className="mells-price-currency">{t('lunariLabel')}</span>
+                  <span className="mells-price-currency"><E ns="bazaarPage" k="lunariLabel">{t('lunariLabel')}</E></span>
                 </div>
 
                 {/* Owned: Equip/Unequip button */}
@@ -317,7 +318,7 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn, userAvatar, 
               </svg>
             </button>
 
-            <p className="mells-preview-label">{t('mells.previewTitle')}</p>
+            <p className="mells-preview-label"><E ns="bazaarPage" k="mells.previewTitle">{t('mells.previewTitle')}</E></p>
 
             {/* Mini Profile Card */}
             <div className="mells-preview-card">

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type { TicketPackage, TicketPurchaseResponse } from '@/types/bazaar';
 import LunariIcon from '@/components/LunariIcon';
+import { E } from '@/components/edit-mode/EditableText';
 
 interface VendorZoldarProps {
   packages: TicketPackage[];
@@ -62,9 +63,9 @@ export default function VendorZoldar({ packages, balance, tickets, hasDebt, isLo
   return (
     <div className="vendor-section">
       <div className="vendor-header">
-        <h2 className="vendor-name">{t('zoldar.name')}</h2>
-        <p className="vendor-title">{t('zoldar.title')}</p>
-        <p className="vendor-desc">{t('zoldar.desc')}</p>
+        <h2 className="vendor-name"><E ns="bazaarPage" k="zoldar.name">{t('zoldar.name')}</E></h2>
+        <p className="vendor-title"><E ns="bazaarPage" k="zoldar.title">{t('zoldar.title')}</E></p>
+        <p className="vendor-desc"><E ns="bazaarPage" k="zoldar.desc">{t('zoldar.desc')}</E></p>
       </div>
 
       {/* Current tickets */}
@@ -72,7 +73,7 @@ export default function VendorZoldar({ packages, balance, tickets, hasDebt, isLo
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
           <path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V9z" />
         </svg>
-        <span>{t('zoldar.currentTickets')}: <strong>{tickets}</strong></span>
+        <span><E ns="bazaarPage" k="zoldar.currentTickets">{t('zoldar.currentTickets')}</E>: <strong>{tickets}</strong></span>
       </div>
 
       {error && (
@@ -120,11 +121,11 @@ export default function VendorZoldar({ packages, balance, tickets, hasDebt, isLo
                 {buying === pkg.id ? (
                   <span className="luckbox-spinner" />
                 ) : hasDebt ? (
-                  t('inDebt')
+                  <E ns="bazaarPage" k="inDebt">{t('inDebt')}</E>
                 ) : !canAfford ? (
-                  t('insufficientBalance')
+                  <E ns="bazaarPage" k="insufficientBalance">{t('insufficientBalance')}</E>
                 ) : (
-                  t('zoldar.buyTickets')
+                  <E ns="bazaarPage" k="zoldar.buyTickets">{t('zoldar.buyTickets')}</E>
                 )}
               </button>
             </div>

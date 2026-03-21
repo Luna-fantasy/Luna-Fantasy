@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import { E } from '@/components/edit-mode/EditableText';
 
 interface BrimorItem {
   id: string;

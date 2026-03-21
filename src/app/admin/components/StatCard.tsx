@@ -8,11 +8,12 @@ interface StatCardProps {
   trend?: string;
   trendType?: 'positive' | 'negative' | 'neutral';
   href?: string;
+  tooltip?: string;
 }
 
-export default function StatCard({ label, value, icon, color = 'cyan', trend, trendType = 'neutral', href }: StatCardProps) {
+export default function StatCard({ label, value, icon, color = 'cyan', trend, trendType = 'neutral', href, tooltip }: StatCardProps) {
   const card = (
-    <div className={`admin-stat-card${href ? ' admin-stat-card-link' : ''}`}>
+    <div className={`admin-stat-card${href ? ' admin-stat-card-link' : ''}`} data-tooltip={tooltip || undefined}>
       <div className="admin-stat-header">
         <span className="admin-stat-label">{label}</span>
         <div className={`admin-stat-icon ${color}`}>{icon}</div>

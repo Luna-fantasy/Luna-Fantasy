@@ -6,9 +6,10 @@ import AdminLightbox from '../components/AdminLightbox';
 import Link from 'next/link';
 
 // Memoized card table -- prevents re-render when modal inputs change
-const CardTable = memo(function CardTable({ items, selectedRarity, onEdit, onDelete }: {
+const CardTable = memo(function CardTable({ items, selectedRarity, totalWeight, onEdit, onDelete }: {
   items: CardItem[];
   selectedRarity: string;
+  totalWeight: number;
   onEdit: (index: number, card: CardItem) => void;
   onDelete: (index: number, name: string) => void;
 }) {
@@ -27,7 +28,7 @@ const CardTable = memo(function CardTable({ items, selectedRarity, onEdit, onDel
             <th>#</th>
             <th>Card</th>
             <th>Attack</th>
-            <th>Weight</th>
+            <th>Drop %</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -47,7 +48,7 @@ const CardTable = memo(function CardTable({ items, selectedRarity, onEdit, onDel
                 </div>
               </td>
               <td>{card.attack}</td>
-              <td>{card.weight}</td>
+              <td>{totalWeight > 0 ? ((card.weight / totalWeight) * 100).toFixed(1) + '%' : '\u2014'}</td>
               <td>
                 <div style={{ display: 'flex', gap: '4px' }}>
                   <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => onEdit(i, card)}>Edit</button>
@@ -316,6 +317,10 @@ export default function CardsPage() {
     const term = search.toLowerCase();
     return currentItems.filter((card) => card.name.toLowerCase().includes(term));
   }, [currentItems, search]);
+
+  const totalWeight = useMemo(() => {
+    return currentItems.reduce((sum, card) => sum + card.weight, 0);
+  }, [currentItems]);
 
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -784,7 +789,7 @@ export default function CardsPage() {
     return (
       <>
         <div className="admin-page-header">
-          <h1 className="admin-page-title">Cards</h1>
+          <h1 className="admin-page-title"><span className="emoji-float">🃏</span> Cards</h1>
           <p className="admin-page-subtitle">Card catalog editor and distribution stats</p>
         </div>
         <div className="admin-loading"><div className="admin-spinner" />Loading card data...</div>
@@ -795,7 +800,7 @@ export default function CardsPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title">Cards</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">🃏</span> Cards</h1>
         <p className="admin-page-subtitle">Card catalog editor and distribution stats</p>
       </div>
 
@@ -868,7 +873,7 @@ export default function CardsPage() {
             <input
               type="text"
               className="admin-form-input"
-              placeholder="Search cards by name..."
+              placeholder="🔍 Search cards by name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ maxWidth: '360px' }}
@@ -890,6 +895,7 @@ export default function CardsPage() {
           <CardTable
             items={filteredItems}
             selectedRarity={selectedRarity}
+            totalWeight={totalWeight}
             onEdit={openEditModal}
             onDelete={(i, name) => { setDeleteTarget({ index: i, name }); setDeleteTypedName(''); }}
           />
@@ -960,7 +966,7 @@ export default function CardsPage() {
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Name</label>
+              <label className="admin-form-label">✏️ Name</label>
               <input
                 className="admin-form-input"
                 value={editName}
@@ -970,7 +976,7 @@ export default function CardsPage() {
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Attack</label>
+              <label className="admin-form-label">⚔️ Attack</label>
               <input
                 type="number"
                 className="admin-form-input"
@@ -978,10 +984,13 @@ export default function CardsPage() {
                 onChange={(e) => setEditAttack(e.target.value)}
                 min="0"
               />
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Base attack power for this card
+              </p>
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Weight</label>
+              <label className="admin-form-label">🎯 Weight</label>
               <input
                 type="number"
                 className="admin-form-input"
@@ -990,8 +999,11 @@ export default function CardsPage() {
                 step="0.01"
                 min="0"
               />
+              <p style={{ fontSize: '12px', color: 'var(--accent-primary)', marginTop: '4px', fontWeight: 600 }}>
+                Drop rate: {totalWeight > 0 ? ((Number(editWeight) / (totalWeight - (editCard?.card.weight ?? 0) + Number(editWeight))) * 100).toFixed(1) : '0.0'}%
+              </p>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Higher weight = more common drop.
+                Higher weight = more common drop. The % is calculated automatically
               </p>
             </div>
 
@@ -1000,7 +1012,7 @@ export default function CardsPage() {
                 Cancel
               </button>
               <button className="admin-btn admin-btn-primary" onClick={handleEditSave} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? 'Saving...' : '💾 Save Changes'}
               </button>
             </div>
           </>
@@ -1061,7 +1073,7 @@ export default function CardsPage() {
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Image URL (optional, ignored if uploading)</label>
+              <label className="admin-form-label">🖼️ Image URL (optional, ignored if uploading)</label>
               <input
                 className="admin-form-input"
                 value={newImageUrl}
@@ -1072,7 +1084,7 @@ export default function CardsPage() {
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Name</label>
+              <label className="admin-form-label">✏️ Name</label>
               <input
                 className="admin-form-input"
                 value={newName}
@@ -1082,7 +1094,7 @@ export default function CardsPage() {
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Attack</label>
+              <label className="admin-form-label">⚔️ Attack</label>
               <input
                 type="number"
                 className="admin-form-input"
@@ -1090,10 +1102,13 @@ export default function CardsPage() {
                 onChange={(e) => setNewAttack(e.target.value)}
                 min="0"
               />
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Base attack power for this card
+              </p>
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Weight</label>
+              <label className="admin-form-label">🎯 Weight</label>
               <input
                 type="number"
                 className="admin-form-input"
@@ -1102,6 +1117,9 @@ export default function CardsPage() {
                 step="0.01"
                 min="0"
               />
+              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Higher weight = more common drop. The % is calculated automatically
+              </p>
             </div>
 
             {/* Live card preview */}
@@ -1153,10 +1171,10 @@ export default function CardsPage() {
                 Cancel
               </button>
               <button className="admin-btn admin-btn-ghost" onClick={() => handleAddCard(false)} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Only'}
+                {saving ? 'Saving...' : '💾 Save Only'}
               </button>
               <button className="admin-btn admin-btn-primary" onClick={() => handleAddCard(true)} disabled={saving}>
-                {saving ? 'Deploying...' : 'Save & Deploy'}
+                {saving ? 'Deploying...' : '💾 Save & Deploy'}
               </button>
             </div>
       </AdminLightbox>
@@ -1228,7 +1246,7 @@ export default function CardsPage() {
             </div>
 
             <div className="admin-form-group">
-              <label className="admin-form-label">Image URL (optional, ignored if uploading)</label>
+              <label className="admin-form-label">🖼️ Image URL (optional, ignored if uploading)</label>
               <input
                 className="admin-form-input"
                 value={fwImageUrl}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getTicketPackage } from '@/lib/bazaar/stone-config';
+import { getTicketShopConfig } from '@/lib/bazaar/shop-config';
 import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
 import { addTickets } from '@/lib/bazaar/ticket-ops';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
@@ -36,9 +36,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'You have outstanding debt. Pay your debts first.' }, { status: 403 });
     }
 
-    // 2. Input validation
+    // 2. Input validation — look up from DB-backed config
     const { packageId } = await request.json();
-    const pkg = getTicketPackage(packageId);
+    const allPackages = await getTicketShopConfig();
+    const pkg = allPackages.find((p) => p.id === packageId);
     if (!pkg) {
       return NextResponse.json({ error: 'Invalid package' }, { status: 400 });
     }
