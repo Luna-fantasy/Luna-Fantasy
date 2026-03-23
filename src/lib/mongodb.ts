@@ -9,16 +9,13 @@ const uri = process.env.MONGODB_URI;
 let clientPromise: Promise<MongoClient>;
 
 if (uri) {
-  if (process.env.NODE_ENV === "development") {
-    if (!globalWithMongo._mongoClientPromise) {
-      const client = new MongoClient(uri);
-      globalWithMongo._mongoClientPromise = client.connect();
-    }
-    clientPromise = globalWithMongo._mongoClientPromise;
-  } else {
-    const client = new MongoClient(uri);
-    clientPromise = client.connect();
+  // Use global cache in both dev and production.
+  // In dev it survives hot-reload; on Railway (persistent server) it ensures a single client.
+  if (!globalWithMongo._mongoClientPromise) {
+    const client = new MongoClient(uri, { maxPoolSize: 10 });
+    globalWithMongo._mongoClientPromise = client.connect();
   }
+  clientPromise = globalWithMongo._mongoClientPromise;
 } else {
   // During build, MONGODB_URI may not be set. Provide a deferred promise
   // that will only reject if actually awaited without a proper URI.
