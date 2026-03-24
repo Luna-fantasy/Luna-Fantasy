@@ -1,6 +1,6 @@
 # Luna Fantasy — Project Instructions
 
-> **RSS Version**: 1.1 | **Last updated**: 2026-03-12
+> **RSS Version**: 1.2 | **Last updated**: 2026-03-22
 > **Parent config**: `~/CLAUDE.md` (read that first for ecosystem context)
 
 ## Overview
@@ -75,5 +75,20 @@ Key files:
 
 ## Deployment
 
-Website is NOT yet deployed to production. All changes are local only.
-When ready, pushing to git will trigger deployment (last step).
+Website is deployed on **Railway** (https://railway.app).
+
+- **Auto-deploy**: Pushing to git triggers an automatic Railway build and deploy
+- **No staging**: Every push goes straight to production — be careful
+- **Environment variables**: Configured in Railway dashboard (NOT in `.env.local` for production)
+  - 15 env vars already configured
+  - 7 env vars pending manual entry: `ORACLE_BOT_TOKEN`, `TRANSACTION_WEBHOOK_KEY`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`
+- **Local development**: Uses `.env.local` for local env vars (gitignored)
+
+### Deployment Checklist
+
+Before pushing changes that go to production:
+1. Run `pnpm run build` locally — verify no build errors
+2. Run `pnpm run typecheck` — verify no type errors
+3. If you changed any API route, verify CSRF protection is still in place
+4. If you changed any MongoDB query patterns, verify they match what Butler/Jester write
+5. If you added new env vars, tell the user to add them in Railway dashboard first

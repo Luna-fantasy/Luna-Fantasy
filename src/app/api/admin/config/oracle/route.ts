@@ -11,7 +11,7 @@ const DB_NAME = 'Database';
 
 const ALLOWED_SECTIONS = new Set([
   'setup', 'games_trivia', 'games_sowalef', 'games_settings',
-  'content_welcome', 'content_panel', 'content_buttons', 'content_aura', 'content_whisper',
+  'content_welcome', 'content_panel', 'content_buttons', 'content_aura', 'content_whisper', 'content_expiry',
   'vip', 'assets',
 ]);
 
@@ -26,6 +26,7 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   content_buttons: { docId: 'oracle_vc_content', field: 'buttonLabels' },
   content_aura:    { docId: 'oracle_vc_content', field: '_aura' },
   content_whisper: { docId: 'oracle_vc_content', field: 'whisper' },
+  content_expiry:  { docId: 'oracle_vc_content', field: 'expiryTitles' },
   vip:             { docId: 'oracle_vc_vip', field: '_root' },
   assets:          { docId: 'oracle_vc_assets', field: '_root' },
 };
@@ -33,6 +34,10 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
 export async function GET() {
   const auth = await requireMastermindApi();
   if (!auth.authorized) return auth.response;
+
+  const adminId = auth.session.user?.discordId ?? '';
+  const { allowed } = checkRateLimit('oracle_config_read', adminId, 15, 60_000);
+  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
 
   try {
     const client = await clientPromise;
@@ -49,37 +54,59 @@ export async function GET() {
 
     const sections: Record<string, any> = {};
 
-    // Setup
-    if (setup?.data) sections.setup = setup.data;
+    // Setup — default to empty config if not seeded
+    const setupData = setup?.data ?? {
+      hubChannels: [], vipCategoryId: '', logChannelId: '', staffRoleIds: [],
+      maxTempRoomsPerUser: 1, maxVipRoomsPerUser: 1, gracePeriodMs: 10000,
+      welcomeCooldownMs: 60000, challengesEnabled: true, challengeIntervalMs: 1800000,
+      challengeMinMembers: 3, auraUpdateIntervalMs: 60000, panelAutoRefreshMs: 30000,
+    };
+    sections.setup = setupData;
 
-    // Games
-    if (games?.data) {
-      if (games.data.trivia) sections.games_trivia = games.data.trivia;
-      if (games.data.sowalef) sections.games_sowalef = games.data.sowalef;
-      // games_settings is everything except trivia and sowalef
-      const { trivia, sowalef, ...settings } = games.data;
-      if (Object.keys(settings).length > 0) sections.games_settings = settings;
+    // Games — always return arrays (empty if not seeded)
+    const gamesData = games?.data;
+    sections.games_trivia = gamesData?.trivia ?? [];
+    sections.games_sowalef = gamesData?.sowalef ?? [];
+    if (gamesData) {
+      const { trivia, sowalef, ...settings } = gamesData;
+      sections.games_settings = settings;
+    } else {
+      sections.games_settings = {
+        mathOps: { enabled: ['add', 'subtract', 'multiply', 'divide', 'square', 'cube', 'percent', 'multistep_add', 'multistep_sub', 'order_of_ops'], rewardMin: 5, rewardMax: 10, timeoutMs: 20000 },
+        triviaReward: { autoDropMin: 50, autoDropMax: 200, miniMin: 5, miniMax: 10 },
+        triviaTimeoutMs: 30000, triviaSessionSize: 10,
+        streakBonuses: { '3': 5, '5': 10, '10': 25 },
+        quickReact: { rewardMin: 5, rewardMax: 10, delayMin: 3000, delayMax: 8000, timeoutMs: 10000 },
+        emojiRaceEmojis: ['🌙', '⭐', '🔮', '💎', '🗡️', '🛡️', '👑', '🔥'],
+        sowalefSessionSize: 10, sowalefDebounceMs: 5000,
+        gameCooldownMs: 10000, endCooldownMs: 5000,
+        auraRewardMultipliers: { dormant: 0.5, flickering: 0.75, glowing: 1.0, radiant: 1.5, blazing: 2.0 },
+        bossChallenge: { enabled: true, rewardMin: 500, rewardMax: 1000, cooldownHours: 24, questionCount: 5 },
+      };
     }
 
-    // Content
-    if (content?.data) {
-      if (content.data.welcomeGreetings) sections.content_welcome = content.data.welcomeGreetings;
-      if (content.data.panelText) sections.content_panel = content.data.panelText;
-      if (content.data.buttonLabels) sections.content_buttons = content.data.buttonLabels;
-      // content_aura is combined auraTiers + auraThresholds + auraWeights
-      const aura: Record<string, any> = {};
-      if (content.data.auraTiers) aura.auraTiers = content.data.auraTiers;
-      if (content.data.auraThresholds) aura.auraThresholds = content.data.auraThresholds;
-      if (content.data.auraWeights) aura.auraWeights = content.data.auraWeights;
-      if (Object.keys(aura).length > 0) sections.content_aura = aura;
-      if (content.data.whisper) sections.content_whisper = content.data.whisper;
-    }
+    // Content — always return all sub-sections
+    const contentData = content?.data;
+    sections.content_welcome = contentData?.welcomeGreetings ?? [];
+    sections.content_panel = contentData?.panelText ?? { line1: '', line2: '', line3: '', line4: '' };
+    sections.content_buttons = contentData?.buttonLabels ?? {};
+    sections.content_aura = {
+      auraTiers: contentData?.auraTiers ?? { dormant: '💤 نايمة', flickering: '✨ تتحرك', glowing: '🌙 دافية', radiant: '💎 حامية', blazing: '🔥 مشتعلة!' },
+      auraThresholds: contentData?.auraThresholds ?? { flickering: 10, glowing: 30, radiant: 60, blazing: 90 },
+      auraWeights: contentData?.auraWeights ?? { warmthPerVisitor: 3, warmthMax: 25, energyDivisor: 10, energyMax: 25, harmonyPerMin: 5, harmonyMax: 25, loyaltyMax: 25 },
+    };
+    sections.content_whisper = contentData?.whisper ?? { cooldownMs: 60000, colors: [], ansiColors: [], modalTitle: '', modalPlaceholder: '', autoCleanupMs: 300000 };
+    sections.content_expiry = contentData?.expiryTitles ?? {
+      trivia: '🧠 تحدي المعرفة — انتهى الوقت!', math: '🧮 حل المسألة — انتهى الوقت!',
+      emoji_race: '🏃 سباق الإيموجي — انتهى الوقت!', quickreact: '⚡ سرعة رد فعل — انتهى الوقت!',
+      endurance: '💪 تحدي التحمّل — انتهى الوقت!',
+    };
 
-    // VIP
+    // VIP (deprecated — kept for backwards compat)
     if (vip?.data) sections.vip = vip.data;
 
     // Assets
-    if (assets?.data) sections.assets = assets.data;
+    sections.assets = assets?.data ?? { panelBannerUrl: '', emojis: {} };
 
     // Collect most recent updatedAt/updatedBy across all config documents
     const allDocs = [setup, games, content, vip, assets];

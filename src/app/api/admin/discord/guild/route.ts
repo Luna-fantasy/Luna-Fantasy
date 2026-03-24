@@ -94,13 +94,13 @@ async function fetchGuildData(token: string): Promise<GuildData> {
   }
 
   const channels: GuildChannel[] = allChannels
-    .filter((ch: any) => ch.type === 0 || ch.type === 2 || ch.type === 5 || ch.type === 15)
+    .filter((ch: any) => ch.type === 0 || ch.type === 2 || ch.type === 4 || ch.type === 5 || ch.type === 15)
     .map((ch: any) => ({
       id: ch.id,
       name: ch.name,
       type: ch.type,
       parentId: ch.parent_id ?? null,
-      parentName: ch.parent_id ? categoryMap[ch.parent_id] ?? 'Uncategorized' : 'No Category',
+      parentName: ch.type === 4 ? 'Categories' : (ch.parent_id ? categoryMap[ch.parent_id] ?? 'Uncategorized' : 'No Category'),
       position: ch.position ?? 0,
     }))
     .sort((a: GuildChannel, b: GuildChannel) => {

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useGuildData, type GuildRole } from '../utils/useGuildData';
 
 interface RolePickerProps {
@@ -24,25 +25,48 @@ export default function RolePicker({
   const { roles, loading, error } = useGuildData();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
   const wrapRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const ids = multi ? (Array.isArray(value) ? value : [value].filter(Boolean)) : [];
   const singleId = multi ? '' : (Array.isArray(value) ? value[0] ?? '' : value ?? '');
 
-  // Close on outside click
+  // Calculate position when opening
+  useLayoutEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+  }, [open]);
+
+  // Focus search
+  useEffect(() => {
+    if (open) setTimeout(() => searchRef.current?.focus(), 0);
+  }, [open]);
+
+  // Close on outside click (check both wrapper AND portal dropdown)
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      const inWrap = wrapRef.current?.contains(target);
+      const inDrop = dropRef.current?.contains(target);
+      if (!inWrap && !inDrop) setOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
-  // Focus search when opening
+  // Close on scroll
   useEffect(() => {
-    if (open) searchRef.current?.focus();
+    if (!open) return;
+    const handleScroll = () => setOpen(false);
+    const scrollParent = document.querySelector('.admin-content') || window;
+    scrollParent.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollParent.removeEventListener('scroll', handleScroll);
   }, [open]);
 
   const roleMap = new Map<string, GuildRole>();
@@ -82,12 +106,67 @@ export default function RolePicker({
     }
   }
 
+  function renderPortalDropdown() {
+    return createPortal(
+      <div
+        ref={dropRef}
+        style={{
+          position: 'fixed',
+          top: pos.top,
+          left: pos.left,
+          width: Math.max(pos.width, 240),
+          zIndex: 999999,
+        }}
+      >
+        <div className="admin-picker-dropdown">
+          <input
+            ref={searchRef}
+            type="text"
+            className="admin-picker-search"
+            placeholder="Search roles..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); setSearch(''); } }}
+          />
+          <div className="admin-picker-list">
+            {error ? (
+              <div className="admin-picker-empty" style={{ color: '#f43f5e' }}>Failed to load roles.</div>
+            ) : loading ? (
+              <div className="admin-picker-empty">Loading roles...</div>
+            ) : filtered.length === 0 ? (
+              <div className="admin-picker-empty">No roles found</div>
+            ) : (
+              filtered.map((r) => {
+                const selected = multi ? ids.includes(r.id) : singleId === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className={`admin-picker-item ${selected ? 'admin-picker-item-selected' : ''}`}
+                    onClick={() => handleSelect(r.id)}
+                  >
+                    <span className="admin-role-dot" style={{ background: roleColor(r.color) }} />
+                    <span className="admin-picker-item-name">{r.name}</span>
+                    {r.managed && <span className="admin-picker-badge">Bot</span>}
+                    {selected && <span className="admin-picker-check">&#10003;</span>}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
   // Compact mode (for ConfigTable cells)
   if (compact) {
     const resolved = singleId ? resolveRole(singleId) : null;
     return (
       <div ref={wrapRef} style={{ position: 'relative' }}>
         <button
+          ref={triggerRef}
           type="button"
           className={`admin-form-input admin-picker-trigger ${open ? 'admin-picker-open' : ''}`}
           onClick={() => setOpen(!open)}
@@ -102,56 +181,11 @@ export default function RolePicker({
             <span style={{ color: 'var(--text-muted)' }}>{placeholder || 'Select role'}</span>
           )}
         </button>
-        {open && renderDropdown()}
+        {open && renderPortalDropdown()}
       </div>
     );
   }
 
-  function renderDropdown() {
-    return (
-      <div className="admin-picker-dropdown">
-        <input
-          ref={searchRef}
-          type="text"
-          className="admin-picker-search"
-          placeholder="Search roles..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); setSearch(''); } }}
-        />
-        <div className="admin-picker-list">
-          {error ? (
-            <div className="admin-picker-empty" style={{ color: '#f43f5e' }}>
-              Failed to load roles. Check Discord API connection.
-            </div>
-          ) : loading ? (
-            <div className="admin-picker-empty">Loading roles...</div>
-          ) : filtered.length === 0 ? (
-            <div className="admin-picker-empty">No roles found</div>
-          ) : (
-            filtered.map((r) => {
-              const selected = multi ? ids.includes(r.id) : singleId === r.id;
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  className={`admin-picker-item ${selected ? 'admin-picker-item-selected' : ''}`}
-                  onClick={() => handleSelect(r.id)}
-                >
-                  <span className="admin-role-dot" style={{ background: roleColor(r.color) }} />
-                  <span className="admin-picker-item-name">{r.name}</span>
-                  {r.managed && <span className="admin-picker-badge">Bot</span>}
-                  {selected && <span className="admin-picker-check">&#10003;</span>}
-                </button>
-              );
-            })
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Full mode
   const displayIds = multi ? ids : (singleId ? [singleId] : []);
 
   return (
@@ -175,6 +209,7 @@ export default function RolePicker({
       )}
 
       <button
+        ref={triggerRef}
         type="button"
         className={`admin-picker-trigger ${open ? 'admin-picker-open' : ''}`}
         onClick={() => setOpen(!open)}
@@ -195,7 +230,7 @@ export default function RolePicker({
         <span className="admin-picker-arrow">&#9662;</span>
       </button>
 
-      {open && renderDropdown()}
+      {open && renderPortalDropdown()}
     </div>
   );
 }

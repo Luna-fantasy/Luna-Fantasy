@@ -15,7 +15,8 @@ export async function GET() {
     const [activeRooms, hallAura, hallVisitors, topUsers, totalStats] = await Promise.all([
       // Active rooms
       db.collection('vc_rooms').find({}).project({
-        _id: 1, name: 1, ownerId: 1, type: 1, 'aura.tier': 1, 'aura.score': 1, createdAt: 1,
+        _id: 1, name: 1, ownerId: 1, type: 1, 'aura.tier': 1, 'aura.score': 1,
+        memberCount: 1, isLocked: 1, isHidden: 1, createdAt: 1,
       }).toArray(),
 
       // Hall of Records — top 10 by peak aura

@@ -6,9 +6,12 @@ import NumberInput from '../components/NumberInput';
 import ToggleSwitch from '../components/ToggleSwitch';
 import DurationInput from '../components/DurationInput';
 import StringArrayInput from '../components/StringArrayInput';
-import IdChipInput from '../components/IdChipInput';
+import RolePicker from '../components/RolePicker';
+import ChannelPicker from '../components/ChannelPicker';
 import SaveDeployBar from '../components/SaveDeployBar';
 import StatCard from '../components/StatCard';
+import AdminLightbox from '../components/AdminLightbox';
+import ConfirmModal from '../components/ConfirmModal';
 import { SkeletonCard, SkeletonTable } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { getCsrfToken } from '../utils/csrf';
@@ -61,6 +64,8 @@ interface GameSettings {
   sowalefDebounceMs: number;
   gameCooldownMs: number;
   endCooldownMs: number;
+  auraRewardMultipliers?: Record<string, number>;
+  bossChallenge?: { enabled: boolean; rewardMin: number; rewardMax: number; cooldownHours: number; questionCount: number };
 }
 
 interface ContentPanel {
@@ -115,7 +120,7 @@ interface VoiceSections {
   content_buttons?: Record<string, string>;
   content_aura?: ContentAura;
   content_whisper?: ContentWhisper;
-  vip?: VipSection;
+  content_expiry?: Record<string, string>;
   assets?: AssetsSection;
 }
 
@@ -123,10 +128,22 @@ interface VoiceStats {
   activeRooms: any[];
   hallOfRecords: { byAura: any[]; byVisitors: any[] };
   topUsers: any[];
-  totals: { totalRooms: number; totalVoiceHours: number; totalLunariSpent: number; activeNow: number };
+  totals: { totalRoomsCreated: number; totalVoiceHours: number; totalLunariSpent: number; activeRoomsCount: number };
 }
 
-type Tab = 'setup' | 'games' | 'content' | 'vip' | 'assets' | 'stats';
+interface VoiceUserProfile {
+  stats: {
+    totalRoomsCreated: number;
+    totalVoiceMinutes: number;
+    challengesWon: number;
+    totalLunariSpent: number;
+    vipPurchases: number;
+  };
+  roomHistory: { name: string; peakAuraScore: number; totalVisitors: number; deletedAt: string | null }[];
+  currentRoom: { _id: string; name: string; aura: { tier: string; score: number }; memberCount: number } | null;
+}
+
+type Tab = 'setup' | 'games' | 'content' | 'assets' | 'stats';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -143,11 +160,19 @@ const BUTTON_KEYS = [
   'load', 'math', 'trivia', 'react', 'sowalef',
 ];
 
-const AURA_TIER_KEYS = ['dormant', 'flickering', 'steady', 'radiant', 'blazing'];
-const AURA_THRESHOLD_KEYS = ['flickering', 'steady', 'radiant', 'blazing'];
-const AURA_WEIGHT_KEYS = ['minutesActive', 'uniqueVisitors', 'gameWins', 'triviaCorrect', 'whispersSent', 'challengesWon', 'vipBonus'];
+const AURA_TIER_KEYS = ['dormant', 'flickering', 'glowing', 'radiant', 'blazing'];
+const AURA_THRESHOLD_KEYS = ['flickering', 'glowing', 'radiant', 'blazing'];
+const AURA_WEIGHT_KEYS = ['warmthPerVisitor', 'warmthMax', 'energyDivisor', 'energyMax', 'harmonyPerMin', 'harmonyMax', 'loyaltyMax'];
 
 const TIMEOUT_MESSAGE_KEYS = ['trivia', 'math', 'emoji_race', 'quickreact', 'endurance'];
+
+const AURA_ROW_STYLES: Record<string, React.CSSProperties> = {
+  dormant: { opacity: 0.6 },
+  flickering: { borderLeft: '3px solid #3b82f6' },
+  glowing: { borderLeft: '3px solid #06b6d4' },
+  radiant: { borderLeft: '3px solid #a855f7' },
+  blazing: { borderLeft: '3px solid #f97316' },
+};
 
 /* ------------------------------------------------------------------ */
 /*  Page Component                                                     */
@@ -173,6 +198,15 @@ export default function VoicePage() {
 
   // Upload state
   const [uploading, setUploading] = useState(false);
+
+  // Room management
+  const [confirmAction, setConfirmAction] = useState<{ action: string; roomId: string; roomName: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // User drill-down
+  const [userModalId, setUserModalId] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<VoiceUserProfile | null>(null);
+  const [userProfileLoading, setUserProfileLoading] = useState(false);
 
   const { toast } = useToast();
 
@@ -222,7 +256,7 @@ export default function VoicePage() {
       fetchStats();
     }
     if (tab === 'stats') {
-      statsIntervalRef.current = setInterval(fetchStats, 30_000);
+      statsIntervalRef.current = setInterval(fetchStats, 10_000);
       return () => { if (statsIntervalRef.current) clearInterval(statsIntervalRef.current); };
     } else {
       if (statsIntervalRef.current) clearInterval(statsIntervalRef.current);
@@ -264,14 +298,27 @@ export default function VoicePage() {
           body: JSON.stringify({ section, value: sections[section] }),
         });
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || `Failed to save ${section}`);
+          const data = await res.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(data.error || `Failed to save section "${section}"`);
         }
       }
       setOriginal({ ...sections });
       toast('Saved! Changes take effect within 30 seconds.', 'success');
     } catch (err: any) {
-      toast(err.message, 'error');
+      toast(`Save failed: ${err.message}`, 'error');
+      // Re-fetch config from server to show the true persisted state
+      try {
+        const res = await fetch('/api/admin/config/oracle');
+        if (res.ok) {
+          const data = await res.json();
+          const s = data.sections || {};
+          if (data.metadata) setConfigMetadata(data.metadata);
+          setSections(s);
+          setOriginal(s);
+        }
+      } catch {
+        // Silently fail — user already saw the save error toast
+      }
     } finally {
       setSaving(false);
     }
@@ -310,6 +357,57 @@ export default function VoicePage() {
   }
 
   /* ---------------------------------------------------------------- */
+  /*  Room management actions                                          */
+  /* ---------------------------------------------------------------- */
+
+  async function executeRoomAction(action: string, roomId: string, value?: string) {
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/voice/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify({ action, roomId, ...(value ? { value } : {}) }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(data.error || `Failed to ${action} room`);
+      }
+      toast(`Room ${action} queued. Bot will execute on next cycle.`, 'success');
+      setConfirmAction(null);
+      // Refresh stats to show updated state
+      fetchStats();
+    } catch (err: any) {
+      toast(err.message, 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /*  User profile drill-down                                          */
+  /* ---------------------------------------------------------------- */
+
+  async function fetchUserProfile(userId: string) {
+    setUserModalId(userId);
+    setUserProfile(null);
+    setUserProfileLoading(true);
+    try {
+      const res = await fetch(`/api/admin/voice/user?id=${encodeURIComponent(userId)}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(data.error || 'Failed to load user profile');
+      }
+      const data = await res.json();
+      setUserProfile(data);
+    } catch (err: any) {
+      toast(err.message, 'error');
+      setUserModalId(null);
+    } finally {
+      setUserProfileLoading(false);
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
   /*  Loading state                                                    */
   /* ---------------------------------------------------------------- */
 
@@ -318,7 +416,7 @@ export default function VoicePage() {
       <>
         <div className="admin-page-header">
           <h1 className="admin-page-title"><span className="emoji-float">🎙️</span> Voice</h1>
-          <p className="admin-page-subtitle">Configure Oracle voice rooms, games, VIP tiers, and content</p>
+          <p className="admin-page-subtitle">Configure Oracle voice rooms, games, and content</p>
         </div>
         <SkeletonCard count={2} />
         <SkeletonTable rows={4} />
@@ -339,16 +437,17 @@ export default function VoicePage() {
   const buttons = sections.content_buttons ?? {};
   const aura = sections.content_aura;
   const whisper = sections.content_whisper;
-  const vip = sections.vip;
   const assets = sections.assets;
 
+  const indexedTrivia = trivia.map((t, i) => ({ item: t, realIdx: i }));
   const filteredTrivia = triviaSearch
-    ? trivia.filter((t) => t.q.includes(triviaSearch) || t.answers.some((a) => a.includes(triviaSearch)))
-    : trivia;
+    ? indexedTrivia.filter(({ item }) => item.q.includes(triviaSearch) || item.answers.some((a) => a.includes(triviaSearch)))
+    : indexedTrivia;
 
+  const indexedSowalef = sowalef.map((s, i) => ({ item: s, realIdx: i }));
   const filteredSowalef = sowalefSearch
-    ? sowalef.filter((s) => s.includes(sowalefSearch))
-    : sowalef;
+    ? indexedSowalef.filter(({ item }) => item.includes(sowalefSearch))
+    : indexedSowalef;
 
   /* ---------------------------------------------------------------- */
   /*  Render                                                           */
@@ -358,7 +457,7 @@ export default function VoicePage() {
     <>
       <div className="admin-page-header">
         <h1 className="admin-page-title"><span className="emoji-float">🎙️</span> Voice</h1>
-        <p className="admin-page-subtitle">Configure Oracle voice rooms, games, VIP tiers, and content</p>
+        <p className="admin-page-subtitle">Configure Oracle voice rooms, games, and content</p>
       </div>
 
       {configMetadata.updatedAt && (
@@ -378,9 +477,6 @@ export default function VoicePage() {
         <button className={`admin-tab ${tab === 'content' ? 'admin-tab-active' : ''}`} onClick={() => setTab('content')}>
           Content
         </button>
-        <button className={`admin-tab ${tab === 'vip' ? 'admin-tab-active' : ''}`} onClick={() => setTab('vip')}>
-          VIP
-        </button>
         <button className={`admin-tab ${tab === 'assets' ? 'admin-tab-active' : ''}`} onClick={() => setTab('assets')}>
           Assets
         </button>
@@ -399,34 +495,30 @@ export default function VoicePage() {
               {setup.hubChannels.map((hub, idx) => (
                 <div key={idx} style={{ padding: '12px', background: 'var(--bg-deep)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Channel ID</label>
-                      <input
-                        type="text"
-                        className="admin-input"
-                        value={hub.channelId}
-                        onChange={(e) => {
-                          const updated = [...setup.hubChannels];
-                          updated[idx] = { ...hub, channelId: e.target.value };
-                          updateSection('setup', { ...setup, hubChannels: updated });
-                        }}
-                        placeholder="Channel ID"
-                      />
-                    </div>
-                    <div className="admin-form-group">
-                      <label className="admin-form-label">Category ID</label>
-                      <input
-                        type="text"
-                        className="admin-input"
-                        value={hub.categoryId}
-                        onChange={(e) => {
-                          const updated = [...setup.hubChannels];
-                          updated[idx] = { ...hub, categoryId: e.target.value };
-                          updateSection('setup', { ...setup, hubChannels: updated });
-                        }}
-                        placeholder="Category ID"
-                      />
-                    </div>
+                    <ChannelPicker
+                      label="Hub Channel"
+                      description="Voice channel that spawns rooms"
+                      value={hub.channelId}
+                      onChange={(val) => {
+                        const updated = [...setup.hubChannels];
+                        updated[idx] = { ...hub, channelId: val as string };
+                        updateSection('setup', { ...setup, hubChannels: updated });
+                      }}
+                      channelTypes={[2]}
+                      placeholder="Select voice channel"
+                    />
+                    <ChannelPicker
+                      label="Category"
+                      description="Category for spawned rooms"
+                      value={hub.categoryId}
+                      onChange={(val) => {
+                        const updated = [...setup.hubChannels];
+                        updated[idx] = { ...hub, categoryId: val as string };
+                        updateSection('setup', { ...setup, hubChannels: updated });
+                      }}
+                      channelTypes={[4]}
+                      placeholder="Select category"
+                    />
                     <div className="admin-form-group">
                       <label className="admin-form-label">Name Template</label>
                       <input
@@ -492,37 +584,25 @@ export default function VoicePage() {
             </div>
           </ConfigSection>
 
-          <ConfigSection title="VIP & Logging" description="Category for VIP rooms and the log channel for events">
-            <div className="admin-config-grid">
-              <div className="admin-form-group">
-                <label className="admin-form-label">VIP Category ID</label>
-                <input
-                  type="text"
-                  className="admin-input"
-                  value={setup.vipCategoryId}
-                  onChange={(e) => updateSection('setup', { ...setup, vipCategoryId: e.target.value })}
-                  placeholder="Category ID"
-                />
-              </div>
-              <div className="admin-form-group">
-                <label className="admin-form-label">Log Channel ID</label>
-                <input
-                  type="text"
-                  className="admin-input"
-                  value={setup.logChannelId}
-                  onChange={(e) => updateSection('setup', { ...setup, logChannelId: e.target.value })}
-                  placeholder="Channel ID"
-                />
-              </div>
-            </div>
+          <ConfigSection title="Logging" description="Log channel for voice events">
+            <ChannelPicker
+              label="Log Channel"
+              description="Channel for voice event logs"
+              value={setup.logChannelId}
+              onChange={(val) => updateSection('setup', { ...setup, logChannelId: val as string })}
+              channelTypes={[0, 5]}
+              placeholder="Select log channel"
+            />
           </ConfigSection>
 
           <ConfigSection title="Staff Roles" description="Roles with elevated voice room permissions">
-            <IdChipInput
-              label="Staff Role IDs"
-              description="Enter a Discord role ID and press Enter to add"
-              ids={setup.staffRoleIds}
-              onChange={(ids) => updateSection('setup', { ...setup, staffRoleIds: ids })}
+            <RolePicker
+              label="Staff Roles"
+              description="Select roles that can manage voice rooms"
+              value={setup.staffRoleIds}
+              onChange={(val) => updateSection('setup', { ...setup, staffRoleIds: Array.isArray(val) ? val : [val] })}
+              multi={true}
+              placeholder="Select staff roles"
             />
           </ConfigSection>
 
@@ -535,14 +615,6 @@ export default function VoicePage() {
                 min={1}
                 max={10}
                 description="Per user (1-10)"
-              />
-              <NumberInput
-                label="Max VIP Rooms"
-                value={setup.maxVipRoomsPerUser}
-                onChange={(v) => updateSection('setup', { ...setup, maxVipRoomsPerUser: v })}
-                min={1}
-                max={5}
-                description="Per user (1-5)"
               />
             </div>
           </ConfigSection>
@@ -620,9 +692,7 @@ export default function VoicePage() {
               />
             </div>
             <div style={{ maxHeight: '600px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {filteredTrivia.map((question, idx) => {
-                const realIdx = triviaSearch ? trivia.indexOf(question) : idx;
-                return (
+              {filteredTrivia.map(({ item: question, realIdx }) => (
                   <div key={realIdx} style={{ padding: '12px', background: 'var(--bg-deep)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div className="admin-form-group" style={{ marginBottom: '10px' }}>
                       <label className="admin-form-label">Question</label>
@@ -690,8 +760,7 @@ export default function VoicePage() {
                       </button>
                     </div>
                   </div>
-                );
-              })}
+              ))}
             </div>
             <button
               className="admin-btn admin-btn-ghost admin-btn-sm"
@@ -717,9 +786,7 @@ export default function VoicePage() {
               />
             </div>
             <div style={{ maxHeight: '600px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {filteredSowalef.map((question, idx) => {
-                const realIdx = sowalefSearch ? sowalef.indexOf(question) : idx;
-                return (
+              {filteredSowalef.map(({ item: question, realIdx }) => (
                   <div key={realIdx} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)', width: '30px', textAlign: 'center', flexShrink: 0 }}>{realIdx + 1}</span>
                     <input
@@ -745,8 +812,7 @@ export default function VoicePage() {
                       &times;
                     </button>
                   </div>
-                );
-              })}
+              ))}
             </div>
             <button
               className="admin-btn admin-btn-ghost admin-btn-sm"
@@ -936,6 +1002,81 @@ export default function VoicePage() {
                   placeholder="Paste an emoji"
                 />
               </ConfigSection>
+
+              <ConfigSection title="Aura Reward Multipliers" description="Higher aura rooms give bigger rewards. 1.0 = baseline.">
+                <div className="admin-config-grid">
+                  {(['dormant', 'flickering', 'glowing', 'radiant', 'blazing'] as const).map((tier) => (
+                    <NumberInput
+                      key={tier}
+                      label={tier.charAt(0).toUpperCase() + tier.slice(1)}
+                      value={gs.auraRewardMultipliers?.[tier] ?? ({ dormant: 0.5, flickering: 0.75, glowing: 1.0, radiant: 1.5, blazing: 2.0 }[tier])}
+                      onChange={(v) => updateSection('games_settings', {
+                        ...gs,
+                        auraRewardMultipliers: { ...({ dormant: 0.5, flickering: 0.75, glowing: 1.0, radiant: 1.5, blazing: 2.0 }), ...gs.auraRewardMultipliers, [tier]: v },
+                      })}
+                      min={0}
+                      max={5}
+                      step={0.1}
+                      description={`${tier} room multiplier`}
+                    />
+                  ))}
+                </div>
+              </ConfigSection>
+
+              <ConfigSection title="Boss Challenge" description="Daily high-stakes challenge in the most active room">
+                <div className="admin-config-grid">
+                  <ToggleSwitch
+                    label="Boss Challenge Enabled"
+                    checked={gs.bossChallenge?.enabled ?? true}
+                    onChange={(v) => updateSection('games_settings', {
+                      ...gs,
+                      bossChallenge: { ...({ enabled: true, rewardMin: 500, rewardMax: 1000, cooldownHours: 24, questionCount: 5 }), ...gs.bossChallenge, enabled: v },
+                    })}
+                  />
+                  <NumberInput
+                    label="Reward Min"
+                    value={gs.bossChallenge?.rewardMin ?? 500}
+                    onChange={(v) => updateSection('games_settings', {
+                      ...gs,
+                      bossChallenge: { ...({ enabled: true, rewardMin: 500, rewardMax: 1000, cooldownHours: 24, questionCount: 5 }), ...gs.bossChallenge, rewardMin: v },
+                    })}
+                    min={0}
+                    description="Minimum Lunari reward"
+                  />
+                  <NumberInput
+                    label="Reward Max"
+                    value={gs.bossChallenge?.rewardMax ?? 1000}
+                    onChange={(v) => updateSection('games_settings', {
+                      ...gs,
+                      bossChallenge: { ...({ enabled: true, rewardMin: 500, rewardMax: 1000, cooldownHours: 24, questionCount: 5 }), ...gs.bossChallenge, rewardMax: v },
+                    })}
+                    min={0}
+                    description="Maximum Lunari reward"
+                  />
+                  <NumberInput
+                    label="Cooldown (hours)"
+                    value={gs.bossChallenge?.cooldownHours ?? 24}
+                    onChange={(v) => updateSection('games_settings', {
+                      ...gs,
+                      bossChallenge: { ...({ enabled: true, rewardMin: 500, rewardMax: 1000, cooldownHours: 24, questionCount: 5 }), ...gs.bossChallenge, cooldownHours: v },
+                    })}
+                    min={1}
+                    max={168}
+                    description="Hours between boss drops"
+                  />
+                  <NumberInput
+                    label="Questions"
+                    value={gs.bossChallenge?.questionCount ?? 5}
+                    onChange={(v) => updateSection('games_settings', {
+                      ...gs,
+                      bossChallenge: { ...({ enabled: true, rewardMin: 500, rewardMax: 1000, cooldownHours: 24, questionCount: 5 }), ...gs.bossChallenge, questionCount: v },
+                    })}
+                    min={1}
+                    max={20}
+                    description="Number of boss questions"
+                  />
+                </div>
+              </ConfigSection>
             </>
           )}
         </>
@@ -1117,109 +1258,24 @@ export default function VoicePage() {
             </ConfigSection>
           )}
 
-          {sections.content_buttons && (
-            <ConfigSection title="Game Timeout Messages" description="Messages shown when a game times out (RTL)">
-              <div className="admin-config-grid">
-                {TIMEOUT_MESSAGE_KEYS.map((key) => (
-                  <div key={key} className="admin-form-group">
-                    <label className="admin-form-label" style={{ textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={(sections as any)[`timeout_${key}`] ?? ''}
-                      onChange={(e) => setSections((prev) => ({ ...prev, [`timeout_${key}`]: e.target.value }))}
-                      dir="rtl"
-                      style={{ textAlign: 'right' }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </ConfigSection>
-          )}
-        </>
-      )}
-
-      {/* ============================================================ */}
-      {/*  VIP TAB                                                      */}
-      {/* ============================================================ */}
-      {tab === 'vip' && vip && (
-        <>
-          <div className="admin-config-grid">
-            {Object.entries(vip.tiers).map(([tierKey, tier]) => (
-              <ConfigSection key={tierKey} title={tier.label || tierKey} description={`${tierKey} tier configuration`}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">Arabic Name</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={tier.name}
-                      onChange={(e) => updateSection('vip', { ...vip, tiers: { ...vip.tiers, [tierKey]: { ...tier, name: e.target.value } } })}
-                      dir="rtl"
-                      style={{ textAlign: 'right' }}
-                    />
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">English Label</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={tier.label}
-                      onChange={(e) => updateSection('vip', { ...vip, tiers: { ...vip.tiers, [tierKey]: { ...tier, label: e.target.value } } })}
-                    />
-                  </div>
-                  <div className="admin-form-group">
-                    <label className="admin-form-label">Emoji</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={tier.emoji}
-                      onChange={(e) => updateSection('vip', { ...vip, tiers: { ...vip.tiers, [tierKey]: { ...tier, emoji: e.target.value } } })}
-                    />
-                  </div>
-                  <NumberInput
-                    label="Cost (Lunari)"
-                    value={tier.cost}
-                    onChange={(v) => updateSection('vip', { ...vip, tiers: { ...vip.tiers, [tierKey]: { ...tier, cost: v } } })}
-                    min={0}
-                    description="Lunari cost to purchase"
-                  />
-                  <NumberInput
-                    label="Duration (days)"
-                    value={tier.days}
-                    onChange={(v) => updateSection('vip', { ...vip, tiers: { ...vip.tiers, [tierKey]: { ...tier, days: v } } })}
-                    min={1}
-                    description="How many days the VIP lasts"
+          <ConfigSection title="Game Timeout Messages" description="Messages shown when a game times out (RTL)">
+            <div className="admin-config-grid">
+              {TIMEOUT_MESSAGE_KEYS.map((key) => (
+                <div key={key} className="admin-form-group">
+                  <label className="admin-form-label" style={{ textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={(sections.content_expiry ?? {})[key] ?? ''}
+                    onChange={(e) => {
+                      const expiry = { ...(sections.content_expiry ?? {}), [key]: e.target.value };
+                      updateSection('content_expiry', expiry);
+                    }}
+                    dir="rtl"
+                    style={{ textAlign: 'right' }}
                   />
                 </div>
-              </ConfigSection>
-            ))}
-          </div>
-
-          <ConfigSection title="Renewal & Expiry" description="Settings for VIP renewal and expiration">
-            <div className="admin-config-grid">
-              <NumberInput
-                label="Renewal Discount %"
-                value={vip.renewDiscountPercent}
-                onChange={(v) => updateSection('vip', { ...vip, renewDiscountPercent: v })}
-                min={0}
-                max={100}
-                description="Discount when renewing before expiry (0-100)"
-              />
-              <NumberInput
-                label="Expiry Warning (hours)"
-                value={vip.expiryWarningHours}
-                onChange={(v) => updateSection('vip', { ...vip, expiryWarningHours: v })}
-                min={1}
-                max={168}
-                description="Hours before expiry to send warning (1-168)"
-              />
-              <DurationInput
-                label="Grace After Expiry"
-                value={vip.graceAfterExpiryMs}
-                onChange={(v) => updateSection('vip', { ...vip, graceAfterExpiryMs: v })}
-                description="Time after expiry before room is removed"
-              />
+              ))}
             </div>
           </ConfigSection>
         </>
@@ -1263,28 +1319,78 @@ export default function VoicePage() {
             </div>
           </ConfigSection>
 
-          {assets?.emojis && Object.keys(assets.emojis).length > 0 && (
-            <ConfigSection title="Emoji Reference" description="Emoji IDs used by Oracle (read-only)">
-              <div className="admin-table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left' }}>Key</th>
-                      <th style={{ textAlign: 'left' }}>Value</th>
+          <ConfigSection title="Emojis" description="Emoji IDs used by Oracle">
+            <div className="admin-table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left' }}>Key</th>
+                    <th style={{ textAlign: 'left' }}>Discord Format</th>
+                    <th style={{ textAlign: 'left', width: '80px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(assets?.emojis ?? {}).map(([key, val]) => (
+                    <tr key={key}>
+                      <td>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          value={key}
+                          onChange={(e) => {
+                            const newKey = e.target.value;
+                            if (newKey === key) return;
+                            const updated = { ...assets!.emojis };
+                            delete updated[key];
+                            updated[newKey] = val;
+                            updateSection('assets', { ...assets!, emojis: updated });
+                          }}
+                          style={{ fontSize: '13px', fontFamily: 'monospace' }}
+                          placeholder="emoji_key"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          value={val}
+                          onChange={(e) => {
+                            const updated = { ...assets!.emojis, [key]: e.target.value };
+                            updateSection('assets', { ...assets!, emojis: updated });
+                          }}
+                          style={{ fontSize: '13px', fontFamily: 'monospace' }}
+                          placeholder="<:name:id>"
+                        />
+                      </td>
+                      <td>
+                        <button
+                          className="admin-btn admin-btn-danger admin-btn-sm"
+                          style={{ padding: '4px 10px' }}
+                          onClick={() => {
+                            const updated = { ...assets!.emojis };
+                            delete updated[key];
+                            updateSection('assets', { ...assets!, emojis: updated });
+                          }}
+                        >
+                          &times;
+                        </button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(assets.emojis).map(([key, val]) => (
-                      <tr key={key}>
-                        <td style={{ fontSize: '13px', fontFamily: 'monospace' }}>{key}</td>
-                        <td style={{ fontSize: '13px', fontFamily: 'monospace' }}>{val}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </ConfigSection>
-          )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <button
+              className="admin-btn admin-btn-ghost admin-btn-sm"
+              style={{ marginTop: '12px' }}
+              onClick={() => {
+                const emojis = { ...(assets?.emojis ?? {}), '': '' };
+                updateSection('assets', { ...(assets ?? { panelBannerUrl: '' }), emojis });
+              }}
+            >
+              + Add Emoji
+            </button>
+          </ConfigSection>
         </>
       )}
 
@@ -1301,48 +1407,123 @@ export default function VoicePage() {
           ) : stats ? (
             <>
               <div className="admin-stats-grid">
-                <StatCard label="Total Rooms Created" value={stats.totals.totalRooms} icon="🏠" color="cyan" />
-                <StatCard label="Total Voice Hours" value={stats.totals.totalVoiceHours} icon="🕐" color="purple" />
-                <StatCard label="Total Lunari Spent" value={stats.totals.totalLunariSpent} icon="💰" color="gold" />
-                <StatCard label="Active Rooms Now" value={stats.totals.activeNow} icon="🎙️" color="green" />
+                <StatCard label="Total Rooms Created" value={stats.totals?.totalRoomsCreated ?? 0} icon="🏠" color="cyan" />
+                <StatCard label="Total Voice Hours" value={stats.totals?.totalVoiceHours ?? 0} icon="🕐" color="purple" />
+                <StatCard label="Total Lunari Spent" value={stats.totals?.totalLunariSpent ?? 0} icon="💰" color="gold" />
+                <StatCard label="Active Rooms Now" value={stats.totals?.activeRoomsCount ?? 0} icon="🎙️" color="green" />
               </div>
 
-              <ConfigSection title="Active Rooms" description="Currently active voice rooms (auto-refreshes every 30s)">
-                {stats.activeRooms.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No active rooms right now.</p>
-                ) : (
-                  <div className="admin-table-container">
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th style={{ textAlign: 'left' }}>Name</th>
-                          <th style={{ textAlign: 'left' }}>Owner</th>
-                          <th style={{ textAlign: 'left' }}>Type</th>
-                          <th style={{ textAlign: 'left' }}>Aura</th>
-                          <th style={{ textAlign: 'left' }}>Created</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stats.activeRooms.map((room: any, idx: number) => (
-                          <tr key={idx}>
-                            <td style={{ fontSize: '13px' }}>{room.name}</td>
-                            <td style={{ fontSize: '13px', fontFamily: 'monospace' }}>{room.owner}</td>
-                            <td style={{ fontSize: '13px' }}>{room.type}</td>
-                            <td style={{ fontSize: '13px' }}>{room.aura}</td>
-                            <td style={{ fontSize: '13px' }}>{room.created ? timeAgo(room.created) : '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+              <ConfigSection title="Active Rooms" description="Currently active voice rooms (auto-refreshes every 10s)">
+                {(() => {
+                  const rooms = stats.activeRooms ?? [];
+                  const totalMembers = rooms.reduce((sum: number, r: any) => sum + (r.memberCount ?? 0), 0);
+                  const blazingCount = rooms.filter((r: any) => r.aura?.tier === 'blazing').length;
+                  return (
+                    <>
+                      {rooms.length > 0 && (
+                        <div style={{
+                          display: 'flex', gap: '16px', marginBottom: '12px', fontSize: '13px',
+                          color: 'var(--text-secondary)', padding: '8px 12px',
+                          background: 'rgba(0, 212, 255, 0.05)', borderRadius: '6px',
+                          border: '1px solid rgba(0, 212, 255, 0.1)',
+                        }}>
+                          <span><strong>{rooms.length}</strong> active</span>
+                          <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                          <span><strong>{totalMembers}</strong> members</span>
+                          <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                          <span style={{ color: '#f97316' }}><strong>{blazingCount}</strong> blazing</span>
+                        </div>
+                      )}
+                      {rooms.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No active rooms right now.</p>
+                      ) : (
+                        <div className="admin-table-container">
+                          <table className="admin-table">
+                            <thead>
+                              <tr>
+                                <th style={{ textAlign: 'left' }}>Name</th>
+                                <th style={{ textAlign: 'left' }}>Owner</th>
+                                <th style={{ textAlign: 'left' }}>Type</th>
+                                <th style={{ textAlign: 'left' }}>Aura</th>
+                                <th style={{ textAlign: 'left' }}>Members</th>
+                                <th style={{ textAlign: 'left' }}>Status</th>
+                                <th style={{ textAlign: 'left' }}>Created</th>
+                                <th style={{ textAlign: 'left' }}>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rooms.map((room: any, idx: number) => {
+                                const tier = room.aura?.tier ?? 'dormant';
+                                return (
+                                  <tr key={room._id ?? idx} style={AURA_ROW_STYLES[tier] ?? {}}>
+                                    <td style={{ fontSize: '13px' }}>{room.name || 'Unknown'}</td>
+                                    <td style={{ fontSize: '13px', fontFamily: 'monospace' }}>{room.ownerId || 'Unknown'}</td>
+                                    <td style={{ fontSize: '13px' }}>{room.type || 'Unknown'}</td>
+                                    <td style={{ fontSize: '13px' }}>{room.aura ? `${tier} (${room.aura.score ?? 0})` : '-'}</td>
+                                    <td style={{ fontSize: '13px' }}>{room.memberCount ?? 0}</td>
+                                    <td style={{ fontSize: '13px' }}>
+                                      {room.isLocked && (
+                                        <span style={{
+                                          display: 'inline-block', padding: '1px 6px', fontSize: '11px',
+                                          borderRadius: '4px', background: 'rgba(239, 68, 68, 0.15)',
+                                          color: '#ef4444', marginRight: '4px',
+                                        }}>Locked</span>
+                                      )}
+                                      {room.isHidden && (
+                                        <span style={{
+                                          display: 'inline-block', padding: '1px 6px', fontSize: '11px',
+                                          borderRadius: '4px', background: 'rgba(168, 85, 247, 0.15)',
+                                          color: '#a855f7',
+                                        }}>Hidden</span>
+                                      )}
+                                      {!room.isLocked && !room.isHidden && (
+                                        <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Open</span>
+                                      )}
+                                    </td>
+                                    <td style={{ fontSize: '13px' }}>{room.createdAt ? timeAgo(room.createdAt) : '-'}</td>
+                                    <td style={{ fontSize: '13px', whiteSpace: 'nowrap' }}>
+                                      <button
+                                        className="admin-btn admin-btn-ghost admin-btn-sm"
+                                        style={{ padding: '2px 6px', fontSize: '12px', marginRight: '4px' }}
+                                        title={room.isLocked ? 'Unlock room' : 'Lock room'}
+                                        onClick={() => setConfirmAction({
+                                          action: room.isLocked ? 'unlock' : 'lock',
+                                          roomId: room._id,
+                                          roomName: room.name || 'Unknown',
+                                        })}
+                                      >
+                                        {room.isLocked ? '🔓' : '🔒'}
+                                      </button>
+                                      <button
+                                        className="admin-btn admin-btn-ghost admin-btn-sm"
+                                        style={{ padding: '2px 6px', fontSize: '12px', color: '#ef4444' }}
+                                        title="Delete room"
+                                        onClick={() => setConfirmAction({
+                                          action: 'delete',
+                                          roomId: room._id,
+                                          roomName: room.name || 'Unknown',
+                                        })}
+                                      >
+                                        🗑️
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </ConfigSection>
 
               <ConfigSection title="Hall of Records" description="Top users by aura score and visitor count">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
                     <h4 style={{ fontSize: '14px', marginBottom: '8px', color: 'var(--text-secondary)' }}>Top 10 by Aura</h4>
-                    {stats.hallOfRecords.byAura.length === 0 ? (
+                    {(stats.hallOfRecords?.byAura ?? []).length === 0 ? (
                       <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No data yet.</p>
                     ) : (
                       <div className="admin-table-container">
@@ -1351,15 +1532,29 @@ export default function VoicePage() {
                             <tr>
                               <th style={{ textAlign: 'left' }}>#</th>
                               <th style={{ textAlign: 'left' }}>User</th>
-                              <th style={{ textAlign: 'left' }}>Aura</th>
+                              <th style={{ textAlign: 'left' }}>Tier</th>
+                              <th style={{ textAlign: 'left' }}>Score</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {stats.hallOfRecords.byAura.map((entry: any, idx: number) => (
+                            {(stats.hallOfRecords?.byAura ?? []).map((entry: any, idx: number) => (
                               <tr key={idx}>
                                 <td style={{ fontSize: '13px' }}>{idx + 1}</td>
-                                <td style={{ fontSize: '13px' }}>{entry.name || entry.userId}</td>
-                                <td style={{ fontSize: '13px' }}>{typeof entry.aura === 'number' ? entry.aura.toLocaleString() : entry.aura}</td>
+                                <td>
+                                  <button
+                                    onClick={() => fetchUserProfile(entry.ownerId)}
+                                    style={{
+                                      background: 'none', border: 'none', cursor: 'pointer',
+                                      color: 'var(--accent-cyan)', fontSize: '13px', padding: 0,
+                                      textDecoration: 'underline', textDecorationStyle: 'dotted' as const,
+                                    }}
+                                    title={`View profile for ${entry.ownerId}`}
+                                  >
+                                    {entry.name || entry.ownerId || 'Unknown'}
+                                  </button>
+                                </td>
+                                <td style={{ fontSize: '13px' }}>{entry.peakAuraTier || '-'}</td>
+                                <td style={{ fontSize: '13px' }}>{typeof entry.peakAuraScore === 'number' ? entry.peakAuraScore.toLocaleString() : (entry.peakAuraScore ?? 0)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1369,7 +1564,7 @@ export default function VoicePage() {
                   </div>
                   <div>
                     <h4 style={{ fontSize: '14px', marginBottom: '8px', color: 'var(--text-secondary)' }}>Top 10 by Visitors</h4>
-                    {stats.hallOfRecords.byVisitors.length === 0 ? (
+                    {(stats.hallOfRecords?.byVisitors ?? []).length === 0 ? (
                       <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No data yet.</p>
                     ) : (
                       <div className="admin-table-container">
@@ -1382,11 +1577,23 @@ export default function VoicePage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {stats.hallOfRecords.byVisitors.map((entry: any, idx: number) => (
+                            {(stats.hallOfRecords?.byVisitors ?? []).map((entry: any, idx: number) => (
                               <tr key={idx}>
                                 <td style={{ fontSize: '13px' }}>{idx + 1}</td>
-                                <td style={{ fontSize: '13px' }}>{entry.name || entry.userId}</td>
-                                <td style={{ fontSize: '13px' }}>{typeof entry.visitors === 'number' ? entry.visitors.toLocaleString() : entry.visitors}</td>
+                                <td>
+                                  <button
+                                    onClick={() => fetchUserProfile(entry.ownerId)}
+                                    style={{
+                                      background: 'none', border: 'none', cursor: 'pointer',
+                                      color: 'var(--accent-cyan)', fontSize: '13px', padding: 0,
+                                      textDecoration: 'underline', textDecorationStyle: 'dotted' as const,
+                                    }}
+                                    title={`View profile for ${entry.ownerId}`}
+                                  >
+                                    {entry.name || entry.ownerId || 'Unknown'}
+                                  </button>
+                                </td>
+                                <td style={{ fontSize: '13px' }}>{typeof entry.totalVisitors === 'number' ? entry.totalVisitors.toLocaleString() : (entry.totalVisitors ?? 0)}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1398,7 +1605,7 @@ export default function VoicePage() {
               </ConfigSection>
 
               <ConfigSection title="Top Users" description="Leaderboard of most active voice users">
-                {stats.topUsers.length === 0 ? (
+                {(stats.topUsers ?? []).length === 0 ? (
                   <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No data yet.</p>
                 ) : (
                   <div className="admin-table-container">
@@ -1406,20 +1613,37 @@ export default function VoicePage() {
                       <thead>
                         <tr>
                           <th style={{ textAlign: 'left' }}>#</th>
-                          <th style={{ textAlign: 'left' }}>User</th>
+                          <th style={{ textAlign: 'left' }}>User ID</th>
                           <th style={{ textAlign: 'left' }}>Hours</th>
                           <th style={{ textAlign: 'left' }}>Rooms</th>
-                          <th style={{ textAlign: 'left' }}>Games</th>
+                          <th style={{ textAlign: 'left' }}>Challenges</th>
+                          <th style={{ textAlign: 'left' }}>Lunari Spent</th>
+                          <th style={{ textAlign: 'left' }}>VIP Purchases</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {stats.topUsers.map((user: any, idx: number) => (
-                          <tr key={idx}>
+                        {(stats.topUsers ?? []).map((user: any, idx: number) => (
+                          <tr key={user._id ?? idx}>
                             <td style={{ fontSize: '13px' }}>{idx + 1}</td>
-                            <td style={{ fontSize: '13px' }}>{user.name || user.userId}</td>
-                            <td style={{ fontSize: '13px' }}>{typeof user.hours === 'number' ? user.hours.toLocaleString() : user.hours}</td>
-                            <td style={{ fontSize: '13px' }}>{typeof user.rooms === 'number' ? user.rooms.toLocaleString() : user.rooms}</td>
-                            <td style={{ fontSize: '13px' }}>{typeof user.games === 'number' ? user.games.toLocaleString() : user.games}</td>
+                            <td>
+                              <button
+                                onClick={() => fetchUserProfile(user._id)}
+                                style={{
+                                  background: 'none', border: 'none', cursor: 'pointer',
+                                  color: 'var(--accent-cyan)', fontSize: '13px', padding: 0,
+                                  fontFamily: 'monospace',
+                                  textDecoration: 'underline', textDecorationStyle: 'dotted' as const,
+                                }}
+                                title={`View profile for ${user._id}`}
+                              >
+                                {user._id || 'Unknown'}
+                              </button>
+                            </td>
+                            <td style={{ fontSize: '13px' }}>{typeof user.totalVoiceMinutes === 'number' ? Math.round(user.totalVoiceMinutes / 60).toLocaleString() : 0}</td>
+                            <td style={{ fontSize: '13px' }}>{(user.totalRoomsCreated ?? 0).toLocaleString()}</td>
+                            <td style={{ fontSize: '13px' }}>{(user.challengesWon ?? 0).toLocaleString()}</td>
+                            <td style={{ fontSize: '13px' }}>{(user.totalLunariSpent ?? 0).toLocaleString()}</td>
+                            <td style={{ fontSize: '13px' }}>{(user.vipPurchases ?? 0).toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1432,6 +1656,94 @@ export default function VoicePage() {
             <p style={{ color: 'var(--text-muted)', fontSize: '14px', padding: '20px 0' }}>Failed to load stats. Try switching tabs and back.</p>
           )}
         </>
+      )}
+
+      {/* Room action confirm modal */}
+      {confirmAction && (
+        <ConfirmModal
+          title={`${confirmAction.action.charAt(0).toUpperCase() + confirmAction.action.slice(1)} Room`}
+          message={`Are you sure you want to ${confirmAction.action} "${confirmAction.roomName}"? The bot will execute this on its next aura cycle.`}
+          confirmLabel={actionLoading ? 'Processing...' : confirmAction.action.charAt(0).toUpperCase() + confirmAction.action.slice(1)}
+          variant="danger"
+          onConfirm={() => executeRoomAction(confirmAction.action, confirmAction.roomId)}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+
+      {/* User profile drill-down modal */}
+      {userModalId && (
+        <AdminLightbox isOpen={true} onClose={() => { setUserModalId(null); setUserProfile(null); }} title={`Voice Profile: ${userModalId}`} size="lg">
+          {userProfileLoading ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading user data...</div>
+          ) : userProfile ? (
+            <div style={{ padding: '8px 0' }}>
+              {/* Stats cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px', marginBottom: '20px' }}>
+                <div style={{ padding: '12px', background: 'rgba(0, 212, 255, 0.06)', borderRadius: '8px', border: '1px solid rgba(0, 212, 255, 0.1)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Rooms Created</div>
+                  <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>{(userProfile.stats.totalRoomsCreated ?? 0).toLocaleString()}</div>
+                </div>
+                <div style={{ padding: '12px', background: 'rgba(168, 85, 247, 0.06)', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.1)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Voice Hours</div>
+                  <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>{Math.round((userProfile.stats.totalVoiceMinutes ?? 0) / 60).toLocaleString()}</div>
+                </div>
+                <div style={{ padding: '12px', background: 'rgba(6, 182, 212, 0.06)', borderRadius: '8px', border: '1px solid rgba(6, 182, 212, 0.1)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Challenges Won</div>
+                  <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>{(userProfile.stats.challengesWon ?? 0).toLocaleString()}</div>
+                </div>
+                <div style={{ padding: '12px', background: 'rgba(255, 213, 79, 0.06)', borderRadius: '8px', border: '1px solid rgba(255, 213, 79, 0.1)', textAlign: 'center' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Lunari Spent</div>
+                  <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>{(userProfile.stats.totalLunariSpent ?? 0).toLocaleString()}</div>
+                </div>
+              </div>
+
+              {/* Current room indicator */}
+              {userProfile.currentRoom && (
+                <div style={{
+                  padding: '10px 14px', marginBottom: '16px', borderRadius: '6px',
+                  background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.15)',
+                  fontSize: '13px', color: 'var(--text-secondary)',
+                }}>
+                  <strong style={{ color: '#22c55e' }}>Active Room:</strong>{' '}
+                  {userProfile.currentRoom.name} &mdash;{' '}
+                  {userProfile.currentRoom.aura?.tier ?? 'dormant'} ({userProfile.currentRoom.aura?.score ?? 0}),{' '}
+                  {userProfile.currentRoom.memberCount ?? 0} members
+                </div>
+              )}
+
+              {/* Room history table */}
+              <h4 style={{ fontSize: '14px', marginBottom: '8px', color: 'var(--text-secondary)' }}>Room History (last 10)</h4>
+              {userProfile.roomHistory.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No room history found.</p>
+              ) : (
+                <div className="admin-table-container">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left' }}>Name</th>
+                        <th style={{ textAlign: 'left' }}>Peak Aura</th>
+                        <th style={{ textAlign: 'left' }}>Visitors</th>
+                        <th style={{ textAlign: 'left' }}>Deleted</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {userProfile.roomHistory.map((room, idx) => (
+                        <tr key={idx}>
+                          <td style={{ fontSize: '13px' }}>{room.name || 'Unknown'}</td>
+                          <td style={{ fontSize: '13px' }}>{(room.peakAuraScore ?? 0).toLocaleString()}</td>
+                          <td style={{ fontSize: '13px' }}>{(room.totalVisitors ?? 0).toLocaleString()}</td>
+                          <td style={{ fontSize: '13px' }}>{room.deletedAt ? timeAgo(room.deletedAt) : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Failed to load user data.</div>
+          )}
+        </AdminLightbox>
       )}
 
       {/* Save bar (not shown on stats tab) */}
