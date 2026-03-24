@@ -111,9 +111,33 @@ export default function AssetsPage() {
     setCurrentPrefix(prefix);
   }
 
+  async function directUploadToR2(file: File, key: string): Promise<string> {
+    // Step 1: Get presigned URL from our API
+    const presignRes = await fetch('/api/admin/assets/presign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+      body: JSON.stringify({ key, contentType: file.type || 'application/octet-stream', size: file.size }),
+    });
+    if (!presignRes.ok) {
+      const data = await presignRes.json();
+      throw new Error(data.error || 'Failed to get upload URL');
+    }
+    const { presignedUrl, publicUrl } = await presignRes.json();
+
+    // Step 2: Upload directly to R2 (bypasses our server entirely)
+    const uploadRes = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error(`R2 upload failed (${uploadRes.status})`);
+
+    return publicUrl;
+  }
+
   async function handleUpload(file: File) {
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File too large (max 10MB)');
+    if (file.size > 100 * 1024 * 1024) {
+      setError('File too large (max 100MB)');
       return;
     }
 
@@ -126,23 +150,8 @@ export default function AssetsPage() {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('key', key);
-
-      const res = await fetch('/api/admin/assets/upload', {
-        method: 'POST',
-        headers: { 'x-csrf-token': getCsrfToken() },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Upload failed');
-      }
-
-      const data = await res.json();
-      setSuccess(`Uploaded: ${data.url}`);
+      const url = await directUploadToR2(file, key);
+      setSuccess(`Uploaded: ${url}`);
       setUploadKey('');
       if (fileInputRef.current) fileInputRef.current.value = '';
       fetchBrowse(currentPrefix);
@@ -155,8 +164,8 @@ export default function AssetsPage() {
   }
 
   async function handleSwap(file: File, existingKey: string) {
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File too large (max 10MB)');
+    if (file.size > 100 * 1024 * 1024) {
+      setError('File too large (max 100MB)');
       return;
     }
 
@@ -164,21 +173,7 @@ export default function AssetsPage() {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('key', existingKey);
-
-      const res = await fetch('/api/admin/assets/upload', {
-        method: 'POST',
-        headers: { 'x-csrf-token': getCsrfToken() },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Swap failed');
-      }
-
+      await directUploadToR2(file, existingKey);
       setSuccess(`Replaced: ${existingKey}`);
       fetchBrowse(currentPrefix);
       setTimeout(() => setSuccess(''), 5000);
@@ -318,7 +313,7 @@ export default function AssetsPage() {
           }}
         >
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            Drop file here or click to browse (max 10MB)
+            Drop file here or click to browse (max 100MB)
           </p>
           {currentPrefix && (
             <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>

@@ -7,9 +7,8 @@ import { validateCsrf } from '@/lib/bazaar/csrf';
 import { uploadObject, isR2Configured } from '@/lib/admin/r2';
 
 export const runtime = 'nodejs';
-
-// Override body size limit for uploads
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // 60s timeout for large uploads
 
 export async function POST(request: NextRequest) {
   const authResult = await requireMastermindApi();

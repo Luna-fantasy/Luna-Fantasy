@@ -1,4 +1,5 @@
 import { S3Client, ListObjectsV2Command, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -89,6 +90,21 @@ export async function uploadObject(key: string, buffer: Buffer, contentType: str
     ContentType: contentType,
   });
   await client.send(command);
+  return `${R2_PUBLIC_URL}/${key}`;
+}
+
+export async function getPresignedUploadUrl(key: string, contentType: string, expiresIn = 600): Promise<string> {
+  const client = getClient();
+  const command = new PutObjectCommand({
+    Bucket: R2_BUCKET_NAME,
+    Key: key,
+    ContentType: contentType,
+  });
+  // Cast needed: @aws-sdk/s3-request-presigner may pull a slightly different @smithy/types version
+  return getSignedUrl(client as any, command as any, { expiresIn });
+}
+
+export function getPublicUrl(key: string): string {
   return `${R2_PUBLIC_URL}/${key}`;
 }
 
