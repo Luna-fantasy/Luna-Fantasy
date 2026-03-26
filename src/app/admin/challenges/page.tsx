@@ -878,13 +878,55 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [edits, setEdits] = useState<Record<string, string>>({});
 
+  // Config state (numeric settings + HoF)
+  const [cfg, setCfg] = useState<any>(null);
+  const [cfgOrig, setCfgOrig] = useState('');
+  const [cfgSaving, setCfgSaving] = useState(false);
+  const [channels, setChannels] = useState<Channel[]>([]);
+
   useEffect(() => {
     fetch('/api/admin/challenges/texts')
       .then(r => r.json())
       .then(d => setTexts(d.texts || {}))
       .catch(() => toast('Failed to load texts', 'error'))
       .finally(() => setLoading(false));
+    // Load challenge config
+    fetch('/api/admin/challenges/config')
+      .then(r => r.json())
+      .then(d => { setCfg(d.config); setCfgOrig(JSON.stringify(d.config)); })
+      .catch(() => toast('Failed to load config', 'error'));
+    // Load channels for HoF picker
+    fetch('/api/admin/challenges/channels')
+      .then(r => r.json())
+      .then(d => setChannels(d.channels || []))
+      .catch(() => {});
   }, [toast]);
+
+  const cfgHasChanges = cfg ? JSON.stringify(cfg) !== cfgOrig : false;
+
+  const handleSaveConfig = async () => {
+    if (!cfg || !cfgHasChanges) return;
+    setCfgSaving(true);
+    try {
+      const res = await fetch('/api/admin/challenges/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify({ config: cfg }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed'); }
+      setCfgOrig(JSON.stringify(cfg));
+      toast('Settings saved! Bot will pick up changes within 60 seconds.', 'success');
+    } catch (err: any) {
+      toast(err.message || 'Failed to save', 'error');
+    } finally { setCfgSaving(false); }
+  };
+
+  const cfgNum = (key: string, label: string, unit: string, min: number, max: number) => (
+    <div className="cm-field" style={{ flex: 1 }}>
+      <label className="admin-form-label">{label} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({unit})</span></label>
+      <input className="admin-input" type="number" min={min} max={max} value={cfg?.[key] ?? ''} onChange={e => setCfg((c: any) => ({ ...c, [key]: Number(e.target.value) }))} />
+    </div>
+  );
 
   const toggleCategory = (cat: string) => {
     setExpanded(prev => {
@@ -946,8 +988,82 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
     )
   );
 
+  const groupedChannels = useMemo(() => {
+    const map = new Map<string, Channel[]>();
+    for (const ch of channels) {
+      if (!map.has(ch.parentName)) map.set(ch.parentName, []);
+      map.get(ch.parentName)!.push(ch);
+    }
+    return map;
+  }, [channels]);
+
   return (
     <div style={{ marginTop: '1rem' }}>
+
+      {/* ── Challenge Config (numeric settings + HoF) ── */}
+      {cfg && (
+        <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Challenge Settings</h3>
+          <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Changes take effect within 60 seconds (bot reads from database).</p>
+
+          {/* Hall of Fame */}
+          <div className="admin-config-section" style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Hall of Fame Channel</h4>
+            <select className="admin-input" value={cfg.hallOfFameChannelId || ''} onChange={e => setCfg((c: any) => ({ ...c, hallOfFameChannelId: e.target.value || null }))}>
+              <option value="">Not configured</option>
+              {Array.from(groupedChannels.entries()).map(([cat, chs]) => (
+                <optgroup key={cat} label={cat}>
+                  {chs.map(ch => <option key={ch.id} value={ch.id}>#{ch.name}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          {/* Anti-Alt Protection */}
+          <div className="admin-config-section" style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Anti-Alt Protection</h4>
+            <div className="cm-row">
+              {cfgNum('minJoinAgeMs', 'Min server join age', 'ms — 3600000 = 1hr', 0, 2592000000)}
+              {cfgNum('minAccountAgeMs', 'Min account age', 'ms — 604800000 = 7d', 0, 7776000000)}
+            </div>
+            <div className="cm-row" style={{ marginTop: '8px' }}>
+              {cfgNum('suspiciousVoteThreshold', 'Flag threshold', 'new accounts', 2, 20)}
+            </div>
+          </div>
+
+          {/* Rate Limiting */}
+          <div className="admin-config-section" style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Rate Limiting</h4>
+            <div className="cm-row">
+              {cfgNum('maxGuildVotesPerSec', 'Votes/sec limit', 'votes/sec', 1, 100)}
+              {cfgNum('cmdCooldownMs', 'Command cooldown', 'ms — 5000 = 5s', 0, 60000)}
+              {cfgNum('voteChangeWindowMs', 'Vote change window', 'ms — 120000 = 2min', 0, 600000)}
+            </div>
+          </div>
+
+          {/* Display */}
+          <div className="admin-config-section" style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Display</h4>
+            <div className="cm-row">
+              {cfgNum('updateIntervalMs', 'Panel refresh', 'ms — 30000 = 30s', 10000, 300000)}
+              {cfgNum('maxTopEntriesShown', 'Entries in panel', 'entries', 1, 25)}
+            </div>
+          </div>
+
+          {cfgHasChanges && (
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button className="admin-btn admin-btn-primary" onClick={handleSaveConfig} disabled={cfgSaving}>
+                {cfgSaving ? 'Saving...' : 'Save Settings'}
+              </button>
+              <button className="admin-btn admin-btn-ghost" onClick={() => setCfg(JSON.parse(cfgOrig))}>Discard</button>
+            </div>
+          )}
+
+          <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.06)', margin: '8px 0' }} />
+        </div>
+      )}
+
+      {/* Text Configuration */}
       {/* Search */}
       <input
         className="admin-input"
