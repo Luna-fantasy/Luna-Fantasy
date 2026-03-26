@@ -4,10 +4,10 @@ import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
 
-// Cache overrides for 60 seconds to avoid hitting MongoDB on every request
+// Cache overrides for 30 seconds — combined with ISR (60s), worst case is 90s staleness
 let overrideCache: Record<string, Record<string, string>> = {};
 let cacheTimestamp = 0;
-const CACHE_TTL = 60_000;
+const CACHE_TTL = 30_000;
 
 export function invalidateOverrideCache() {
   cacheTimestamp = 0;

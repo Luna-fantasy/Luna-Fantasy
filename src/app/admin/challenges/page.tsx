@@ -405,7 +405,7 @@ export default function ChallengesPage() {
                 </div>
                 {active.voteCount > 0 && active.entryCount > 0 && (
                   <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-muted, rgba(255,255,255,0.5))', display: 'flex', gap: '16px' }}>
-                    <span>Avg votes/entry: {(active.voteCount / active.entryCount).toFixed(1)}</span>
+                    <span>Avg votes/entry: {active.entryCount > 0 ? (active.voteCount / active.entryCount).toFixed(1) : '0'}</span>
                     {active.flaggedVoteCount > 0 && <span>Flagged: {(active.flaggedVoteCount / active.voteCount * 100).toFixed(1)}%</span>}
                   </div>
                 )}
@@ -905,7 +905,7 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
   const cfgHasChanges = cfg ? JSON.stringify(cfg) !== cfgOrig : false;
 
   const handleSaveConfig = async () => {
-    if (!cfg || !cfgHasChanges) return;
+    if (!cfg || !cfgHasChanges || cfgSaving) return;
     setCfgSaving(true);
     try {
       const res = await fetch('/api/admin/challenges/config', {
@@ -1055,7 +1055,7 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
               <button className="admin-btn admin-btn-primary" onClick={handleSaveConfig} disabled={cfgSaving}>
                 {cfgSaving ? 'Saving...' : 'Save Settings'}
               </button>
-              <button className="admin-btn admin-btn-ghost" onClick={() => setCfg(JSON.parse(cfgOrig))}>Discard</button>
+              <button className="admin-btn admin-btn-ghost" onClick={() => { try { setCfg(JSON.parse(cfgOrig)); } catch { toast('Reset failed', 'error'); } }}>Discard</button>
             </div>
           )}
 

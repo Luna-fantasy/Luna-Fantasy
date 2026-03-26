@@ -70,7 +70,8 @@ function renderColumn(col: FooterColumn, locale: string) {
       <ul className="footer-links">
         {col.links.map((link, i) => {
           const label = locale === 'ar' ? link.labelAr : link.labelEn;
-          const icon = SOCIAL_ICONS[link.labelEn.toLowerCase()];
+          if (!label) return null; // Skip empty labels
+          const icon = SOCIAL_ICONS[(link.labelEn || '').toLowerCase()];
           return (
             <li key={`${col.id}-${i}`}>
               {link.external ? (

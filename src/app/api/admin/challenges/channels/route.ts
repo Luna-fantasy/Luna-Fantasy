@@ -24,20 +24,15 @@ export async function GET() {
   }
 
   try {
-    // BUG-7 fix: timeout to prevent indefinite hang if Discord is slow
+    // Timeout to prevent indefinite hang if Discord is slow
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
 
-    let res: Response;
-    try {
-      res = await fetch(`${DISCORD_API}/guilds/${GUILD_ID}/channels`, {
-        headers: { Authorization: `Bot ${token}` },
-        signal: controller.signal,
-        next: { revalidate: 0 },
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
+    const res = await fetch(`${DISCORD_API}/guilds/${GUILD_ID}/channels`, {
+      headers: { Authorization: `Bot ${token}` },
+      signal: controller.signal,
+      next: { revalidate: 0 },
+    }).finally(() => clearTimeout(timeout));
 
     if (!res.ok) {
       console.error('Discord channels fetch failed:', res.status);
