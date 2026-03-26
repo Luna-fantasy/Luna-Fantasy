@@ -526,7 +526,15 @@
       "trade_loss": "خسارة تبادل",
       "seluna_purchase": "شراء من سيلونا",
       "brimor_purchase": "شراء من بريمور",
-      "mells_purchase": "شراء من ميلز"
+      "mells_purchase": "شراء من ميلز",
+      "lunari_added": "لوناري مُكتسب",
+      "lunari_spent": "لوناري مُنفق",
+      "challenge_reward": "جائزة تحدي",
+      "daily_vip": "مكافأة يومية VIP",
+      "game_win": "فوز في لعبة",
+      "game_loss": "خسارة في لعبة",
+      "transfer_sent": "تحويل مُرسل",
+      "transfer_received": "تحويل مُستلم"
     },
     "playerStats": {
       "title": "إحصائيات اللاعب",

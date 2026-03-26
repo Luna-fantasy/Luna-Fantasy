@@ -525,7 +525,15 @@
       "trade_loss": "Trade Lost",
       "seluna_purchase": "Seluna Purchase",
       "brimor_purchase": "Brimor Purchase",
-      "mells_purchase": "Mells Purchase"
+      "mells_purchase": "Mells Purchase",
+      "lunari_added": "Lunari Earned",
+      "lunari_spent": "Lunari Spent",
+      "challenge_reward": "Challenge Reward",
+      "daily_vip": "Daily VIP Bonus",
+      "game_win": "Game Win",
+      "game_loss": "Game Loss",
+      "transfer_sent": "Transfer Sent",
+      "transfer_received": "Transfer Received"
     },
     "playerStats": {
       "title": "Player Stats",
