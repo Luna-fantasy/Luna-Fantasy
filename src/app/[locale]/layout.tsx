@@ -81,6 +81,9 @@ export const viewport = {
   themeColor: '#030306',
 };
 
+// ISR: revalidate every 60s so MongoDB translation overrides take effect on the live site
+export const revalidate = 60;
+
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;
 
