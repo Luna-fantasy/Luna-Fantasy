@@ -980,14 +980,6 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
     }
   };
 
-  if (loading) return <SkeletonCard count={3} />;
-
-  const filteredCategories = Object.entries(TEXT_CATEGORIES).filter(([cat, keys]) =>
-    !search || cat.toLowerCase().includes(search.toLowerCase()) || keys.some(k =>
-      k.toLowerCase().includes(search.toLowerCase()) || (texts[k] || '').toLowerCase().includes(search.toLowerCase())
-    )
-  );
-
   const groupedChannels = useMemo(() => {
     const map = new Map<string, Channel[]>();
     for (const ch of channels) {
@@ -996,6 +988,14 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
     }
     return map;
   }, [channels]);
+
+  if (loading) return <SkeletonCard count={3} />;
+
+  const filteredCategories = Object.entries(TEXT_CATEGORIES).filter(([cat, keys]) =>
+    !search || cat.toLowerCase().includes(search.toLowerCase()) || keys.some(k =>
+      k.toLowerCase().includes(search.toLowerCase()) || (texts[k] || '').toLowerCase().includes(search.toLowerCase())
+    )
+  );
 
   return (
     <div style={{ marginTop: '1rem' }}>
