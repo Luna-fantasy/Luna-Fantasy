@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { action, roomId, value } = body;
+  const { action, roomId, value: rawValue } = body;
 
   // Validate action
   if (!action || !ALLOWED_ACTIONS.includes(action as ManageAction)) {
@@ -42,11 +42,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate roomId
-  if (!roomId || typeof roomId !== 'string' || roomId.trim().length === 0) {
-    return NextResponse.json({ error: 'roomId must be a non-empty string' }, { status: 400 });
+  if (!roomId || typeof roomId !== 'string' || !/^\d{17,20}$/.test(roomId)) {
+    return NextResponse.json({ error: 'roomId must be a valid Discord channel ID' }, { status: 400 });
   }
 
   // Validate value for rename action
+  let value = rawValue;
   if (action === 'rename') {
     if (!value || typeof value !== 'string' || value.trim().length === 0) {
       return NextResponse.json({ error: 'value must be a non-empty string for rename' }, { status: 400 });
@@ -54,6 +55,8 @@ export async function POST(request: NextRequest) {
     if (value.length > 100) {
       return NextResponse.json({ error: 'value must be 100 characters or fewer' }, { status: 400 });
     }
+    // Sanitize Discord markdown injection
+    value = value.replace(/@(everyone|here)/gi, '@\u200b$1').replace(/```/g, '');
   }
 
   try {

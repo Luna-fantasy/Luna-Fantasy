@@ -8,6 +8,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { EditModeProvider } from '@/lib/edit-mode/context';
 import { EditToolbar } from '@/components/edit-mode/EditToolbar';
+import { getFooterConfig } from '@/lib/admin/footer-defaults';
 import '@/styles/edit-mode.css';
 
 type Props = {
@@ -30,9 +31,6 @@ export async function generateMetadata({ params }: Props) {
     keywords: locale === 'ar'
       ? 'لونا, لونا فانتسي, ديسكورد, لعبة كروت, فانتازيا, لعب أدوار, مجتمع, الكويت, السعودية'
       : 'Luna, Luna Fantasy, Discord roleplay, fantasy game, card game, RPG, roleplay community, fantasy world, Kuwait, Saudi Arabia',
-    authors: [{ name: 'Buried Games Studio' }],
-    creator: 'Buried Games Studio',
-    publisher: 'Buried Games Studio',
     metadataBase: new URL('https://lunarian.app'),
     alternates: {
       canonical: `https://lunarian.app/${locale}/`,
@@ -94,6 +92,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const messages = await getMessages();
   const isRTL = locale === 'ar';
+  const footerConfig = await getFooterConfig();
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -149,7 +148,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <EditToolbar />
           <Navbar />
           {children}
-          <Footer />
+          <Footer config={footerConfig} locale={locale} />
         </EditModeProvider>
       </NextIntlClientProvider>
     </div>

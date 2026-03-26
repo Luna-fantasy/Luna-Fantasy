@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         .project({ name: 1, peakAuraScore: 1, totalVisitors: 1, deletedAt: 1 })
         .toArray(),
       db.collection('vc_rooms').findOne(
-        { ownerId: userId },
+        { ownerId: userId, deletedAt: { $exists: false } },
         { projection: { _id: 1, name: 1, 'aura.tier': 1, 'aura.score': 1, memberCount: 1 } },
       ),
     ]);

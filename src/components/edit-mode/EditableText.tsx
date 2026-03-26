@@ -33,7 +33,7 @@ export function E({ ns, k, children, tag, className }: EditableTextProps) {
     const newText = ref.current.textContent ?? '';
     const original = originalRef.current;
 
-    if (newText !== original && newText.trim() !== '') {
+    if (newText !== original) {
       addChange(editKey, {
         type: 'translation',
         key: editKey,
@@ -41,7 +41,7 @@ export function E({ ns, k, children, tag, className }: EditableTextProps) {
         value: newText,
         original,
       });
-    } else if (newText === original) {
+    } else {
       removeChange(editKey);
     }
   }, [editKey, locale, addChange, removeChange]);

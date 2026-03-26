@@ -135,6 +135,7 @@ function validateContentButtons(value: any): string | null {
   if (typeof value !== 'object' || value === null) return 'Must be an object';
   for (const key of EXPECTED_BUTTON_KEYS) {
     if (typeof value[key] !== 'string' || value[key].trim().length === 0) return `Button "${key}" must be non-empty`;
+    if (value[key].length > 80) return `Button "${key}" exceeds Discord's 80-character limit`;
   }
   return null;
 }

@@ -1413,6 +1413,12 @@ export default function VoicePage() {
                 <StatCard label="Active Rooms Now" value={stats.totals?.activeRoomsCount ?? 0} icon="🎙️" color="green" />
               </div>
 
+              {/* Export buttons */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <a href="/api/admin/voice/export?format=csv" download className="admin-btn admin-btn-sm admin-btn-ghost">📄 Export CSV</a>
+                <a href="/api/admin/voice/export?format=json" download className="admin-btn admin-btn-sm admin-btn-ghost">📦 Export JSON</a>
+              </div>
+
               <ConfigSection title="Active Rooms" description="Currently active voice rooms (auto-refreshes every 10s)">
                 {(() => {
                   const rooms = stats.activeRooms ?? [];

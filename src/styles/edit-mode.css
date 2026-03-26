@@ -214,6 +214,14 @@ body.edit-mode-active .editable-text {
   background: rgba(0, 212, 255, 0.06);
 }
 
+/* Empty-text placeholder in edit mode */
+.editable-text:empty::after {
+  content: '(empty)';
+  color: rgba(255, 255, 255, 0.25);
+  font-style: italic;
+  pointer-events: none;
+}
+
 /*
  * FIX: Prevent clicks on editable text inside links/buttons from
  * triggering navigation. The text captures pointer events, and

@@ -45,6 +45,7 @@ const navItems: { section: string; items: NavItem[] }[] = [
       { label: 'Shop Items', href: '/admin/vendors', icon: 'store' },
       { label: 'Tickets', href: '/admin/tickets', icon: 'shield' },
       { label: 'Applications', href: '/admin/applications', icon: 'users' },
+      { label: 'Challenges', href: '/admin/challenges', icon: 'trophy' },
     ],
   },
   {
@@ -67,6 +68,7 @@ const navItems: { section: string; items: NavItem[] }[] = [
       { label: 'Canvas Editor', href: '/admin/canvas-editor', icon: 'image' },
       { label: 'Assets (R2)', href: '/admin/assets', icon: 'image' },
       { label: 'Website', href: '/admin/content', icon: 'globe' },
+      { label: 'Footer', href: '/admin/footer-config', icon: 'settings' },
       { label: 'Partners', href: '/admin/partners', icon: 'users' },
     ],
   },
@@ -217,6 +219,14 @@ function NavIcon({ name }: { name: string }) {
         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
         <polyline points="15 3 21 3 21 9" />
         <line x1="10" y1="14" x2="21" y2="3" />
+      </svg>
+    ),
+    trophy: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+        <path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22" />
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22" />
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
       </svg>
     ),
   };
