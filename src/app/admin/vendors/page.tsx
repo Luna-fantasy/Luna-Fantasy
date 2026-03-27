@@ -137,6 +137,31 @@ export default function VendorsPage() {
     backgroundType: 'profile' as 'profile' | 'rank' | 'both',
     rankBackgroundUrl: '',
   });
+
+  // Card/Stone picker data
+  const [cardsList, setCardsList] = useState<{ name: string; rarity: string; imageUrl: string }[]>([]);
+  const [stonesList, setStonesList] = useState<{ name: string; imageUrl: string }[]>([]);
+  const [pickerSearch, setPickerSearch] = useState('');
+
+  // Fetch cards + stones for pickers (once on mount)
+  useEffect(() => {
+    fetch('/api/admin/cards/config').then(r => r.json()).then(d => {
+      const all: { name: string; rarity: string; imageUrl: string }[] = [];
+      for (const group of (d.rarities || [])) {
+        for (const card of (group.items || [])) {
+          all.push({ name: card.name, rarity: group.rarity, imageUrl: card.imageUrl });
+        }
+      }
+      setCardsList(all);
+    }).catch(() => {});
+
+    fetch('/api/admin/stones/config').then(r => r.json()).then(d => {
+      const all: { name: string; imageUrl: string }[] = [];
+      for (const s of (d.stones || [])) all.push({ name: s.name, imageUrl: s.imageUrl });
+      for (const s of (d.forbiddenStones || [])) all.push({ name: s.name, imageUrl: s.imageUrl });
+      setStonesList(all);
+    }).catch(() => {});
+  }, []);
   const [bgImageFile, setBgImageFile] = useState<File | null>(null);
   const [bgImagePreview, setBgImagePreview] = useState<string | null>(null);
 
@@ -873,15 +898,44 @@ export default function VendorsPage() {
               <div className="admin-form-group">
                 <label className="admin-form-label">🔵 Type</label>
                 <select className="admin-select" value={newItem.type}
-                  onChange={(e) => setNewItem(p => ({ ...p, type: e.target.value as any }))}>
+                  onChange={(e) => { setNewItem(p => ({ ...p, type: e.target.value as any, name: '', roleId: '' })); setPickerSearch(''); }}>
                   {ITEM_TYPES.map(t => <option key={t} value={t}>{TYPE_ICONS[t]} {t}</option>)}
                 </select>
               </div>
 
               <div className="admin-form-group">
                 <label className="admin-form-label">✏️ Name</label>
-                <input className="admin-form-input" placeholder="e.g. Luna Sentinel"
-                  value={newItem.name} onChange={(e) => setNewItem(p => ({ ...p, name: e.target.value }))} />
+                {newItem.type === 'Card' ? (
+                  <>
+                    <input className="admin-form-input" placeholder="Search cards..." value={pickerSearch}
+                      onChange={e => setPickerSearch(e.target.value)} style={{ marginBottom: '6px' }} />
+                    <select className="admin-select" value={newItem.name} style={{ height: '140px' }} size={6}
+                      onChange={e => {
+                        const card = cardsList.find(c => c.name === e.target.value);
+                        setNewItem(p => ({ ...p, name: e.target.value, rarity: card?.rarity || p.rarity }));
+                      }}>
+                      {cardsList
+                        .filter(c => !pickerSearch || c.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+                        .map(c => <option key={c.name} value={c.name}>{c.name} ({c.rarity})</option>)}
+                    </select>
+                    {newItem.name && <span className="admin-number-input-desc">Selected: {newItem.name}</span>}
+                  </>
+                ) : newItem.type === 'Stone' ? (
+                  <>
+                    <input className="admin-form-input" placeholder="Search stones..." value={pickerSearch}
+                      onChange={e => setPickerSearch(e.target.value)} style={{ marginBottom: '6px' }} />
+                    <select className="admin-select" value={newItem.name} style={{ height: '140px' }} size={6}
+                      onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))}>
+                      {stonesList
+                        .filter(s => !pickerSearch || s.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+                        .map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                    </select>
+                    {newItem.name && <span className="admin-number-input-desc">Selected: {newItem.name}</span>}
+                  </>
+                ) : (
+                  <input className="admin-form-input" placeholder={newItem.type === 'Background' ? 'e.g. Lunar Night' : newItem.type === 'Tickets' ? 'e.g. Game Tickets x10' : 'Item name'}
+                    value={newItem.name} onChange={(e) => setNewItem(p => ({ ...p, name: e.target.value }))} />
+                )}
               </div>
 
               <div className="admin-form-group">
@@ -911,9 +965,16 @@ export default function VendorsPage() {
 
               {newItem.type === 'Role' && (
                 <div className="admin-form-group">
-                  <label className="admin-form-label">🛡️ Role</label>
-                  <input className="admin-form-input" placeholder="Role ID"
-                    value={newItem.roleId} onChange={(e) => setNewItem(p => ({ ...p, roleId: e.target.value }))} />
+                  <RolePicker
+                    label="🛡️ Role"
+                    value={newItem.roleId}
+                    onChange={(v) => {
+                      const id = Array.isArray(v) ? v[0] || '' : v;
+                      const role = roles.find((r: any) => r.id === id);
+                      setNewItem(p => ({ ...p, roleId: id, name: role?.name || p.name }));
+                    }}
+                    description="Discord role given on purchase"
+                  />
                 </div>
               )}
 
@@ -998,8 +1059,37 @@ export default function VendorsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="admin-form-group">
                 <label className="admin-form-label">✏️ Name</label>
-                <input className="admin-form-input" value={editingSelunaItem.name}
-                  onChange={(e) => setEditingSelunaItem(p => p ? { ...p, name: e.target.value } : p)} />
+                {editingSelunaItem.type === 'Card' ? (
+                  <>
+                    <input className="admin-form-input" placeholder="Search cards..." value={pickerSearch}
+                      onChange={e => setPickerSearch(e.target.value)} style={{ marginBottom: '6px' }} />
+                    <select className="admin-select" value={editingSelunaItem.name} style={{ height: '140px' }} size={6}
+                      onChange={e => {
+                        const card = cardsList.find(c => c.name === e.target.value);
+                        setEditingSelunaItem(p => p ? { ...p, name: e.target.value, rarity: card?.rarity || p.rarity } : p);
+                      }}>
+                      {cardsList
+                        .filter(c => !pickerSearch || c.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+                        .map(c => <option key={c.name} value={c.name}>{c.name} ({c.rarity})</option>)}
+                    </select>
+                    {editingSelunaItem.name && <span className="admin-number-input-desc">Selected: {editingSelunaItem.name}</span>}
+                  </>
+                ) : editingSelunaItem.type === 'Stone' ? (
+                  <>
+                    <input className="admin-form-input" placeholder="Search stones..." value={pickerSearch}
+                      onChange={e => setPickerSearch(e.target.value)} style={{ marginBottom: '6px' }} />
+                    <select className="admin-select" value={editingSelunaItem.name} style={{ height: '140px' }} size={6}
+                      onChange={e => setEditingSelunaItem(p => p ? { ...p, name: e.target.value } : p)}>
+                      {stonesList
+                        .filter(s => !pickerSearch || s.name.toLowerCase().includes(pickerSearch.toLowerCase()))
+                        .map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
+                    </select>
+                    {editingSelunaItem.name && <span className="admin-number-input-desc">Selected: {editingSelunaItem.name}</span>}
+                  </>
+                ) : (
+                  <input className="admin-form-input" value={editingSelunaItem.name}
+                    onChange={(e) => setEditingSelunaItem(p => p ? { ...p, name: e.target.value } : p)} />
+                )}
               </div>
 
               <div className="admin-form-group">
