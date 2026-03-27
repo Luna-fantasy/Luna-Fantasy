@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import StatCard from '../components/StatCard';
 import DataTable, { type Column } from '../components/DataTable';
 import ConfirmModal from '../components/ConfirmModal';
@@ -182,6 +182,10 @@ export default function ChallengesPage() {
   const [fetchError, setFetchError] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
   const [secondsAgo, setSecondsAgo] = useState(0);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedData, setExpandedData] = useState<any>(null);
+  const [expandedLoading, setExpandedLoading] = useState(false);
+  const [voteFilter, setVoteFilter] = useState<'all' | 'flagged'>('all');
   const { toast } = useToast();
 
   const fetchData = useCallback(async () => {
@@ -252,6 +256,20 @@ export default function ChallengesPage() {
     }
     return map;
   }, [active?.votes]);
+
+  const toggleExpand = async (id: string) => {
+    if (expandedId === id) { setExpandedId(null); setExpandedData(null); return; }
+    setExpandedId(id);
+    setExpandedData(null);
+    setExpandedLoading(true);
+    setVoteFilter('all');
+    try {
+      const res = await fetch(`/api/admin/challenges/${id}`);
+      if (!res.ok) throw new Error('Failed');
+      setExpandedData(await res.json());
+    } catch { toast('Failed to load challenge details', 'error'); setExpandedId(null); }
+    finally { setExpandedLoading(false); }
+  };
 
   if (loading) {
     return (
@@ -439,7 +457,166 @@ export default function ChallengesPage() {
         </div>
       ))}
 
-      {tab === 'history' && <DataTable title="Challenge History" columns={historyColumns} data={history} pageSize={20} />}
+      {tab === 'history' && (
+        <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(0,212,255,0.06)' }}>
+            <h3 style={{ margin: 0, fontSize: '1rem' }}>Challenge History</h3>
+          </div>
+          <table className="admin-table" style={{ width: '100%' }}>
+            <thead><tr>
+              <th>Challenge</th><th>Status</th><th>Entries</th><th>Votes</th><th>Flagged</th><th>Created</th><th>By</th>
+            </tr></thead>
+            <tbody>
+              {history.map(ch => (
+                <React.Fragment key={String(ch._id)}>
+                  <tr onClick={() => toggleExpand(String(ch._id))} style={{ cursor: 'pointer' }}>
+                    <td style={{ fontWeight: 600 }}>{expandedId === String(ch._id) ? '▼ ' : '▶ '}{ch.name}</td>
+                    <td><span className={`admin-badge ${ch.status === 'closed' ? 'green' : ch.status === 'scheduled' ? 'gold' : 'admin-badge-muted'}`}>
+                      {ch.status === 'closed' ? 'Closed' : ch.status === 'scheduled' ? 'Scheduled' : 'Cancelled'}
+                    </span></td>
+                    <td>{ch.entryCount}</td>
+                    <td>{ch.voteCount}</td>
+                    <td>{ch.flaggedVoteCount > 0 ? <span style={{ color: '#f43f5e' }}>{ch.flaggedVoteCount}</span> : '0'}</td>
+                    <td>{new Date(ch.createdAt).toLocaleDateString()}</td>
+                    <td>{ch.createdByName}</td>
+                  </tr>
+                  {expandedId === String(ch._id) && (
+                    <tr><td colSpan={7} style={{ padding: 0, background: 'rgba(0,0,0,0.15)' }}>
+                      {expandedLoading ? (
+                        <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading details...</div>
+                      ) : expandedData ? (
+                        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          {/* Results Ranking */}
+                          <details open>
+                            <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px' }}>
+                              🏆 Results ({expandedData.rankings?.length || 0} entries)
+                            </summary>
+                            {expandedData.rankings?.length > 0 ? (
+                              <table className="admin-table" style={{ width: '100%' }}>
+                                <thead><tr><th>#</th><th>User</th><th>Votes</th><th>%</th><th>Reward</th></tr></thead>
+                                <tbody>
+                                  {expandedData.rankings.map((r: any) => {
+                                    const totalV = expandedData.challenge.voteCount || 1;
+                                    const pct = ((r.votes / totalV) * 100).toFixed(1);
+                                    const medal = r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : r.rank === 3 ? '🥉' : `${r.rank}.`;
+                                    const tier = expandedData.challenge.reward?.tiers?.find((t: any) => t.rank === r.rank);
+                                    return (
+                                      <tr key={r.userId} style={r.rank === 1 ? { background: 'rgba(255,213,79,0.06)' } : undefined}>
+                                        <td style={{ fontWeight: r.rank <= 3 ? 700 : 400 }}>{medal}{r.rank === 1 ? ' ⭐' : ''}</td>
+                                        <td>{r.username}</td>
+                                        <td><strong>{r.votes}</strong></td>
+                                        <td>{pct}%</td>
+                                        <td>{tier ? `${tier.amount.toLocaleString()} Lunari` : '—'}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            ) : <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No entries</p>}
+                          </details>
+
+                          {/* Vote Log */}
+                          <details>
+                            <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px' }}>
+                              🗳️ Vote Log ({expandedData.votes?.length || 0} votes)
+                            </summary>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                              <button className={`admin-btn admin-btn-sm ${voteFilter === 'all' ? 'admin-btn-primary' : 'admin-btn-ghost'}`} onClick={() => setVoteFilter('all')}>All</button>
+                              <button className={`admin-btn admin-btn-sm ${voteFilter === 'flagged' ? 'admin-btn-danger' : 'admin-btn-ghost'}`} onClick={() => setVoteFilter('flagged')}>
+                                Flagged ({expandedData.votes?.filter((v: any) => v.flagged).length || 0})
+                              </button>
+                              <button className="admin-btn admin-btn-sm admin-btn-ghost" style={{ marginLeft: 'auto' }} onClick={() => {
+                                const rows = (expandedData.votes || []).map((v: any) => `${v.voterName},${v.votedForUsername},${v.votedAt},${v.flagged},${v.flagReason || ''}`);
+                                const csv = 'Voter,Voted For,Time,Flagged,Reason\n' + rows.join('\n');
+                                const blob = new Blob([csv], { type: 'text/csv' });
+                                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `votes_${ch.name}.csv`; a.click();
+                              }}>Export CSV</button>
+                            </div>
+                            <div style={{ maxHeight: '300px', overflow: 'auto' }}>
+                              <table className="admin-table" style={{ width: '100%', fontSize: '0.85rem' }}>
+                                <thead><tr><th>Voter</th><th>Voted For</th><th>Time</th><th>Flag</th><th>Reason</th></tr></thead>
+                                <tbody>
+                                  {(expandedData.votes || [])
+                                    .filter((v: any) => voteFilter === 'all' || v.flagged)
+                                    .map((v: any, i: number) => (
+                                    <tr key={i}>
+                                      <td>{v.voterName}</td>
+                                      <td>{v.votedForUsername}</td>
+                                      <td>{new Date(v.votedAt).toLocaleString()}</td>
+                                      <td>{v.flagged ? <span style={{ color: '#f43f5e' }}>Yes</span> : '—'}</td>
+                                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{v.flagReason || '—'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </details>
+
+                          {/* Entry Gallery */}
+                          <details>
+                            <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px' }}>
+                              📸 Entries ({expandedData.entries?.length || 0})
+                            </summary>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+                              {(expandedData.entries || []).map((e: any, i: number) => {
+                                const votes = expandedData.rankings?.find((r: any) => r.userId === e.userId)?.votes || 0;
+                                return (
+                                  <div key={i} className="ch-card" style={{ padding: '8px', textAlign: 'center' }}>
+                                    {e.imageUrl && <img src={e.imageUrl} alt={e.username} style={{ width: '100%', borderRadius: '6px', maxHeight: '160px', objectFit: 'cover', marginBottom: '6px' }} onClick={() => setLightboxEntry(e)} />}
+                                    {e.content && !e.imageUrl && <div style={{ padding: '12px', fontSize: '0.85rem', direction: 'rtl', background: 'rgba(0,0,0,0.2)', borderRadius: '6px', marginBottom: '6px', maxHeight: '120px', overflow: 'auto' }}>{e.content}</div>}
+                                    <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{e.username}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{votes} votes</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </details>
+
+                          {/* Fraud Stats */}
+                          <details>
+                            <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px' }}>
+                              🚩 Fraud Stats
+                            </summary>
+                            {(() => {
+                              const votes = expandedData.votes || [];
+                              const flagged = votes.filter((v: any) => v.flagged);
+                              const reasons = new Map<string, number>();
+                              flagged.forEach((v: any) => { const r = v.flagReason || 'unknown'; reasons.set(r, (reasons.get(r) || 0) + 1); });
+                              const pct = votes.length > 0 ? ((flagged.length / votes.length) * 100).toFixed(1) : '0';
+                              return (
+                                <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                                  <div className="ch-card" style={{ padding: '16px', flex: 1, minWidth: '200px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '2rem', fontWeight: 700, color: flagged.length > 0 ? '#f43f5e' : 'var(--text-primary)' }}>{flagged.length}</div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Flagged Votes ({pct}%)</div>
+                                  </div>
+                                  {reasons.size > 0 && (
+                                    <div className="ch-card" style={{ padding: '16px', flex: 2, minWidth: '200px' }}>
+                                      <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: '0.85rem' }}>Flag Reasons</div>
+                                      {Array.from(reasons.entries()).map(([reason, count]) => (
+                                        <div key={reason} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.85rem' }}>
+                                          <span>{reason}</span>
+                                          <span style={{ color: '#f43f5e', fontWeight: 600 }}>{count}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </details>
+                        </div>
+                      ) : null}
+                    </td></tr>
+                  )}
+                </React.Fragment>
+              ))}
+              {history.length === 0 && (
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--text-muted)' }}>No challenge history</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {tab === 'hallOfFame' && (
         hallOfFame.length > 0 ? (
