@@ -275,26 +275,25 @@ export async function GET() {
       }
     }
 
-    // Fallback to config.ts if MongoDB is empty
+    // Fallback to config.ts if MongoDB is empty (only works locally, not Railway)
     if (rarities.length === 0) {
-      const configContent = await readJesterConfig();
-      const parsed = parseCardsBlock(configContent);
-      if (parsed) {
-        rarities = Object.entries(parsed.cards).map(([rarity, items]) => ({ rarity, items }));
-      }
+      try {
+        const configContent = await readJesterConfig();
+        const parsed = parseCardsBlock(configContent);
+        if (parsed) {
+          rarities = Object.entries(parsed.cards).map(([rarity, items]) => ({ rarity, items }));
+        }
+      } catch { /* config.ts not available on Railway — that's fine if MongoDB has data */ }
     }
 
-    // FactionWar factions — read from bot_config or fallback to config.ts
+    // FactionWar factions — read from bot_config (config.ts fallback disabled on Railway)
     let factionWar = null;
-    const fwDoc = await db.collection('bot_config').findOne({ _id: 'jester_game_settings' as any });
-    if (fwDoc?.data?.FactionWar?.factions) {
-      factionWar = fwDoc.data.FactionWar.factions;
-    } else {
-      // Fallback to config.ts
-      const configContent = await readJesterConfig();
-      const fwData = parseFactionWarFull(configContent);
-      factionWar = fwData?.factions ?? null;
-    }
+    try {
+      const fwDoc = await db.collection('bot_config').findOne({ _id: 'jester_game_settings' as any });
+      if (fwDoc?.data?.FactionWar?.factions) {
+        factionWar = fwDoc.data.FactionWar.factions;
+      }
+    } catch { /* non-critical — faction war data is optional */ }
 
     return NextResponse.json({ rarities, factionWar });
   } catch (error) {
