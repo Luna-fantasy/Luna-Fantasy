@@ -51,6 +51,7 @@ interface ActiveShop {
   channelId: string;
   startTime: number;
   endTime: number;
+  nextAppearTime?: number;
   isDev?: boolean;
 }
 
@@ -91,7 +92,7 @@ function deepClone<T>(obj: T): T {
 
 // ── Main Page ──
 
-export default function VendorsSection() {
+export default function VendorsSection({ vendorTab }: { vendorTab?: 'seluna' | 'brimor' | 'broker' }) {
   // Seluna state (unchanged)
   const [selunaItems, setSelunaItems] = useState<SelunaItem[]>([]);
   const [selunaOpen, setSelunaOpen] = useState(false);
@@ -106,7 +107,7 @@ export default function VendorsSection() {
   // UI state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeVendorTab, setActiveVendorTab] = useState<VendorId>('brimor');
+  const [activeVendorTab, setActiveVendorTab] = useState<VendorId>(vendorTab === 'broker' ? 'broker' : 'brimor');
 
   // Seluna modals
   const [showAddSelunaItem, setShowAddSelunaItem] = useState(false);
@@ -498,7 +499,8 @@ export default function VendorsSection() {
   return (
     <>
 
-      {/* ── Seluna Section (unchanged) ── */}
+      {/* ── Seluna Section ── */}
+      {(!vendorTab || vendorTab === 'seluna') && (<>
       <div className="admin-card vendor-seluna-card" style={{ marginBottom: '32px' }}>
         <div className="vendor-seluna-header">
           <div className="vendor-seluna-title-area">
@@ -512,16 +514,21 @@ export default function VendorsSection() {
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {selunaOpen && activeShop?.endTime && (
-              <span style={{ fontSize: '12px', color: 'var(--accent-legendary)' }}>
-                {formatTimeLeft(activeShop.endTime)}
-              </span>
-            )}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
             <span className={`admin-badge ${selunaOpen ? 'admin-badge-success' : 'admin-badge-muted'}`}
               style={{ fontSize: '13px', padding: '4px 12px' }}>
               {selunaOpen ? 'OPEN' : 'CLOSED'}
             </span>
+            {selunaOpen && activeShop?.endTime && (
+              <span style={{ fontSize: '12px', color: 'var(--accent-legendary)' }}>
+                Closes {formatTimeLeft(activeShop.endTime)}
+              </span>
+            )}
+            {!selunaOpen && activeShop?.nextAppearTime && activeShop.nextAppearTime > Date.now() && (
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Next: {new Date(activeShop.nextAppearTime).toLocaleDateString()}
+              </span>
+            )}
           </div>
         </div>
 
@@ -656,7 +663,10 @@ export default function VendorsSection() {
         </div>
       </div>
 
+      </>)}
+
       {/* ── Vendor Shops (Brimor / Broker) ── */}
+      {(!vendorTab || vendorTab === 'brimor' || vendorTab === 'broker') && (<>
       <div className="admin-tabs" style={{ marginBottom: '24px' }}>
         {VENDOR_TABS.map((tab) => (
           <button
@@ -802,6 +812,8 @@ export default function VendorsSection() {
           </div>
         )}
       </div>
+
+      </>)}
 
       {/* ── SaveDeployBar ── */}
       <SaveDeployBar

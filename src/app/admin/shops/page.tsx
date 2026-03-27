@@ -64,7 +64,7 @@ interface MellsItem {
   enabled?: boolean;
 }
 
-type ShopTab = 'mells' | 'luckbox' | 'stonebox' | 'tickets' | 'trade' | 'vendors';
+type ShopTab = 'seluna' | 'mells' | 'luckbox' | 'stonebox' | 'tickets' | 'brimor' | 'broker';
 
 const VALID_RARITIES = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden'] as const;
 const RARITY_COLORS: Record<string, string> = {
@@ -89,7 +89,7 @@ function formatLunari(n: number): string {
 // ── Main Page ──
 
 export default function ShopsPage() {
-  const [activeTab, setActiveTab] = useState<ShopTab>('mells');
+  const [activeTab, setActiveTab] = useState<ShopTab>('seluna');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -370,7 +370,7 @@ export default function ShopsPage() {
     return (
       <>
         <div className="admin-page-header">
-          <h1 className="admin-page-title"><span className="emoji-float">🛒</span> Shop Configuration</h1>
+          <h1 className="admin-page-title"><span className="emoji-float">🛒</span> Shops</h1>
           <p className="admin-page-subtitle">Manage luckbox tiers, stone boxes, and ticket packages</p>
         </div>
         <div className="admin-loading"><div className="admin-spinner" />Loading...</div>
@@ -381,37 +381,27 @@ export default function ShopsPage() {
   return (
     <>
       <div className="admin-page-header">
-        <h1 className="admin-page-title"><span className="emoji-float">🛒</span> Shop Configuration</h1>
+        <h1 className="admin-page-title"><span className="emoji-float">🛒</span> Shops</h1>
         <p className="admin-page-subtitle">Manage luckbox tiers, stone boxes, and ticket packages</p>
       </div>
 
       {/* Tabs */}
       <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div className="admin-tabs" style={{ paddingLeft: '24px' }}>
-          <button className={`admin-tab ${activeTab === 'mells' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('mells')}>
-            Mells Selvair
-          </button>
-          <button className={`admin-tab ${activeTab === 'luckbox' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('luckbox')}>
-            Luckboxes (Kael)
-          </button>
-          <button className={`admin-tab ${activeTab === 'stonebox' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('stonebox')}>
-            Stone Boxes (Meluna)
-          </button>
-          <button className={`admin-tab ${activeTab === 'tickets' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('tickets')}>
-            Tickets (Zoldar)
-          </button>
-          <button className={`admin-tab ${activeTab === 'trade' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('trade')}>
-            Trade Config
-          </button>
-          <button className={`admin-tab ${activeTab === 'vendors' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('vendors')}>
-            Vendors (Seluna / Brimor / Broker)
-          </button>
+          {([
+            { id: 'seluna' as const, label: 'Seluna' },
+            { id: 'mells' as const, label: 'Mells Selvair' },
+            { id: 'luckbox' as const, label: 'Kael (Luckboxes)' },
+            { id: 'stonebox' as const, label: 'Meluna (Stone Boxes)' },
+            { id: 'tickets' as const, label: 'Zoldar (Tickets)' },
+            { id: 'brimor' as const, label: 'Brimor' },
+            { id: 'broker' as const, label: 'Broker' },
+          ]).map(t => (
+            <button key={t.id} className={`admin-tab ${activeTab === t.id ? 'admin-tab-active' : ''}`}
+              onClick={() => setActiveTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
         </div>
 
         <div style={{ padding: '24px' }}>
@@ -1021,62 +1011,11 @@ export default function ShopsPage() {
           )}
 
           {/* ── Trade Config Tab ── */}
-          {activeTab === 'vendors' && <VendorsSection />}
+          {activeTab === 'seluna' && <VendorsSection vendorTab="seluna" />}
+          {activeTab === 'brimor' && <VendorsSection vendorTab="brimor" />}
+          {activeTab === 'broker' && <VendorsSection vendorTab="broker" />}
 
-          {activeTab === 'trade' && (
-            <div>
-              <div className="admin-stat-card" style={{ maxWidth: 480 }}>
-                <h3 className="admin-section-title">Auction & Trade Duration</h3>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
-                  How long card and stone trades/auctions stay active before expiring.
-                </p>
-                <div className="admin-form-group">
-                  <label className="admin-form-label">Duration (hours)</label>
-                  <input
-                    className="admin-form-input"
-                    type="number"
-                    min={1}
-                    max={168}
-                    value={auctionDurationHours}
-                    onChange={e => setAuctionDurationHours(Math.max(1, parseInt(e.target.value) || 1))}
-                  />
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
-                    Currently: {auctionDurationHours} hour{auctionDurationHours !== 1 ? 's' : ''} ({(auctionDurationHours * 60).toLocaleString()} minutes)
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                  <button
-                    className={`admin-btn admin-btn-primary ${tradeSaving ? 'admin-btn-loading' : ''}`}
-                    disabled={tradeSaving || auctionDurationHours === auctionDurationOrig}
-                    onClick={async () => {
-                      setTradeSaving(true);
-                      try {
-                        const res = await fetch('/api/admin/config/jester', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
-                          body: JSON.stringify({ section: 'trade', value: auctionDurationHours * 3_600_000 }),
-                        });
-                        if (!res.ok) throw new Error('Save failed');
-                        setAuctionDurationOrig(auctionDurationHours);
-                        toast('Auction duration saved! Takes effect within 30 seconds.', 'success');
-                      } catch {
-                        toast('Failed to save trade config', 'error');
-                      } finally {
-                        setTradeSaving(false);
-                      }
-                    }}
-                  >
-                    {tradeSaving ? 'Saving...' : 'Save'}
-                  </button>
-                  {auctionDurationHours !== auctionDurationOrig && (
-                    <button className="admin-btn admin-btn-ghost" onClick={() => setAuctionDurationHours(auctionDurationOrig)}>
-                      Discard
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Trade Config moved to Settings page */}
 
         </div>
       </div>
