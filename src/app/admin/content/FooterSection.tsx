@@ -12,7 +12,7 @@ function getCsrf(): string {
 
 type Tab = 'columns' | 'social' | 'bottom';
 
-export default function FooterConfigPage() {
+export default function FooterSection() {
   const { toast } = useToast();
   const [config, setConfig] = useState<FooterConfig | null>(null);
   const [orig, setOrig] = useState<string>('');

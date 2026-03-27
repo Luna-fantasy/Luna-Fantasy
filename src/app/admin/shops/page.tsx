@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import ConfirmModal from '../components/ConfirmModal';
+
+const VendorsSection = dynamic(() => import('./VendorsSection'), { ssr: false });
 import AdminLightbox from '../components/AdminLightbox';
 import ImagePicker from '../components/ImagePicker';
 import RichTextArea from '../components/RichTextArea';
@@ -61,7 +64,7 @@ interface MellsItem {
   enabled?: boolean;
 }
 
-type ShopTab = 'mells' | 'luckbox' | 'stonebox' | 'tickets' | 'trade';
+type ShopTab = 'mells' | 'luckbox' | 'stonebox' | 'tickets' | 'trade' | 'vendors';
 
 const VALID_RARITIES = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden'] as const;
 const RARITY_COLORS: Record<string, string> = {
@@ -404,6 +407,10 @@ export default function ShopsPage() {
           <button className={`admin-tab ${activeTab === 'trade' ? 'admin-tab-active' : ''}`}
             onClick={() => setActiveTab('trade')}>
             Trade Config
+          </button>
+          <button className={`admin-tab ${activeTab === 'vendors' ? 'admin-tab-active' : ''}`}
+            onClick={() => setActiveTab('vendors')}>
+            Vendors (Seluna / Brimor / Broker)
           </button>
         </div>
 
@@ -1014,6 +1021,8 @@ export default function ShopsPage() {
           )}
 
           {/* ── Trade Config Tab ── */}
+          {activeTab === 'vendors' && <VendorsSection />}
+
           {activeTab === 'trade' && (
             <div>
               <div className="admin-stat-card" style={{ maxWidth: 480 }}>

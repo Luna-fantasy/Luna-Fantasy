@@ -91,7 +91,7 @@ function deepClone<T>(obj: T): T {
 
 // ── Main Page ──
 
-export default function VendorsPage() {
+export default function VendorsSection() {
   // Seluna state (unchanged)
   const [selunaItems, setSelunaItems] = useState<SelunaItem[]>([]);
   const [selunaOpen, setSelunaOpen] = useState(false);
@@ -489,10 +489,6 @@ export default function VendorsPage() {
   if (loading) {
     return (
       <>
-        <div className="admin-page-header">
-          <h1 className="admin-page-title"><span className="emoji-float">🏬</span> Shop Items</h1>
-          <p className="admin-page-subtitle">Manage vendor inventory, prices, and the rare trader</p>
-        </div>
         <SkeletonCard count={3} />
         <SkeletonTable rows={4} />
       </>
@@ -501,10 +497,6 @@ export default function VendorsPage() {
 
   return (
     <>
-      <div className="admin-page-header">
-        <h1 className="admin-page-title"><span className="emoji-float">🏬</span> Shop Items</h1>
-        <p className="admin-page-subtitle">Manage vendor inventory, prices, and the rare trader</p>
-      </div>
 
       {/* ── Seluna Section (unchanged) ── */}
       <div className="admin-card vendor-seluna-card" style={{ marginBottom: '32px' }}>
