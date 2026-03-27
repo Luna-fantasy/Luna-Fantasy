@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import ConfirmModal from '../components/ConfirmModal';
 import AdminLightbox from '../components/AdminLightbox';
 import SaveDeployBar from '../components/SaveDeployBar';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import ImagePicker from '../components/ImagePicker';
 import RichTextArea from '../components/RichTextArea';
 import RolePicker from '../components/RolePicker';
@@ -203,6 +204,7 @@ export default function VendorsPage() {
     return JSON.stringify(brimor) !== JSON.stringify(brimorOrig)
       || JSON.stringify(broker) !== JSON.stringify(brokerOrig);
   }, [brimor, brimorOrig, broker, brokerOrig]);
+  useUnsavedWarning(hasChanges);
 
   const diff = useMemo(() => {
     const entries = [];

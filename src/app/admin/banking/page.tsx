@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ConfigSection from '../components/ConfigSection';
+import MinMaxWarning from '../components/MinMaxWarning';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import ConfirmModal from '../components/ConfirmModal';
 import NumberInput from '../components/NumberInput';
 import PercentInput from '../components/PercentInput';
@@ -296,6 +298,7 @@ export default function BankingPage() {
   const tradeSettingsChanged = JSON.stringify(tradeSettings) !== JSON.stringify(tradeSettingsOriginal);
   const insuranceChanged = JSON.stringify(insurance) !== JSON.stringify(insuranceOriginal);
   const hasChanges = dailyRewardChanged || salaryChanged || vipRewardChanged || loanTiersChanged || investmentChanged || stealSystemChanged || tradeSettingsChanged || insuranceChanged;
+  useUnsavedWarning(hasChanges);
   const hasValidationErrors =
     dailyReward.min > dailyReward.max ||
     dailyReward.cooldown <= 0 ||
@@ -449,6 +452,7 @@ export default function BankingPage() {
             <div className="admin-config-grid">
               <NumberInput label="💰 Minimum" value={dailyReward.min} onChange={(v) => setDailyReward({ ...dailyReward, min: v })} min={0} description="Smallest amount of Lunari per claim" />
               <NumberInput label="💰 Maximum" value={dailyReward.max} onChange={(v) => setDailyReward({ ...dailyReward, max: v })} min={0} description="Largest amount of Lunari per claim" />
+              <MinMaxWarning min={dailyReward.min} max={dailyReward.max} label="Daily reward" />
               <DurationInput label="⏱️ Cooldown" value={dailyReward.cooldown} onChange={(v) => setDailyReward({ ...dailyReward, cooldown: v })} description="Time between claims" />
             </div>
             {dailyReward.min > dailyReward.max && (

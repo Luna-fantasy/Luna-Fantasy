@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/app/admin/components/Toast';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import type { FooterConfig, FooterColumn, FooterLink, SocialLink, LegalLink } from '@/lib/admin/footer-defaults';
 
 function getCsrf(): string {
@@ -38,6 +39,7 @@ export default function FooterConfigPage() {
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
 
   const hasChanges = config ? JSON.stringify(config) !== orig : false;
+  useUnsavedWarning(hasChanges);
 
   const handleSave = async () => {
     if (!config || !hasChanges) return;

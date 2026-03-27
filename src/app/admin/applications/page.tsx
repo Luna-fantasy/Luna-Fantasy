@@ -5,6 +5,7 @@ import ConfigSection from '../components/ConfigSection';
 import NumberInput from '../components/NumberInput';
 import BotBadge from '../components/BotBadge';
 import SaveDeployBar from '../components/SaveDeployBar';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import ImagePicker from '../components/ImagePicker';
 import RichTextArea from '../components/RichTextArea';
 import RolePicker from '../components/RolePicker';
@@ -60,6 +61,7 @@ export default function ApplicationsPage() {
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
 
   const hasChanges = JSON.stringify(config) !== JSON.stringify(original);
+  useUnsavedWarning(hasChanges);
 
   const handleSave = async () => {
     setSaving(true);

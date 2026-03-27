@@ -7,6 +7,7 @@ import ToggleSwitch from '../components/ToggleSwitch';
 import DurationInput from '../components/DurationInput';
 import BotBadge from '../components/BotBadge';
 import SaveDeployBar from '../components/SaveDeployBar';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import RolePicker from '../components/RolePicker';
 import ChannelPicker from '../components/ChannelPicker';
 import ImagePicker from '../components/ImagePicker';
@@ -187,6 +188,7 @@ export default function SettingsPage() {
     JSON.stringify(jChannels) !== JSON.stringify(jChannelsOrig) ||
     JSON.stringify(jRoles) !== JSON.stringify(jRolesOrig) ||
     JSON.stringify(badges) !== JSON.stringify(badgesOrig);
+  useUnsavedWarning(hasChanges);
 
   const handleSave = async () => {
     setSaving(true);

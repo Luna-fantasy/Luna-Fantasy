@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import ConfigSection from '../components/ConfigSection';
+import MinMaxWarning from '../components/MinMaxWarning';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import NumberInput from '../components/NumberInput';
 import DurationInput from '../components/DurationInput';
 import ToggleSwitch from '../components/ToggleSwitch';
@@ -216,6 +218,7 @@ export default function GamesManagementPage() {
   const jesterHasChanges = JSON.stringify(jesterSections) !== JSON.stringify(jesterOriginal);
   const gamesHasChanges = butlerHasChanges || jesterHasChanges;
   const pointsHasChanges = JSON.stringify(pointsSettings) !== JSON.stringify(pointsOriginal);
+  useUnsavedWarning(gamesHasChanges || pointsHasChanges);
 
   // -- Update helpers --
 
@@ -738,15 +741,6 @@ export default function GamesManagementPage() {
         </>
       )}
     </>
-  );
-}
-
-function MinMaxWarning({ min, max, label }: { min: number; max: number; label: string }) {
-  if (min == null || max == null || min <= max) return null;
-  return (
-    <div style={{ gridColumn: '1 / -1', padding: '8px 12px', background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', borderRadius: '6px', fontSize: '13px', color: '#fbbf24' }}>
-      {label} minimum ({min.toLocaleString()}) is higher than maximum ({max.toLocaleString()}) — this will break the game!
-    </div>
   );
 }
 

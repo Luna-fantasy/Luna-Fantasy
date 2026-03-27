@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import ConfigSection from '../components/ConfigSection';
 import BotBadge from '../components/BotBadge';
 import SaveDeployBar from '../components/SaveDeployBar';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import ImagePicker from '../components/ImagePicker';
 import RichTextArea from '../components/RichTextArea';
 import RolePicker from '../components/RolePicker';
@@ -50,6 +51,7 @@ export default function TicketsPage() {
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
 
   const hasChanges = JSON.stringify(config) !== JSON.stringify(original);
+  useUnsavedWarning(hasChanges);
 
   const handleSave = async () => {
     setSaving(true);

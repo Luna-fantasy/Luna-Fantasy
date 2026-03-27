@@ -5,6 +5,7 @@ import ConfigSection from '../components/ConfigSection';
 import ToggleSwitch from '../components/ToggleSwitch';
 import BotBadge from '../components/BotBadge';
 import SaveDeployBar from '../components/SaveDeployBar';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import { SkeletonCard } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { getCsrfToken } from '../utils/csrf';
@@ -165,6 +166,7 @@ export default function CommandsPage() {
   const butlerChanged = JSON.stringify(butlerCmds) !== JSON.stringify(butlerCmdsOriginal);
   const jesterChanged = JSON.stringify(jesterCmds) !== JSON.stringify(jesterCmdsOriginal);
   const hasChanges = butlerChanged || jesterChanged;
+  useUnsavedWarning(hasChanges);
 
   const configDiff = hasChanges ? computeConfigDiff(
     { butler_commands: butlerCmdsOriginal, jester_commands: jesterCmdsOriginal },

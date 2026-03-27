@@ -5,6 +5,7 @@ import ConfigSection from '../components/ConfigSection';
 import DurationInput from '../components/DurationInput';
 import NumberInput from '../components/NumberInput';
 import SaveDeployBar from '../components/SaveDeployBar';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import BotBadge from '../components/BotBadge';
 import ToggleSwitch from '../components/ToggleSwitch';
 import ImagePicker from '../components/ImagePicker';
@@ -169,6 +170,7 @@ export default function SagePage() {
   const loreChanged = loreText !== loreTextOriginal;
   const privilegesChanged = JSON.stringify(privileges) !== JSON.stringify(privilegesOriginal);
   const hasChanges = settingsChanged || systemPromptChanged || loreChanged || privilegesChanged;
+  useUnsavedWarning(hasChanges);
 
   // Save helper — sends individual field PUTs to match API's per-field design
   async function saveConfig() {

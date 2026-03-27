@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ConfigSection from '../components/ConfigSection';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import NumberInput from '../components/NumberInput';
 import ToggleSwitch from '../components/ToggleSwitch';
 import DurationInput from '../components/DurationInput';
@@ -288,6 +289,7 @@ export default function VoicePage() {
   /* ---------------------------------------------------------------- */
 
   const hasChanges = JSON.stringify(sections) !== JSON.stringify(original);
+  useUnsavedWarning(hasChanges);
   const configDiff = hasChanges ? computeConfigDiff(original as any, sections as any) : [];
 
   function updateSection<K extends keyof VoiceSections>(key: K, value: VoiceSections[K]) {

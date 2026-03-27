@@ -8,6 +8,7 @@ import DurationInput from '../components/DurationInput';
 import ConfigTable from '../components/ConfigTable';
 import BotBadge from '../components/BotBadge';
 import SaveDeployBar from '../components/SaveDeployBar';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import RolePicker from '../components/RolePicker';
 import ChannelPicker from '../components/ChannelPicker';
 import { SkeletonCard, SkeletonTable } from '../components/Skeleton';
@@ -90,6 +91,7 @@ export default function LevelingPage() {
   const butlerHasChanges = JSON.stringify(sections) !== JSON.stringify(original);
   const jesterHasChanges = JSON.stringify(jesterRewards) !== JSON.stringify(jesterRewardsOriginal);
   const hasChanges = butlerHasChanges || jesterHasChanges;
+  useUnsavedWarning(hasChanges);
   const hasValidationErrors =
     (sections.text_xp ? sections.text_xp.min > sections.text_xp.max : false) ||
     (sections.voice_xp ? sections.voice_xp.enabled && sections.voice_xp.xp_per_minute <= 0 : false);

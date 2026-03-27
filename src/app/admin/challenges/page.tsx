@@ -11,6 +11,7 @@ import ConfigSection from '../components/ConfigSection';
 import DurationInput, { formatDuration } from '../components/DurationInput';
 import NumberInput from '../components/NumberInput';
 import SaveDeployBar from '../components/SaveDeployBar';
+import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -907,6 +908,7 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
   }, [toast]);
 
   const cfgHasChanges = cfg ? JSON.stringify(cfg) !== cfgOrig : false;
+  useUnsavedWarning(cfgHasChanges);
 
   const handleSaveConfig = async () => {
     if (!cfg || !cfgHasChanges || cfgSaving) return;
