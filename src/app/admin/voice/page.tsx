@@ -33,11 +33,9 @@ interface HubChannel {
 
 interface SetupSection {
   hubChannels: HubChannel[];
-  vipCategoryId: string;
   logChannelId: string;
   staffRoleIds: string[];
   maxTempRoomsPerUser: number;
-  maxVipRoomsPerUser: number;
   gracePeriodMs: number;
   welcomeCooldownMs: number;
   challengesEnabled: boolean;
@@ -91,21 +89,6 @@ interface ContentWhisper {
   autoCleanupMs: number;
 }
 
-interface VipTier {
-  name: string;
-  label: string;
-  cost: number;
-  days: number;
-  emoji: string;
-}
-
-interface VipSection {
-  tiers: Record<string, VipTier>;
-  renewDiscountPercent: number;
-  expiryWarningHours: number;
-  graceAfterExpiryMs: number;
-}
-
 interface AssetsSection {
   panelBannerUrl: string;
   emojis: Record<string, string>;
@@ -129,7 +112,7 @@ interface VoiceStats {
   activeRooms: any[];
   hallOfRecords: { byAura: any[]; byVisitors: any[] };
   topUsers: any[];
-  totals: { totalRoomsCreated: number; totalVoiceHours: number; totalLunariSpent: number; activeRoomsCount: number };
+  totals: { totalRoomsCreated: number; totalVoiceHours: number; activeRoomsCount: number };
 }
 
 interface VoiceUserProfile {
@@ -137,8 +120,6 @@ interface VoiceUserProfile {
     totalRoomsCreated: number;
     totalVoiceMinutes: number;
     challengesWon: number;
-    totalLunariSpent: number;
-    vipPurchases: number;
   };
   roomHistory: { name: string; peakAuraScore: number; totalVisitors: number; deletedAt: string | null }[];
   currentRoom: { _id: string; name: string; aura: { tier: string; score: number }; memberCount: number } | null;
@@ -637,14 +618,6 @@ export default function VoicePage() {
                 min={1}
                 max={10}
                 description="How many temporary voice rooms a single user can create (1-10)"
-              />
-              <NumberInput
-                label="Max VIP Rooms"
-                value={setup.maxVipRoomsPerUser}
-                onChange={(v) => updateSection('setup', { ...setup, maxVipRoomsPerUser: v })}
-                min={1}
-                max={5}
-                description="How many permanent VIP rooms a single user can own (1-5)"
               />
             </div>
           </ConfigSection>
@@ -1452,7 +1425,6 @@ export default function VoicePage() {
               <div className="admin-stats-grid">
                 <StatCard label="Total Rooms Created" value={stats.totals?.totalRoomsCreated ?? 0} icon="🏠" color="cyan" />
                 <StatCard label="Total Voice Hours" value={stats.totals?.totalVoiceHours ?? 0} icon="🕐" color="purple" />
-                <StatCard label="Total Lunari Spent" value={stats.totals?.totalLunariSpent ?? 0} icon="💰" color="gold" />
                 <StatCard label="Active Rooms Now" value={stats.totals?.activeRoomsCount ?? 0} icon="🎙️" color="green" />
               </div>
 
@@ -1666,8 +1638,6 @@ export default function VoicePage() {
                           <th style={{ textAlign: 'left' }}>Hours</th>
                           <th style={{ textAlign: 'left' }}>Rooms</th>
                           <th style={{ textAlign: 'left' }}>Challenges</th>
-                          <th style={{ textAlign: 'left' }}>Lunari Spent</th>
-                          <th style={{ textAlign: 'left' }}>VIP Purchases</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1691,8 +1661,6 @@ export default function VoicePage() {
                             <td style={{ fontSize: '13px' }}>{typeof user.totalVoiceMinutes === 'number' ? Math.round(user.totalVoiceMinutes / 60).toLocaleString() : 0}</td>
                             <td style={{ fontSize: '13px' }}>{(user.totalRoomsCreated ?? 0).toLocaleString()}</td>
                             <td style={{ fontSize: '13px' }}>{(user.challengesWon ?? 0).toLocaleString()}</td>
-                            <td style={{ fontSize: '13px' }}>{(user.totalLunariSpent ?? 0).toLocaleString()}</td>
-                            <td style={{ fontSize: '13px' }}>{(user.vipPurchases ?? 0).toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1739,10 +1707,6 @@ export default function VoicePage() {
                 <div style={{ padding: '12px', background: 'rgba(6, 182, 212, 0.06)', borderRadius: '8px', border: '1px solid rgba(6, 182, 212, 0.1)', textAlign: 'center' }}>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Challenges Won</div>
                   <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>{(userProfile.stats.challengesWon ?? 0).toLocaleString()}</div>
-                </div>
-                <div style={{ padding: '12px', background: 'rgba(255, 213, 79, 0.06)', borderRadius: '8px', border: '1px solid rgba(255, 213, 79, 0.1)', textAlign: 'center' }}>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Lunari Spent</div>
-                  <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>{(userProfile.stats.totalLunariSpent ?? 0).toLocaleString()}</div>
                 </div>
               </div>
 

@@ -33,7 +33,6 @@ function validateSetup(value: any): string | null {
   }
   if (typeof value.gracePeriodMs === 'number' && value.gracePeriodMs < 1000) return 'gracePeriodMs must be >= 1000';
   if (typeof value.maxTempRoomsPerUser === 'number' && (value.maxTempRoomsPerUser < 1 || value.maxTempRoomsPerUser > 10)) return 'maxTempRoomsPerUser must be 1-10';
-  if (typeof value.maxVipRoomsPerUser === 'number' && (value.maxVipRoomsPerUser < 1 || value.maxVipRoomsPerUser > 5)) return 'maxVipRoomsPerUser must be 1-5';
   if (typeof value.challengeMinMembers === 'number' && (value.challengeMinMembers < 1 || value.challengeMinMembers > 25)) return 'challengeMinMembers must be 1-25';
 
   return null;
@@ -184,24 +183,6 @@ function validateContentExpiry(value: any): string | null {
   return null;
 }
 
-function validateVip(value: any): string | null {
-  if (typeof value !== 'object' || value === null) return 'Must be an object';
-
-  if (value.tiers) {
-    for (const [name, tier] of Object.entries(value.tiers)) {
-      const t = tier as any;
-      if (typeof t !== 'object' || t === null) return `tiers.${name} must be an object`;
-      if (typeof t.cost === 'number' && t.cost <= 0) return `tiers.${name}.cost must be positive`;
-      if (typeof t.days === 'number' && t.days <= 0) return `tiers.${name}.days must be positive`;
-    }
-  }
-  if (typeof value.renewDiscountPercent === 'number' && (value.renewDiscountPercent < 0 || value.renewDiscountPercent > 100)) return 'renewDiscountPercent must be 0-100';
-  if (value.expiryWarningHours !== undefined && !posNum(value.expiryWarningHours)) return 'expiryWarningHours must be positive';
-  if (value.graceAfterExpiryMs !== undefined && !posInt(value.graceAfterExpiryMs)) return 'graceAfterExpiryMs must be positive';
-
-  return null;
-}
-
 function validateAssets(value: any): string | null {
   if (typeof value !== 'object' || value === null) return 'Must be an object';
   if (value.panelBannerUrl !== undefined && typeof value.panelBannerUrl !== 'string') return 'panelBannerUrl must be a string';
@@ -219,7 +200,6 @@ const ORACLE_VALIDATORS: Record<string, (value: any) => string | null> = {
   content_aura: validateContentAura,
   content_whisper: validateContentWhisper,
   content_expiry: validateContentExpiry,
-  vip: validateVip,
   assets: validateAssets,
 };
 

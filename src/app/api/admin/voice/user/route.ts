@@ -45,8 +45,6 @@ export async function GET(request: NextRequest) {
         totalRoomsCreated: userStats?.totalRoomsCreated ?? 0,
         totalVoiceMinutes: userStats?.totalVoiceMinutes ?? 0,
         challengesWon: userStats?.challengesWon ?? 0,
-        totalLunariSpent: userStats?.totalLunariSpent ?? 0,
-        vipPurchases: userStats?.vipPurchases ?? 0,
       },
       roomHistory: roomHistory.map((r) => ({
         name: r.name,

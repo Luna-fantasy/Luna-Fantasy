@@ -12,7 +12,7 @@ const DB_NAME = 'Database';
 const ALLOWED_SECTIONS = new Set([
   'setup', 'games_trivia', 'games_sowalef', 'games_settings',
   'content_welcome', 'content_panel', 'content_buttons', 'content_aura', 'content_whisper', 'content_expiry',
-  'vip', 'assets',
+  'assets',
 ]);
 
 // Maps dashboard section names -> bot_config document _id + data field path
@@ -27,7 +27,6 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   content_aura:    { docId: 'oracle_vc_content', field: '_aura' },
   content_whisper: { docId: 'oracle_vc_content', field: 'whisper' },
   content_expiry:  { docId: 'oracle_vc_content', field: 'expiryTitles' },
-  vip:             { docId: 'oracle_vc_vip', field: '_root' },
   assets:          { docId: 'oracle_vc_assets', field: '_root' },
 };
 

@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       .find({})
       .project({
         _id: 1, totalRoomsCreated: 1, totalVoiceMinutes: 1,
-        challengesWon: 1, totalLunariSpent: 1,
+        challengesWon: 1,
       })
       .toArray();
 
@@ -82,15 +82,14 @@ export async function GET(req: NextRequest) {
     lines.push('');
 
     // Section 2: Top users
-    lines.push('user_id,rooms_created,voice_minutes,challenges_won,lunari_spent');
+    lines.push('user_id,rooms_created,voice_minutes,challenges_won');
 
     for (const u of users) {
       const userId = escapeCSV(String(u._id));
       const roomsCreated = escapeCSV(String(u.totalRoomsCreated ?? 0));
       const voiceMinutes = escapeCSV(String(u.totalVoiceMinutes ?? 0));
       const challengesWon = escapeCSV(String(u.challengesWon ?? 0));
-      const lunariSpent = escapeCSV(String(u.totalLunariSpent ?? 0));
-      lines.push([userId, roomsCreated, voiceMinutes, challengesWon, lunariSpent].join(','));
+      lines.push([userId, roomsCreated, voiceMinutes, challengesWon].join(','));
     }
 
     const csv = lines.join('\n');

@@ -36,7 +36,7 @@ export async function GET() {
         .sort({ totalRoomsCreated: -1 }).limit(20)
         .project({
           _id: 1, totalRoomsCreated: 1, totalVoiceMinutes: 1,
-          challengesWon: 1, totalLunariSpent: 1, vipPurchases: 1,
+          challengesWon: 1,
         })
         .toArray(),
 
@@ -47,13 +47,12 @@ export async function GET() {
             _id: null,
             totalRooms: { $sum: '$totalRoomsCreated' },
             totalMinutes: { $sum: '$totalVoiceMinutes' },
-            totalSpent: { $sum: '$totalLunariSpent' },
           },
         },
       ]).toArray(),
     ]);
 
-    const totals = totalStats[0] || { totalRooms: 0, totalMinutes: 0, totalSpent: 0 };
+    const totals = totalStats[0] || { totalRooms: 0, totalMinutes: 0 };
 
     return NextResponse.json({
       activeRooms,
@@ -62,7 +61,6 @@ export async function GET() {
       totals: {
         totalRoomsCreated: totals.totalRooms,
         totalVoiceHours: Math.round((totals.totalMinutes || 0) / 60),
-        totalLunariSpent: totals.totalSpent,
         activeRoomsCount: activeRooms.length,
       },
     });
