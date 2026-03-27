@@ -501,7 +501,7 @@ export default function BankingPage() {
               columns={[
                 { key: 'level', label: '🔢 Required Level', type: 'number', width: '120px' },
                 { key: 'amount', label: '💰 Loan Amount (Lunari)', type: 'number' },
-                { key: 'interest', label: '📊 Interest Rate', type: 'number' },
+                { key: 'interest', label: '📊 Interest Rate', type: 'percent' },
                 { key: 'duration', label: '⏱️ Repayment Time', type: 'duration' },
               ]}
               rows={loanTiers}
@@ -509,7 +509,7 @@ export default function BankingPage() {
               addLabel="Add Loan Tier"
             />
             <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
-              Interest Rate: 0.20 = 20%
+              Duration is in milliseconds (86400000 = 1 day). Interest shows as percentage.
             </div>
             <BotBadge bot="butler" />
           </ConfigSection>
@@ -537,12 +537,11 @@ export default function BankingPage() {
               onChange={(v) => setInvestment({ ...investment, maturity_period: v })}
               description="How long until investment matures and can be collected"
             />
-            <NumberInput
-              label="💰 Early Withdrawal Fee"
+            <PercentInput
+              label="📊 Early Withdrawal Penalty"
               value={investment.early_withdrawal_fee}
               onChange={(v) => setInvestment({ ...investment, early_withdrawal_fee: v })}
-              min={0}
-              description="Lunari penalty for withdrawing before maturity"
+              description="Percentage deducted when withdrawing before maturity (e.g. 10% = lose 10% of investment)"
             />
             <DurationInput
               label="⏱️ Check Interval"

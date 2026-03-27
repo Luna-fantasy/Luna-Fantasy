@@ -422,6 +422,7 @@
 }
 
 .admin-card:hover {
+  transform: translateY(-1px);
   border-color: rgba(0, 212, 255, 0.15);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 212, 255, 0.05);
 }
@@ -675,7 +676,7 @@
 }
 
 .admin-table tbody tr:hover {
-  background: rgba(0, 212, 255, 0.04);
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.06), rgba(0, 212, 255, 0.02));
   border-left-color: rgba(0, 212, 255, 0.3);
 }
 
@@ -750,7 +751,7 @@
 
 .admin-btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.15));
-  box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2), 0 0 40px rgba(0, 212, 255, 0.05);
 }
 
 .admin-btn-primary:active:not(:disabled) {
@@ -792,6 +793,7 @@
 
 .admin-btn-danger:hover:not(:disabled) {
   background: rgba(244, 63, 94, 0.2);
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.15);
 }
 
 .admin-btn-success {
@@ -802,6 +804,7 @@
 
 .admin-btn-success:hover:not(:disabled) {
   background: rgba(74, 222, 128, 0.2);
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.15);
 }
 
 .admin-btn-sm {
@@ -1000,8 +1003,15 @@
   font-family: inherit;
 }
 
+.admin-form-input:hover,
+.admin-input:hover,
+.admin-select:hover {
+  border-color: rgba(0, 212, 255, 0.2);
+}
+
 .admin-form-input:focus,
-.admin-input:focus {
+.admin-input:focus,
+.admin-select:focus {
   outline: none;
   border-color: var(--accent-primary);
   box-shadow:
@@ -1196,7 +1206,7 @@ textarea.admin-rich-textarea {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 2000;
+  z-index: 10001; /* Above everything — toasts must always be visible */
   display: flex;
   flex-direction: column-reverse;
   gap: 8px;
@@ -2115,17 +2125,6 @@ textarea.admin-rich-textarea {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes adminScaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 @keyframes adminSlideInRight {
   from {
     opacity: 0;
@@ -2788,23 +2787,7 @@ textarea.admin-rich-textarea {
 
 /* (sidebar glow now in main sidebar section above) */
 
-/* Enhanced buttons with glow */
-.admin-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2), 0 0 40px rgba(0, 212, 255, 0.05);
-}
-
-.admin-btn-danger:hover:not(:disabled) {
-  box-shadow: 0 0 20px rgba(244, 63, 94, 0.15);
-}
-
-.admin-btn-success:hover:not(:disabled) {
-  box-shadow: 0 0 20px rgba(74, 222, 128, 0.15);
-}
-
-/* Enhanced table rows */
-.admin-table tbody tr:hover {
-  background: linear-gradient(90deg, rgba(0, 212, 255, 0.06), rgba(0, 212, 255, 0.02));
-}
+/* (Button glow, table row hover merged into base definitions above) */
 
 /* Stat icon float animation */
 .admin-stat-icon {
@@ -2867,15 +2850,6 @@ textarea.admin-rich-textarea {
 /* Stepper done checkmark glow */
 .admin-stepper-icon-done {
   box-shadow: 0 0 12px rgba(74, 222, 128, 0.2);
-}
-
-/* Enhanced form focus */
-.admin-form-input:focus,
-.admin-input:focus,
-.admin-select:focus {
-  box-shadow:
-    0 0 0 3px rgba(0, 212, 255, 0.1),
-    0 0 16px rgba(0, 212, 255, 0.06);
 }
 
 /* Enhanced toast slide-in */
@@ -2945,7 +2919,8 @@ textarea.admin-rich-textarea {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3020,12 +2995,6 @@ textarea.admin-rich-textarea {
   50% { opacity: 0.3; }
 }
 
-/* ── Table row hover glow ── */
-
-.admin-table tbody tr:hover {
-  box-shadow: inset 0 0 20px rgba(0, 212, 255, 0.03);
-}
-
 /* ── Button loading spinner ── */
 
 .admin-btn-loading {
@@ -3046,10 +3015,6 @@ textarea.admin-rich-textarea {
   border-top-color: #fff;
   border-radius: 50%;
   animation: adminSpin 0.6s linear infinite;
-}
-
-@keyframes adminSpin {
-  to { transform: rotate(360deg); }
 }
 
 /* ── Help tooltip ── */
@@ -3351,25 +3316,10 @@ textarea.admin-rich-textarea {
   animation: adminFadeInUp 0.3s ease;
 }
 
-/* Card hover lift effect */
-.admin-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(0, 212, 255, 0.03);
-}
-
-.admin-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
 /* Form input depth */
 .admin-form-input,
 .admin-select {
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.admin-form-input:focus,
-.admin-select:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(0, 212, 255, 0.15);
 }
 
 /* Better table alternating rows */
@@ -3379,10 +3329,6 @@ textarea.admin-rich-textarea {
 
 .admin-table tbody tr {
   transition: background 0.15s ease, border-left-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.admin-table tbody tr:hover {
-  background: rgba(0, 212, 255, 0.04);
 }
 
 .admin-table thead th {
@@ -3452,12 +3398,6 @@ textarea.admin-rich-textarea {
 
 .admin-lightbox-closing.admin-lightbox-overlay {
   animation: adminLightboxOverlayExit 0.2s ease forwards;
-}
-
-/* Increase backdrop blur */
-.admin-lightbox-overlay {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 /* ── Toast accent borders and progress bar ── */
@@ -5404,7 +5344,7 @@ textarea.admin-rich-textarea {
 .admin-inline-result {
   font-size: 13px;
   margin-top: 12px;
-  animation: fadeIn 0.3s ease;
+  animation: adminFadeIn 0.3s ease;
 }
 
 .admin-inline-result.success {

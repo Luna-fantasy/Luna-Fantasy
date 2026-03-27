@@ -206,7 +206,7 @@ export default function FooterConfigPage() {
                     </div>
                     <input className="admin-input" placeholder="Label (EN)" value={link.labelEn} onChange={e => updateLink(colIdx, linkIdx, { labelEn: e.target.value })} style={{ flex: 1, fontSize: '0.85rem' }} />
                     <input className="admin-input" placeholder="Label (AR)" value={link.labelAr} onChange={e => updateLink(colIdx, linkIdx, { labelAr: e.target.value })} style={{ flex: 1, fontSize: '0.85rem', direction: 'rtl' }} />
-                    <input className="admin-input" placeholder="URL" value={link.href} onChange={e => updateLink(colIdx, linkIdx, { href: e.target.value })} style={{ flex: 1.5, fontSize: '0.85rem' }} />
+                    <input className="admin-input" placeholder="https://... or /page" value={link.href} onChange={e => updateLink(colIdx, linkIdx, { href: e.target.value })} style={{ flex: 1.5, fontSize: '0.85rem' }} />
                     <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>
                       <input type="checkbox" checked={link.external} onChange={e => updateLink(colIdx, linkIdx, { external: e.target.checked })} />
                       External
@@ -244,7 +244,7 @@ export default function FooterConfigPage() {
                 <option value="twitter">Twitter / X</option>
                 <option value="youtube">YouTube</option>
               </select>
-              <input className="admin-input" placeholder="URL" value={s.url} onChange={e => updateSocial(idx, { url: e.target.value })} style={{ flex: 1 }} />
+              <input className="admin-input" placeholder="https://discord.gg/..." value={s.url} onChange={e => updateSocial(idx, { url: e.target.value })} style={{ flex: 1 }} />
               <button className="admin-btn admin-btn-sm" style={{ color: '#f43f5e' }} onClick={() => removeSocial(idx)}>✕</button>
             </div>
           ))}
@@ -285,7 +285,7 @@ export default function FooterConfigPage() {
                   </label>
                   <input className="admin-input" placeholder="Label (EN)" value={link.labelEn} onChange={e => updateLegal(idx, { labelEn: e.target.value })} style={{ flex: 1, fontSize: '0.85rem' }} />
                   <input className="admin-input" placeholder="Label (AR)" value={link.labelAr} onChange={e => updateLegal(idx, { labelAr: e.target.value })} style={{ flex: 1, fontSize: '0.85rem', direction: 'rtl' }} />
-                  <input className="admin-input" placeholder="URL" value={link.href} onChange={e => updateLegal(idx, { href: e.target.value })} style={{ flex: 1.5, fontSize: '0.85rem' }} />
+                  <input className="admin-input" placeholder="/terms or https://..." value={link.href} onChange={e => updateLegal(idx, { href: e.target.value })} style={{ flex: 1.5, fontSize: '0.85rem' }} />
                 </div>
               ))}
             </div>

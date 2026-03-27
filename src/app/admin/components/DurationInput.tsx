@@ -56,7 +56,7 @@ export default function DurationInput({ label, value, onChange, description }: D
           className="admin-number-input"
           style={{ flex: 1 }}
           value={displayValue}
-          onChange={e => onChange(Number(e.target.value) * DURATION_UNITS[unitIndex].ms)}
+          onChange={e => onChange(Math.max(0, Number(e.target.value)) * DURATION_UNITS[unitIndex].ms)}
           min={0}
         />
         <select

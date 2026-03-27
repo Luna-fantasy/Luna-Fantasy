@@ -578,11 +578,13 @@ export default function VendorsPage() {
               <label className="admin-form-label">Duration (hours)</label>
               <input className="admin-form-input" type="number" min={1} max={168} value={selunaDuration}
                 onChange={e => setSelunaDuration(Math.max(1, parseInt(e.target.value) || 1))} />
+              <span className="admin-number-input-desc">How many hours Seluna's shop stays open (1-168)</span>
             </div>
             <div className="admin-form-group" style={{ margin: 0 }}>
               <label className="admin-form-label">Reappear After (days)</label>
               <input className="admin-form-input" type="number" min={1} max={365} value={selunaReappear}
                 onChange={e => setSelunaReappear(Math.max(1, parseInt(e.target.value) || 1))} />
+              <span className="admin-number-input-desc">Days until Seluna appears again</span>
             </div>
             <div style={{ display: 'flex', gap: '6px' }}>
               <button
@@ -882,14 +884,16 @@ export default function VendorsPage() {
 
               <div className="admin-form-group">
                 <label className="admin-form-label">💰 Price (Lunari)</label>
-                <input className="admin-form-input" type="number" placeholder="50000"
+                <input className="admin-form-input" type="number" placeholder="50000" min={0}
                   value={newItem.price} onChange={(e) => setNewItem(p => ({ ...p, price: e.target.value }))} />
+                <span className="admin-number-input-desc">How much this item costs to buy</span>
               </div>
 
               <div className="admin-form-group">
                 <label className="admin-form-label">📦 Stock<span className="admin-tooltip-trigger" data-tooltip="-1 = unlimited stock">?</span></label>
                 <input className="admin-form-input" type="number" placeholder="-1"
                   value={newItem.stock} onChange={(e) => setNewItem(p => ({ ...p, stock: e.target.value }))} />
+                <span className="admin-number-input-desc">Available stock (-1 = unlimited)</span>
                 <span className="admin-form-description">How many available. -1 = unlimited</span>
               </div>
 
@@ -914,8 +918,9 @@ export default function VendorsPage() {
               {newItem.type === 'Tickets' && (
                 <div className="admin-form-group">
                   <label className="admin-form-label">Ticket Amount</label>
-                  <input className="admin-form-input" type="number" placeholder="1"
+                  <input className="admin-form-input" type="number" placeholder="1" min={1}
                     value={newItem.amount} onChange={(e) => setNewItem(p => ({ ...p, amount: e.target.value }))} />
+                  <span className="admin-number-input-desc">Quantity given per purchase</span>
                 </div>
               )}
 
@@ -997,14 +1002,16 @@ export default function VendorsPage() {
 
               <div className="admin-form-group">
                 <label className="admin-form-label">💰 Price (Lunari)</label>
-                <input className="admin-form-input" type="number" value={editingSelunaItem.price}
+                <input className="admin-form-input" type="number" min={0} value={editingSelunaItem.price}
                   onChange={(e) => setEditingSelunaItem(p => p ? { ...p, price: parseInt(e.target.value) || 0 } : p)} />
+                <span className="admin-number-input-desc">How much this item costs to buy</span>
               </div>
 
               <div className="admin-form-group">
                 <label className="admin-form-label">📦 Stock<span className="admin-tooltip-trigger" data-tooltip="-1 = unlimited stock">?</span></label>
                 <input className="admin-form-input" type="number" value={editingSelunaItem.stock}
                   onChange={(e) => setEditingSelunaItem(p => p ? { ...p, stock: parseInt(e.target.value) } : p)} />
+                <span className="admin-number-input-desc">Available stock (-1 = unlimited)</span>
                 <span className="admin-form-description">How many available. -1 = unlimited</span>
               </div>
 
@@ -1021,8 +1028,9 @@ export default function VendorsPage() {
               {editingSelunaItem.type === 'Tickets' && (
                 <div className="admin-form-group">
                   <label className="admin-form-label">Ticket Amount</label>
-                  <input className="admin-form-input" type="number" value={editingSelunaItem.amount ?? 1}
+                  <input className="admin-form-input" type="number" min={1} value={editingSelunaItem.amount ?? 1}
                     onChange={(e) => setEditingSelunaItem(p => p ? { ...p, amount: parseInt(e.target.value) || 1 } : p)} />
+                  <span className="admin-number-input-desc">Quantity given per purchase</span>
                 </div>
               )}
             </div>

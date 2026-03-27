@@ -7,6 +7,10 @@ import ConfirmModal from '../components/ConfirmModal';
 import { SkeletonCard } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { getCsrfToken } from '../utils/csrf';
+import ConfigSection from '../components/ConfigSection';
+import DurationInput, { formatDuration } from '../components/DurationInput';
+import NumberInput from '../components/NumberInput';
+import SaveDeployBar from '../components/SaveDeployBar';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -921,12 +925,48 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
     } finally { setCfgSaving(false); }
   };
 
-  const cfgNum = (key: string, label: string, unit: string, min: number, max: number) => (
-    <div className="cm-field" style={{ flex: 1 }}>
-      <label className="admin-form-label">{label} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({unit})</span></label>
-      <input className="admin-input" type="number" min={min} max={max} value={cfg?.[key] ?? ''} onChange={e => setCfg((c: any) => ({ ...c, [key]: Number(e.target.value) }))} />
-    </div>
-  );
+  // Friendly diff for SaveDeployBar "Review Changes" modal
+  const configDiff = useMemo(() => {
+    if (!cfg || !cfgOrig) return [];
+    let orig: any;
+    try { orig = JSON.parse(cfgOrig); } catch { return []; }
+    const diff: { label: string; before: string; after: string }[] = [];
+
+    const durationFields: [string, string][] = [
+      ['minJoinAgeMs', 'Server membership requirement'],
+      ['minAccountAgeMs', 'Account age requirement'],
+      ['cmdCooldownMs', 'Command cooldown'],
+      ['voteChangeWindowMs', 'Vote change window'],
+      ['updateIntervalMs', 'Refresh speed'],
+    ];
+    for (const [key, label] of durationFields) {
+      if (cfg[key] !== orig[key]) {
+        diff.push({ label, before: formatDuration(orig[key] ?? 0), after: formatDuration(cfg[key] ?? 0) });
+      }
+    }
+
+    const countFields: [string, string, string][] = [
+      ['suspiciousVoteThreshold', 'Suspicious vote limit', ''],
+      ['maxGuildVotesPerSec', 'Max votes per second', ' votes/sec'],
+      ['maxTopEntriesShown', 'Top entries shown', ''],
+    ];
+    for (const [key, label, suffix] of countFields) {
+      if (cfg[key] !== orig[key]) {
+        diff.push({ label, before: `${orig[key] ?? 0}${suffix}`, after: `${cfg[key] ?? 0}${suffix}` });
+      }
+    }
+
+    if (cfg.hallOfFameChannelId !== orig.hallOfFameChannelId) {
+      const findName = (id: string | null) => {
+        if (!id) return 'Not configured';
+        const ch = channels.find(c => c.id === id);
+        return ch ? `#${ch.name}` : id;
+      };
+      diff.push({ label: 'Hall of Fame channel', before: findName(orig.hallOfFameChannelId), after: findName(cfg.hallOfFameChannelId) });
+    }
+
+    return diff;
+  }, [cfg, cfgOrig, channels]);
 
   const toggleCategory = (cat: string) => {
     setExpanded(prev => {
@@ -1000,66 +1040,103 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
   return (
     <div style={{ marginTop: '1rem' }}>
 
-      {/* ── Challenge Config (numeric settings + HoF) ── */}
+      {/* ── Challenge Config ── */}
       {cfg && (
-        <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Challenge Settings</h3>
-          <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Changes take effect within 60 seconds (bot reads from database).</p>
+        <div style={{ marginBottom: '2rem' }}>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Changes take effect within 60 seconds.</p>
 
-          {/* Hall of Fame */}
-          <div className="admin-config-section" style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem' }}>
-            <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Hall of Fame Channel</h4>
-            <select className="admin-input" value={cfg.hallOfFameChannelId || ''} onChange={e => setCfg((c: any) => ({ ...c, hallOfFameChannelId: e.target.value || null }))}>
-              <option value="">Not configured</option>
-              {Array.from(groupedChannels.entries()).map(([cat, chs]) => (
-                <optgroup key={cat} label={cat}>
-                  {chs.map(ch => <option key={ch.id} value={ch.id}>#{ch.name}</option>)}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-
-          {/* Anti-Alt Protection */}
-          <div className="admin-config-section" style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem' }}>
-            <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Anti-Alt Protection</h4>
-            <div className="cm-row">
-              {cfgNum('minJoinAgeMs', 'Min server join age', 'ms — 3600000 = 1hr', 0, 2592000000)}
-              {cfgNum('minAccountAgeMs', 'Min account age', 'ms — 604800000 = 7d', 0, 7776000000)}
+          <ConfigSection title="Hall of Fame" description="Where winning challenge entries are permanently posted">
+            <div className="admin-number-input-wrap">
+              <label className="admin-number-input-label">Channel</label>
+              <select className="admin-number-input" value={cfg.hallOfFameChannelId || ''} onChange={e => setCfg((c: any) => ({ ...c, hallOfFameChannelId: e.target.value || null }))}>
+                <option value="">Not configured</option>
+                {Array.from(groupedChannels.entries()).map(([cat, chs]) => (
+                  <optgroup key={cat} label={cat}>
+                    {chs.map(ch => <option key={ch.id} value={ch.id}>#{ch.name}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+              <span className="admin-number-input-desc">Select a Discord channel where winners will be showcased</span>
             </div>
-            <div className="cm-row" style={{ marginTop: '8px' }}>
-              {cfgNum('suspiciousVoteThreshold', 'Flag threshold', 'new accounts', 2, 20)}
-            </div>
-          </div>
+          </ConfigSection>
 
-          {/* Rate Limiting */}
-          <div className="admin-config-section" style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem' }}>
-            <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Rate Limiting</h4>
-            <div className="cm-row">
-              {cfgNum('maxGuildVotesPerSec', 'Votes/sec limit', 'votes/sec', 1, 100)}
-              {cfgNum('cmdCooldownMs', 'Command cooldown', 'ms — 5000 = 5s', 0, 60000)}
-              {cfgNum('voteChangeWindowMs', 'Vote change window', 'ms — 120000 = 2min', 0, 600000)}
+          <ConfigSection title="Alt Account Protection" description="Prevents fake accounts from manipulating votes">
+            <div className="admin-config-grid">
+              <DurationInput
+                label="Server membership requirement"
+                value={cfg.minJoinAgeMs ?? 0}
+                onChange={v => setCfg((c: any) => ({ ...c, minJoinAgeMs: v }))}
+                description="How long someone must be in the server before they can vote"
+              />
+              <DurationInput
+                label="Account age requirement"
+                value={cfg.minAccountAgeMs ?? 0}
+                onChange={v => setCfg((c: any) => ({ ...c, minAccountAgeMs: v }))}
+                description="How old a Discord account must be before they can vote"
+              />
+              <NumberInput
+                label="Suspicious vote limit"
+                value={cfg.suspiciousVoteThreshold ?? 3}
+                onChange={v => setCfg((c: any) => ({ ...c, suspiciousVoteThreshold: v }))}
+                min={2}
+                max={20}
+                description="If a new account votes this many times, their votes get flagged for review"
+              />
             </div>
-          </div>
+          </ConfigSection>
 
-          {/* Display */}
-          <div className="admin-config-section" style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem' }}>
-            <h4 style={{ margin: '0 0 8px', fontSize: '0.9rem' }}>Display</h4>
-            <div className="cm-row">
-              {cfgNum('updateIntervalMs', 'Panel refresh', 'ms — 30000 = 30s', 10000, 300000)}
-              {cfgNum('maxTopEntriesShown', 'Entries in panel', 'entries', 1, 25)}
+          <ConfigSection title="Spam Protection" description="Prevents abuse by limiting how fast people can interact">
+            <div className="admin-config-grid">
+              <NumberInput
+                label="Max votes per second"
+                value={cfg.maxGuildVotesPerSec ?? 10}
+                onChange={v => setCfg((c: any) => ({ ...c, maxGuildVotesPerSec: v }))}
+                min={1}
+                max={100}
+                description="How many votes the entire server can cast per second (prevents spam bots)"
+              />
+              <DurationInput
+                label="Command cooldown"
+                value={cfg.cmdCooldownMs ?? 5000}
+                onChange={v => setCfg((c: any) => ({ ...c, cmdCooldownMs: v }))}
+                description="How long a user must wait between challenge commands"
+              />
+              <DurationInput
+                label="Vote change window"
+                value={cfg.voteChangeWindowMs ?? 120000}
+                onChange={v => setCfg((c: any) => ({ ...c, voteChangeWindowMs: v }))}
+                description="How long after voting someone can change their vote"
+              />
             </div>
-          </div>
+          </ConfigSection>
 
-          {cfgHasChanges && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button className="admin-btn admin-btn-primary" onClick={handleSaveConfig} disabled={cfgSaving}>
-                {cfgSaving ? 'Saving...' : 'Save Settings'}
-              </button>
-              <button className="admin-btn admin-btn-ghost" onClick={() => { try { setCfg(JSON.parse(cfgOrig)); } catch { toast('Reset failed', 'error'); } }}>Discard</button>
+          <ConfigSection title="Voting Panel Display" description="Controls how the live voting panel looks and updates in Discord">
+            <div className="admin-config-grid">
+              <DurationInput
+                label="Refresh speed"
+                value={cfg.updateIntervalMs ?? 30000}
+                onChange={v => setCfg((c: any) => ({ ...c, updateIntervalMs: v }))}
+                description="How often the voting panel updates with new vote counts"
+              />
+              <NumberInput
+                label="Top entries shown"
+                value={cfg.maxTopEntriesShown ?? 5}
+                onChange={v => setCfg((c: any) => ({ ...c, maxTopEntriesShown: v }))}
+                min={1}
+                max={25}
+                description="How many of the top-voted entries are displayed on the panel"
+              />
             </div>
-          )}
+          </ConfigSection>
 
-          <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.06)', margin: '8px 0' }} />
+          <SaveDeployBar
+            hasChanges={cfgHasChanges}
+            saving={cfgSaving}
+            onSave={handleSaveConfig}
+            onDiscard={() => { try { setCfg(JSON.parse(cfgOrig)); } catch { /* ignore */ } }}
+            projectName="Challenge Settings"
+            diff={configDiff}
+          />
         </div>
       )}
 

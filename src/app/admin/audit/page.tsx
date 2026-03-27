@@ -81,12 +81,10 @@ export default function AuditLogPage() {
       },
     },
     {
-      key: 'ip',
-      label: 'IP',
-      render: (row: AuditEntry) => (
-        <span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--text-muted)' }}>
-          {row.ip}
-        </span>
+      key: 'source',
+      label: 'Source',
+      render: () => (
+        <span className="admin-badge admin-badge-muted">Dashboard</span>
       ),
     },
   ];

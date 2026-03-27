@@ -619,6 +619,7 @@ export default function ShopsPage() {
                   <div className="admin-form-group" style={{ margin: 0 }}>
                     <label className="admin-form-label">💰 Price (Lunari)</label>
                     <input className="admin-form-input" type="number" value={editingMellsItem.price ?? 0} onChange={(e) => setEditingMellsItem({ ...editingMellsItem, price: parseInt(e.target.value) || 0 })} min={0} />
+                    <span className="admin-number-input-desc">How much this item costs to buy</span>
                   </div>
                   <div className="admin-form-group" style={{ margin: 0 }}>
                     <label className="admin-form-label">🛡️ Role ID</label>
@@ -837,13 +838,15 @@ export default function ShopsPage() {
                   <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
                     <div className="admin-form-group" style={{ margin: 0, flex: 1 }}>
                       <label className="admin-form-label">Box Price</label>
-                      <input className="admin-form-input" type="number" value={stonePriceInput}
+                      <input className="admin-form-input" type="number" value={stonePriceInput} min={0}
                         onChange={e => setStonePriceInput(e.target.value)} />
+                      <span className="admin-number-input-desc">Price to open a stone box (Lunari)</span>
                     </div>
                     <div className="admin-form-group" style={{ margin: 0, flex: 1 }}>
                       <label className="admin-form-label">Refund Amount (on miss)</label>
-                      <input className="admin-form-input" type="number" value={stoneRefundInput}
+                      <input className="admin-form-input" type="number" value={stoneRefundInput} min={0}
                         onChange={e => setStoneRefundInput(e.target.value)} />
+                      <span className="admin-number-input-desc">Lunari refunded when getting a duplicate stone</span>
                     </div>
                     <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={handleSaveStonePrices} disabled={saving}>
                       💾 Save
@@ -1095,13 +1098,15 @@ export default function ShopsPage() {
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Price (Lunari)</label>
-                <input className="admin-form-input" type="number" value={editingLuckbox.price}
+                <input className="admin-form-input" type="number" value={editingLuckbox.price} min={0}
                   onChange={e => setEditingLuckbox({ ...editingLuckbox, price: parseInt(e.target.value) || 0 })} />
+                <span className="admin-number-input-desc">How much this luckbox costs to open</span>
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Order</label>
                 <input className="admin-form-input" type="number" value={editingLuckbox.order}
                   onChange={e => setEditingLuckbox({ ...editingLuckbox, order: parseInt(e.target.value) || 0 })} />
+                <span className="admin-number-input-desc">Display order (lower number = shows first)</span>
               </div>
             </div>
 
@@ -1319,13 +1324,15 @@ export default function ShopsPage() {
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Weight (drop rate)</label>
-                <input className="admin-form-input" type="number" step="0.01" value={editingStone.stone.weight}
+                <input className="admin-form-input" type="number" step="0.01" min={0} value={editingStone.stone.weight}
                   onChange={e => setEditingStone({ ...editingStone, stone: { ...editingStone.stone, weight: parseFloat(e.target.value) || 0 } })} />
+                <span className="admin-number-input-desc">Higher weight = drops more often</span>
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Sell Price</label>
-                <input className="admin-form-input" type="number" value={editingStone.stone.sell_price}
+                <input className="admin-form-input" type="number" min={0} value={editingStone.stone.sell_price}
                   onChange={e => setEditingStone({ ...editingStone, stone: { ...editingStone.stone, sell_price: parseInt(e.target.value) || 0 } })} />
+                <span className="admin-number-input-desc">Lunari earned when selling this stone</span>
               </div>
               <div className="admin-form-group" style={{ gridColumn: '1 / -1' }}>
                 <label className="admin-form-label">Image URL</label>
@@ -1371,13 +1378,15 @@ export default function ShopsPage() {
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Tickets</label>
-                <input className="admin-form-input" type="number" value={editingTicket.tickets}
+                <input className="admin-form-input" type="number" min={1} value={editingTicket.tickets}
                   onChange={e => setEditingTicket({ ...editingTicket, tickets: parseInt(e.target.value) || 1 })} />
+                <span className="admin-number-input-desc">Number of game tickets in this package</span>
               </div>
               <div className="admin-form-group">
                 <label className="admin-form-label">Price (Lunari)</label>
-                <input className="admin-form-input" type="number" value={editingTicket.price}
+                <input className="admin-form-input" type="number" min={0} value={editingTicket.price}
                   onChange={e => setEditingTicket({ ...editingTicket, price: parseInt(e.target.value) || 0 })} />
+                <span className="admin-number-input-desc">How much this ticket package costs</span>
               </div>
             </div>
 

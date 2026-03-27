@@ -741,6 +741,15 @@ export default function GamesManagementPage() {
   );
 }
 
+function MinMaxWarning({ min, max, label }: { min: number; max: number; label: string }) {
+  if (min == null || max == null || min <= max) return null;
+  return (
+    <div style={{ gridColumn: '1 / -1', padding: '8px 12px', background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', borderRadius: '6px', fontSize: '13px', color: '#fbbf24' }}>
+      {label} minimum ({min.toLocaleString()}) is higher than maximum ({max.toLocaleString()}) — this will break the game!
+    </div>
+  );
+}
+
 // -- Butler game field renderers --
 
 function renderButlerGameFields(
@@ -764,6 +773,7 @@ function renderButlerGameFields(
         <>
           <NumberInput label="🎲 Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
           <NumberInput label="🎲 Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
+          <MinMaxWarning min={game.min_bet} max={game.max_bet} label="Bet" />
           <NumberInput label="📊 Win Multiplier" value={game.win_multiplier} onChange={(v) => update(key, { ...game, win_multiplier: v })} step={0.1} min={0} description="Bet is multiplied by this on a win (e.g. 2.0 = double)" />
           <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
         </>
@@ -774,8 +784,10 @@ function renderButlerGameFields(
           <NumberInput label="📊 Success Chance (%)" value={game.success_chance} onChange={(v) => update(key, { ...game, success_chance: v })} min={0} max={100} description="Percentage chance the hunt succeeds (0-100)" />
           <NumberInput label="🏆 Min Reward" value={game.min_reward} onChange={(v) => update(key, { ...game, min_reward: v })} min={0} description="Smallest Lunari reward on a successful hunt" />
           <NumberInput label="🏆 Max Reward" value={game.max_reward} onChange={(v) => update(key, { ...game, max_reward: v })} min={0} description="Largest Lunari reward on a successful hunt" />
+          <MinMaxWarning min={game.min_reward} max={game.max_reward} label="Reward" />
           <NumberInput label="💰 Min Loss" value={game.min_loss} onChange={(v) => update(key, { ...game, min_loss: v })} min={0} description="Smallest Lunari lost on a failed hunt" />
           <NumberInput label="💰 Max Loss" value={game.max_loss} onChange={(v) => update(key, { ...game, max_loss: v })} min={0} description="Largest Lunari lost on a failed hunt" />
+          <MinMaxWarning min={game.min_loss} max={game.max_loss} label="Loss" />
           <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between hunts" />
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 250px' }}>
@@ -808,6 +820,7 @@ function renderButlerGameFields(
           <NumberInput label="🔢 Chambers" value={game.chambers} onChange={(v) => update(key, { ...game, chambers: v })} min={2} max={12} description="Number of chambers in the revolver (more = safer)" />
           <NumberInput label="🎲 Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
           <NumberInput label="🎲 Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
+          <MinMaxWarning min={game.min_bet} max={game.max_bet} label="Bet" />
           <NumberInput label="📊 Reward Multiplier" value={game.reward_multiplier} onChange={(v) => update(key, { ...game, reward_multiplier: v })} step={0.1} description="Bet is multiplied by this if the player survives" />
           <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
         </>
@@ -817,6 +830,7 @@ function renderButlerGameFields(
         <>
           <NumberInput label="🎲 Min Bet" value={game.min_bet} onChange={(v) => update(key, { ...game, min_bet: v })} min={0} description="Smallest amount of Lunari a player can bet" />
           <NumberInput label="🎲 Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
+          <MinMaxWarning min={game.min_bet} max={game.max_bet} label="Bet" />
           <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
         </>
       );

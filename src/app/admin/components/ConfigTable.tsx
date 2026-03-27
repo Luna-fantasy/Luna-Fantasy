@@ -6,7 +6,7 @@ import RolePicker from './RolePicker';
 interface Column {
   key: string;
   label: string;
-  type?: 'text' | 'number' | 'duration' | 'role';
+  type?: 'text' | 'number' | 'duration' | 'role' | 'percent';
   width?: string;
 }
 
@@ -29,7 +29,7 @@ export default function ConfigTable({ columns, rows, onChange, addLabel = 'Add R
   function addRow() {
     const empty: Record<string, any> = {};
     for (const col of columns) {
-      if (col.type === 'number' || col.type === 'duration') empty[col.key] = 0;
+      if (col.type === 'number' || col.type === 'duration' || col.type === 'percent') empty[col.key] = 0;
       else if (col.type === 'role') empty[col.key] = '';
       else empty[col.key] = '';
     }
@@ -66,22 +66,49 @@ export default function ConfigTable({ columns, rows, onChange, addLabel = 'Add R
                         onChange={(v) => updateCell(ri, col.key, v)}
                         compact
                       />
-                    ) : (
+                    ) : col.type === 'percent' ? (
+                      <>
+                        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%' }}>
+                          <input
+                            className="admin-form-input"
+                            type="number"
+                            value={parseFloat(((row[col.key] ?? 0) * 100).toFixed(10))}
+                            onChange={(e) => updateCell(ri, col.key, Number(e.target.value) / 100)}
+                            disabled={disabled}
+                            min={0}
+                            max={100}
+                            step={1}
+                            style={{ padding: '6px 10px', fontSize: '13px', paddingRight: '28px' }}
+                          />
+                          <span className="admin-percent-suffix">%</span>
+                        </div>
+                      </>
+                    ) : col.type === 'duration' ? (
                       <>
                         <input
                           className="admin-form-input"
-                          type={col.type === 'number' || col.type === 'duration' ? 'number' : 'text'}
+                          type="number"
                           value={row[col.key] ?? ''}
-                          onChange={(e) => updateCell(ri, col.key, col.type === 'number' || col.type === 'duration' ? Number(e.target.value) : e.target.value)}
+                          onChange={(e) => updateCell(ri, col.key, Math.max(0, Number(e.target.value)))}
                           disabled={disabled}
+                          min={0}
                           style={{ padding: '6px 10px', fontSize: '13px' }}
                         />
-                        {col.type === 'duration' && row[col.key] > 0 && (
+                        {row[col.key] > 0 && (
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
                             {formatDuration(row[col.key])}
                           </div>
                         )}
                       </>
+                    ) : (
+                      <input
+                        className="admin-form-input"
+                        type={col.type === 'number' ? 'number' : 'text'}
+                        value={row[col.key] ?? ''}
+                        onChange={(e) => updateCell(ri, col.key, col.type === 'number' ? Number(e.target.value) : e.target.value)}
+                        disabled={disabled}
+                        style={{ padding: '6px 10px', fontSize: '13px' }}
+                      />
                     )}
                   </td>
                 ))}

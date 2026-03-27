@@ -160,6 +160,26 @@ const BUTTON_KEYS = [
   'load', 'math', 'trivia', 'react', 'sowalef',
 ];
 
+const BUTTON_DESCRIPTIONS: Record<string, string> = {
+  lock: 'Prevents new users from joining the room',
+  unlock: 'Allows anyone to join the room again',
+  hide: 'Makes the room invisible to non-members',
+  limit: 'Sets a maximum number of users in the room',
+  region: 'Changes the voice server region for better quality',
+  trust: 'Gives a user permission to manage the room',
+  ban: 'Permanently blocks a user from the room',
+  kick: 'Removes a user from the room (they can rejoin)',
+  claim: 'Takes ownership of an unclaimed room',
+  transfer: 'Gives room ownership to another user',
+  whisper: 'Sends a private message to the room',
+  save: 'Saves the current room settings as a preset',
+  load: 'Restores a previously saved room preset',
+  math: 'Starts a math challenge game',
+  trivia: 'Starts a trivia quiz game',
+  react: 'Starts a quick reaction game',
+  sowalef: 'Starts a conversation topic game',
+};
+
 const AURA_TIER_KEYS = ['dormant', 'flickering', 'glowing', 'radiant', 'blazing'];
 const AURA_THRESHOLD_KEYS = ['flickering', 'glowing', 'radiant', 'blazing'];
 const AURA_WEIGHT_KEYS = ['warmthPerVisitor', 'warmthMax', 'energyDivisor', 'energyMax', 'harmonyPerMin', 'harmonyMax', 'loyaltyMax'];
@@ -606,7 +626,7 @@ export default function VoicePage() {
             />
           </ConfigSection>
 
-          <ConfigSection title="Room Limits" description="Maximum number of temporary rooms per user">
+          <ConfigSection title="Room Limits" description="How many rooms each user can create">
             <div className="admin-config-grid">
               <NumberInput
                 label="Max Temp Rooms"
@@ -614,7 +634,15 @@ export default function VoicePage() {
                 onChange={(v) => updateSection('setup', { ...setup, maxTempRoomsPerUser: v })}
                 min={1}
                 max={10}
-                description="Per user (1-10)"
+                description="How many temporary voice rooms a single user can create (1-10)"
+              />
+              <NumberInput
+                label="Max VIP Rooms"
+                value={setup.maxVipRoomsPerUser}
+                onChange={(v) => updateSection('setup', { ...setup, maxVipRoomsPerUser: v })}
+                min={1}
+                max={5}
+                description="How many permanent VIP rooms a single user can own (1-5)"
               />
             </div>
           </ConfigSection>
@@ -1099,28 +1127,34 @@ export default function VoicePage() {
           </ConfigSection>
 
           {panel && (
-            <ConfigSection title="Panel Description" description="Lines shown on the voice panel embed">
-              {(['line1', 'line2', 'line3', 'line4'] as const).map((lineKey) => (
-                <div key={lineKey} className="admin-form-group" style={{ marginBottom: '10px' }}>
-                  <label className="admin-form-label">{lineKey.replace('line', 'Line ')}</label>
+            <ConfigSection title="Panel Description" description="Text displayed on the voice room control panel in Discord (RTL Arabic)">
+              {([
+                { key: 'line1' as const, label: 'Line 1 — Header', desc: 'Title or welcome text at the top of the panel' },
+                { key: 'line2' as const, label: 'Line 2 — Description', desc: 'Main instructions or room info' },
+                { key: 'line3' as const, label: 'Line 3 — Details', desc: 'Additional details or tips' },
+                { key: 'line4' as const, label: 'Line 4 — Footer', desc: 'Footer note at the bottom of the panel' },
+              ]).map(({ key, label, desc }) => (
+                <div key={key} className="admin-form-group" style={{ marginBottom: '10px' }}>
+                  <label className="admin-form-label">{label}</label>
                   <textarea
                     className="admin-input"
-                    value={panel[lineKey]}
-                    onChange={(e) => updateSection('content_panel', { ...panel, [lineKey]: e.target.value })}
+                    value={panel[key]}
+                    onChange={(e) => updateSection('content_panel', { ...panel, [key]: e.target.value })}
                     dir="rtl"
                     style={{ textAlign: 'right', width: '100%', resize: 'vertical', minHeight: '60px' }}
                     rows={2}
                   />
+                  <span className="admin-number-input-desc">{desc}</span>
                 </div>
               ))}
             </ConfigSection>
           )}
 
-          <ConfigSection title="Button Labels" description="Text displayed on voice room control buttons">
+          <ConfigSection title="Button Labels" description="Text displayed on voice room control buttons (Arabic, max 80 characters)">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               {BUTTON_KEYS.map((key) => (
                 <div key={key} className="admin-form-group">
-                  <label className="admin-form-label">{key}</label>
+                  <label className="admin-form-label" style={{ textTransform: 'capitalize' }}>{key}</label>
                   <input
                     type="text"
                     className="admin-input"
@@ -1128,7 +1162,11 @@ export default function VoicePage() {
                     onChange={(e) => updateSection('content_buttons', { ...buttons, [key]: e.target.value })}
                     dir="rtl"
                     style={{ textAlign: 'right' }}
+                    maxLength={80}
                   />
+                  {BUTTON_DESCRIPTIONS[key] && (
+                    <span className="admin-number-input-desc">{BUTTON_DESCRIPTIONS[key]}</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -1215,6 +1253,7 @@ export default function VoicePage() {
                     dir="rtl"
                     style={{ textAlign: 'right' }}
                   />
+                  <span className="admin-number-input-desc">Title shown at the top of the whisper popup</span>
                 </div>
                 <div className="admin-form-group">
                   <label className="admin-form-label">Modal Placeholder</label>
@@ -1226,10 +1265,12 @@ export default function VoicePage() {
                     dir="rtl"
                     style={{ textAlign: 'right' }}
                   />
+                  <span className="admin-number-input-desc">Hint text shown inside the empty whisper input box</span>
                 </div>
               </div>
               <div style={{ marginTop: '12px' }}>
-                <label className="admin-form-label" style={{ marginBottom: '8px', display: 'block' }}>Embed Colors (hex)</label>
+                <label className="admin-form-label" style={{ marginBottom: '4px', display: 'block' }}>Embed Colors (hex)</label>
+                <span className="admin-number-input-desc" style={{ display: 'block', marginBottom: '8px' }}>Colors cycle through these for whisper embeds — add more for variety</span>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                   {(whisper.colors ?? []).map((color, idx) => (
                     <div key={idx} className="admin-form-group">
@@ -1258,7 +1299,7 @@ export default function VoicePage() {
             </ConfigSection>
           )}
 
-          <ConfigSection title="Game Timeout Messages" description="Messages shown when a game times out (RTL)">
+          <ConfigSection title="Game Timeout Messages" description="Messages displayed when nobody answers in time (Arabic, right-to-left)">
             <div className="admin-config-grid">
               {TIMEOUT_MESSAGE_KEYS.map((key) => (
                 <div key={key} className="admin-form-group">
@@ -1319,7 +1360,7 @@ export default function VoicePage() {
             </div>
           </ConfigSection>
 
-          <ConfigSection title="Emojis" description="Emoji IDs used by Oracle">
+          <ConfigSection title="Emojis" description="Custom emoji IDs used by Oracle. Format: <:name:id> — find the ID by typing \:emoji: in Discord">
             <div className="admin-table-container">
               <table className="admin-table">
                 <thead>
