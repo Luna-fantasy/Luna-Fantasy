@@ -985,7 +985,9 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
     const updates: Record<string, string | null> = {};
     for (const key of keys) {
       if (edits[key] !== undefined) {
-        updates[key] = edits[key] || null; // empty string = reset to default
+        // Reset to default if empty or matches the built-in default text
+        const val = edits[key];
+        updates[key] = (!val || val === TEXT_DEFAULTS[key]) ? null : val;
       }
     }
     if (Object.keys(updates).length === 0) { toast('No changes to save', 'info'); return; }
@@ -1191,9 +1193,11 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
 
             {isOpen && (
               <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {keys.filter(k => !search || k.includes(search) || (texts[k] || '').includes(search)).map(key => {
-                  const current = edits[key] ?? texts[key] ?? '';
+                {keys.filter(k => !search || k.includes(search) || (texts[k] || TEXT_DEFAULTS[k] || '').includes(search)).map(key => {
+                  const current = edits[key] ?? texts[key] ?? TEXT_DEFAULTS[key] ?? '';
                   const isCustom = !!texts[key];
+                  const isEdited = edits[key] !== undefined;
+                  const isDefault = !isCustom && !isEdited;
 
                   return (
                     <div key={key}>
@@ -1201,8 +1205,9 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
                         <label className="admin-form-label" style={{ margin: 0, fontSize: '0.8rem' }}>
                           <code style={{ fontSize: '0.75rem', opacity: 0.7 }}>{key}</code>
                           {isCustom && <span className="admin-badge cyan" style={{ marginLeft: '6px', fontSize: '0.6rem' }}>custom</span>}
+                          {isDefault && <span style={{ marginLeft: '6px', fontSize: '0.6rem', color: 'var(--text-muted)' }}>default</span>}
                         </label>
-                        {isCustom && (
+                        {(isCustom || isEdited) && (
                           <button className="admin-btn admin-btn-ghost" style={{ fontSize: '0.7rem', padding: '2px 6px' }}
                             onClick={() => handleEdit(key, '')}>
                             Reset
@@ -1215,7 +1220,6 @@ function SettingsTab({ toast }: { toast: (msg: string, type: 'success' | 'error'
                         onChange={e => handleEdit(key, e.target.value)}
                         rows={2}
                         style={{ fontSize: '0.85rem', resize: 'vertical', direction: 'rtl' }}
-                        placeholder={TEXT_DEFAULTS[key] || '(no default)'}
                       />
                       {/* Inline preview */}
                       {current && (
