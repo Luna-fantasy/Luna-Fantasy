@@ -787,7 +787,7 @@ function CreateChallengeModal({ onClose, onCreated, toast, templates }: { onClos
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loadingChannels, setLoadingChannels] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', type: 'image', submissionChannelId: '', votingChannelId: '', logChannelId: '', reward1st: '', reward2nd: '', reward3rd: '', duration: '', scheduledAt: '' });
+  const [form, setForm] = useState({ name: '', description: '', type: 'image', submissionChannelId: '', votingChannelId: '', logChannelId: '', reward1st: '', reward2nd: '', reward3rd: '', durationDays: '', durationHours: '', scheduledAt: '' });
 
   useEffect(() => {
     fetch('/api/admin/challenges/channels')
@@ -826,7 +826,7 @@ function CreateChallengeModal({ onClose, onCreated, toast, templates }: { onClos
           reward1st: form.reward1st ? parseInt(form.reward1st) : undefined,
           reward2nd: form.reward2nd ? parseInt(form.reward2nd) : undefined,
           reward3rd: form.reward3rd ? parseInt(form.reward3rd) : undefined,
-          duration: form.duration ? parseInt(form.duration) : undefined,
+          duration: (form.durationDays || form.durationHours) ? (parseInt(form.durationDays || '0') * 24) + parseInt(form.durationHours || '0') || undefined : undefined,
           scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
         }),
       });
@@ -918,8 +918,11 @@ function CreateChallengeModal({ onClose, onCreated, toast, templates }: { onClos
 
         <div className="cm-row">
           <div className="cm-field">
-            <label className="admin-form-label">Duration (hours, optional)</label>
-            <input className="admin-input" type="number" min="1" max="168" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} placeholder="Auto-close after X hours" />
+            <label className="admin-form-label">Duration (optional)</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input className="admin-input" type="number" min="0" max="30" value={form.durationDays} onChange={e => setForm(f => ({ ...f, durationDays: e.target.value }))} placeholder="Days" style={{ flex: 1 }} />
+              <input className="admin-input" type="number" min="0" max="23" value={form.durationHours} onChange={e => setForm(f => ({ ...f, durationHours: e.target.value }))} placeholder="Hours" style={{ flex: 1 }} />
+            </div>
           </div>
           <div className="cm-field">
             <label className="admin-form-label">Schedule for later</label>
