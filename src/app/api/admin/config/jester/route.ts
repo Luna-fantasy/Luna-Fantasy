@@ -11,7 +11,7 @@ const DB_NAME = 'Database';
 
 const ALLOWED_SECTIONS = new Set([
   'status', 'all_of_games', 'roulette', 'mafia', 'rps', 'guessthecountry',
-  'bombroulette', 'LunaFantasy', 'LunaFantasyEvent',
+  'bombroulette', 'mines', 'LunaFantasy', 'LunaFantasyEvent',
   'GrandFantasy', 'FactionWar', 'points_settings', 'ticket_shop_settings',
   'votegame', 'collection_rewards', 'trade_config', 'channel_config',
   'shop_brimor', 'shop_broker', 'level_rewards',
@@ -27,6 +27,7 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   rps:                  { docId: 'jester_game_settings', field: 'rps' },
   guessthecountry:      { docId: 'jester_game_settings', field: 'guessthecountry' },
   bombroulette:         { docId: 'jester_game_settings', field: 'bombroulette' },
+  mines:                { docId: 'jester_game_settings', field: 'mines' },
   LunaFantasy:          { docId: 'jester_game_settings', field: 'LunaFantasy' },
   LunaFantasyEvent:     { docId: 'jester_game_settings', field: 'LunaFantasyEvent' },
   GrandFantasy:         { docId: 'jester_game_settings', field: 'GrandFantasy' },
@@ -81,7 +82,7 @@ export async function GET() {
       const gs = gameSettings.data;
       for (const key of [
         'all_of_games', 'votegame', 'roulette', 'mafia', 'rps', 'guessthecountry',
-        'bombroulette', 'LunaFantasy', 'LunaFantasyEvent',
+        'bombroulette', 'mines', 'LunaFantasy', 'LunaFantasyEvent',
         'GrandFantasy', 'FactionWar', 'ticket_shop_settings',
       ]) {
         if (gs[key]) {

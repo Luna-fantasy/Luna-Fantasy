@@ -48,6 +48,7 @@ interface JesterSections {
   rps?: JesterGameBase;
   bombroulette?: JesterGameBase;
   guessthecountry?: JesterGameBase;
+  mines?: JesterGameBase;
   LunaFantasy?: JesterGameBase;
   LunaFantasyEvent?: JesterGameBase;
   GrandFantasy?: JesterGameBase;
@@ -66,6 +67,7 @@ interface PointsSettings {
   bombroulette: PointsTier[];
   rps: PointsTier[];
   mafia: PointsTier[];
+  mines: PointsTier[];
   guessthecountry: number;
   LunaFantasy: number;
   LunaFantasy_bot: number;
@@ -105,6 +107,7 @@ const JESTER_GAMES: GameMeta[] = [
   { key: 'rps', displayName: 'Luna RPS', description: 'Multiplayer Rock Paper Scissors tournament. Players compete in rounds until one remains.' },
   { key: 'bombroulette', displayName: 'Luna Bomber', description: 'A bomb is passed between players. If it explodes on your turn, you\'re out!' },
   { key: 'guessthecountry', displayName: 'Guess The Country', description: 'Geography trivia. Players see clues and race to guess the country first.' },
+  { key: 'mines', displayName: 'Mines', description: 'Hidden minefield! Pick a tile — safe or mine? Last one standing wins!' },
   { key: 'LunaFantasy', displayName: 'Luna Fantasy (Duel)', description: '1v1 card battle. Pick your best cards from your collection and duel another player.' },
   { key: 'LunaFantasyEvent', displayName: 'Luna Fantasy Event', description: 'Special event version of Luna Fantasy. Winners earn Lunari prizes.' },
   { key: 'GrandFantasy', displayName: 'Grand Fantasy', description: 'Full hand card battle using your entire collection. Play against others or the bot.' },
@@ -112,11 +115,12 @@ const JESTER_GAMES: GameMeta[] = [
 ];
 
 // Lobby games that have tiered reward arrays
-const LOBBY_GAMES: { key: keyof Pick<PointsSettings, 'roulette' | 'bombroulette' | 'rps' | 'mafia'>; displayName: string }[] = [
+const LOBBY_GAMES: { key: keyof Pick<PointsSettings, 'roulette' | 'bombroulette' | 'rps' | 'mafia' | 'mines'>; displayName: string }[] = [
   { key: 'roulette', displayName: 'Luna Roulette' },
   { key: 'bombroulette', displayName: 'Luna Bomber' },
   { key: 'rps', displayName: 'Luna RPS' },
   { key: 'mafia', displayName: 'Blood Moon' },
+  { key: 'mines', displayName: 'Mines' },
 ];
 
 function getGameRewardPreview(game: any): string | null {
