@@ -69,6 +69,13 @@ export function checkRateLimit(
   return { allowed: true, retryAfterMs: 0 };
 }
 
+/** Extract client IP from request headers (for public endpoint rate limiting). */
+export function getClientIp(req: Request): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown';
+}
+
 // Rate limit configs per endpoint
 export const RATE_LIMITS = {
   luckbox: { maxRequests: 5, windowMs: 60_000 },      // 5 per minute
@@ -94,4 +101,22 @@ export const RATE_LIMITS = {
   brimor_toggle: { maxRequests: 10, windowMs: 60_000 },   // 10 per minute
   mells_purchase: { maxRequests: 3, windowMs: 60_000 },   // 3 per minute
   mells_equip: { maxRequests: 10, windowMs: 60_000 },     // 10 per minute
+  // Public browsing endpoints (keyed by IP)
+  contact: { maxRequests: 3, windowMs: 300_000 },           // 3 per 5 minutes
+  members_browse: { maxRequests: 30, windowMs: 60_000 },    // 30 per minute
+  marketplace_browse: { maxRequests: 30, windowMs: 60_000 },// 30 per minute
+  public_cards: { maxRequests: 20, windowMs: 60_000 },      // 20 per minute
+  public_profile: { maxRequests: 20, windowMs: 60_000 },    // 20 per minute
+  catalog_browse: { maxRequests: 20, windowMs: 60_000 },    // 20 per minute
+  partners_browse: { maxRequests: 20, windowMs: 60_000 },   // 20 per minute
+  // Authenticated data endpoints (keyed by discordId)
+  notifications: { maxRequests: 30, windowMs: 60_000 },     // 30 per minute
+  notifications_read: { maxRequests: 20, windowMs: 60_000 },// 20 per minute
+  marketplace_my: { maxRequests: 20, windowMs: 60_000 },    // 20 per minute
+  marketplace_edit: { maxRequests: 10, windowMs: 60_000 },  // 10 per minute
+  profile_tx: { maxRequests: 15, windowMs: 60_000 },        // 15 per minute
+  my_stones: { maxRequests: 15, windowMs: 60_000 },         // 15 per minute
+  swaps_list: { maxRequests: 20, windowMs: 60_000 },        // 20 per minute
+  swaps_history: { maxRequests: 15, windowMs: 60_000 },     // 15 per minute
+  admin_server: { maxRequests: 5, windowMs: 60_000 },       // 5 per minute
 } as const;

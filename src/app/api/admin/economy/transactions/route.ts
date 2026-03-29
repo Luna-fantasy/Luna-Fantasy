@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = request.nextUrl;
-  const page = parseInt(searchParams.get('page') ?? '1', 10);
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '50', 10), 100);
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '50', 10)));
   const userId = searchParams.get('userId') ?? undefined;
   const type = searchParams.get('type') ?? undefined;
   const source = searchParams.get('source') ?? undefined;

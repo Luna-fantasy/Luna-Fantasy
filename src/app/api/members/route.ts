@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
+import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import type { MemberListItem, MembersResponse } from '@/types/members';
 
 export async function GET(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkRateLimit('members_browse', ip, RATE_LIMITS.members_browse.maxRequests, RATE_LIMITS.members_browse.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const url = new URL(request.url);
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));

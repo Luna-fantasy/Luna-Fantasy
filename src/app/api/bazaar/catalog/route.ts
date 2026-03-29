@@ -5,9 +5,18 @@ import { LUNARI_PACKAGES } from '@/lib/stripe';
 import { getBalance, checkDebt } from '@/lib/bazaar/lunari-ops';
 import { getUserTickets } from '@/lib/bazaar/ticket-ops';
 import { setCsrfCookie } from '@/lib/bazaar/csrf';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 export async function GET() {
+  // Rate limit by session user if authenticated, skip if not (catalog is semi-public)
+  const session = await auth();
+  const rateLimitKey = session?.user?.discordId || 'anon';
+  const rl = checkRateLimit('catalog_browse', rateLimitKey, RATE_LIMITS.catalog_browse.maxRequests, RATE_LIMITS.catalog_browse.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const client = await clientPromise;
     const db = client.db('Database');

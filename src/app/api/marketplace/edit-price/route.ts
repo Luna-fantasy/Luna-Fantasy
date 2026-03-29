@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { updateListingPrice } from '@/lib/bazaar/marketplace-ops';
 
 const MIN_PRICE = 50;
@@ -17,6 +18,11 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const discordId = session.user.discordId;
+
+  const rl = checkRateLimit('marketplace_edit', discordId, RATE_LIMITS.marketplace_edit.maxRequests, RATE_LIMITS.marketplace_edit.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
 
   // 2. CSRF validation
   const csrfValid = await validateCsrf(request);

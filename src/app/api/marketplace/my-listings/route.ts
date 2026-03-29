@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getUserListings } from '@/lib/bazaar/marketplace-ops';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 
 /**
  * GET /api/marketplace/my-listings
@@ -11,6 +12,11 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.discordId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = checkRateLimit('marketplace_my', session.user.discordId, RATE_LIMITS.marketplace_my.maxRequests, RATE_LIMITS.marketplace_my.windowMs);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     const listings = await getUserListings(session.user.discordId);

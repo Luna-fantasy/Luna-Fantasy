@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getUserStones } from '@/lib/bazaar/stone-ops';
 import { STONES, getStoneSellPrice } from '@/lib/bazaar/stone-config';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 
 export interface DuplicateStone {
   name: string;
@@ -14,6 +15,11 @@ export async function GET() {
   const session = await auth();
   if (!session?.user?.discordId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rl = checkRateLimit('my_stones', session.user.discordId, RATE_LIMITS.my_stones.maxRequests, RATE_LIMITS.my_stones.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   try {

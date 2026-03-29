@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { markNotificationsRead } from '@/lib/bazaar/marketplace-ops';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 
 /**
  * POST /api/notifications/read
@@ -13,6 +14,11 @@ export async function POST(request: Request) {
   }
 
   const discordId = session.user.discordId;
+
+  const rl = checkRateLimit('notifications_read', discordId, RATE_LIMITS.notifications_read.maxRequests, RATE_LIMITS.notifications_read.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
 
   let notificationIds: string[] | undefined;
   try {

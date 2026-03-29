@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.discordId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rl = checkRateLimit('profile_tx', session.user.discordId, RATE_LIMITS.profile_tx.maxRequests, RATE_LIMITS.profile_tx.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
 
   try {

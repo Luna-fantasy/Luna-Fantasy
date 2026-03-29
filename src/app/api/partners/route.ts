@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const ip = getClientIp(request);
+  const rl = checkRateLimit('partners_browse', ip, RATE_LIMITS.partners_browse.maxRequests, RATE_LIMITS.partners_browse.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const client = await clientPromise;
     const db = client.db('Database');

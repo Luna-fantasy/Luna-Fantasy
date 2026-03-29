@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getUserCards } from '@/lib/bazaar/card-ops';
+import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 /**
@@ -10,6 +11,11 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ discordId: string }> }
 ) {
+  const ip = getClientIp(_request);
+  const rl = checkRateLimit('public_cards', ip, RATE_LIMITS.public_cards.maxRequests, RATE_LIMITS.public_cards.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
   const { discordId } = await params;
 
   if (!discordId || typeof discordId !== 'string') {

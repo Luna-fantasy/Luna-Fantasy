@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/bazaar/rate-limit";
 import clientPromise from "@/lib/mongodb";
 import { generateCardStats } from "@/lib/bazaar/luckbox-config";
 import { getGuildMemberName } from "@/lib/bank/discord-roles";
@@ -30,9 +31,14 @@ export async function GET(request: Request) {
   let isPublic = false;
 
   if (targetId) {
-    // Public profile view — no auth required
+    // Public profile view — no auth required, rate limit by IP
     if (!/^\d{17,20}$/.test(targetId)) {
       return NextResponse.json({ error: "Invalid Discord ID" }, { status: 400 });
+    }
+    const ip = getClientIp(request);
+    const rl = checkRateLimit('public_profile', ip, RATE_LIMITS.public_profile.maxRequests, RATE_LIMITS.public_profile.windowMs);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
     discordId = targetId;
     isPublic = true;

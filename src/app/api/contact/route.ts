@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB per file
 const MAX_FILES = 3;
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIp(req);
+  const rl = checkRateLimit('contact', ip, RATE_LIMITS.contact.maxRequests, RATE_LIMITS.contact.windowMs);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const fd = await req.formData();
     const discord = fd.get('discord') as string | null;
