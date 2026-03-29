@@ -443,7 +443,6 @@ export default function ChallengesPage() {
               <button className="admin-btn admin-btn-ghost" disabled={actionLoading} onClick={() => setConfirmAction({ action: 'cancel', challengeId: active._id, label: active.name })}>
                 Cancel
               </button>
-              <span className="ch-hint">Use bot <code>/challenge close</code> for full results + Lunari rewards</span>
             </div>
           </div>
         </div>
