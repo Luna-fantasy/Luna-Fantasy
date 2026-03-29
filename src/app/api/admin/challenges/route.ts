@@ -85,6 +85,37 @@ export async function GET(req: NextRequest) {
       for (const u of webUsers) {
         userMap.set(u.discordId, { name: u.globalName || u.username || '', avatar: u.image ?? null });
       }
+
+      // Fetch any unresolved users from Discord API (new voters not yet in DB)
+      const unresolvedIds = ids.filter(id => !userMap.has(id));
+      if (unresolvedIds.length > 0) {
+        const token = process.env.DISCORD_BOT_TOKEN;
+        const guildId = process.env.DISCORD_GUILD_ID ?? '1243327880478462032';
+        if (token) {
+          await Promise.allSettled(
+            unresolvedIds.slice(0, 50).map(async (id) => {
+              try {
+                const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${id}`, {
+                  headers: { Authorization: `Bot ${token}` },
+                });
+                if (!res.ok) return;
+                const member = await res.json();
+                const name = member.nick || member.user?.global_name || member.user?.username;
+                const hash = member.user?.avatar ?? null;
+                if (name) {
+                  userMap.set(id, { name, avatar: hash });
+                  // Cache for future lookups
+                  db.collection('discord_users').updateOne(
+                    { _id: id as any },
+                    { $set: { username: name, avatar: hash, fetchedAt: new Date() } },
+                    { upsert: true }
+                  ).catch(() => {});
+                }
+              } catch { /* non-critical */ }
+            })
+          );
+        }
+      }
     }
 
     // Enrich a single challenge
@@ -303,7 +334,7 @@ export async function PUT(req: NextRequest) {
     const { action, challengeId, userId } = body;
 
     if (!challengeId || !action) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
-    if (!['close', 'cancel', 'remove_entry'].includes(action)) return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    if (!['close', 'cancel', 'remove_entry', 'remove_vote'].includes(action)) return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
     let objId: ObjectId;
     try { objId = new ObjectId(challengeId); } catch { return NextResponse.json({ error: 'Invalid ID' }, { status: 400 }); }
@@ -344,6 +375,23 @@ export async function PUT(req: NextRequest) {
 
       await logAdminAction({ adminDiscordId: adminId, adminUsername: adminName, action: 'challenge_remove_entry', targetDiscordId: userId, before: { username: entry.username }, after: null, metadata: { challengeName: challenge.name, removedVotes: votesToRemove.length }, ip: getClientIp(req) });
       return NextResponse.json({ success: true, message: `Removed ${entry.username}` });
+    }
+
+    if (action === 'remove_vote') {
+      const { voterId, votedForUserId } = body;
+      if (!voterId || !votedForUserId) return NextResponse.json({ error: 'Missing voterId or votedForUserId' }, { status: 400 });
+
+      const vote = (challenge.votes || []).find((v: any) => v.voterId === voterId && v.votedForUserId === votedForUserId);
+      if (!vote) return NextResponse.json({ error: 'Vote not found' }, { status: 404 });
+
+      const wasFlagged = vote.flagged ? 1 : 0;
+      await col.updateOne({ _id: objId }, {
+        $pull: { votes: { voterId, votedForUserId } as any },
+        $inc: { voteCount: -1, flaggedVoteCount: -wasFlagged },
+      } as any);
+
+      await logAdminAction({ adminDiscordId: adminId, adminUsername: adminName, action: 'challenge_remove_vote', targetDiscordId: voterId, before: { votedFor: votedForUserId, flagged: vote.flagged }, after: null, metadata: { challengeName: challenge.name }, ip: getClientIp(req) });
+      return NextResponse.json({ success: true, message: `Vote removed` });
     }
   } catch (error) {
     console.error('Challenges PUT error:', error);

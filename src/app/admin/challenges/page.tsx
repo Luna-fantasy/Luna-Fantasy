@@ -652,7 +652,7 @@ export default function ChallengesPage() {
 
       {/* ── Lightbox ── */}
       {lightboxEntry && active && (
-        <Lightbox entry={lightboxEntry} votes={votesByEntry.get(lightboxEntry.userId) || []} challengeName={active.name} onClose={() => setLightboxEntry(null)} />
+        <Lightbox entry={lightboxEntry} votes={votesByEntry.get(lightboxEntry.userId) || []} challengeName={active.name} challengeId={active._id} onClose={() => setLightboxEntry(null)} onRefresh={fetchData} toast={toast} />
       )}
 
       {/* ── Create Modal ── */}
@@ -694,8 +694,30 @@ export default function ChallengesPage() {
 
 // ── Lightbox Component ─────────────────────────────────────────────────
 
-function Lightbox({ entry, votes, challengeName, onClose }: { entry: ChallengeEntry; votes: ChallengeVote[]; challengeName: string; onClose: () => void }) {
+function Lightbox({ entry, votes, challengeName, challengeId, onClose, onRefresh, toast }: { entry: ChallengeEntry; votes: ChallengeVote[]; challengeName: string; challengeId: string; onClose: () => void; onRefresh: () => void; toast: (msg: string, type: 'success' | 'error' | 'info') => void }) {
   const flagged = votes.filter(v => v.flagged);
+  const [removingVote, setRemovingVote] = useState<string | null>(null);
+
+  const handleRemoveVote = async (voterId: string, votedForUserId: string) => {
+    if (!confirm('Remove this vote?')) return;
+    const key = `${voterId}_${votedForUserId}`;
+    setRemovingVote(key);
+    try {
+      const res = await fetch('/api/admin/challenges', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify({ action: 'remove_vote', challengeId, voterId, votedForUserId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      toast('Vote removed', 'success');
+      onRefresh();
+    } catch (err: any) {
+      toast(err.message || 'Failed to remove vote', 'error');
+    } finally {
+      setRemovingVote(null);
+    }
+  };
 
   return (
     <div className="lb-overlay" onClick={onClose}>
@@ -741,6 +763,12 @@ function Lightbox({ entry, votes, challengeName, onClose }: { entry: ChallengeEn
                     </span>
                   </div>
                   <span className="lb-vote-time">{new Date(v.votedAt).toLocaleTimeString()}</span>
+                  <button
+                    className="lb-vote-remove"
+                    title="Remove this vote"
+                    disabled={removingVote === `${v.voterId}_${v.votedForUserId}`}
+                    onClick={(e) => { e.stopPropagation(); handleRemoveVote(v.voterId, v.votedForUserId); }}
+                  >×</button>
                 </div>
               ))}
             </div>
@@ -775,6 +803,9 @@ function Lightbox({ entry, votes, challengeName, onClose }: { entry: ChallengeEn
         .lb-age-old { background: rgba(74,222,128,0.2); color: #4ade80; }
         .lb-flag-badge { font-size: 0.65rem; color: #f43f5e; }
         .lb-vote-time { font-size: 0.7rem; color: var(--text-muted, rgba(255,255,255,0.5)); flex-shrink: 0; }
+        .lb-vote-remove { background: none; border: none; color: rgba(244,63,94,0.5); font-size: 1rem; cursor: pointer; padding: 0 4px; flex-shrink: 0; line-height: 1; transition: color 0.15s; }
+        .lb-vote-remove:hover { color: #f43f5e; }
+        .lb-vote-remove:disabled { opacity: 0.3; cursor: not-allowed; }
         @media (max-width: 768px) { .lb-layout { flex-direction: column; } .lb-info { width: 100%; max-height: 50vh; border-left: none; border-top: 1px solid rgba(255,255,255,0.06); } }
       `}</style>
     </div>
