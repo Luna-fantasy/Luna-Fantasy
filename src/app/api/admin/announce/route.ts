@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
-import { validateCsrf } from '@/lib/bazaar/csrf';
+import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 
 const DISCORD_API = 'https://discord.com/api/v10';
@@ -209,7 +209,8 @@ export async function POST(request: NextRequest) {
       ip: getClientIp(request),
     });
 
-    return NextResponse.json({ success: true, messageId: msg.id });
+    const response = NextResponse.json({ success: true, messageId: msg.id });
+    return refreshCsrf(response);
   } catch (error) {
     console.error('Announce send error:', error);
     return NextResponse.json({ error: 'Failed to send announcement' }, { status: 500 });
