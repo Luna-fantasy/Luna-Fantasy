@@ -191,7 +191,7 @@ export default function GamesManagementPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const sections = data.sections || {};
-      const gameKeys = ['roulette', 'mafia', 'rps', 'bombroulette', 'guessthecountry', 'LunaFantasy', 'LunaFantasyEvent', 'GrandFantasy', 'FactionWar'];
+      const gameKeys = ['roulette', 'mafia', 'rps', 'bombroulette', 'guessthecountry', 'mines', 'LunaFantasy', 'LunaFantasyEvent', 'GrandFantasy', 'FactionWar'];
       const filtered: JesterSections = {};
       for (const k of gameKeys) {
           if (sections[k]) (filtered as any)[k] = sections[k];
@@ -882,6 +882,13 @@ function renderJesterGameFields(
     case 'mafia':
     case 'rps':
     case 'bombroulette':
+      return (
+        <>
+          {commonMultiplayer}
+          {channelRoleInputs}
+        </>
+      );
+    case 'mines':
       return (
         <>
           {commonMultiplayer}
