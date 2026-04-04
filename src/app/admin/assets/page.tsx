@@ -78,6 +78,7 @@ export default function AssetsPage() {
   const swapInputRef = useRef<HTMLInputElement>(null);
   const [swapTarget, setSwapTarget] = useState<string | null>(null);
   const [swapping, setSwapping] = useState(false);
+  const [cacheBust, setCacheBust] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -178,6 +179,7 @@ export default function AssetsPage() {
     try {
       await directUploadToR2(file, existingKey);
       setSuccess(`Replaced: ${existingKey}`);
+      setCacheBust(Date.now());
       fetchBrowse(currentPrefix);
       setTimeout(() => setSuccess(''), 5000);
     } catch (err: any) {
@@ -532,7 +534,7 @@ export default function AssetsPage() {
                         >
                           {isImage(obj.key) ? (
                             <img
-                              src={obj.url}
+                              src={cacheBust ? `${obj.url}?v=${cacheBust}` : obj.url}
                               alt={fileName}
                               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                               loading="lazy"
@@ -594,7 +596,7 @@ export default function AssetsPage() {
       <AdminLightbox isOpen={previewUrl !== null} onClose={() => setPreviewUrl(null)} size="xl">
         {previewUrl && (
           <div style={{ textAlign: 'center' }}>
-            <img src={previewUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: '75vh', borderRadius: '8px' }} />
+            <img src={cacheBust ? `${previewUrl}?v=${cacheBust}` : previewUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: '75vh', borderRadius: '8px' }} />
             <div style={{ marginTop: '8px' }}>
               <button className="admin-btn admin-btn-ghost" onClick={() => setPreviewUrl(null)}>Close</button>
             </div>
