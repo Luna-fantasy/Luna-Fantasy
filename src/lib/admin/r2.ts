@@ -6,6 +6,8 @@ const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME ?? 'assets';
 const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL ?? 'https://assets.lunarian.app';
+const CF_ZONE_ID = process.env.CLOUDFLARE_ZONE_ID;
+const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
 
 function getClient(): S3Client {
   if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
@@ -88,9 +90,13 @@ export async function uploadObject(key: string, buffer: Buffer, contentType: str
     Key: key,
     Body: buffer,
     ContentType: contentType,
+    CacheControl: 'public, max-age=31536000, immutable',
   });
   await client.send(command);
-  return `${R2_PUBLIC_URL}/${key}`;
+  const url = `${R2_PUBLIC_URL}/${key}`;
+  // Fire-and-forget: purge CDN cache for this URL so the new version is served immediately
+  purgeCdnCache([url]).catch(() => {});
+  return url;
 }
 
 export async function getPresignedUploadUrl(key: string, contentType: string, expiresIn = 600): Promise<string> {
@@ -99,6 +105,7 @@ export async function getPresignedUploadUrl(key: string, contentType: string, ex
     Bucket: R2_BUCKET_NAME,
     Key: key,
     ContentType: contentType,
+    CacheControl: 'public, max-age=31536000, immutable',
   });
   // Cast needed: @aws-sdk/s3-request-presigner may pull a slightly different @smithy/types version
   return getSignedUrl(client as any, command as any, { expiresIn });
@@ -115,4 +122,31 @@ export async function deleteObject(key: string): Promise<void> {
     Key: key,
   });
   await client.send(command);
+}
+
+/**
+ * Purge Cloudflare CDN cache for specific URLs.
+ * Requires CLOUDFLARE_ZONE_ID and CLOUDFLARE_API_TOKEN env vars.
+ * Silently skips if not configured.
+ */
+export async function purgeCdnCache(urls: string[]): Promise<void> {
+  if (!CF_ZONE_ID || !CF_API_TOKEN || urls.length === 0) return;
+
+  try {
+    const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/purge_cache`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CF_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ files: urls }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      console.error('[R2] Cache purge failed:', res.status, data);
+    }
+  } catch (err) {
+    console.error('[R2] Cache purge error:', err);
+  }
 }

@@ -127,7 +127,10 @@ export default function AssetsPage() {
     // Step 2: Upload directly to R2 (bypasses our server entirely)
     const uploadRes = await fetch(presignedUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
       body: file,
     });
     if (!uploadRes.ok) throw new Error(`R2 upload failed (${uploadRes.status})`);

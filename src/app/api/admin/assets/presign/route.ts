@@ -4,7 +4,7 @@ import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { getPresignedUploadUrl, getPublicUrl, isR2Configured } from '@/lib/admin/r2';
+import { getPresignedUploadUrl, getPublicUrl, isR2Configured, purgeCdnCache } from '@/lib/admin/r2';
 
 // Client uploads directly to R2 using the presigned URL — no body size limit on our server
 export async function POST(request: NextRequest) {
@@ -53,9 +53,13 @@ export async function POST(request: NextRequest) {
       ip: getClientIp(request),
     });
 
+    const publicUrl = getPublicUrl(key);
+    // Purge CDN cache proactively so the new upload is served immediately
+    purgeCdnCache([publicUrl]).catch(() => {});
+
     return NextResponse.json({
       presignedUrl,
-      publicUrl: getPublicUrl(key),
+      publicUrl,
       key,
     });
   } catch (error) {

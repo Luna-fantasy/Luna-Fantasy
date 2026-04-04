@@ -38,6 +38,7 @@ interface ShopItem {
   roleId?: string;
   description?: string;
   gradientColors?: string[];
+  type?: string;
 }
 
 interface ShopConfig {
@@ -62,11 +63,11 @@ const VENDOR_TABS: { id: VendorId; label: string }[] = [
   { id: 'broker', label: 'Broker' },
 ];
 
-const RARITIES = ['COMMON', 'RARE', 'EPIC', 'UNIQUE', 'LEGENDARY', 'SECRET'] as const;
+const RARITIES = ['COMMON', 'RARE', 'EPIC', 'UNIQUE', 'LEGENDARY', 'SECRET', 'FORBIDDEN'] as const;
 const ITEM_TYPES = ['Card', 'Stone', 'Role', 'Tickets', 'Background'] as const;
 const RARITY_COLORS: Record<string, string> = {
   COMMON: '#4ade80', RARE: '#0077FF', EPIC: '#B066FF',
-  UNIQUE: '#FF3366', LEGENDARY: '#FFD54F', SECRET: '#FFD27F',
+  UNIQUE: '#FF3366', LEGENDARY: '#FFD54F', SECRET: '#FFD27F', FORBIDDEN: '#8B0000',
 };
 const TYPE_ICONS: Record<string, string> = {
   Card: '\uD83C\uDCCF', Stone: '\uD83D\uDC8E', Role: '\uD83C\uDFC5', Tickets: '\uD83C\uDFAB', Background: '\uD83D\uDDBC\uFE0F',
@@ -122,7 +123,7 @@ export default function VendorsSection({ vendorTab }: { vendorTab?: 'seluna' | '
   const [confirmDeleteVendorItem, setConfirmDeleteVendorItem] = useState<number | null>(null);
 
   // Vendor item form
-  const [itemForm, setItemForm] = useState({ name: '', price: '', roleId: '', description: '' });
+  const [itemForm, setItemForm] = useState({ name: '', price: '', roleId: '', description: '', type: '' });
 
   // Seluna schedule
   const [selunaDuration, setSelunaDuration] = useState(24);
@@ -298,7 +299,7 @@ export default function VendorsSection({ vendorTab }: { vendorTab?: 'seluna' | '
   }
 
   function openAddItem() {
-    setItemForm({ name: '', price: '', roleId: '', description: '' });
+    setItemForm({ name: '', price: '', roleId: '', description: '', type: '' });
     setEditingVendorItemIdx(null);
     setShowAddVendorItem(true);
   }
@@ -310,6 +311,7 @@ export default function VendorsSection({ vendorTab }: { vendorTab?: 'seluna' | '
       price: String(item.price),
       roleId: item.roleId || '',
       description: item.description || '',
+      type: item.type || '',
     });
     setEditingVendorItemIdx(idx);
     setShowAddVendorItem(true);
@@ -334,18 +336,22 @@ export default function VendorsSection({ vendorTab }: { vendorTab?: 'seluna' | '
           ...items[editingVendorItemIdx],
           name: itemForm.name.trim(),
           price,
-          roleId: itemForm.roleId || undefined,
+          roleId: itemForm.type ? undefined : (itemForm.roleId || undefined),
           description: itemForm.description.trim() || undefined,
+          type: itemForm.type || undefined,
         };
       } else {
         // Add new
-        const id = itemForm.name.trim().replace(/\s+/g, '');
+        const id = itemForm.type
+          ? `${itemForm.type === 'game_ability' ? 'ability' : 'emoji'}_${itemForm.name.trim().replace(/\s+/g, '_').toLowerCase()}`
+          : itemForm.name.trim().replace(/\s+/g, '');
         items.push({
           id,
           name: itemForm.name.trim(),
           price,
-          roleId: itemForm.roleId || undefined,
+          roleId: itemForm.type ? undefined : (itemForm.roleId || undefined),
           description: itemForm.description.trim() || undefined,
+          type: itemForm.type || undefined,
         });
       }
       return { ...prev, items };
@@ -741,78 +747,65 @@ export default function VendorsSection({ vendorTab }: { vendorTab?: 'seluna' | '
         )}
       </div>
 
-      {/* Items Grid */}
-      <div style={{ marginTop: '20px' }}>
-        <div className="vendor-section-header">
-          <h4 className="vendor-section-title">
-            Items <span className="vendor-section-count">({activeShopData.items?.length ?? 0})</span>
-          </h4>
-          <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={openAddItem}>
-            + Add Item
-          </button>
-        </div>
+      {/* Items grouped by type */}
+      {(() => {
+        const items = activeShopData.items || [];
+        const roles = items.filter(i => !i.type).map((item, _, arr) => ({ item, idx: items.indexOf(item) }));
+        const abilities = items.filter(i => i.type === 'game_ability').map((item) => ({ item, idx: items.indexOf(item) }));
+        const badges = items.filter(i => i.type === 'player_emoji').map((item) => ({ item, idx: items.indexOf(item) }));
 
-        {activeShopData.items && activeShopData.items.length > 0 ? (
-          <div className="vendor-shop-items-grid">
-            {activeShopData.items.map((item, idx) => {
-              const role = item.roleId ? roleMap.get(item.roleId) : null;
-              return (
-                <div key={item.id || idx} className="vendor-shop-item-card">
-                  <div className="vendor-shop-item-name">{item.name}</div>
-                  {item.description && (
-                    <div className="vendor-shop-item-desc">{item.description}</div>
-                  )}
-                  <div className="vendor-shop-item-price">{formatLunari(item.price)}</div>
-                  {item.roleId && (
-                    <div className="vendor-shop-item-role" style={role ? {
-                      color: role.color,
-                      borderLeft: `3px solid ${role.color}`,
-                      paddingLeft: '8px',
-                      fontFamily: 'inherit',
-                      background: `${role.color}10`,
-                    } : undefined}>
-                      {role ? role.name : item.roleId}
+        const renderGroup = (title: string, groupItems: { item: ShopItem; idx: number }[], color: string) => (
+          <div style={{ marginTop: '20px' }}>
+            <div className="vendor-section-header">
+              <h4 className="vendor-section-title">
+                {title} <span className="vendor-section-count">({groupItems.length})</span>
+              </h4>
+            </div>
+            {groupItems.length > 0 ? (
+              <div className="vendor-shop-items-grid">
+                {groupItems.map(({ item, idx }) => {
+                  const role = item.roleId ? roleMap.get(item.roleId) : null;
+                  return (
+                    <div key={item.id || idx} className="vendor-shop-item-card" style={{ borderTop: `2px solid ${color}` }}>
+                      <div className="vendor-shop-item-name">{item.name}</div>
+                      {item.description && <div className="vendor-shop-item-desc">{item.description}</div>}
+                      <div className="vendor-shop-item-price">{formatLunari(item.price)}</div>
+                      {item.roleId && (
+                        <div className="vendor-shop-item-role" style={role ? { color: role.color, borderLeft: `3px solid ${role.color}`, paddingLeft: '8px', background: `${role.color}10` } : undefined}>
+                          {role ? role.name : item.roleId}
+                        </div>
+                      )}
+                      <div className="vendor-shop-item-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div className="vendor-item-reorder">
+                          <button className="admin-btn admin-btn-ghost" disabled={idx === 0} onClick={() => moveItem(idx, idx - 1)} title="Move up">&#9650;</button>
+                          <button className="admin-btn admin-btn-ghost" disabled={idx === items.length - 1} onClick={() => moveItem(idx, idx + 1)} title="Move down">&#9660;</button>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => openEditItem(idx)}>Edit</button>
+                          <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => setConfirmDeleteVendorItem(idx)}>Delete</button>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  <div className="vendor-shop-item-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div className="vendor-item-reorder">
-                      <button
-                        className="admin-btn admin-btn-ghost"
-                        disabled={idx === 0}
-                        onClick={() => moveItem(idx, idx - 1)}
-                        title="Move up"
-                      >
-                        &#9650;
-                      </button>
-                      <button
-                        className="admin-btn admin-btn-ghost"
-                        disabled={idx === activeShopData.items.length - 1}
-                        onClick={() => moveItem(idx, idx + 1)}
-                        title="Move down"
-                      >
-                        &#9660;
-                      </button>
-                    </div>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={() => openEditItem(idx)}>
-                        Edit
-                      </button>
-                      <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => setConfirmDeleteVendorItem(idx)}>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="admin-empty" style={{ padding: '16px', opacity: 0.5 }}>No {title.toLowerCase()} configured</div>
+            )}
           </div>
-        ) : (
-          <div className="admin-empty" style={{ padding: '32px' }}>
-            <p>No items configured for this vendor</p>
-          </div>
-        )}
-      </div>
+        );
 
+        return (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+              <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={openAddItem}>+ Add Item</button>
+            </div>
+            {renderGroup('🛡️ Roles', roles, '#10b981')}
+            {renderGroup('⚡ Abilities (قدرات)', abilities, '#3b82f6')}
+            {renderGroup('🎭 Badges (شارات)', badges, '#8b5cf6')}
+          </div>
+        );
+      })()}
       </>)}
 
       {/* ── SaveDeployBar ── */}
@@ -854,15 +847,32 @@ export default function VendorsSection({ vendorTab }: { vendorTab?: 'seluna' | '
               onChange={(e) => setItemForm(p => ({ ...p, price: e.target.value }))}
             />
           </div>
-          <div style={{ gridColumn: '1 / -1' }}>
-            <RolePicker
-              label="🛡️ Role"
-              description="The Discord role granted on purchase"
-              value={itemForm.roleId}
-              onChange={(val) => setItemForm(p => ({ ...p, roleId: typeof val === 'string' ? val : val[0] ?? '' }))}
-              placeholder="Select a role (optional)"
-            />
+          <div className="admin-form-group">
+            <label className="admin-form-label">📦 Type</label>
+            <select
+              className="admin-form-input"
+              value={itemForm.type}
+              onChange={(e) => setItemForm(p => ({ ...p, type: e.target.value, roleId: e.target.value ? '' : p.roleId }))}
+            >
+              <option value="">Role (Discord role)</option>
+              <option value="game_ability">Ability (قدرة)</option>
+              <option value="player_emoji">Badge (شارة)</option>
+            </select>
           </div>
+          <div className="admin-form-group">
+            <label className="admin-form-label" style={{ opacity: 0.4 }}>&nbsp;</label>
+          </div>
+          {!itemForm.type && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <RolePicker
+                label="🛡️ Role"
+                description="The Discord role granted on purchase"
+                value={itemForm.roleId}
+                onChange={(val) => setItemForm(p => ({ ...p, roleId: typeof val === 'string' ? val : val[0] ?? '' }))}
+                placeholder="Select a role (optional)"
+              />
+            </div>
+          )}
           <div className="admin-form-group" style={{ gridColumn: '1 / -1' }}>
             <label className="admin-form-label">📝 Description</label>
             <input
