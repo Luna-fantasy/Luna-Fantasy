@@ -61,11 +61,12 @@ export async function GET(request: Request) {
     // Collect discord IDs for lookups
     const discordIds = users.map((u) => u.discordId);
 
-    // Batch lookup: levels, points, cards
-    const [levelDocs, pointDocs, cardDocs] = await Promise.all([
+    // Batch lookup: levels, points, cards, discord bot cache (fresher avatars)
+    const [levelDocs, pointDocs, cardDocs, discordUserDocs] = await Promise.all([
       db.collection('levels').find({ _id: { $in: discordIds } as any }).toArray(),
       db.collection('points').find({ _id: { $in: discordIds } as any }).toArray(),
       db.collection('cards').find({ _id: { $in: discordIds } as any }).toArray(),
+      db.collection('discord_users').find({ _id: { $in: discordIds } as any }).toArray(),
     ]);
 
     // Build lookup maps
@@ -84,12 +85,21 @@ export async function GET(request: Request) {
       cardCountMap.set(String(doc._id), Array.isArray(doc.cards) ? doc.cards.length : 0);
     }
 
-    // Map to response shape
+    // Discord bot cache — fresher avatar hashes
+    const discordAvatarMap = new Map<string, string>();
+    for (const doc of discordUserDocs) {
+      if (doc.avatar) {
+        const ext = doc.avatar.startsWith('a_') ? 'gif' : 'png';
+        discordAvatarMap.set(String(doc._id), `https://cdn.discordapp.com/avatars/${doc._id}/${doc.avatar}.${ext}?size=128`);
+      }
+    }
+
+    // Map to response shape — prefer bot-cached avatar over stale OAuth avatar
     let members: MemberListItem[] = users.map((u) => ({
       discordId: u.discordId,
       name: u.globalName || u.name || u.username || 'Unknown',
       username: u.username || '',
-      image: u.image || null,
+      image: discordAvatarMap.get(u.discordId) || u.image || null,
       joinedAt: u.createdAt ? new Date(u.createdAt).toISOString() : null,
       level: levelMap.get(u.discordId) ?? 0,
       lunari: pointMap.get(u.discordId) ?? 0,

@@ -19,6 +19,7 @@ export default function MembersContent() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [loading, setLoading] = useState(true);
+  const [brokenAvatars, setBrokenAvatars] = useState<Set<string>>(new Set());
 
   const searchTimer = useRef<ReturnType<typeof setTimeout>>();
   const debouncedSearch = useRef(search);
@@ -140,13 +141,14 @@ export default function MembersContent() {
                 className="member-card"
               >
                 <div className="member-avatar-wrap">
-                  {member.image ? (
+                  {member.image && !brokenAvatars.has(member.discordId) ? (
                     <Image
                       src={member.image}
                       alt={member.name}
                       width={64}
                       height={64}
                       className="member-avatar"
+                      onError={() => setBrokenAvatars(prev => new Set(prev).add(member.discordId))}
                     />
                   ) : (
                     <div className="member-avatar-fallback">
