@@ -16,6 +16,53 @@ import BotBadge from '../components/BotBadge';
 import { SkeletonCard, SkeletonTable } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { getCsrfToken } from '../utils/csrf';
+import { useGuildData, type GuildRole, type GuildChannel } from '../utils/useGuildData';
+
+// -- Permission summary for game cards --
+
+function PermissionSummary({ roles: roleIds, channels: channelIds, allRoles, allChannels }: {
+  roles?: string[];
+  channels?: string[];
+  allRoles: GuildRole[];
+  allChannels: GuildChannel[];
+}) {
+  const hasRoles = roleIds && roleIds.length > 0;
+  const hasChannels = channelIds && channelIds.length > 0;
+  if (!hasRoles && !hasChannels) return null;
+
+  const roleMap = new Map(allRoles.map(r => [r.id, r]));
+  const channelMap = new Map(allChannels.map(c => [c.id, c]));
+
+  const pillStyle: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: '4px',
+    padding: '1px 7px', borderRadius: '4px', fontSize: '10px', fontWeight: 500,
+    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+    color: 'var(--text-muted)', whiteSpace: 'nowrap',
+  };
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+      {hasRoles && roleIds.map(id => {
+        const r = roleMap.get(id);
+        const color = r ? `#${r.color.toString(16).padStart(6, '0')}` : '#6b7280';
+        return (
+          <span key={id} style={pillStyle}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: r?.color ? color : '#6b7280', flexShrink: 0 }} />
+            {r?.name ?? id.slice(0, 8)}
+          </span>
+        );
+      })}
+      {hasChannels && channelIds.map(id => {
+        const c = channelMap.get(id);
+        return (
+          <span key={id} style={{ ...pillStyle, color: '#60a5fa' }}>
+            # {c?.name ?? id.slice(0, 8)}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
 // -- Butler game types --
 
@@ -158,6 +205,7 @@ export default function GamesManagementPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const { toast } = useToast();
+  const { roles: guildRoles, channels: guildChannels } = useGuildData();
 
   // -- Fetch configs --
 
@@ -437,6 +485,7 @@ export default function GamesManagementPage() {
                           {getGameRewardPreview(game)}
                         </span>
                       )}
+                      <PermissionSummary roles={game.allowedRoles} channels={game.allowedChannels} allRoles={guildRoles} allChannels={guildChannels} />
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
@@ -538,6 +587,7 @@ export default function GamesManagementPage() {
                           Cost: {game.ticket_cost} tickets
                         </span>
                       )}
+                      <PermissionSummary roles={game.allowedRoles} channels={game.allowedChannels} allRoles={guildRoles} allChannels={guildChannels} />
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
@@ -755,6 +805,25 @@ function renderButlerGameFields(
   game: any,
   update: (key: string, value: any) => void,
 ) {
+  const channelRoleInputs = (
+    <>
+      <ChannelPicker
+        label="📺 Allowed Channels"
+        description="Only these channels can use this game. Leave empty to allow all channels."
+        value={game.allowedChannels ?? []}
+        onChange={(v) => update(key, { ...game, allowedChannels: v })}
+        multi
+      />
+      <RolePicker
+        label="🛡️ Allowed Roles"
+        description="Only users with these roles can play. Leave empty to allow everyone."
+        value={game.allowedRoles ?? []}
+        onChange={(v) => update(key, { ...game, allowedRoles: v })}
+        multi
+      />
+    </>
+  );
+
   switch (key) {
     case 'xo_game':
     case 'rps_game':
@@ -764,6 +833,7 @@ function renderButlerGameFields(
           <NumberInput label="🏆 Win Reward" value={game.win_reward} onChange={(v) => update(key, { ...game, win_reward: v })} min={0} description="Lunari awarded to the winner" />
           <NumberInput label="🏆 Draw Reward" value={game.draw_reward} onChange={(v) => update(key, { ...game, draw_reward: v })} min={0} description="Lunari earned when both players draw" />
           <DurationInput label="⏱️ Timeout" value={game.timeout ?? 0} onChange={(v) => update(key, { ...game, timeout: v })} description="How long before the game expires if no one plays" />
+          {channelRoleInputs}
         </>
       );
     case 'coinflip_game':
@@ -774,6 +844,7 @@ function renderButlerGameFields(
           <MinMaxWarning min={game.min_bet} max={game.max_bet} label="Bet" />
           <NumberInput label="📊 Win Multiplier" value={game.win_multiplier} onChange={(v) => update(key, { ...game, win_multiplier: v })} step={0.1} min={0} description="Bet is multiplied by this on a win (e.g. 2.0 = double)" />
           <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
+          {channelRoleInputs}
         </>
       );
     case 'hunt_game':
@@ -810,6 +881,7 @@ function renderButlerGameFields(
               />
             </div>
           </div>
+          {channelRoleInputs}
         </>
       );
     case 'roulette_game':
@@ -821,6 +893,7 @@ function renderButlerGameFields(
           <MinMaxWarning min={game.min_bet} max={game.max_bet} label="Bet" />
           <NumberInput label="📊 Reward Multiplier" value={game.reward_multiplier} onChange={(v) => update(key, { ...game, reward_multiplier: v })} step={0.1} description="Bet is multiplied by this if the player survives" />
           <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
+          {channelRoleInputs}
         </>
       );
     case 'luna21_game':
@@ -830,12 +903,14 @@ function renderButlerGameFields(
           <NumberInput label="🎲 Max Bet" value={game.max_bet} onChange={(v) => update(key, { ...game, max_bet: v })} min={0} description="Largest amount of Lunari a player can bet" />
           <MinMaxWarning min={game.min_bet} max={game.max_bet} label="Bet" />
           <DurationInput label="⏱️ Cooldown" value={game.cooldown ?? 0} onChange={(v) => update(key, { ...game, cooldown: v })} description="Time between plays" />
+          {channelRoleInputs}
         </>
       );
     case 'baloot_game':
       return (
         <>
           <NumberInput label="🏆 Win Reward" value={game.reward ?? 20000} onChange={(v) => update(key, { ...game, reward: v })} min={0} description="Lunari awarded to each player on the winning team" />
+          {channelRoleInputs}
         </>
       );
     default:

@@ -410,7 +410,40 @@
   "privacyPage": {
     "title": "Privacy Policy",
     "desc": "How we handle your data at Luna.",
-    "content": "Luna is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform. We collect minimal data necessary to provide our services, including Discord account information used for authentication and in-game data such as card collections and currency balances. We do not sell or share your personal data with third parties. Payment information is processed securely through Stripe and is never stored on our servers. You may request deletion of your data at any time by contacting us through our Discord server. We use cookies and similar technologies to maintain your session and improve your experience."
+    "lastUpdated": "Last updated: April 4, 2026",
+
+    "overviewTitle": "1. Overview",
+    "overviewContent": "Luna is a fantasy community built on Discord, consisting of Discord bots (Luna Butler, Luna Jester, Luna Sage, Luna Oracle), a website (lunarian.app), and related services. This Privacy Policy explains what data we collect, how we use it, and your rights regarding that data.\n\nBy using any Luna service, you agree to this policy. If you do not agree, please stop using our services and request data deletion.",
+
+    "dataCollectedTitle": "2. Data We Collect",
+    "dataCollectedContent": "We collect only the minimum data necessary to provide our services:\n\n- Discord account information: user ID, username, display name, roles (provided by Discord when you interact with our bots or log into the website)\n- In-game data: card collections, currency balances (Lunari), game statistics, level/XP progress, badge ownership, inventory items\n- Transaction records: purchases, trades, daily rewards, game winnings\n- Luna Sage AI interactions: messages sent in designated live chat channels where Sage is active, and messages sent directly to Sage via prefix commands\n- Mastermind-set user facts: server administrators may store notes about users for personalization purposes\n- Website session data: cookies for authentication and session management\n- Payment information: processed securely through Stripe; card details are never stored on our servers",
+
+    "howWeUseTitle": "3. How We Use Your Data",
+    "howWeUseContent": "Your data is used exclusively to provide Luna services:\n\n- Discord user ID and roles: to identify you across our bots and website, enforce permissions, and personalize interactions\n- In-game data: to maintain your progress, collections, and economy balance\n- Transaction records: to provide transaction history and prevent abuse\n- AI interactions: to generate contextual responses from Luna Sage (see Section 5)\n- Cookies: to maintain your website login session",
+
+    "thirdPartyTitle": "4. Third-Party Services",
+    "thirdPartyContent": "We use third-party services to operate Luna:\n\n- Discord: our platform runs on Discord's infrastructure. Discord's own privacy policy applies to your use of Discord.\n- AI services: Luna Sage uses third-party AI APIs to generate responses. Message content from designated channels may be sent to these services for processing. We do not send your Discord user ID to any AI provider.\n- Stripe: processes payments securely. We never store your payment card details.\n- We use industry-standard cloud infrastructure for hosting, databases, and content delivery. All data is encrypted in transit and at rest.\n\nWe do not sell your data to any third party. We do not use your data for advertising.",
+
+    "lunaSageTitle": "5. Luna Sage AI Features",
+    "lunaSageContent": "Luna Sage is an AI assistant that operates in designated Discord channels. When Sage is active in a channel:\n\n- Messages in that channel are temporarily held in memory (last 50 messages) to provide conversation context. This buffer is not permanently stored and resets when the bot restarts.\n- When Sage responds (via prefix command or auto-join), recent messages are sent to a third-party AI service to generate a response. User IDs are not included in data sent to AI providers.\n- Mastermind-set user facts: server administrators (Masterminds) may store facts about users that Sage references in conversation. These facts are stored in our database until a Mastermind removes them or you request deletion.\n- Activity logs: Sage logs when it reacts to or joins conversations (trigger type, channel, brief response excerpt). These logs are automatically deleted after 30 days.\n\nYou can view what data Sage has about you by typing !sage mydata in any channel. You can request deletion of all your Sage data by typing !sage forget.",
+
+    "dataRetentionTitle": "6. Data Retention",
+    "dataRetentionContent": "- In-game data (cards, currency, levels): retained as long as your account is active in the Luna server\n- Transaction records: retained indefinitely for audit purposes\n- Sage activity logs: automatically deleted after 30 days\n- Sage conversation buffer: in-memory only, not permanently stored\n- Sage user facts: retained until removed by a Mastermind or by your request\n- Website session cookies: expire when you log out or after 30 days of inactivity",
+
+    "userRightsTitle": "7. Your Rights",
+    "userRightsContent": "You have the right to:\n\n- Access: view what data we store about you (use !sage mydata for Sage data, or contact us for other data)\n- Deletion: request deletion of your data at any time (use !sage forget for Sage data, or contact us through our Discord server for complete account deletion)\n- Correction: request correction of inaccurate data stored about you\n- Portability: request a copy of your data in a readable format\n\nTo exercise these rights, contact us through the Luna Discord server or via the contact form on lunarian.app. We will respond to requests within 30 days.",
+
+    "securityTitle": "8. Security",
+    "securityContent": "We take reasonable measures to protect your data:\n\n- Database connections are encrypted (TLS/SSL)\n- Admin dashboard access is restricted to authorized Masterminds with CSRF protection and rate limiting\n- Bot tokens and API keys are stored as environment variables, never in code\n- All mutation endpoints require authentication and are audit-logged\n\nNo system is 100% secure. If you discover a vulnerability, please report it through our Discord server.",
+
+    "childrenTitle": "9. Children's Privacy",
+    "childrenContent": "Luna services are available to users who meet Discord's minimum age requirement (13 years or the minimum age in your country). We do not knowingly collect data from users below this age. If you believe a child under the minimum age is using our services, please contact us.",
+
+    "changesTitle": "10. Changes to This Policy",
+    "changesContent": "We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated date. Continued use of Luna services after changes constitutes acceptance of the updated policy.",
+
+    "contactTitle": "11. Contact",
+    "contactContent": "For privacy-related questions, data requests, or concerns:\n\n- Discord server: Luna (primary contact method)\n- Website: lunarian.app/contact\n\nWe aim to respond to all inquiries within 30 days."
   },
   "refundPage": {
     "title": "Refund Policy",

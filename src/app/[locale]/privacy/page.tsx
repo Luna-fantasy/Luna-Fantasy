@@ -35,8 +35,28 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
   return <PrivacyContent />;
 }
 
+function Section({ titleKey, contentKey }: { titleKey: string; contentKey: string }) {
+  const t = useTranslations('privacyPage');
+  return (
+    <div style={{ marginBottom: '28px' }}>
+      <h2 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px' }}>
+        <E ns="privacyPage" k={titleKey}>{t(titleKey)}</E>
+      </h2>
+      <div style={{ whiteSpace: 'pre-line' }}>
+        <E ns="privacyPage" k={contentKey}>{t(contentKey)}</E>
+      </div>
+    </div>
+  );
+}
+
 function PrivacyContent() {
   const t = useTranslations('privacyPage');
+
+  const sections = [
+    'overview', 'dataCollected', 'howWeUse', 'thirdParty',
+    'lunaSage', 'dataRetention', 'userRights', 'security',
+    'children', 'changes', 'contact',
+  ];
 
   return (
     <section className="legal-page">
@@ -44,9 +64,14 @@ function PrivacyContent() {
         <div className="legal-header">
           <h1><E ns="privacyPage" k="title">{t('title')}</E></h1>
           <p><E ns="privacyPage" k="desc">{t('desc')}</E></p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '8px' }}>
+            <E ns="privacyPage" k="lastUpdated">{t('lastUpdated')}</E>
+          </p>
         </div>
         <div className="legal-content">
-          <p><E ns="privacyPage" k="content">{t('content')}</E></p>
+          {sections.map((key) => (
+            <Section key={key} titleKey={`${key}Title`} contentKey={`${key}Content`} />
+          ))}
         </div>
       </div>
     </section>
