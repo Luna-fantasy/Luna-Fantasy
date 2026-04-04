@@ -172,6 +172,41 @@ export async function GET(req: NextRequest) {
     const enrichedActive = activeChallenge ? enrichChallenge(activeChallenge, true) : null;
     const enrichedHistory = historyChallenges.map(ch => enrichChallenge(ch, false));
 
+    // Refresh expired Discord attachment URLs (read-only, no DB writes)
+    const token = process.env.DISCORD_BOT_TOKEN;
+    if (token) {
+      const allEnriched = enrichedActive ? [enrichedActive, ...enrichedHistory] : enrichedHistory;
+      const discordUrls: string[] = [];
+      for (const ch of allEnriched) {
+        for (const e of ch.entries) {
+          if (e.imageUrl && e.imageUrl.includes('cdn.discordapp.com/attachments/')) {
+            discordUrls.push(e.imageUrl);
+          }
+        }
+      }
+      if (discordUrls.length > 0) {
+        try {
+          const refreshRes = await fetch('https://discord.com/api/v10/attachments/refresh-urls', {
+            method: 'POST',
+            headers: { Authorization: `Bot ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ attachment_urls: discordUrls }),
+          });
+          if (refreshRes.ok) {
+            const { refreshed_urls } = await refreshRes.json();
+            const urlMap = new Map<string, string>();
+            for (const r of refreshed_urls) urlMap.set(r.original, r.refreshed);
+            for (const ch of allEnriched) {
+              for (const e of ch.entries) {
+                if (e.imageUrl && urlMap.has(e.imageUrl)) {
+                  e.imageUrl = urlMap.get(e.imageUrl)!;
+                }
+              }
+            }
+          }
+        } catch { /* non-critical — original URLs still returned */ }
+      }
+    }
+
     // Summary stats
     const statsPipeline = await col.aggregate([
       { $group: {
