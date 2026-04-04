@@ -99,7 +99,7 @@ export async function GET(request: Request) {
       discordId: u.discordId,
       name: u.globalName || u.name || u.username || 'Unknown',
       username: u.username || '',
-      image: discordAvatarMap.get(u.discordId) || u.image || null,
+      image: u.image || discordAvatarMap.get(u.discordId) || null,
       joinedAt: u.createdAt ? new Date(u.createdAt).toISOString() : null,
       level: levelMap.get(u.discordId) ?? 0,
       lunari: pointMap.get(u.discordId) ?? 0,
