@@ -5,6 +5,7 @@ import ConfigSection from '../components/ConfigSection';
 import ToggleSwitch from '../components/ToggleSwitch';
 import BotBadge from '../components/BotBadge';
 import SaveDeployBar from '../components/SaveDeployBar';
+import RolePicker from '../components/RolePicker';
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import { SkeletonCard } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
@@ -14,7 +15,7 @@ import { computeConfigDiff } from '../utils/computeConfigDiff';
 interface CommandEntry {
   triggers: string[];
   enabled: boolean;
-  permission: 'everyone' | 'admin' | 'owner';
+  allowedRoles: string[];
 }
 type CommandsConfig = Record<string, CommandEntry>;
 
@@ -40,55 +41,88 @@ const JESTER_DESCRIPTIONS: Record<string, string> = {
   rps: 'Start a Rock Paper Scissors game',
   guessthecountry: 'Start a Guess the Country game',
   mafia: 'Start a Blood Moon (Mafia) game',
+  mines: 'Start a Mines game',
   LunaFantasy: 'Start a Luna Fantasy duel',
   votegame: 'Vote on which game to play',
-  setshop: 'Post the main shop (Brimor/Broker)',
-  'set-tickets-shop': 'Post the Zoldar ticket shop',
-  'set-luckbox-shop': 'Post the Kael Vandar luckbox shop',
-  'set-seluna': 'Configure Seluna vendor',
+  setshop: 'Brimor & Broker shops',
+  'set-tickets-shop': 'Zoldar ticket shop',
+  'set-luckbox-shop': 'Kael Vendar luckbox shop',
   'cancel-seluna': 'Cancel active Seluna vendor',
   seluna: 'Display Seluna limited shop',
   devseluna: 'Dev mode for testing Seluna',
   'set-meluna': 'Configure Meluna stone vendor',
-  lbf: 'Force generate leaderboard preview',
-  roulettevtest: 'Test roulette video generation',
 };
 
 // Default configs when MongoDB has no data
 const BUTLER_DEFAULTS: CommandsConfig = {
-  bank:             { triggers: ['bank', 'banker'], enabled: true, permission: 'everyone' },
-  shop:             { triggers: ['shop'], enabled: true, permission: 'owner' },
-  mells:            { triggers: ['mells'], enabled: true, permission: 'owner' },
-  lbm:              { triggers: ['lbm'], enabled: true, permission: 'owner' },
-  lbl:              { triggers: ['lbl'], enabled: true, permission: 'owner' },
-  staffchat:        { triggers: ['staffchat'], enabled: true, permission: 'owner' },
-  staffvoice:       { triggers: ['staffvoice'], enabled: true, permission: 'owner' },
-  resetvoice:       { triggers: ['resetvoice'], enabled: true, permission: 'owner' },
-  resetstaffembeds: { triggers: ['resetstaffembeds'], enabled: true, permission: 'owner' },
-  leveltest:        { triggers: ['leveltest'], enabled: true, permission: 'owner' },
-  clear4:           { triggers: ['clear4'], enabled: true, permission: 'owner' },
+  bank:             { triggers: ['bank', 'banker'], enabled: true, allowedRoles: [] },
+  shop:             { triggers: ['shop'], enabled: true, allowedRoles: [] },
+  mells:            { triggers: ['mells'], enabled: true, allowedRoles: [] },
+  lbm:              { triggers: ['lbm'], enabled: true, allowedRoles: [] },
+  lbl:              { triggers: ['lbl'], enabled: true, allowedRoles: [] },
+  staffchat:        { triggers: ['staffchat'], enabled: true, allowedRoles: [] },
+  staffvoice:       { triggers: ['staffvoice'], enabled: true, allowedRoles: [] },
+  resetvoice:       { triggers: ['resetvoice'], enabled: true, allowedRoles: [] },
+  resetstaffembeds: { triggers: ['resetstaffembeds'], enabled: true, allowedRoles: [] },
+  leveltest:        { triggers: ['leveltest'], enabled: true, allowedRoles: [] },
+  clear4:           { triggers: ['clear4'], enabled: true, allowedRoles: [] },
 };
 
 const JESTER_DEFAULTS: CommandsConfig = {
-  setroadmap:         { triggers: ['luna'], enabled: true, permission: 'owner' },
-  roulette:           { triggers: ['roulette'], enabled: true, permission: 'admin' },
-  bombroulette:       { triggers: ['LunaBomber', 'bomb'], enabled: true, permission: 'admin' },
-  rps:                { triggers: ['rps', 'rock-paper-scissors'], enabled: true, permission: 'admin' },
-  guessthecountry:    { triggers: ['country', 'guess-country'], enabled: true, permission: 'admin' },
-  mafia:              { triggers: ['BloodMoon', 'Blood'], enabled: true, permission: 'admin' },
-  LunaFantasy:        { triggers: ['fantasyyyyyyyyyyyyy', 'luna-fantasyyyyyyyyyyyyy'], enabled: true, permission: 'everyone' },
-  votegame:           { triggers: ['votegame', 'vote-game', 'vote'], enabled: true, permission: 'everyone' },
-  setshop:            { triggers: ['shop'], enabled: true, permission: 'owner' },
-  'set-tickets-shop': { triggers: ['set-tickets-shop', 'Zoldar'], enabled: true, permission: 'owner' },
-  'set-luckbox-shop': { triggers: ['set-luckbox-shop', 'Kael'], enabled: true, permission: 'owner' },
-  'set-seluna':       { triggers: ['set-seluna', 'Seluna'], enabled: true, permission: 'owner' },
-  'cancel-seluna':    { triggers: ['cancel-seluna', 'remove-seluna'], enabled: true, permission: 'owner' },
-  seluna:             { triggers: ['seluna'], enabled: true, permission: 'everyone' },
-  devseluna:          { triggers: ['devseluna'], enabled: true, permission: 'owner' },
-  'set-meluna':       { triggers: ['set-meluna', 'Meluna'], enabled: true, permission: 'owner' },
-  lbf:                { triggers: ['lbf', 'leaderboard-force'], enabled: true, permission: 'owner' },
-  roulettevtest:      { triggers: ['tr'], enabled: true, permission: 'owner' },
+  setroadmap:         { triggers: ['luna'], enabled: true, allowedRoles: [] },
+  roulette:           { triggers: ['roulette'], enabled: true, allowedRoles: [] },
+  bombroulette:       { triggers: ['LunaBomber', 'bomb'], enabled: true, allowedRoles: [] },
+  rps:                { triggers: ['rps', 'rock-paper-scissors'], enabled: true, allowedRoles: [] },
+  guessthecountry:    { triggers: ['country', 'guess-country'], enabled: true, allowedRoles: [] },
+  mafia:              { triggers: ['BloodMoon', 'Blood'], enabled: true, allowedRoles: [] },
+  mines:              { triggers: ['mine'], enabled: true, allowedRoles: [] },
+  LunaFantasy:        { triggers: ['fantasyyyyyyyyyyyyy', 'luna-fantasyyyyyyyyyyyyy'], enabled: true, allowedRoles: [] },
+  votegame:           { triggers: ['votegame', 'vote-game', 'vote'], enabled: true, allowedRoles: [] },
+  setshop:            { triggers: ['brimor', 'broker'], enabled: true, allowedRoles: [] },
+  'set-tickets-shop': { triggers: ['zoldar'], enabled: true, allowedRoles: [] },
+  'set-luckbox-shop': { triggers: ['kael'], enabled: true, allowedRoles: [] },
+  'cancel-seluna':    { triggers: ['cancel-seluna', 'remove-seluna'], enabled: true, allowedRoles: [] },
+  seluna:             { triggers: ['seluna'], enabled: true, allowedRoles: [] },
+  devseluna:          { triggers: ['devseluna'], enabled: true, allowedRoles: [] },
+  'set-meluna':       { triggers: ['set-meluna', 'Meluna'], enabled: true, allowedRoles: [] },
 };
+
+// Migrate old permission format to allowedRoles
+const OWNER_ROLES = ['1416510580038041621', '1423498630115102900'];
+const ADMIN_ROLES = ['1417164354058719303'];
+const REMOVED_COMMANDS = ['roulettevtest', 'lbf', 'set-seluna'];
+
+function migrateCommands(cmds: Record<string, any>, defaults: CommandsConfig): CommandsConfig {
+  const result: CommandsConfig = {};
+
+  for (const [key, entry] of Object.entries(cmds)) {
+    if (REMOVED_COMMANDS.includes(key)) continue;
+
+    const e = entry as any;
+
+    let allowedRoles: string[] = [];
+    if (Array.isArray(e.allowedRoles)) {
+      allowedRoles = e.allowedRoles;
+    } else if (e.permission === 'owner') {
+      allowedRoles = [...OWNER_ROLES];
+    } else if (e.permission === 'admin') {
+      allowedRoles = [...ADMIN_ROLES];
+    }
+
+    result[key] = {
+      triggers: Array.isArray(e.triggers) ? e.triggers : defaults[key]?.triggers ?? [key],
+      enabled: typeof e.enabled === 'boolean' ? e.enabled : true,
+      allowedRoles,
+    };
+  }
+
+  // Add any missing commands from defaults
+  for (const [key, def] of Object.entries(defaults)) {
+    if (!result[key]) result[key] = { ...def };
+  }
+
+  return result;
+}
 
 // Check for duplicate triggers within a single bot
 function getDuplicateTriggers(cmds: CommandsConfig): Map<string, string[]> {
@@ -143,15 +177,17 @@ export default function CommandsPage() {
       if (butlerRes.ok) {
         const data = await butlerRes.json();
         if (data.sections?.commands) {
-          setButlerCmds(data.sections.commands);
-          setButlerCmdsOriginal(data.sections.commands);
+          const migrated = migrateCommands(data.sections.commands, BUTLER_DEFAULTS);
+          setButlerCmds(migrated);
+          setButlerCmdsOriginal(migrated);
         }
       }
       if (jesterRes.ok) {
         const data = await jesterRes.json();
         if (data.sections?.commands) {
-          setJesterCmds(data.sections.commands);
-          setJesterCmdsOriginal(data.sections.commands);
+          const migrated = migrateCommands(data.sections.commands, JESTER_DEFAULTS);
+          setJesterCmds(migrated);
+          setJesterCmdsOriginal(migrated);
         }
       }
     } catch {
@@ -344,19 +380,20 @@ function CommandCard({
         />
       </div>
 
-      {/* Permission */}
-      <div className="cmd-card-row">
-        <span className="cmd-card-row-label">Permission:</span>
-        <span className={`cmd-permission-dot cmd-permission-dot-${entry.permission}`} />
-        <select
-          className="admin-form-input cmd-permission-select"
-          value={entry.permission}
-          onChange={(e) => onChange({ ...entry, permission: e.target.value as any })}
-        >
-          <option value="everyone">Everyone</option>
-          <option value="admin">Admin</option>
-          <option value="owner">Owner</option>
-        </select>
+      {/* Allowed Roles */}
+      <div className="cmd-card-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+        <RolePicker
+          label=""
+          value={entry.allowedRoles}
+          onChange={(v) => onChange({ ...entry, allowedRoles: v as string[] })}
+          multi
+          placeholder="Everyone — no role restriction"
+        />
+        {entry.allowedRoles.length === 0 && (
+          <span style={{ fontSize: '11px', color: '#4ade80', marginTop: '4px' }}>
+            All members can use this command
+          </span>
+        )}
       </div>
 
       {/* Triggers */}

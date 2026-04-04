@@ -112,8 +112,16 @@ function validateCommandsConfig(value: any): ValidationError[] {
     const c = cmd as any;
     if (!c || typeof c !== 'object') { errors.push({ field: key, message: 'Must be an object' }); continue; }
     if (typeof c.enabled !== 'boolean') errors.push({ field: `${key}.enabled`, message: 'enabled must be boolean' });
-    if (!['everyone', 'admin', 'owner'].includes(c.permission))
-      errors.push({ field: `${key}.permission`, message: 'permission must be everyone/admin/owner' });
+    if (!Array.isArray(c.allowedRoles)) {
+      errors.push({ field: `${key}.allowedRoles`, message: 'allowedRoles must be an array' });
+    } else {
+      if (c.allowedRoles.length > 25)
+        errors.push({ field: `${key}.allowedRoles`, message: 'Max 25 roles per command' });
+      for (const r of c.allowedRoles) {
+        if (typeof r !== 'string' || !/^\d{17,20}$/.test(r))
+          errors.push({ field: `${key}.allowedRoles`, message: 'Invalid Discord role ID' });
+      }
+    }
     if (!Array.isArray(c.triggers)) { errors.push({ field: `${key}.triggers`, message: 'triggers must be an array' }); continue; }
     if (c.triggers.length === 0) errors.push({ field: `${key}.triggers`, message: 'Must have at least one trigger' });
     if (c.triggers.length > 10) errors.push({ field: `${key}.triggers`, message: 'Max 10 triggers per command' });

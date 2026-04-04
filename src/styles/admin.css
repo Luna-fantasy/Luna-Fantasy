@@ -1877,22 +1877,6 @@ textarea.admin-rich-textarea {
   font-size: 11px;
 }
 
-.cmd-permission-select {
-  width: 140px;
-  padding: 4px 8px;
-  font-size: 12px;
-}
-
-.cmd-permission-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 6px;
-}
-.cmd-permission-dot-everyone { background: #4ade80; }
-.cmd-permission-dot-admin { background: #fbbf24; }
-.cmd-permission-dot-owner { background: #f43f5e; }
 
 .cmd-status-line {
   font-size: 12px;
