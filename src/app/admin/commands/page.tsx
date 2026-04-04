@@ -36,14 +36,6 @@ const BUTLER_DESCRIPTIONS: Record<string, string> = {
 
 const JESTER_DESCRIPTIONS: Record<string, string> = {
   setroadmap: 'Display the Luna Map / Roadmaps',
-  roulette: 'Start a Roulette game (spin wheel)',
-  bombroulette: 'Start a Luna Bomber game',
-  rps: 'Start a Rock Paper Scissors game',
-  guessthecountry: 'Start a Guess the Country game',
-  mafia: 'Start a Blood Moon (Mafia) game',
-  mines: 'Start a Mines game',
-  LunaFantasy: 'Start a Luna Fantasy duel',
-  votegame: 'Vote on which game to play',
   setshop: 'Brimor & Broker shops',
   'set-tickets-shop': 'Zoldar ticket shop',
   'set-luckbox-shop': 'Kael Vendar luckbox shop',
@@ -70,14 +62,6 @@ const BUTLER_DEFAULTS: CommandsConfig = {
 
 const JESTER_DEFAULTS: CommandsConfig = {
   setroadmap:         { triggers: ['luna'], enabled: true, allowedRoles: [] },
-  roulette:           { triggers: ['roulette'], enabled: true, allowedRoles: [] },
-  bombroulette:       { triggers: ['LunaBomber', 'bomb'], enabled: true, allowedRoles: [] },
-  rps:                { triggers: ['rps', 'rock-paper-scissors'], enabled: true, allowedRoles: [] },
-  guessthecountry:    { triggers: ['country', 'guess-country'], enabled: true, allowedRoles: [] },
-  mafia:              { triggers: ['BloodMoon', 'Blood'], enabled: true, allowedRoles: [] },
-  mines:              { triggers: ['mine'], enabled: true, allowedRoles: [] },
-  LunaFantasy:        { triggers: ['fantasyyyyyyyyyyyyy', 'luna-fantasyyyyyyyyyyyyy'], enabled: true, allowedRoles: [] },
-  votegame:           { triggers: ['votegame', 'vote-game', 'vote'], enabled: true, allowedRoles: [] },
   setshop:            { triggers: ['brimor', 'broker'], enabled: true, allowedRoles: [] },
   'set-tickets-shop': { triggers: ['zoldar'], enabled: true, allowedRoles: [] },
   'set-luckbox-shop': { triggers: ['kael'], enabled: true, allowedRoles: [] },
@@ -90,7 +74,7 @@ const JESTER_DEFAULTS: CommandsConfig = {
 // Migrate old permission format to allowedRoles
 const OWNER_ROLES = ['1416510580038041621', '1423498630115102900'];
 const ADMIN_ROLES = ['1417164354058719303'];
-const REMOVED_COMMANDS = ['roulettevtest', 'lbf', 'set-seluna'];
+const REMOVED_COMMANDS = ['roulettevtest', 'lbf', 'set-seluna', 'roulette', 'bombroulette', 'rps', 'guessthecountry', 'mafia', 'mines', 'LunaFantasy', 'votegame'];
 
 function migrateCommands(cmds: Record<string, any>, defaults: CommandsConfig): CommandsConfig {
   const result: CommandsConfig = {};
