@@ -73,6 +73,89 @@ function PermissionSummary({ roles: roleIds, channels: channelIds, allRoles, all
   );
 }
 
+// -- Triggers editor for game commands --
+
+// Jester games that have a prefix command (checkCMD handler in bot)
+const GAME_COMMAND_KEYS = new Set(['roulette', 'mafia', 'rps', 'bombroulette', 'guessthecountry', 'mines', 'LunaFantasy']);
+
+function TriggersEditor({ gameKey, triggers, onChange }: {
+  gameKey: string;
+  triggers: string[];
+  onChange: (triggers: string[]) => void;
+}) {
+  const [newTrigger, setNewTrigger] = useState('');
+
+  const addTrigger = () => {
+    const t = newTrigger.trim();
+    if (!t || t.includes(' ') || t.length > 50) return;
+    if (triggers.includes(t)) return;
+    onChange([...triggers, t]);
+    setNewTrigger('');
+  };
+
+  return (
+    <div style={{ gridColumn: '1 / -1' }}>
+      <label className="admin-number-input-label">💬 Commands</label>
+      <span className="admin-number-input-desc" style={{ marginBottom: '8px', display: 'block' }}>
+        What users type in Discord to start this game. Add custom triggers like <code>روليت</code>.
+      </span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+        {triggers.map((t, i) => (
+          <span key={`${gameKey}-${i}`} className="cmd-trigger-pill" dir="auto" style={{ fontSize: '12px' }}>
+            !{t}
+            {triggers.length > 1 && (
+              <button
+                className="cmd-trigger-remove"
+                onClick={() => onChange(triggers.filter((_, j) => j !== i))}
+                type="button"
+              >
+                &times;
+              </button>
+            )}
+          </span>
+        ))}
+        <form onSubmit={(e) => { e.preventDefault(); addTrigger(); }} style={{ display: 'inline-flex' }}>
+          <input
+            className="admin-form-input"
+            placeholder="+ new command"
+            value={newTrigger}
+            onChange={(e) => setNewTrigger(e.target.value)}
+            dir="auto"
+            maxLength={50}
+            style={{ fontSize: '12px', padding: '4px 8px', width: '140px' }}
+          />
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function TriggersSummary({ triggers }: { triggers: string[] }) {
+  if (!triggers || triggers.length === 0) return null;
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+      {triggers.map((t, i) => (
+        <span
+          key={i}
+          style={{
+            padding: '1px 7px',
+            borderRadius: '4px',
+            fontSize: '10px',
+            fontWeight: 500,
+            background: 'rgba(139, 92, 246, 0.08)',
+            border: '1px solid rgba(139, 92, 246, 0.25)',
+            color: '#c4b5fd',
+            fontFamily: 'monospace',
+          }}
+          dir="auto"
+        >
+          !{t}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // -- Butler game types --
 
 interface ButlerGameBase {
@@ -205,6 +288,10 @@ export default function GamesManagementPage() {
   const [jesterLoading, setJesterLoading] = useState(true);
   const [jesterSaving, setJesterSaving] = useState(false);
 
+  // Jester commands state — triggers editable on each game card
+  const [jesterCommands, setJesterCommands] = useState<Record<string, any>>({});
+  const [jesterCommandsOriginal, setJesterCommandsOriginal] = useState<Record<string, any>>({});
+
   // Points settings state (Rewards tab)
   const [pointsSettings, setPointsSettings] = useState<PointsSettings | null>(null);
   const [pointsOriginal, setPointsOriginal] = useState<PointsSettings | null>(null);
@@ -261,6 +348,12 @@ export default function GamesManagementPage() {
         setPointsSettings(sections.points_settings);
         setPointsOriginal(sections.points_settings);
       }
+
+      // Load command configs for game trigger editing
+      if (sections.commands && typeof sections.commands === 'object') {
+        setJesterCommands(sections.commands);
+        setJesterCommandsOriginal(sections.commands);
+      }
     } catch {
       toast('Failed to load Jester games. Try refreshing.', 'error');
     } finally {
@@ -277,7 +370,8 @@ export default function GamesManagementPage() {
 
   const butlerHasChanges = JSON.stringify(butlerSections) !== JSON.stringify(butlerOriginal);
   const jesterHasChanges = JSON.stringify(jesterSections) !== JSON.stringify(jesterOriginal);
-  const gamesHasChanges = butlerHasChanges || jesterHasChanges;
+  const jesterCommandsChanged = JSON.stringify(jesterCommands) !== JSON.stringify(jesterCommandsOriginal);
+  const gamesHasChanges = butlerHasChanges || jesterHasChanges || jesterCommandsChanged;
   const pointsHasChanges = JSON.stringify(pointsSettings) !== JSON.stringify(pointsOriginal);
   useUnsavedWarning(gamesHasChanges || pointsHasChanges);
 
@@ -289,6 +383,13 @@ export default function GamesManagementPage() {
 
   function updateJester(key: string, value: any) {
     setJesterSections((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateJesterTriggers(gameKey: string, triggers: string[]) {
+    setJesterCommands((prev) => {
+      const existing = prev[gameKey] || { enabled: true, allowedRoles: [] };
+      return { ...prev, [gameKey]: { ...existing, triggers } };
+    });
   }
 
   function updatePoints(key: string, value: any) {
@@ -352,6 +453,20 @@ export default function GamesManagementPage() {
         setJesterOriginal({ ...jesterSections });
       }
 
+      // Save Jester commands (game triggers)
+      if (jesterCommandsChanged) {
+        const res = await fetch('/api/admin/config/jester', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+          body: JSON.stringify({ section: 'commands', value: jesterCommands }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to save command triggers');
+        }
+        setJesterCommandsOriginal({ ...jesterCommands });
+      }
+
       toast('Saved! Changes take effect within 30 seconds.', 'success');
     } catch (err: any) {
       toast(err.message, 'error');
@@ -392,6 +507,7 @@ export default function GamesManagementPage() {
   function discardGames() {
     setButlerSections({ ...butlerOriginal });
     setJesterSections({ ...jesterOriginal });
+    setJesterCommands({ ...jesterCommandsOriginal });
   }
 
   function discardPoints() {
@@ -597,6 +713,9 @@ export default function GamesManagementPage() {
                         </span>
                       )}
                       <PermissionSummary roles={game.allowedRoles} channels={game.allowedChannels} allRoles={guildRoles} allChannels={guildChannels} />
+                      {GAME_COMMAND_KEYS.has(meta.key) && (
+                        <TriggersSummary triggers={jesterCommands[meta.key]?.triggers ?? []} />
+                      )}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
@@ -633,6 +752,13 @@ export default function GamesManagementPage() {
                     }}>
                       <div className="admin-config-grid">
                         {renderJesterGameFields(meta.key, game, updateJester)}
+                        {GAME_COMMAND_KEYS.has(meta.key) && (
+                          <TriggersEditor
+                            gameKey={meta.key}
+                            triggers={jesterCommands[meta.key]?.triggers ?? []}
+                            onChange={(triggers) => updateJesterTriggers(meta.key, triggers)}
+                          />
+                        )}
                       </div>
                     </div>
                   )}

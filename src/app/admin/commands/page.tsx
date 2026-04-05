@@ -69,12 +69,25 @@ const JESTER_DEFAULTS: CommandsConfig = {
   seluna:             { triggers: ['seluna'], enabled: true, allowedRoles: [] },
   devseluna:          { triggers: ['devseluna'], enabled: true, allowedRoles: [] },
   'set-meluna':       { triggers: ['set-meluna', 'Meluna'], enabled: true, allowedRoles: [] },
+  // Game command defaults — kept in state to preserve on save, managed via Games page
+  roulette:           { triggers: ['roulette'], enabled: true, allowedRoles: [] },
+  bombroulette:       { triggers: ['LunaBomber', 'bomb'], enabled: true, allowedRoles: [] },
+  rps:                { triggers: ['rps', 'rock-paper-scissors'], enabled: true, allowedRoles: [] },
+  guessthecountry:    { triggers: ['country', 'guess-country'], enabled: true, allowedRoles: [] },
+  mafia:              { triggers: ['BloodMoon', 'Blood'], enabled: true, allowedRoles: [] },
+  mines:              { triggers: ['mine'], enabled: true, allowedRoles: [] },
+  LunaFantasy:        { triggers: ['fantasyyyyyyyyyyyyy'], enabled: true, allowedRoles: [] },
+  votegame:           { triggers: ['votegame', 'vote'], enabled: true, allowedRoles: [] },
 };
 
 // Migrate old permission format to allowedRoles
 const OWNER_ROLES = ['1416510580038041621', '1423498630115102900'];
 const ADMIN_ROLES = ['1417164354058719303'];
-const REMOVED_COMMANDS = ['roulettevtest', 'lbf', 'set-seluna', 'roulette', 'bombroulette', 'rps', 'guessthecountry', 'mafia', 'mines', 'LunaFantasy', 'votegame'];
+// Commands fully removed — deleted from state
+const REMOVED_COMMANDS = ['roulettevtest', 'lbf', 'set-seluna'];
+// Game commands — preserved in state (so saves don't wipe them) but hidden from the UI.
+// They are managed via the Games page instead.
+const HIDDEN_GAME_COMMANDS = new Set(['roulette', 'bombroulette', 'rps', 'guessthecountry', 'mafia', 'mines', 'LunaFantasy', 'votegame']);
 
 function migrateCommands(cmds: Record<string, any>, defaults: CommandsConfig): CommandsConfig {
   const result: CommandsConfig = {};
@@ -193,15 +206,20 @@ export default function CommandsPage() {
     { butler_commands: butlerCmds, jester_commands: jesterCmds },
   ) : [];
 
+  // Visible Jester commands — game commands are hidden (managed in Games page)
+  const visibleJesterCmds: CommandsConfig = Object.fromEntries(
+    Object.entries(jesterCmds).filter(([k]) => !HIDDEN_GAME_COMMANDS.has(k))
+  );
+
   const butlerDupes = getDuplicateTriggers(butlerCmds);
-  const jesterDupes = getDuplicateTriggers(jesterCmds);
+  const jesterDupes = getDuplicateTriggers(visibleJesterCmds);
   const hasDupes = butlerDupes.size > 0 || jesterDupes.size > 0;
-  const crossBotDupes = getCrossBotDuplicates(butlerCmds, jesterCmds);
+  const crossBotDupes = getCrossBotDuplicates(butlerCmds, visibleJesterCmds);
 
   const butlerEnabled = Object.values(butlerCmds).filter(c => c.enabled).length;
   const butlerTotal = Object.keys(butlerCmds).length;
-  const jesterEnabled = Object.values(jesterCmds).filter(c => c.enabled).length;
-  const jesterTotal = Object.keys(jesterCmds).length;
+  const jesterEnabled = Object.values(visibleJesterCmds).filter(c => c.enabled).length;
+  const jesterTotal = Object.keys(visibleJesterCmds).length;
 
   async function saveConfig() {
     setSaving(true);
@@ -300,7 +318,7 @@ export default function CommandsPage() {
           <span className="cmd-status-line">{jesterEnabled} of {jesterTotal} enabled</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
-          {Object.entries(jesterCmds).map(([key, entry]) => (
+          {Object.entries(visibleJesterCmds).map(([key, entry]) => (
             <CommandCard
               key={key}
               commandKey={key}
