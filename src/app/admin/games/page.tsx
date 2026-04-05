@@ -28,7 +28,6 @@ function PermissionSummary({ roles: roleIds, channels: channelIds, allRoles, all
 }) {
   const hasRoles = roleIds && roleIds.length > 0;
   const hasChannels = channelIds && channelIds.length > 0;
-  if (!hasRoles && !hasChannels) return null;
 
   const roleMap = new Map(allRoles.map(r => [r.id, r]));
   const channelMap = new Map(allChannels.map(c => [c.id, c]));
@@ -39,27 +38,37 @@ function PermissionSummary({ roles: roleIds, channels: channelIds, allRoles, all
     background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
     color: 'var(--text-muted)', whiteSpace: 'nowrap',
   };
+  const greenPill: React.CSSProperties = {
+    ...pillStyle,
+    background: 'rgba(74, 222, 128, 0.08)',
+    border: '1px solid rgba(74, 222, 128, 0.25)',
+    color: '#4ade80',
+  };
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
-      {hasRoles && roleIds.map(id => {
+      {hasRoles ? roleIds!.map(id => {
         const r = roleMap.get(id);
         const color = r ? `#${r.color.toString(16).padStart(6, '0')}` : '#6b7280';
         return (
-          <span key={id} style={pillStyle}>
+          <span key={`r-${id}`} style={pillStyle}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: r?.color ? color : '#6b7280', flexShrink: 0 }} />
             {r?.name ?? id.slice(0, 8)}
           </span>
         );
-      })}
-      {hasChannels && channelIds.map(id => {
+      }) : (
+        <span style={greenPill}>🛡️ Everyone</span>
+      )}
+      {hasChannels ? channelIds!.map(id => {
         const c = channelMap.get(id);
         return (
-          <span key={id} style={{ ...pillStyle, color: '#60a5fa' }}>
+          <span key={`c-${id}`} style={{ ...pillStyle, color: '#60a5fa' }}>
             # {c?.name ?? id.slice(0, 8)}
           </span>
         );
-      })}
+      }) : (
+        <span style={greenPill}>📺 Any channel</span>
+      )}
     </div>
   );
 }
@@ -808,15 +817,15 @@ function renderButlerGameFields(
   const channelRoleInputs = (
     <>
       <ChannelPicker
-        label="📺 Allowed Channels"
-        description="Only these channels can use this game. Leave empty to allow all channels."
+        label="📺 Where can this game be played?"
+        description="Pick channels. Empty = works in ALL channels."
         value={game.allowedChannels ?? []}
         onChange={(v) => update(key, { ...game, allowedChannels: v })}
         multi
       />
       <RolePicker
-        label="🛡️ Allowed Roles"
-        description="Only users with these roles can play. Leave empty to allow everyone."
+        label="🛡️ Who can play this game?"
+        description="Pick roles. Empty = EVERYONE can play."
         value={game.allowedRoles ?? []}
         onChange={(v) => update(key, { ...game, allowedRoles: v })}
         multi
@@ -936,15 +945,15 @@ function renderJesterGameFields(
   const channelRoleInputs = (
     <>
       <ChannelPicker
-        label="📺 Allowed Channels"
-        description="Only these channels can use this game. Leave empty to allow all channels."
+        label="📺 Where can this game be played?"
+        description="Pick channels. Empty = works in ALL channels."
         value={game.allowedChannels ?? []}
         onChange={(v) => update(key, { ...game, allowedChannels: v })}
         multi
       />
       <RolePicker
-        label="🛡️ Allowed Roles"
-        description="Only users with these roles can play. Leave empty to allow everyone."
+        label="🛡️ Who can play this game?"
+        description="Pick roles. Empty = EVERYONE can play."
         value={game.allowedRoles ?? []}
         onChange={(v) => update(key, { ...game, allowedRoles: v })}
         multi
