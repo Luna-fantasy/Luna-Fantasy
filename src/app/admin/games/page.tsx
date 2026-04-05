@@ -510,6 +510,10 @@ export default function GamesManagementPage() {
     if (savingJester) setJesterSaving(true);
 
     try {
+      // Ensure CSRF cookie exists before making a burst of PUT requests.
+      // Games tab saves can fire 10+ sequential writes and any race on the
+      // cookie rotation would mismatch the header.
+      await fetch('/api/admin/csrf').catch(() => {});
       // Save Butler changes
       if (savingButler) {
         for (const key of Object.keys(butlerSections) as Array<keyof ButlerSections>) {
@@ -592,6 +596,7 @@ export default function GamesManagementPage() {
     setPointsSaving(true);
 
     try {
+      await fetch('/api/admin/csrf').catch(() => {});
       const res = await fetch('/api/admin/config/jester', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
