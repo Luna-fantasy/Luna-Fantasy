@@ -78,6 +78,7 @@ const JESTER_DEFAULTS: CommandsConfig = {
   mines:              { triggers: ['mine'], enabled: true, allowedRoles: [] },
   LunaFantasy:        { triggers: ['fantasyyyyyyyyyyyyy'], enabled: true, allowedRoles: [] },
   votegame:           { triggers: ['votegame', 'vote'], enabled: true, allowedRoles: [] },
+  stop:               { triggers: ['stop', 'stopgame'], enabled: true, allowedRoles: [] },
 };
 
 // Migrate old permission format to allowedRoles
@@ -87,7 +88,7 @@ const ADMIN_ROLES = ['1417164354058719303'];
 const REMOVED_COMMANDS = ['roulettevtest', 'lbf', 'set-seluna'];
 // Game commands — preserved in state (so saves don't wipe them) but hidden from the UI.
 // They are managed via the Games page instead.
-const HIDDEN_GAME_COMMANDS = new Set(['roulette', 'bombroulette', 'rps', 'guessthecountry', 'mafia', 'mines', 'LunaFantasy', 'votegame']);
+const HIDDEN_GAME_COMMANDS = new Set(['roulette', 'bombroulette', 'rps', 'guessthecountry', 'mafia', 'mines', 'LunaFantasy', 'votegame', 'stop']);
 
 function migrateCommands(cmds: Record<string, any>, defaults: CommandsConfig): CommandsConfig {
   const result: CommandsConfig = {};

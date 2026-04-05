@@ -156,6 +156,84 @@ function TriggersSummary({ triggers }: { triggers: string[] }) {
   );
 }
 
+// -- Master stop command card --
+
+function MasterStopCard({ entry, onChange, allRoles }: {
+  entry: { triggers: string[]; enabled: boolean; allowedRoles: string[] };
+  onChange: (e: { triggers: string[]; enabled: boolean; allowedRoles: string[] }) => void;
+  allRoles: GuildRole[];
+}) {
+  const [newTrigger, setNewTrigger] = useState('');
+
+  const addTrigger = () => {
+    const t = newTrigger.trim();
+    if (!t || t.includes(' ') || t.length > 50 || entry.triggers.includes(t)) return;
+    onChange({ ...entry, triggers: [...entry.triggers, t] });
+    setNewTrigger('');
+  };
+
+  return (
+    <div className="admin-stat-card" style={{ padding: '18px 20px', border: '1px solid rgba(244, 63, 94, 0.25)', background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.04), rgba(139, 92, 246, 0.03))' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '18px' }}>🛑</span>
+            <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>Stop Game</span>
+            <span className={`admin-badge ${entry.enabled ? 'admin-badge-success' : 'admin-badge-muted'}`}>
+              {entry.enabled ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+            Stops the active game in the <b>current channel only</b>. Use to recover from sabotage or stuck games.
+          </div>
+        </div>
+        <ToggleSwitch label="" checked={entry.enabled} onChange={(v) => onChange({ ...entry, enabled: v })} />
+      </div>
+
+      {/* Triggers */}
+      <div style={{ marginBottom: '12px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>💬 Commands</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+          {entry.triggers.map((t, i) => (
+            <span key={i} className="cmd-trigger-pill" dir="auto" style={{ fontSize: '12px' }}>
+              !{t}
+              {entry.triggers.length > 1 && (
+                <button
+                  className="cmd-trigger-remove"
+                  type="button"
+                  onClick={() => onChange({ ...entry, triggers: entry.triggers.filter((_, j) => j !== i) })}
+                >
+                  &times;
+                </button>
+              )}
+            </span>
+          ))}
+          <form onSubmit={(e) => { e.preventDefault(); addTrigger(); }} style={{ display: 'inline-flex' }}>
+            <input
+              className="admin-form-input"
+              placeholder="+ new trigger"
+              value={newTrigger}
+              onChange={(e) => setNewTrigger(e.target.value)}
+              dir="auto"
+              maxLength={50}
+              style={{ fontSize: '12px', padding: '4px 8px', width: '140px' }}
+            />
+          </form>
+        </div>
+      </div>
+
+      {/* Who can use it */}
+      <RolePicker
+        label="🛡️ Who can use !stop?"
+        description="Pick roles. Empty = only admins and owners (safe default)."
+        value={entry.allowedRoles}
+        onChange={(v) => onChange({ ...entry, allowedRoles: v as string[] })}
+        multi
+      />
+    </div>
+  );
+}
+
 // -- Butler game types --
 
 interface ButlerGameBase {
@@ -553,6 +631,23 @@ export default function GamesManagementPage() {
       {/* All Games tab */}
       {tab === 'games' && (
         <>
+          {/* Master Commands Section */}
+          <div style={{ marginBottom: '16px', marginTop: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 className="admin-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              Master Controls
+              <BotBadge bot="jester" />
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 400 }}>Emergency controls for live games</span>
+            </h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+            <MasterStopCard
+              entry={jesterCommands.stop ?? { triggers: ['stop', 'stopgame'], enabled: true, allowedRoles: [] }}
+              onChange={(updated) => setJesterCommands((prev) => ({ ...prev, stop: updated }))}
+              allRoles={guildRoles}
+            />
+          </div>
+
           {/* Butler Games Section */}
           <div style={{ marginBottom: '16px', marginTop: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <h2 className="admin-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
