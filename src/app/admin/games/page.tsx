@@ -423,8 +423,13 @@ export default function GamesManagementPage() {
 
       // Also grab points_settings for the Rewards tab
       if (sections.points_settings) {
-        setPointsSettings(sections.points_settings);
-        setPointsOriginal(sections.points_settings);
+        // Ensure all lobby games have a tier array (crashes ConfigTable otherwise)
+        const ps = { ...sections.points_settings };
+        for (const { key } of LOBBY_GAMES) {
+          if (!Array.isArray(ps[key])) ps[key] = [];
+        }
+        setPointsSettings(ps);
+        setPointsOriginal(ps);
       }
 
       // Load command configs for game trigger editing
@@ -912,7 +917,7 @@ export default function GamesManagementPage() {
                           { key: 'players', label: '🔢 Minimum Players', type: 'number' },
                           { key: 'points', label: '🏆 Reward (Lunari)', type: 'number' },
                         ]}
-                        rows={pointsSettings[key] as PointsTier[]}
+                        rows={(pointsSettings[key] as PointsTier[]) ?? []}
                         onChange={(rows) => updatePointsTier(key, rows as PointsTier[])}
                         addLabel="Add Tier"
                       />
