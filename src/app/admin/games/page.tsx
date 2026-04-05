@@ -117,15 +117,21 @@ function TriggersEditor({ gameKey, triggers, onChange }: {
         <form onSubmit={(e) => { e.preventDefault(); addTrigger(); }} style={{ display: 'inline-flex' }}>
           <input
             className="admin-form-input"
-            placeholder="+ new command"
+            placeholder="+ new command (press Enter)"
             value={newTrigger}
             onChange={(e) => setNewTrigger(e.target.value)}
+            onBlur={() => addTrigger()}
             dir="auto"
             maxLength={50}
-            style={{ fontSize: '12px', padding: '4px 8px', width: '140px' }}
+            style={{ fontSize: '12px', padding: '4px 8px', width: '180px' }}
           />
         </form>
       </div>
+      {newTrigger.trim().length > 0 && (
+        <div style={{ fontSize: '10px', color: '#fbbf24', marginTop: '4px' }}>
+          Press Enter to add <code>!{newTrigger.trim()}</code> to the list
+        </div>
+      )}
     </div>
   );
 }
@@ -211,15 +217,21 @@ function MasterStopCard({ entry, onChange, allRoles }: {
           <form onSubmit={(e) => { e.preventDefault(); addTrigger(); }} style={{ display: 'inline-flex' }}>
             <input
               className="admin-form-input"
-              placeholder="+ new trigger"
+              placeholder="+ new trigger (press Enter)"
               value={newTrigger}
               onChange={(e) => setNewTrigger(e.target.value)}
+              onBlur={() => addTrigger()}
               dir="auto"
               maxLength={50}
-              style={{ fontSize: '12px', padding: '4px 8px', width: '140px' }}
+              style={{ fontSize: '12px', padding: '4px 8px', width: '180px' }}
             />
           </form>
         </div>
+        {newTrigger.trim().length > 0 && (
+          <div style={{ fontSize: '10px', color: '#fbbf24', marginTop: '4px' }}>
+            Press Enter to add <code>!{newTrigger.trim()}</code>
+          </div>
+        )}
       </div>
 
       {/* Who can use it */}
