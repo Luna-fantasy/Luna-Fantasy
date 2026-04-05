@@ -466,9 +466,10 @@ export default function GamesManagementPage() {
   const butlerHasChanges = JSON.stringify(butlerSections) !== JSON.stringify(butlerOriginal);
   const jesterHasChanges = JSON.stringify(jesterSections) !== JSON.stringify(jesterOriginal);
   const jesterCommandsChanged = JSON.stringify(jesterCommands) !== JSON.stringify(jesterCommandsOriginal);
-  const gamesHasChanges = butlerHasChanges || jesterHasChanges || jesterCommandsChanged;
   const pointsHasChanges = JSON.stringify(pointsSettings) !== JSON.stringify(pointsOriginal);
-  useUnsavedWarning(gamesHasChanges || pointsHasChanges);
+  // Games tab now also manages per-game prizes (LunaFantasy, Guess The Country) that live in pointsSettings
+  const gamesHasChanges = butlerHasChanges || jesterHasChanges || jesterCommandsChanged || pointsHasChanges;
+  useUnsavedWarning(gamesHasChanges);
 
   // -- Update helpers --
 
@@ -562,6 +563,20 @@ export default function GamesManagementPage() {
         setJesterCommandsOriginal({ ...jesterCommands });
       }
 
+      // Save points settings (LunaFantasy/Guess The Country prizes edited from game cards)
+      if (pointsHasChanges && pointsSettings) {
+        const res = await fetch('/api/admin/config/jester', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+          body: JSON.stringify({ section: 'points_settings', value: pointsSettings }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to save prizes');
+        }
+        setPointsOriginal({ ...pointsSettings });
+      }
+
       toast('Saved! Changes take effect within 30 seconds.', 'success');
     } catch (err: any) {
       toast(err.message, 'error');
@@ -603,6 +618,7 @@ export default function GamesManagementPage() {
     setButlerSections({ ...butlerOriginal });
     setJesterSections({ ...jesterOriginal });
     setJesterCommands({ ...jesterCommandsOriginal });
+    setPointsSettings(pointsOriginal ? { ...pointsOriginal } : null);
   }
 
   function discardPoints() {
@@ -863,7 +879,7 @@ export default function GamesManagementPage() {
                       paddingTop: '16px',
                     }}>
                       <div className="admin-config-grid">
-                        {renderJesterGameFields(meta.key, game, updateJester)}
+                        {renderJesterGameFields(meta.key, game, updateJester, pointsSettings, updatePoints)}
                         {GAME_COMMAND_KEYS.has(meta.key) && (
                           <TriggersEditor
                             gameKey={meta.key}
@@ -935,97 +951,6 @@ export default function GamesManagementPage() {
                       />
                     </div>
                   ))}
-                </div>
-              </ConfigSection>
-
-              <ConfigSection
-                title="Direct Game Rewards"
-                description="Fixed Lunari amounts awarded for winning each game"
-              >
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-                  <div className="admin-stat-card" style={{ padding: '16px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Guess The Country</h4>
-                      <BotBadge bot="jester" />
-                    </div>
-                    <NumberInput
-                      label="🏆 Win Reward"
-                      value={pointsSettings.guessthecountry ?? 0}
-                      onChange={(v) => updatePoints('guessthecountry', v)}
-                      min={0}
-                      description="Lunari for winning a round"
-                    />
-                  </div>
-
-                  <div className="admin-stat-card" style={{ padding: '16px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Luna Fantasy</h4>
-                      <BotBadge bot="jester" />
-                    </div>
-                    <NumberInput
-                      label="🏆 vs Player"
-                      value={pointsSettings.LunaFantasy ?? 0}
-                      onChange={(v) => updatePoints('LunaFantasy', v)}
-                      min={0}
-                      description="Lunari for winning a PvP duel"
-                    />
-                    <NumberInput
-                      label="🏆 vs Bot"
-                      value={pointsSettings.LunaFantasy_bot ?? 0}
-                      onChange={(v) => updatePoints('LunaFantasy_bot', v)}
-                      min={0}
-                      description="Lunari for beating the bot"
-                    />
-                  </div>
-
-                  <div className="admin-stat-card" style={{ padding: '16px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Grand Fantasy</h4>
-                      <BotBadge bot="jester" />
-                    </div>
-                    <NumberInput
-                      label="🏆 vs Player"
-                      value={pointsSettings.GrandFantasy ?? 0}
-                      onChange={(v) => updatePoints('GrandFantasy', v)}
-                      min={0}
-                      description="Lunari for winning a PvP match"
-                    />
-                    <NumberInput
-                      label="🏆 vs Bot"
-                      value={pointsSettings.GrandFantasy_bot ?? 0}
-                      onChange={(v) => updatePoints('GrandFantasy_bot', v)}
-                      min={0}
-                      description="Lunari for beating the bot"
-                    />
-                  </div>
-
-                  <div className="admin-stat-card" style={{ padding: '16px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Faction War</h4>
-                      <BotBadge bot="jester" />
-                    </div>
-                    <NumberInput
-                      label="🏆 Base Prize"
-                      value={pointsSettings.FactionWar ?? 0}
-                      onChange={(v) => updatePoints('FactionWar', v)}
-                      min={0}
-                      description="Standard win reward"
-                    />
-                    <NumberInput
-                      label="🏆 Bonus Prize"
-                      value={pointsSettings.FactionWar_bonus ?? 0}
-                      onChange={(v) => updatePoints('FactionWar_bonus', v)}
-                      min={0}
-                      description="Bonus victory reward"
-                    />
-                    <NumberInput
-                      label="🏆 Double Prize"
-                      value={pointsSettings.FactionWar_double ?? 0}
-                      onChange={(v) => updatePoints('FactionWar_double', v)}
-                      min={0}
-                      description="Double victory reward"
-                    />
-                  </div>
                 </div>
               </ConfigSection>
 
@@ -1171,6 +1096,8 @@ function renderJesterGameFields(
   key: string,
   game: any,
   update: (key: string, value: any) => void,
+  pointsSettings: PointsSettings | null,
+  updatePoints: (key: string, value: any) => void,
 ) {
   const commonMultiplayer = (
     <>
@@ -1222,6 +1149,7 @@ function renderJesterGameFields(
         <>
           <NumberInput label="🔢 Rounds" value={game.rounds ?? 5} onChange={(v) => update(key, { ...game, rounds: v })} min={1} description="How many rounds each game lasts" />
           <NumberInput label="⏱️ Guess Time" value={game.guess_time ?? 30} onChange={(v) => update(key, { ...game, guess_time: v })} min={0} description="Seconds players have to guess each round" />
+          <NumberInput label="🏆 Win Reward" value={(pointsSettings?.guessthecountry as number) ?? 0} onChange={(v) => updatePoints('guessthecountry', v)} min={0} description="Lunari awarded for winning a round" />
           {channelRoleInputs}
         </>
       );
@@ -1231,6 +1159,8 @@ function renderJesterGameFields(
           <NumberInput label="🎟️ Ticket Cost" value={game.ticket_cost ?? 0} onChange={(v) => update(key, { ...game, ticket_cost: v })} min={0} description="Game tickets required to enter a duel (0 = free)" />
           <NumberInput label="⏱️ Round Time" value={game.round_time ?? 30} onChange={(v) => update(key, { ...game, round_time: v })} min={0} description="Seconds each player has per round" />
           <NumberInput label="⏱️ Invite Timeout" value={game.pvp_invite_time ?? 60} onChange={(v) => update(key, { ...game, pvp_invite_time: v })} min={0} description="Seconds to accept a PvP challenge" />
+          <NumberInput label="🏆 Prize (vs Player)" value={(pointsSettings?.LunaFantasy as number) ?? 0} onChange={(v) => updatePoints('LunaFantasy', v)} min={0} description="Lunari awarded for winning a PvP duel" />
+          <NumberInput label="🏆 Prize (vs Bot)" value={(pointsSettings?.LunaFantasy_bot as number) ?? 0} onChange={(v) => updatePoints('LunaFantasy_bot', v)} min={0} description="Lunari awarded for beating the bot" />
           {channelRoleInputs}
         </>
       );
