@@ -237,7 +237,8 @@ export async function PUT(req: NextRequest) {
   }
 
   const adminId = auth.session.user.discordId!;
-  const { allowed } = checkRateLimit('butler_config', adminId, 5, 60_000);
+  // Games tab save batches many sequential writes. 60/min is generous enough.
+  const { allowed } = checkRateLimit('butler_config', adminId, 60, 60_000);
   if (!allowed) {
     return NextResponse.json({ error: 'Too many config changes. Wait a moment.' }, { status: 429 });
   }
