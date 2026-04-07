@@ -294,7 +294,8 @@ export default function CanvasEditorPage() {
       setCustomBackgrounds(prev => ({ ...prev, [activeCanvasId]: newUrl }));
 
       // Also mark layout as edited so backgroundUrl is included in save
-      const updated = { ...currentLayout, backgroundUrl: data.url };
+      // Append ?v= timestamp so the bot's in-memory cache busts on re-deploy
+      const updated = { ...currentLayout, backgroundUrl: data.url + '?v=' + Date.now() };
       setEditedLayouts(prev => ({ ...prev, [activeCanvasId]: updated }));
 
       setToast('Background uploaded. Save to apply.');
