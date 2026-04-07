@@ -10,6 +10,8 @@ const PROP_LABELS: Record<string, string> = {
   x: 'Horizontal Position',
   y: 'Vertical Position',
   size: 'Radius',
+  radiusX: 'Horizontal Radius',
+  radiusY: 'Vertical Radius',
   fontSize: 'Font Size',
   width: 'Width',
   height: 'Height',
@@ -22,6 +24,8 @@ function getSliderRange(prop: string, canvasWidth: number, canvasHeight: number)
     case 'y': return [0, canvasHeight];
     case 'fontSize': return [1, Math.max(200, Math.round(canvasHeight * 0.1))];
     case 'size': return [1, Math.max(500, Math.round(Math.min(canvasWidth, canvasHeight) * 0.15))];
+    case 'radiusX': return [1, Math.max(500, Math.round(canvasWidth * 0.15))];
+    case 'radiusY': return [1, Math.max(500, Math.round(canvasHeight * 0.15))];
     case 'width': return [1, canvasWidth];
     case 'height': return [1, canvasHeight];
     default: return [0, 1000];
@@ -75,7 +79,7 @@ function PropSliderInput({ label, prop, value, onChange, min, max, canvasSize }:
           className="ce-prop-input ce-prop-input-sm"
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          min={prop === 'fontSize' || prop === 'size' || prop === 'width' || prop === 'height' ? 1 : undefined}
+          min={prop === 'fontSize' || prop === 'size' || prop === 'radiusX' || prop === 'radiusY' || prop === 'width' || prop === 'height' ? 1 : undefined}
         />
       </div>
       {showHelper && (

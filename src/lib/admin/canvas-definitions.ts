@@ -34,7 +34,7 @@ function leaderboardElements(valueLabel: string): CanvasElementDef[] {
   for (let rank = 1; rank <= 3; rank++) {
     const group = `Top 3 — Rank ${rank}`;
     elements.push(
-      { id: `top3.${rank}.avatar`, label: `#${rank} Avatar`, type: 'circle', props: ['x', 'y', 'size'], group },
+      { id: `top3.${rank}.avatar`, label: `#${rank} Avatar`, type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group },
       { id: `top3.${rank}.name`, label: `#${rank} Name`, type: 'text', props: ['x', 'y', 'fontSize'], group },
       { id: `top3.${rank}.value`, label: `#${rank} ${valueLabel}`, type: 'text', props: ['x', 'y', 'fontSize'], group },
     );
@@ -43,7 +43,7 @@ function leaderboardElements(valueLabel: string): CanvasElementDef[] {
   for (let rank = 4; rank <= 10; rank++) {
     const group = `List — Rank ${rank}`;
     elements.push(
-      { id: `list.${rank}.avatar`, label: `#${rank} Avatar`, type: 'circle', props: ['x', 'y', 'size'], group },
+      { id: `list.${rank}.avatar`, label: `#${rank} Avatar`, type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group },
       { id: `list.${rank}.name`, label: `#${rank} Name`, type: 'text', props: ['x', 'y', 'fontSize'], group },
       { id: `list.${rank}.value`, label: `#${rank} ${valueLabel}`, type: 'text', props: ['x', 'y', 'fontSize'], group },
     );
@@ -56,18 +56,18 @@ function leaderboardElements(valueLabel: string): CanvasElementDef[] {
 
 const leaderboardLunariLayout: Record<string, any> = {
   top3: {
-    1: { avatar: { x: 768, y: 164, size: 70 }, name: { x: 768, y: 296, fontSize: 20 }, value: { x: 768, y: 341, fontSize: 22 } },
-    2: { avatar: { x: 482, y: 186, size: 62 }, name: { x: 485, y: 295, fontSize: 20 }, value: { x: 485, y: 339, fontSize: 22 } },
-    3: { avatar: { x: 1052, y: 186, size: 62 }, name: { x: 1049, y: 295, fontSize: 20 }, value: { x: 1049, y: 339, fontSize: 22 } },
+    1: { avatar: { x: 768, y: 164, radiusX: 70, radiusY: 70 }, name: { x: 768, y: 296, fontSize: 20 }, value: { x: 768, y: 341, fontSize: 22 } },
+    2: { avatar: { x: 482, y: 186, radiusX: 62, radiusY: 62 }, name: { x: 485, y: 295, fontSize: 20 }, value: { x: 485, y: 339, fontSize: 22 } },
+    3: { avatar: { x: 1052, y: 186, radiusX: 62, radiusY: 62 }, name: { x: 1049, y: 295, fontSize: 20 }, value: { x: 1049, y: 339, fontSize: 22 } },
   },
   list: {
-    4: { avatar: { x: 329, y: 416, size: 29 }, name: { x: 420, y: 426, fontSize: 18 }, value: { x: 1180, y: 426, fontSize: 22 } },
-    5: { avatar: { x: 329, y: 495, size: 29 }, name: { x: 420, y: 504, fontSize: 18 }, value: { x: 1180, y: 504, fontSize: 22 } },
-    6: { avatar: { x: 329, y: 573, size: 29 }, name: { x: 420, y: 582, fontSize: 18 }, value: { x: 1180, y: 581, fontSize: 22 } },
-    7: { avatar: { x: 329, y: 650, size: 29 }, name: { x: 420, y: 657, fontSize: 18 }, value: { x: 1180, y: 659, fontSize: 22 } },
-    8: { avatar: { x: 329, y: 728, size: 29 }, name: { x: 420, y: 735, fontSize: 18 }, value: { x: 1180, y: 736, fontSize: 22 } },
-    9: { avatar: { x: 329, y: 806, size: 29 }, name: { x: 420, y: 812, fontSize: 18 }, value: { x: 1180, y: 814, fontSize: 22 } },
-    10: { avatar: { x: 329, y: 882, size: 29 }, name: { x: 420, y: 891, fontSize: 18 }, value: { x: 1180, y: 894, fontSize: 22 } },
+    4: { avatar: { x: 329, y: 416, radiusX: 29, radiusY: 29 }, name: { x: 420, y: 426, fontSize: 18 }, value: { x: 1180, y: 426, fontSize: 22 } },
+    5: { avatar: { x: 329, y: 495, radiusX: 29, radiusY: 29 }, name: { x: 420, y: 504, fontSize: 18 }, value: { x: 1180, y: 504, fontSize: 22 } },
+    6: { avatar: { x: 329, y: 573, radiusX: 29, radiusY: 29 }, name: { x: 420, y: 582, fontSize: 18 }, value: { x: 1180, y: 581, fontSize: 22 } },
+    7: { avatar: { x: 329, y: 650, radiusX: 29, radiusY: 29 }, name: { x: 420, y: 657, fontSize: 18 }, value: { x: 1180, y: 659, fontSize: 22 } },
+    8: { avatar: { x: 329, y: 728, radiusX: 29, radiusY: 29 }, name: { x: 420, y: 735, fontSize: 18 }, value: { x: 1180, y: 736, fontSize: 22 } },
+    9: { avatar: { x: 329, y: 806, radiusX: 29, radiusY: 29 }, name: { x: 420, y: 812, fontSize: 18 }, value: { x: 1180, y: 814, fontSize: 22 } },
+    10: { avatar: { x: 329, y: 882, radiusX: 29, radiusY: 29 }, name: { x: 420, y: 891, fontSize: 18 }, value: { x: 1180, y: 894, fontSize: 22 } },
   },
 };
 
@@ -75,18 +75,18 @@ const leaderboardLunariLayout: Record<string, any> = {
 
 const leaderboardLevelsLayout: Record<string, any> = {
   top3: {
-    1: { avatar: { x: 4893, y: 1072, size: 395 }, name: { x: 4850, y: 1860, fontSize: 120 }, value: { x: 4850, y: 2140, fontSize: 140 } },
-    2: { avatar: { x: 3057, y: 1127, size: 365 }, name: { x: 3070, y: 1860, fontSize: 120 }, value: { x: 3070, y: 2140, fontSize: 140 } },
-    3: { avatar: { x: 6620, y: 1127, size: 365 }, name: { x: 6641, y: 1860, fontSize: 120 }, value: { x: 6641, y: 2140, fontSize: 140 } },
+    1: { avatar: { x: 4893, y: 1072, radiusX: 395, radiusY: 395 }, name: { x: 4850, y: 1860, fontSize: 120 }, value: { x: 4850, y: 2140, fontSize: 140 } },
+    2: { avatar: { x: 3057, y: 1127, radiusX: 365, radiusY: 365 }, name: { x: 3070, y: 1860, fontSize: 120 }, value: { x: 3070, y: 2140, fontSize: 140 } },
+    3: { avatar: { x: 6620, y: 1127, radiusX: 365, radiusY: 365 }, name: { x: 6641, y: 1860, fontSize: 120 }, value: { x: 6641, y: 2140, fontSize: 140 } },
   },
   list: {
-    4: { avatar: { x: 1710, y: 2540, size: 190 }, name: { x: 2300, y: 2595, fontSize: 117 }, value: { x: 4750, y: 2600, fontSize: 156 } },
-    5: { avatar: { x: 1710, y: 3015, size: 190 }, name: { x: 2300, y: 3050, fontSize: 117 }, value: { x: 4750, y: 3065, fontSize: 156 } },
-    6: { avatar: { x: 1720, y: 3500, size: 190 }, name: { x: 2300, y: 3525, fontSize: 117 }, value: { x: 4750, y: 3540, fontSize: 156 } },
-    7: { avatar: { x: 1710, y: 3950, size: 190 }, name: { x: 2300, y: 3965, fontSize: 117 }, value: { x: 4750, y: 3990, fontSize: 156 } },
-    8: { avatar: { x: 1715, y: 4400, size: 190 }, name: { x: 2300, y: 4440, fontSize: 117 }, value: { x: 4750, y: 4450, fontSize: 156 } },
-    9: { avatar: { x: 1710, y: 4850, size: 190 }, name: { x: 2300, y: 4900, fontSize: 117 }, value: { x: 4750, y: 4910, fontSize: 156 } },
-    10: { avatar: { x: 1715, y: 5325, size: 190 }, name: { x: 2300, y: 5355, fontSize: 117 }, value: { x: 4750, y: 5390, fontSize: 156 } },
+    4: { avatar: { x: 1710, y: 2540, radiusX: 190, radiusY: 190 }, name: { x: 2300, y: 2595, fontSize: 117 }, value: { x: 4750, y: 2600, fontSize: 156 } },
+    5: { avatar: { x: 1710, y: 3015, radiusX: 190, radiusY: 190 }, name: { x: 2300, y: 3050, fontSize: 117 }, value: { x: 4750, y: 3065, fontSize: 156 } },
+    6: { avatar: { x: 1720, y: 3500, radiusX: 190, radiusY: 190 }, name: { x: 2300, y: 3525, fontSize: 117 }, value: { x: 4750, y: 3540, fontSize: 156 } },
+    7: { avatar: { x: 1710, y: 3950, radiusX: 190, radiusY: 190 }, name: { x: 2300, y: 3965, fontSize: 117 }, value: { x: 4750, y: 3990, fontSize: 156 } },
+    8: { avatar: { x: 1715, y: 4400, radiusX: 190, radiusY: 190 }, name: { x: 2300, y: 4440, fontSize: 117 }, value: { x: 4750, y: 4450, fontSize: 156 } },
+    9: { avatar: { x: 1710, y: 4850, radiusX: 190, radiusY: 190 }, name: { x: 2300, y: 4900, fontSize: 117 }, value: { x: 4750, y: 4910, fontSize: 156 } },
+    10: { avatar: { x: 1715, y: 5325, radiusX: 190, radiusY: 190 }, name: { x: 2300, y: 5355, fontSize: 117 }, value: { x: 4750, y: 5390, fontSize: 156 } },
   },
 };
 
@@ -94,25 +94,25 @@ const leaderboardLevelsLayout: Record<string, any> = {
 
 const fantasyLeaderboardLayout: Record<string, any> = {
   top3: {
-    1: { avatar: { x: 1920, y: 410, size: 168 }, name: { x: 1800, y: 740, fontSize: 37 }, value: { x: 1910, y: 855, fontSize: 60 } },
-    2: { avatar: { x: 1213, y: 466, size: 150 }, name: { x: 1100, y: 738, fontSize: 37 }, value: { x: 1212, y: 848, fontSize: 60 } },
-    3: { avatar: { x: 2623, y: 465, size: 150 }, name: { x: 2520, y: 736, fontSize: 37 }, value: { x: 2613, y: 848, fontSize: 60 } },
+    1: { avatar: { x: 1920, y: 410, radiusX: 168, radiusY: 168 }, name: { x: 1800, y: 740, fontSize: 37 }, value: { x: 1910, y: 855, fontSize: 60 } },
+    2: { avatar: { x: 1213, y: 466, radiusX: 150, radiusY: 150 }, name: { x: 1100, y: 738, fontSize: 37 }, value: { x: 1212, y: 848, fontSize: 60 } },
+    3: { avatar: { x: 2623, y: 465, radiusX: 150, radiusY: 150 }, name: { x: 2520, y: 736, fontSize: 37 }, value: { x: 2613, y: 848, fontSize: 60 } },
   },
   list: {
-    4: { avatar: { x: 821, y: 1044, size: 73 }, name: { x: 1050, y: 1064, fontSize: 45 }, value: { x: 2800, y: 1064, fontSize: 60 } },
-    5: { avatar: { x: 821, y: 1239, size: 73 }, name: { x: 1050, y: 1259, fontSize: 45 }, value: { x: 2800, y: 1259, fontSize: 60 } },
-    6: { avatar: { x: 821, y: 1432, size: 73 }, name: { x: 1050, y: 1454, fontSize: 45 }, value: { x: 2800, y: 1452, fontSize: 60 } },
-    7: { avatar: { x: 821, y: 1625, size: 73 }, name: { x: 1050, y: 1642, fontSize: 45 }, value: { x: 2800, y: 1647, fontSize: 60 } },
-    8: { avatar: { x: 821, y: 1820, size: 73 }, name: { x: 1050, y: 1837, fontSize: 45 }, value: { x: 2800, y: 1840, fontSize: 60 } },
-    9: { avatar: { x: 821, y: 2017, size: 73 }, name: { x: 1050, y: 2031, fontSize: 45 }, value: { x: 2800, y: 2036, fontSize: 60 } },
-    10: { avatar: { x: 821, y: 2214, size: 73 }, name: { x: 1050, y: 2228, fontSize: 45 }, value: { x: 2800, y: 2235, fontSize: 60 } },
+    4: { avatar: { x: 821, y: 1044, radiusX: 73, radiusY: 73 }, name: { x: 1050, y: 1064, fontSize: 45 }, value: { x: 2800, y: 1064, fontSize: 60 } },
+    5: { avatar: { x: 821, y: 1239, radiusX: 73, radiusY: 73 }, name: { x: 1050, y: 1259, fontSize: 45 }, value: { x: 2800, y: 1259, fontSize: 60 } },
+    6: { avatar: { x: 821, y: 1432, radiusX: 73, radiusY: 73 }, name: { x: 1050, y: 1454, fontSize: 45 }, value: { x: 2800, y: 1452, fontSize: 60 } },
+    7: { avatar: { x: 821, y: 1625, radiusX: 73, radiusY: 73 }, name: { x: 1050, y: 1642, fontSize: 45 }, value: { x: 2800, y: 1647, fontSize: 60 } },
+    8: { avatar: { x: 821, y: 1820, radiusX: 73, radiusY: 73 }, name: { x: 1050, y: 1837, fontSize: 45 }, value: { x: 2800, y: 1840, fontSize: 60 } },
+    9: { avatar: { x: 821, y: 2017, radiusX: 73, radiusY: 73 }, name: { x: 1050, y: 2031, fontSize: 45 }, value: { x: 2800, y: 2036, fontSize: 60 } },
+    10: { avatar: { x: 821, y: 2214, radiusX: 73, radiusY: 73 }, name: { x: 1050, y: 2228, fontSize: 45 }, value: { x: 2800, y: 2235, fontSize: 60 } },
   },
 };
 
 // ─── Rank Card — Butler ─────────────────────────────────────────────
 
 const rankCardLayout: Record<string, any> = {
-  avatar:      { x: 140, y: 141, size: 80 },
+  avatar:      { x: 140, y: 141, radiusX: 80, radiusY: 80 },
   username:    { x: 250, y: 90, fontSize: 36 },
   level:       { x: 250, y: 130, fontSize: 24 },
   xpText:      { x: 890, y: 165, fontSize: 20 },
@@ -122,7 +122,7 @@ const rankCardLayout: Record<string, any> = {
 };
 
 const rankCardElements: CanvasElementDef[] = [
-  { id: 'avatar', label: 'Avatar', type: 'circle', props: ['x', 'y', 'size'], group: 'Header' },
+  { id: 'avatar', label: 'Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Header' },
   { id: 'username', label: 'Username', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Header' },
   { id: 'level', label: 'Level Text', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Header' },
   { id: 'xpText', label: 'XP Text', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Progress' },
@@ -134,7 +134,7 @@ const rankCardElements: CanvasElementDef[] = [
 // ─── Profile Card — Butler ──────────────────────────────────────────
 
 const profileCardLayout: Record<string, any> = {
-  avatar:       { x: 512, y: 180, size: 100 },
+  avatar:       { x: 512, y: 180, radiusX: 100, radiusY: 100 },
   displayName:  { x: 512, y: 325, fontSize: 36 },
   username:     { x: 512, y: 358, fontSize: 18 },
   levelPill:    { x: 512, y: 388, fontSize: 18 },
@@ -144,7 +144,7 @@ const profileCardLayout: Record<string, any> = {
 };
 
 const profileCardElements: CanvasElementDef[] = [
-  { id: 'avatar', label: 'Avatar', type: 'circle', props: ['x', 'y', 'size'], group: 'Header' },
+  { id: 'avatar', label: 'Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Header' },
   { id: 'displayName', label: 'Display Name', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Header' },
   { id: 'username', label: '@Username', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Header' },
   { id: 'levelPill', label: 'Level Pill', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Header' },
@@ -156,22 +156,22 @@ const profileCardElements: CanvasElementDef[] = [
 // ─── Level Up Card — Butler ──────────────────────────────────────────
 
 const levelUpCardLayout: Record<string, any> = {
-  avatar: { x: 394, y: 334, size: 218 },
+  avatar: { x: 394, y: 334, radiusX: 218, radiusY: 218 },
 };
 
 const levelUpCardElements: CanvasElementDef[] = [
-  { id: 'avatar', label: 'Avatar', type: 'circle', props: ['x', 'y', 'size'], group: 'Content' },
+  { id: 'avatar', label: 'Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Content' },
 ];
 
 // ─── Luna 21 Card — Butler ──────────────────────────────────────────
 
 const luna21Layout: Record<string, any> = {
-  playerAvatar: { x: 180, y: 100, size: 55 },
+  playerAvatar: { x: 180, y: 100, radiusX: 55, radiusY: 55 },
   playerName:   { x: 180, y: 230, fontSize: 26 },
   playerLabel:  { x: 180, y: 258, fontSize: 19 },
   playerCards:  { x: 70, y: 295, fontSize: 0 },
   playerTotal:  { x: 180, y: 545, fontSize: 50 },
-  dealerAvatar: { x: 844, y: 100, size: 55 },
+  dealerAvatar: { x: 844, y: 100, radiusX: 55, radiusY: 55 },
   dealerName:   { x: 844, y: 230, fontSize: 26 },
   dealerLabel:  { x: 844, y: 258, fontSize: 19 },
   dealerCards:  { x: 734, y: 295, fontSize: 0 },
@@ -180,12 +180,12 @@ const luna21Layout: Record<string, any> = {
 };
 
 const luna21Elements: CanvasElementDef[] = [
-  { id: 'playerAvatar', label: 'Player Avatar', type: 'circle', props: ['x', 'y', 'size'], group: 'Player' },
+  { id: 'playerAvatar', label: 'Player Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Player' },
   { id: 'playerName', label: 'Player Name', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
   { id: 'playerLabel', label: 'Player Label', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
   { id: 'playerCards', label: 'Player Cards Area', type: 'rect', props: ['x', 'y'], group: 'Player' },
   { id: 'playerTotal', label: 'Player Total', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
-  { id: 'dealerAvatar', label: 'Dealer Avatar', type: 'circle', props: ['x', 'y', 'size'], group: 'Dealer' },
+  { id: 'dealerAvatar', label: 'Dealer Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Dealer' },
   { id: 'dealerName', label: 'Dealer Name', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Dealer' },
   { id: 'dealerLabel', label: 'Dealer Label', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Dealer' },
   { id: 'dealerCards', label: 'Dealer Cards Area', type: 'rect', props: ['x', 'y'], group: 'Dealer' },
@@ -196,11 +196,11 @@ const luna21Elements: CanvasElementDef[] = [
 // ─── Winner Image — Jester ──────────────────────────────────────────
 
 const winnerLayout: Record<string, any> = {
-  avatar: { x: 569, y: 420, size: 138 },
+  avatar: { x: 569, y: 420, radiusX: 138, radiusY: 138 },
 };
 
 const winnerElements: CanvasElementDef[] = [
-  { id: 'avatar', label: 'Winner Avatar', type: 'circle', props: ['x', 'y', 'size'], group: 'Content' },
+  { id: 'avatar', label: 'Winner Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Content' },
 ];
 
 // ─── Book Image — Jester ────────────────────────────────────────────
@@ -218,15 +218,15 @@ const bookElements: CanvasElementDef[] = [
 // ─── Chest Image — Jester ───────────────────────────────────────────
 
 const chestLayout: Record<string, any> = {
-  stone1: { x: 250, y: 530, size: 100 },
-  stone2: { x: 610, y: 530, size: 100 },
-  stone3: { x: 960, y: 530, size: 100 },
+  stone1: { x: 250, y: 530, radiusX: 100, radiusY: 100 },
+  stone2: { x: 610, y: 530, radiusX: 100, radiusY: 100 },
+  stone3: { x: 960, y: 530, radiusX: 100, radiusY: 100 },
 };
 
 const chestElements: CanvasElementDef[] = [
-  { id: 'stone1', label: 'Stone 1 (Left)', type: 'circle', props: ['x', 'y', 'size'], group: 'Stones' },
-  { id: 'stone2', label: 'Stone 2 (Center)', type: 'circle', props: ['x', 'y', 'size'], group: 'Stones' },
-  { id: 'stone3', label: 'Stone 3 (Right)', type: 'circle', props: ['x', 'y', 'size'], group: 'Stones' },
+  { id: 'stone1', label: 'Stone 1 (Left)', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Stones' },
+  { id: 'stone2', label: 'Stone 2 (Center)', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Stones' },
+  { id: 'stone3', label: 'Stone 3 (Right)', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Stones' },
 ];
 
 // ─── All Canvas Definitions ─────────────────────────────────────────

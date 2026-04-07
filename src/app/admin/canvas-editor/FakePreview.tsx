@@ -37,24 +37,34 @@ function formatNumber(n: number): string {
   return String(n);
 }
 
-// Draw a circular avatar placeholder
-function drawAvatar(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, color: string, label: string) {
+// Draw a circular/elliptical avatar placeholder
+function drawAvatar(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, color: string, label: string) {
   ctx.save();
   ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  if (rx === ry) {
+    ctx.arc(x, y, rx, 0, Math.PI * 2);
+  } else {
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+  }
   ctx.closePath();
   ctx.fillStyle = color;
   ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,0.2)';
   ctx.lineWidth = 2;
   ctx.stroke();
-  // Initial letter
   ctx.fillStyle = '#fff';
-  ctx.font = `bold ${Math.max(radius * 0.8, 10)}px sans-serif`;
+  ctx.font = `bold ${Math.max(Math.min(rx, ry) * 0.8, 10)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(label.charAt(0).toUpperCase(), x, y);
   ctx.restore();
+}
+
+// Helper: read radii from layout object with backward compat
+function getRadii(av: Record<string, any>, fallback: number): [number, number] {
+  const rx = av.radiusX ?? av.size ?? fallback;
+  const ry = av.radiusY ?? av.size ?? fallback;
+  return [rx, ry];
 }
 
 // Draw centered text
@@ -112,7 +122,8 @@ function renderLeaderboard(
     const av = pos.avatar || {};
     const nm = pos.name || {};
     const val = pos.value || pos[valueKey] || {};
-    drawAvatar(ctx, av.x || 0, av.y || 0, av.size || 50, avatarColors[rank - 1], FAKE_NAMES[rank - 1]);
+    const [rx, ry] = getRadii(av, 50);
+    drawAvatar(ctx, av.x || 0, av.y || 0, rx, ry, avatarColors[rank - 1], FAKE_NAMES[rank - 1]);
     drawText(ctx, FAKE_NAMES[rank - 1], nm.x || 0, nm.y || 0, nm.fontSize || 20, nameColor);
     drawText(ctx, formatNumber(values[rank - 1]), val.x || 0, val.y || 0, val.fontSize || 22, valueColor);
   }
@@ -124,7 +135,8 @@ function renderLeaderboard(
     const av = pos.avatar || {};
     const nm = pos.name || {};
     const val = pos.value || pos[valueKey] || {};
-    drawAvatar(ctx, av.x || 0, av.y || 0, av.size || 25, '#4a5568', FAKE_NAMES[rank - 1]);
+    const [lrx, lry] = getRadii(av, 25);
+    drawAvatar(ctx, av.x || 0, av.y || 0, lrx, lry, '#4a5568', FAKE_NAMES[rank - 1]);
     drawText(ctx, `#${rank}  ${FAKE_NAMES[rank - 1]}`, nm.x || 0, nm.y || 0, nm.fontSize || 18, nameColor, 'left');
     drawText(ctx, formatNumber(values[rank - 1]), val.x || 0, val.y || 0, val.fontSize || 22, valueColor, 'right');
   }
@@ -139,7 +151,8 @@ function renderRankCard(ctx: CanvasRenderingContext2D, layout: Record<string, an
   const rk = layout.rank || {};
   const rl = layout.rankLabel || {};
 
-  drawAvatar(ctx, av.x || 0, av.y || 0, av.size || 80, '#58a6ff', 'L');
+  const [rkRx, rkRy] = getRadii(av, 80);
+  drawAvatar(ctx, av.x || 0, av.y || 0, rkRx, rkRy, '#58a6ff', 'L');
   drawText(ctx, 'LunarKnight', un.x || 0, un.y || 0, un.fontSize || 36, colors.username || '#FFFFFF', 'left');
   drawText(ctx, 'Level 42', lv.x || 0, lv.y || 0, lv.fontSize || 24, colors.level || '#D0D4D8', 'left');
   drawText(ctx, '12,450 / 18,000 XP', xp.x || 0, xp.y || 0, xp.fontSize || 20, colors.xp || '#D0D4D8', 'right');
@@ -158,7 +171,8 @@ function renderProfileCard(ctx: CanvasRenderingContext2D, layout: Record<string,
   const xl = layout.xpLabel || {};
   const sep = layout.separator || {};
 
-  drawAvatar(ctx, av.x || 512, av.y || 180, av.size || 100, colors.accent || '#58a6ff', 'L');
+  const [pfRx, pfRy] = getRadii(av, 100);
+  drawAvatar(ctx, av.x || 512, av.y || 180, pfRx, pfRy, colors.accent || '#58a6ff', 'L');
   drawText(ctx, 'LunarKnight', dn.x || 512, dn.y || 325, dn.fontSize || 36, colors.text || '#e6edf3');
   drawText(ctx, '@lunarknight', un.x || 512, un.y || 358, un.fontSize || 18, colors.textDim || '#8b949e');
 
@@ -220,7 +234,8 @@ function renderProfileCard(ctx: CanvasRenderingContext2D, layout: Record<string,
 
 function renderLevelUp(ctx: CanvasRenderingContext2D, layout: Record<string, any>) {
   const av = layout.avatar || {};
-  drawAvatar(ctx, av.x || 394, av.y || 334, av.size || 218, '#58a6ff', 'L');
+  const [luRx, luRy] = getRadii(av, 218);
+  drawAvatar(ctx, av.x || 394, av.y || 334, luRx, luRy, '#58a6ff', 'L');
 }
 
 function renderLuna21(ctx: CanvasRenderingContext2D, layout: Record<string, any>, colors: Record<string, string>) {
@@ -229,7 +244,8 @@ function renderLuna21(ctx: CanvasRenderingContext2D, layout: Record<string, any>
   const pn = layout.playerName || {};
   const pl = layout.playerLabel || {};
   const pt = layout.playerTotal || {};
-  drawAvatar(ctx, pa.x || 180, pa.y || 100, pa.size || 55, '#58a6ff', 'P');
+  const [paRx, paRy] = getRadii(pa, 55);
+  drawAvatar(ctx, pa.x || 180, pa.y || 100, paRx, paRy, '#58a6ff', 'P');
   drawText(ctx, 'LunarKnight', pn.x || 180, pn.y || 230, pn.fontSize || 26, colors.name || '#6FB3E0');
   drawText(ctx, 'Player', pl.x || 180, pl.y || 258, pl.fontSize || 19, colors.label || '#8AB4D5');
 
@@ -259,7 +275,8 @@ function renderLuna21(ctx: CanvasRenderingContext2D, layout: Record<string, any>
   const dn = layout.dealerName || {};
   const dl = layout.dealerLabel || {};
   const dt = layout.dealerTotal || {};
-  drawAvatar(ctx, da.x || 844, da.y || 100, da.size || 55, '#f0883e', 'D');
+  const [daRx, daRy] = getRadii(da, 55);
+  drawAvatar(ctx, da.x || 844, da.y || 100, daRx, daRy, '#f0883e', 'D');
   drawText(ctx, 'Butler', dn.x || 844, dn.y || 230, dn.fontSize || 26, colors.name || '#6FB3E0');
   drawText(ctx, 'Dealer', dl.x || 844, dl.y || 258, dl.fontSize || 19, colors.label || '#8AB4D5');
   const dc = layout.dealerCards || {};
@@ -288,7 +305,8 @@ function renderLuna21(ctx: CanvasRenderingContext2D, layout: Record<string, any>
 
 function renderWinner(ctx: CanvasRenderingContext2D, layout: Record<string, any>) {
   const av = layout.avatar || {};
-  drawAvatar(ctx, av.x || 569, av.y || 420, av.size || 138, '#FFD700', 'W');
+  const [wRx, wRy] = getRadii(av, 138);
+  drawAvatar(ctx, av.x || 569, av.y || 420, wRx, wRy, '#FFD700', 'W');
 }
 
 function renderBook(ctx: CanvasRenderingContext2D, layout: Record<string, any>) {
@@ -326,7 +344,8 @@ function renderChest(ctx: CanvasRenderingContext2D, layout: Record<string, any>)
   const stoneColors = ['#a855f7', '#3b82f6', '#fbbf24'];
   for (let i = 1; i <= 3; i++) {
     const s = layout[`stone${i}`] || {};
-    drawAvatar(ctx, s.x || (250 + (i - 1) * 360), s.y || 530, s.size || 100, stoneColors[i - 1], `S${i}`);
+    const [sRx, sRy] = getRadii(s, 100);
+    drawAvatar(ctx, s.x || (250 + (i - 1) * 360), s.y || 530, sRx, sRy, stoneColors[i - 1], `S${i}`);
   }
 }
 
