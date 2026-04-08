@@ -68,6 +68,12 @@ interface ReactionEmojis {
   excitement: string;
 }
 
+interface ChannelReference {
+  channelId: string;
+  name: string;
+  description: string;
+}
+
 interface LiveChatConfig {
   autoJoinEnabled: boolean;
   reactionsEnabled: boolean;
@@ -90,6 +96,7 @@ interface LiveChatConfig {
   helpOfferTemplates: HelpOfferTemplates;
   greetingTemplates: GreetingTemplates;
   reactionEmojis: ReactionEmojis;
+  channelReferences: ChannelReference[];
 }
 
 interface MemoryFact {
@@ -218,6 +225,7 @@ const DEFAULT_LIVE_CONFIG: LiveChatConfig = {
     greeting: "👋",
     excitement: "🔥",
   },
+  channelReferences: [],
 };
 
 type Tab = 'settings' | 'system_prompt' | 'lore' | 'privileges' | 'live_chat' | 'memories' | 'activity';
@@ -391,6 +399,7 @@ export default function SagePage() {
         helpOfferTemplates: data.helpOfferTemplates ?? DEFAULT_LIVE_CONFIG.helpOfferTemplates,
         greetingTemplates: data.greetingTemplates ?? DEFAULT_LIVE_CONFIG.greetingTemplates,
         reactionEmojis: data.reactionEmojis ?? DEFAULT_LIVE_CONFIG.reactionEmojis,
+        channelReferences: data.channelReferences ?? DEFAULT_LIVE_CONFIG.channelReferences,
       };
       setLiveConfig(c);
       setLiveConfigOriginal(c);
@@ -1867,6 +1876,88 @@ export default function SagePage() {
                 </div>
               ))}
             </div>
+          </ConfigSection>
+
+          {/* Channel References — Sage will mention these channels when relevant */}
+          <ConfigSection title="Channel References" description="Sage will mention these channels when a user asks about a related topic. For example, if a user asks about cards, Sage will point them to the cards shop channel.">
+            {(liveConfig.channelReferences ?? []).map((ref, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', flexWrap: 'wrap', marginBottom: '8px', padding: '8px', background: 'var(--bg-tertiary)', borderRadius: '8px' }}>
+                <div style={{ minWidth: '180px', flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Channel</label>
+                  <select
+                    className="admin-input"
+                    value={ref.channelId}
+                    onChange={(e) => {
+                      const updated = [...liveConfig.channelReferences];
+                      const selected = guildChannels.find(c => c.id === e.target.value);
+                      updated[idx] = { ...updated[idx], channelId: e.target.value, name: updated[idx].name || (selected ? `#${selected.name}` : '') };
+                      setLiveConfig({ ...liveConfig, channelReferences: updated });
+                    }}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">Select channel...</option>
+                    {guildChannels.map(ch => (
+                      <option key={ch.id} value={ch.id}>
+                        #{ch.name} {ch.parentName ? `(${ch.parentName})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ minWidth: '140px', flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Display Name</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="e.g. Card Shop"
+                    value={ref.name}
+                    onChange={(e) => {
+                      const updated = [...liveConfig.channelReferences];
+                      updated[idx] = { ...updated[idx], name: e.target.value };
+                      setLiveConfig({ ...liveConfig, channelReferences: updated });
+                    }}
+                    style={{ width: '100%' }}
+                    maxLength={100}
+                  />
+                </div>
+                <div style={{ minWidth: '200px', flex: 2 }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>When to mention (description)</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="e.g. Cards, collecting, trading, Kael Vandar"
+                    value={ref.description}
+                    onChange={(e) => {
+                      const updated = [...liveConfig.channelReferences];
+                      updated[idx] = { ...updated[idx], description: e.target.value };
+                      setLiveConfig({ ...liveConfig, channelReferences: updated });
+                    }}
+                    style={{ width: '100%' }}
+                    maxLength={200}
+                  />
+                </div>
+                <button
+                  className="admin-btn admin-btn-danger admin-btn-sm"
+                  onClick={() => {
+                    const updated = liveConfig.channelReferences.filter((_, i) => i !== idx);
+                    setLiveConfig({ ...liveConfig, channelReferences: updated });
+                  }}
+                  title="Remove"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              className="admin-btn admin-btn-ghost admin-btn-sm"
+              onClick={() => {
+                setLiveConfig({
+                  ...liveConfig,
+                  channelReferences: [...(liveConfig.channelReferences ?? []), { channelId: '', name: '', description: '' }],
+                });
+              }}
+            >
+              + Add Channel Reference
+            </button>
           </ConfigSection>
 
           {/* Channel Overrides section within Live Chat tab */}

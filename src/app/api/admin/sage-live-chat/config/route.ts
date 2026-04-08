@@ -28,6 +28,7 @@ const ALLOWED_SECTIONS = [
   'helpOfferTemplates',
   'greetingTemplates',
   'reactionEmojis',
+  'channelReferences',
 ] as const;
 
 type Section = (typeof ALLOWED_SECTIONS)[number];
@@ -110,6 +111,7 @@ export async function GET() {
         greeting: "👋",
         excitement: "🔥",
       },
+      channelReferences: [] as { channelId: string; name: string; description: string }[],
     };
 
     if (!doc) {
@@ -139,6 +141,7 @@ export async function GET() {
       helpOfferTemplates: data.helpOfferTemplates ?? defaults.helpOfferTemplates,
       greetingTemplates: data.greetingTemplates ?? defaults.greetingTemplates,
       reactionEmojis: data.reactionEmojis ?? defaults.reactionEmojis,
+      channelReferences: data.channelReferences ?? defaults.channelReferences,
     });
   } catch (err) {
     console.error('[sage-live-chat/config] GET error:', err);
@@ -344,6 +347,26 @@ export async function PUT(req: NextRequest) {
         for (const k of emojiKeys) {
           if (value[k] !== undefined && (typeof value[k] !== 'string' || value[k].length > 10)) {
             return NextResponse.json({ error: `reactionEmojis.${k} must be a string (max 10 chars)` }, { status: 400 });
+          }
+        }
+        break;
+      }
+      case 'channelReferences': {
+        if (!Array.isArray(value) || value.length > 20) {
+          return NextResponse.json({ error: 'channelReferences must be an array (max 20 items)' }, { status: 400 });
+        }
+        for (const ref of value) {
+          if (typeof ref !== 'object' || ref === null) {
+            return NextResponse.json({ error: 'Each channel reference must be an object' }, { status: 400 });
+          }
+          if (typeof ref.channelId !== 'string' || !/^\d{17,20}$/.test(ref.channelId)) {
+            return NextResponse.json({ error: 'Each channel reference must have a valid channelId' }, { status: 400 });
+          }
+          if (typeof ref.name !== 'string' || ref.name.length < 1 || ref.name.length > 100) {
+            return NextResponse.json({ error: 'Each channel reference must have a name (1-100 chars)' }, { status: 400 });
+          }
+          if (typeof ref.description !== 'string' || ref.description.length > 200) {
+            return NextResponse.json({ error: 'Each channel reference description must be max 200 chars' }, { status: 400 });
           }
         }
         break;
