@@ -46,6 +46,9 @@ export default function DraggableElement({
   const radiusY = (values.radiusY ?? values.size ?? 20) * scale;
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Don't start drag if clicking on a resize handle or during resize
+    if ((e.target as HTMLElement).classList.contains('ce-resize-handle')) return;
+    if (resizeRef.current) return;
     e.preventDefault();
     e.stopPropagation();
     onSelect();
@@ -186,7 +189,6 @@ export default function DraggableElement({
       top: y - ry,
       width: rx * 2,
       height: ry * 2,
-      borderRadius: '50%',
     };
     inner = (
       <div
