@@ -78,7 +78,7 @@ export default function AssetsPage() {
   const swapInputRef = useRef<HTMLInputElement>(null);
   const [swapTarget, setSwapTarget] = useState<string | null>(null);
   const [swapping, setSwapping] = useState(false);
-  const [cacheBust, setCacheBust] = useState(0);
+  const [cacheBust, setCacheBust] = useState(Date.now());
   const [dragOver, setDragOver] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -179,8 +179,9 @@ export default function AssetsPage() {
     try {
       await directUploadToR2(file, existingKey);
       setSuccess(`Replaced: ${existingKey}`);
+      // Set cache-bust BEFORE re-fetching so the new list renders with the new param
       setCacheBust(Date.now());
-      fetchBrowse(currentPrefix);
+      await fetchBrowse(currentPrefix);
       setTimeout(() => setSuccess(''), 5000);
     } catch (err: any) {
       setError(err.message);
