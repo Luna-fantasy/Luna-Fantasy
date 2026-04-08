@@ -27,13 +27,15 @@ export default function DraggableElement({
   } | null>(null);
   const elRef = useRef<HTMLDivElement>(null);
 
-  // Resize state — managed via ref + window listeners to avoid interfering with drag
+  // Resize state
   const resizeRef = useRef<{
     handle: 'left' | 'right' | 'top' | 'bottom';
     startPos: number;
     origRadiusX: number;
     origRadiusY: number;
   } | null>(null);
+  // Store cleanup fn so unmount can call it
+  const resizeCleanupRef = useRef<(() => void) | null>(null);
 
   const x = (values.x ?? 0) * scale;
   const y = (values.y ?? 0) * scale;
@@ -45,8 +47,19 @@ export default function DraggableElement({
   const radiusX = (values.radiusX ?? values.size ?? 20) * scale;
   const radiusY = (values.radiusY ?? values.size ?? 20) * scale;
 
+  // Reset all inline styles set during resize
+  function resetInlineStyles() {
+    const el = elRef.current;
+    if (!el) return;
+    el.style.width = '';
+    el.style.height = '';
+    el.style.left = '';
+    el.style.top = '';
+    const inner = el.querySelector('.ce-element') as HTMLElement;
+    if (inner) { inner.style.width = ''; inner.style.height = ''; }
+  }
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    // Don't start drag if clicking on a resize handle or during resize
     if ((e.target as HTMLElement).classList.contains('ce-resize-handle')) return;
     if (resizeRef.current) return;
     e.preventDefault();
@@ -82,7 +95,7 @@ export default function DraggableElement({
     onDragEnd({ ...values, x: newX, y: newY });
   }, [scale, values, onDragEnd]);
 
-  // Resize handle interaction via window events
+  // Resize handle interaction
   const handleResizeStart = useCallback((handle: 'left' | 'right' | 'top' | 'bottom', e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -94,75 +107,89 @@ export default function DraggableElement({
       origRadiusY: values.radiusY ?? values.size ?? 20,
     };
 
-    function onMove(ev: PointerEvent) {
-      if (!resizeRef.current) return;
+    function computeNewValues(ev: PointerEvent | null): Record<string, number> {
       const r = resizeRef.current;
+      if (!r || !ev) return { ...values };
       const isH = r.handle === 'left' || r.handle === 'right';
       const delta = isH ? ev.clientX - r.startPos : ev.clientY - r.startPos;
       const sign = (r.handle === 'right' || r.handle === 'bottom') ? 1 : -1;
-
-      if (isH) {
-        const newRx = Math.max(1, r.origRadiusX + Math.round((delta * sign) / scale));
-        // Update DOM directly for smooth feedback
-        const el = elRef.current;
-        if (el) {
-          const newW = newRx * scale * 2;
-          const cx = (values.x ?? 0) * scale;
-          el.style.width = newW + 'px';
-          el.style.left = (cx - newRx * scale) + 'px';
-          const inner = el.querySelector('.ce-element') as HTMLElement;
-          if (inner) inner.style.width = newW + 'px';
-        }
-      } else {
-        const newRy = Math.max(1, r.origRadiusY + Math.round((delta * sign) / scale));
-        const el = elRef.current;
-        if (el) {
-          const newH = newRy * scale * 2;
-          const cy = (values.y ?? 0) * scale;
-          el.style.height = newH + 'px';
-          el.style.top = (cy - newRy * scale) + 'px';
-          const inner = el.querySelector('.ce-element') as HTMLElement;
-          if (inner) inner.style.height = newH + 'px';
-        }
-      }
-    }
-
-    function onUp(ev: PointerEvent) {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-      if (!resizeRef.current) return;
-      const r = resizeRef.current;
-      const isH = r.handle === 'left' || r.handle === 'right';
-      const delta = isH ? ev.clientX - r.startPos : ev.clientY - r.startPos;
-      const sign = (r.handle === 'right' || r.handle === 'bottom') ? 1 : -1;
-      resizeRef.current = null;
-
       const newValues = { ...values };
       if (isH) {
         newValues.radiusX = Math.max(1, r.origRadiusX + Math.round((delta * sign) / scale));
       } else {
         newValues.radiusY = Math.max(1, r.origRadiusY + Math.round((delta * sign) / scale));
       }
-      // Reset inline styles
-      const el = elRef.current;
-      if (el) {
-        el.style.width = '';
-        el.style.height = '';
-        el.style.left = '';
-        el.style.top = '';
-        const inner = el.querySelector('.ce-element') as HTMLElement;
-        if (inner) { inner.style.width = ''; inner.style.height = ''; }
-      }
-      onDragEnd(newValues);
+      return newValues;
     }
 
+    function onMove(ev: PointerEvent) {
+      if (!resizeRef.current) return;
+      const r = resizeRef.current;
+      const isH = r.handle === 'left' || r.handle === 'right';
+      const delta = isH ? ev.clientX - r.startPos : ev.clientY - r.startPos;
+      const sign = (r.handle === 'right' || r.handle === 'bottom') ? 1 : -1;
+      const el = elRef.current;
+      if (!el) return;
+
+      if (isH) {
+        const newRx = Math.max(1, r.origRadiusX + Math.round((delta * sign) / scale));
+        const newW = newRx * scale * 2;
+        const cx = (values.x ?? 0) * scale;
+        el.style.width = newW + 'px';
+        el.style.left = (cx - newRx * scale) + 'px';
+        const inner = el.querySelector('.ce-element') as HTMLElement;
+        if (inner) inner.style.width = newW + 'px';
+      } else {
+        const newRy = Math.max(1, r.origRadiusY + Math.round((delta * sign) / scale));
+        const newH = newRy * scale * 2;
+        const cy = (values.y ?? 0) * scale;
+        el.style.height = newH + 'px';
+        el.style.top = (cy - newRy * scale) + 'px';
+        const inner = el.querySelector('.ce-element') as HTMLElement;
+        if (inner) inner.style.height = newH + 'px';
+      }
+    }
+
+    function cleanup(ev: PointerEvent | null, commit: boolean) {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUpHandler);
+      window.removeEventListener('pointercancel', onCancelHandler);
+      resizeCleanupRef.current = null;
+
+      const finalValues = commit ? computeNewValues(ev) : null;
+      resizeRef.current = null;
+      resetInlineStyles();
+
+      if (finalValues) {
+        onDragEnd(finalValues);
+      }
+    }
+
+    function onUpHandler(ev: PointerEvent) {
+      cleanup(ev, true);
+    }
+
+    function onCancelHandler() {
+      cleanup(null, false);
+    }
+
+    // Store cleanup so unmount / blur can call it
+    resizeCleanupRef.current = () => cleanup(null, false);
+
     window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointerup', onUpHandler);
+    window.addEventListener('pointercancel', onCancelHandler);
   }, [values, scale, onDragEnd]);
 
-  // Cleanup window listeners on unmount
+  // Clean up on unmount or tab blur
   useEffect(() => {
+    function onBlur() {
+      if (resizeCleanupRef.current) resizeCleanupRef.current();
+    }
+    window.addEventListener('blur', onBlur);
     return () => {
+      window.removeEventListener('blur', onBlur);
+      if (resizeCleanupRef.current) resizeCleanupRef.current();
       resizeRef.current = null;
     };
   }, []);
