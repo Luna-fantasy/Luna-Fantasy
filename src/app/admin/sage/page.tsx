@@ -105,6 +105,13 @@ interface UserMemoryDoc {
   facts: MemoryFact[];
 }
 
+interface DiscordChannel {
+  id: string;
+  name: string;
+  type: number;
+  parentName: string;
+}
+
 interface ChannelOverride {
   channelId: string;
   autoJoin: boolean;
@@ -285,6 +292,20 @@ export default function SagePage() {
   const activityRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { toast } = useToast();
+
+  // Discord guild channels for the channel picker
+  const [guildChannels, setGuildChannels] = useState<DiscordChannel[]>([]);
+  useEffect(() => {
+    fetch('/api/admin/discord/guild')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.channels) {
+          // Only text channels (type 0) and announcement channels (type 5)
+          setGuildChannels(data.channels.filter((c: DiscordChannel) => c.type === 0 || c.type === 5));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // ===========================
   // Sage config fetch/save
@@ -1522,55 +1543,54 @@ export default function SagePage() {
             </div>
           </ConfigSection>
 
-          <ConfigSection title="Active Channels" description="Sage only participates in live chat in these channels. If empty, live chat is disabled everywhere.">
+          <ConfigSection title="Active Channels" description="Sage is ONLY active in these channels. Prefix commands, mentions, and live chat all require a channel to be listed here. If empty, Sage is completely disabled.">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {liveConfig.liveChatChannels.length === 0 && (
                 <div style={{ padding: '12px', borderRadius: '6px', background: 'rgba(244,63,94,0.1)', color: '#f43f5e', fontSize: '13px' }}>
-                  No channels configured — live chat features are currently disabled.
+                  No channels configured — Sage is completely disabled everywhere.
                 </div>
               )}
-              {liveConfig.liveChatChannels.map((chId, i) => (
-                <div key={chId} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <code style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{chId}</code>
-                  <button
-                    className="admin-btn admin-btn-danger admin-btn-sm"
-                    onClick={() => setLiveConfig({ ...liveConfig, liveChatChannels: liveConfig.liveChatChannels.filter((_, j) => j !== i) })}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
+              {liveConfig.liveChatChannels.map((chId, i) => {
+                const ch = guildChannels.find(c => c.id === chId);
+                return (
+                  <div key={chId} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span style={{ fontSize: '16px' }}>#</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {ch ? ch.name : chId}
+                      </div>
+                      {ch && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ch.parentName}</div>}
+                    </div>
+                    <code style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{chId}</code>
+                    <button
+                      className="admin-btn admin-btn-danger admin-btn-sm"
+                      onClick={() => setLiveConfig({ ...liveConfig, liveChatChannels: liveConfig.liveChatChannels.filter((_, j) => j !== i) })}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
               <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                <input
-                  type="text"
+                <select
                   className="admin-input"
-                  placeholder="Channel ID (e.g., 1234567890123456)"
-                  id="newLiveChatChannel"
-                  style={{ width: '260px' }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const input = e.currentTarget;
-                      const val = input.value.trim();
-                      if (/^\d{17,20}$/.test(val) && !liveConfig.liveChatChannels.includes(val)) {
-                        setLiveConfig({ ...liveConfig, liveChatChannels: [...liveConfig.liveChatChannels, val] });
-                        input.value = '';
-                      }
-                    }
-                  }}
-                />
-                <button
-                  className="admin-btn admin-btn-ghost admin-btn-sm"
-                  onClick={() => {
-                    const input = document.getElementById('newLiveChatChannel') as HTMLInputElement;
-                    const val = input?.value.trim();
-                    if (val && /^\d{17,20}$/.test(val) && !liveConfig.liveChatChannels.includes(val)) {
+                  style={{ width: '320px' }}
+                  value=""
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val && !liveConfig.liveChatChannels.includes(val)) {
                       setLiveConfig({ ...liveConfig, liveChatChannels: [...liveConfig.liveChatChannels, val] });
-                      input.value = '';
                     }
                   }}
                 >
-                  Add Channel
-                </button>
+                  <option value="">Select a channel...</option>
+                  {guildChannels
+                    .filter(c => !liveConfig.liveChatChannels.includes(c.id))
+                    .map(c => (
+                      <option key={c.id} value={c.id}>#{c.name} ({c.parentName})</option>
+                    ))
+                  }
+                </select>
               </div>
             </div>
           </ConfigSection>
