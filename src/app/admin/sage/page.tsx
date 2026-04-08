@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ConfigSection from '../components/ConfigSection';
-import DurationInput from '../components/DurationInput';
 import NumberInput from '../components/NumberInput';
 import SaveDeployBar from '../components/SaveDeployBar';
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
 import BotBadge from '../components/BotBadge';
 import ToggleSwitch from '../components/ToggleSwitch';
-import ImagePicker from '../components/ImagePicker';
-import RichTextArea from '../components/RichTextArea';
 import RolePicker from '../components/RolePicker';
+import DataTable, { Column } from '../components/DataTable';
+import AdminLightbox from '../components/AdminLightbox';
 import { SkeletonCard, SkeletonTable } from '../components/Skeleton';
 import { useToast } from '../components/Toast';
 import { getCsrfToken } from '../utils/csrf';
+
+// -- Types (Sage config) --
 
 interface PrivilegedRole {
   id: string;
@@ -36,13 +37,7 @@ interface SageSettings {
   imageGenRoles: string[];
   sagePrefixes: string[];
   ownerRoleIds: string[];
-  threadSlowmode: number;
-  threadWelcomeMessage: string;
-  panelTitle: string;
-  panelDescription: string;
-  panelImageUrl: string;
   channelContextLimit: number;
-  threadHistoryLimit: number;
 }
 
 interface SagePrivileges {
@@ -51,6 +46,82 @@ interface SagePrivileges {
   privilegedRoles: PrivilegedRole[];
   allKnownRoles: KnownRole[];
 }
+
+// -- Types (Live Chat) --
+
+interface HelpOfferTemplates {
+  mastermind: string[];
+  privileged: string[];
+  lunarian: string[];
+  default: string[];
+}
+
+interface GreetingTemplates {
+  arabic: string[];
+  english: string[];
+}
+
+interface ReactionEmojis {
+  luna: string;
+  question: string;
+  greeting: string;
+  excitement: string;
+}
+
+interface LiveChatConfig {
+  autoJoinEnabled: boolean;
+  reactionsEnabled: boolean;
+  periodicCheckIn: boolean;
+  mastermindOnly: boolean;
+  reactionProbability: number;
+  autoJoinCooldownMinutes: number;
+  checkInInterval: number;
+  liveChatChannels: string[];
+  aiCooldownSeconds: number;
+  reactionCooldownSeconds: number;
+  userReactionLimit: number;
+  userReactionWindowMinutes: number;
+  userHelpOfferCooldownMinutes: number;
+  userGreetingCooldownMinutes: number;
+  greetingCooldownSeconds: number;
+  helpOfferCooldownSeconds: number;
+  unansweredQuestionDelaySeconds: number;
+  lunaKeywords: string[];
+  helpOfferTemplates: HelpOfferTemplates;
+  greetingTemplates: GreetingTemplates;
+  reactionEmojis: ReactionEmojis;
+}
+
+interface MemoryFact {
+  text: string;
+  setBy: string;
+  setByRole: string;
+  setAt: string;
+  expiresAt?: string | null;
+}
+
+interface UserMemoryDoc {
+  userId: string;
+  facts: MemoryFact[];
+}
+
+interface ChannelOverride {
+  channelId: string;
+  autoJoin: boolean;
+  reactions: boolean;
+}
+
+interface ActivityEntry {
+  _id: string;
+  time: string;
+  channelId: string;
+  type: 'keyword' | 'reaction' | 'periodic' | 'unanswered_question';
+  reason: string;
+  action: string;
+  responsePreview: string;
+}
+
+// -- Defaults --
 
 const DEFAULT_SETTINGS: SageSettings = {
   provider: 'google',
@@ -62,13 +133,7 @@ const DEFAULT_SETTINGS: SageSettings = {
   imageGenRoles: [],
   sagePrefixes: ['سيج', 'sage'],
   ownerRoleIds: [],
-  threadSlowmode: 0,
-  threadWelcomeMessage: '',
-  panelTitle: '',
-  panelDescription: '',
-  panelImageUrl: '',
   channelContextLimit: 50,
-  threadHistoryLimit: 200,
 };
 
 const DEFAULT_PRIVILEGES: SagePrivileges = {
@@ -78,33 +143,153 @@ const DEFAULT_PRIVILEGES: SagePrivileges = {
   allKnownRoles: [],
 };
 
-type Tab = 'settings' | 'system_prompt' | 'lore' | 'privileges';
+const DEFAULT_LIVE_CONFIG: LiveChatConfig = {
+  autoJoinEnabled: true,
+  reactionsEnabled: true,
+  periodicCheckIn: true,
+  mastermindOnly: false,
+  reactionProbability: 0.3,
+  autoJoinCooldownMinutes: 3,
+  checkInInterval: 20,
+  liveChatChannels: [],
+  aiCooldownSeconds: 8,
+  reactionCooldownSeconds: 30,
+  userReactionLimit: 3,
+  userReactionWindowMinutes: 5,
+  userHelpOfferCooldownMinutes: 2,
+  userGreetingCooldownMinutes: 5,
+  greetingCooldownSeconds: 60,
+  helpOfferCooldownSeconds: 30,
+  unansweredQuestionDelaySeconds: 60,
+  lunaKeywords: [
+    'لونا', 'القمر', 'اللوناري', 'العقل المدبر', 'الحارس', 'الفارس',
+    'النبيل', 'لونفور', 'الحراس', 'الفرسان', 'النبلاء',
+    'كايل', 'ميلونا', 'زولدار', 'سيلونا', 'بريمور', 'كورين',
+    'فانتاسي', 'قراند فانتاسي', 'حرب الفصائل', 'أحجار القمر', 'بطاقات لونا',
+    'luna', 'lunarian', 'mastermind', 'sentinel', 'guardian', 'knight',
+    'noble', 'lunvor', 'kael', 'meluna', 'zoldar', 'seluna', 'primor',
+    'fantasy', 'faction war', 'moon stones', 'luna cards',
+  ],
+  helpOfferTemplates: {
+    mastermind: [
+      "سيدي العقل المدبر، عندي تفاصيل عن هالموضوع لو تحب أشرحلك 🌙",
+      "سيدي العقل المدبر، أقدر أفيدك بهذا لو تبي 🌙",
+      "سيدي العقل المدبر، عندي معلومات عن هذا، تبي أوضحلك؟ 🌙",
+    ],
+    privileged: [
+      "عندي تفاصيل عن هالموضوع لو تبي أشرحلك 🌙",
+      "أقدر أساعدك بهذا، تبي؟ 🌙",
+      "عندي معلومات عن هذا لو تحب أوضحلك 🌙",
+    ],
+    lunarian: [
+      "أقدر أشرحلك عن هذا، تبي؟ 🌙",
+      "تبي أفيدك؟ أعرف كثير عن هالموضوع 🌙",
+      "عندي تفاصيل عن هذا لو تبي يا اللوناري 🌙",
+    ],
+    default: [
+      "عندي معلومات عن هالموضوع لو تبي أفيدك 🌙",
+      "أقدر أساعدك بهذا، تبي أشرحلك؟ 🌙",
+      "تبي أفيدك بهذا؟ 🌙",
+    ],
+  },
+  greetingTemplates: {
+    arabic: [
+      "وعليكم السلام 👋",
+      "هلا وغلا 👋",
+      "أهلاً! 👋",
+      "حياك الله 👋",
+    ],
+    english: [
+      "Hey! 👋",
+      "Hello! 👋",
+      "Hi there! 👋",
+    ],
+  },
+  reactionEmojis: {
+    luna: "🌙",
+    question: "🤔",
+    greeting: "👋",
+    excitement: "🔥",
+  },
+};
+
+type Tab = 'settings' | 'system_prompt' | 'lore' | 'privileges' | 'live_chat' | 'memories' | 'activity';
+
+// -- Helpers --
+
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return '-';
+  try {
+    return new Date(iso).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  } catch {
+    return '-';
+  }
+}
+
+function isExpired(expiresAt: string | null | undefined): boolean {
+  if (!expiresAt) return false;
+  return new Date(expiresAt).getTime() < Date.now();
+}
+
+// -- Component --
 
 export default function SagePage() {
   const [tab, setTab] = useState<Tab>('settings');
 
-  // Settings state
+  // === Sage config state ===
   const [settings, setSettings] = useState<SageSettings>({ ...DEFAULT_SETTINGS });
   const [settingsOriginal, setSettingsOriginal] = useState<SageSettings>({ ...DEFAULT_SETTINGS });
-
-  // System prompt state
   const [systemPrompt, setSystemPrompt] = useState('');
   const [systemPromptOriginal, setSystemPromptOriginal] = useState('');
-
-  // Lore state
   const [loreText, setLoreText] = useState('');
   const [loreTextOriginal, setLoreTextOriginal] = useState('');
-
-  // Privileges state
   const [privileges, setPrivileges] = useState<SagePrivileges>({ ...DEFAULT_PRIVILEGES });
   const [privilegesOriginal, setPrivilegesOriginal] = useState<SagePrivileges>({ ...DEFAULT_PRIVILEGES });
-
   const [configLoading, setConfigLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // === Live Chat config state ===
+  const [liveConfig, setLiveConfig] = useState<LiveChatConfig>({ ...DEFAULT_LIVE_CONFIG });
+  const [liveConfigOriginal, setLiveConfigOriginal] = useState<LiveChatConfig>({ ...DEFAULT_LIVE_CONFIG });
+  const [liveConfigLoading, setLiveConfigLoading] = useState(true);
+  const [liveSaving, setLiveSaving] = useState(false);
+
+  // Memories state
+  const [memoryDocs, setMemoryDocs] = useState<UserMemoryDoc[]>([]);
+  const [memoriesLoading, setMemoriesLoading] = useState(false);
+  const [memorySearch, setMemorySearch] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [newFactText, setNewFactText] = useState('');
+  const [newFactExpiry, setNewFactExpiry] = useState('');
+  const [addingFact, setAddingFact] = useState(false);
+  const [deletingFactIdx, setDeletingFactIdx] = useState<number | null>(null);
+
+  // Channels state
+  const [channels, setChannels] = useState<ChannelOverride[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(false);
+  const [newChannelId, setNewChannelId] = useState('');
+  const [newChannelAutoJoin, setNewChannelAutoJoin] = useState(true);
+  const [newChannelReactions, setNewChannelReactions] = useState(true);
+  const [savingChannels, setSavingChannels] = useState(false);
+
+  // Activity state
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityTotal, setActivityTotal] = useState(0);
+  const [activityTypeFilter, setActivityTypeFilter] = useState('');
+  const [activityChannelFilter, setActivityChannelFilter] = useState('');
+  const activityRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const { toast } = useToast();
 
-  // Fetch config — API returns flat field names, map to local state
+  // ===========================
+  // Sage config fetch/save
+  // ===========================
+
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/config/sage');
@@ -122,13 +307,7 @@ export default function SagePage() {
         imageGenRoles: s.image_gen_roles ?? DEFAULT_SETTINGS.imageGenRoles,
         sagePrefixes: s.sage_prefix ?? DEFAULT_SETTINGS.sagePrefixes,
         ownerRoleIds: s.owner_role_ids ?? DEFAULT_SETTINGS.ownerRoleIds,
-        threadSlowmode: s.thread_slowmode ?? DEFAULT_SETTINGS.threadSlowmode,
-        threadWelcomeMessage: s.thread_welcome ?? DEFAULT_SETTINGS.threadWelcomeMessage,
-        panelTitle: s.panel_title ?? DEFAULT_SETTINGS.panelTitle,
-        panelDescription: s.panel_description ?? DEFAULT_SETTINGS.panelDescription,
-        panelImageUrl: s.panel_image ?? DEFAULT_SETTINGS.panelImageUrl,
         channelContextLimit: s.channel_context_limit ?? DEFAULT_SETTINGS.channelContextLimit,
-        threadHistoryLimit: s.thread_history_limit ?? DEFAULT_SETTINGS.threadHistoryLimit,
       };
       setSettings(settingsData);
       setSettingsOriginal(settingsData);
@@ -160,20 +339,67 @@ export default function SagePage() {
     }
   }, [toast]);
 
+  // ===========================
+  // Live Chat config fetch/save
+  // ===========================
+
+  const fetchLiveConfig = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/sage-live-chat/config');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const c: LiveChatConfig = {
+        autoJoinEnabled: data.autoJoinEnabled ?? DEFAULT_LIVE_CONFIG.autoJoinEnabled,
+        reactionsEnabled: data.reactionsEnabled ?? DEFAULT_LIVE_CONFIG.reactionsEnabled,
+        periodicCheckIn: data.periodicCheckIn ?? DEFAULT_LIVE_CONFIG.periodicCheckIn,
+        mastermindOnly: data.mastermindOnly ?? DEFAULT_LIVE_CONFIG.mastermindOnly,
+        reactionProbability: data.reactionProbability ?? DEFAULT_LIVE_CONFIG.reactionProbability,
+        autoJoinCooldownMinutes: data.autoJoinCooldownMinutes ?? DEFAULT_LIVE_CONFIG.autoJoinCooldownMinutes,
+        checkInInterval: data.checkInInterval ?? DEFAULT_LIVE_CONFIG.checkInInterval,
+        liveChatChannels: data.liveChatChannels ?? DEFAULT_LIVE_CONFIG.liveChatChannels,
+        aiCooldownSeconds: data.aiCooldownSeconds ?? DEFAULT_LIVE_CONFIG.aiCooldownSeconds,
+        reactionCooldownSeconds: data.reactionCooldownSeconds ?? DEFAULT_LIVE_CONFIG.reactionCooldownSeconds,
+        userReactionLimit: data.userReactionLimit ?? DEFAULT_LIVE_CONFIG.userReactionLimit,
+        userReactionWindowMinutes: data.userReactionWindowMinutes ?? DEFAULT_LIVE_CONFIG.userReactionWindowMinutes,
+        userHelpOfferCooldownMinutes: data.userHelpOfferCooldownMinutes ?? DEFAULT_LIVE_CONFIG.userHelpOfferCooldownMinutes,
+        userGreetingCooldownMinutes: data.userGreetingCooldownMinutes ?? DEFAULT_LIVE_CONFIG.userGreetingCooldownMinutes,
+        greetingCooldownSeconds: data.greetingCooldownSeconds ?? DEFAULT_LIVE_CONFIG.greetingCooldownSeconds,
+        helpOfferCooldownSeconds: data.helpOfferCooldownSeconds ?? DEFAULT_LIVE_CONFIG.helpOfferCooldownSeconds,
+        unansweredQuestionDelaySeconds: data.unansweredQuestionDelaySeconds ?? DEFAULT_LIVE_CONFIG.unansweredQuestionDelaySeconds,
+        lunaKeywords: data.lunaKeywords ?? DEFAULT_LIVE_CONFIG.lunaKeywords,
+        helpOfferTemplates: data.helpOfferTemplates ?? DEFAULT_LIVE_CONFIG.helpOfferTemplates,
+        greetingTemplates: data.greetingTemplates ?? DEFAULT_LIVE_CONFIG.greetingTemplates,
+        reactionEmojis: data.reactionEmojis ?? DEFAULT_LIVE_CONFIG.reactionEmojis,
+      };
+      setLiveConfig(c);
+      setLiveConfigOriginal(c);
+    } catch {
+      toast('Failed to load live chat config.', 'error');
+    } finally {
+      setLiveConfigLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchConfig();
-  }, [fetchConfig]);
+    fetchLiveConfig();
+  }, [fetchConfig, fetchLiveConfig]);
 
-  // Change detection
+  // Change detection — Sage config
   const settingsChanged = JSON.stringify(settings) !== JSON.stringify(settingsOriginal);
   const systemPromptChanged = systemPrompt !== systemPromptOriginal;
   const loreChanged = loreText !== loreTextOriginal;
   const privilegesChanged = JSON.stringify(privileges) !== JSON.stringify(privilegesOriginal);
-  const hasChanges = settingsChanged || systemPromptChanged || loreChanged || privilegesChanged;
+  const sageHasChanges = settingsChanged || systemPromptChanged || loreChanged || privilegesChanged;
+
+  // Change detection — Live Chat config
+  const liveConfigChanged = JSON.stringify(liveConfig) !== JSON.stringify(liveConfigOriginal);
+
+  const hasChanges = sageHasChanges || liveConfigChanged;
   useUnsavedWarning(hasChanges);
 
-  // Save helper — sends individual field PUTs to match API's per-field design
-  async function saveConfig() {
+  // Save Sage config — sends individual field PUTs
+  async function saveSageConfig() {
     setSaving(true);
     const toSave: Array<{ section: string; value: any }> = [];
     const saved: string[] = [];
@@ -189,16 +415,6 @@ export default function SagePage() {
           toSave.push({ section: 'enable_search', value: settings.webSearch });
         if (settings.imageGeneration !== settingsOriginal.imageGeneration)
           toSave.push({ section: 'enable_image_generation', value: settings.imageGeneration });
-        if (settings.threadSlowmode !== settingsOriginal.threadSlowmode)
-          toSave.push({ section: 'thread_slowmode', value: settings.threadSlowmode });
-        if (settings.threadWelcomeMessage !== settingsOriginal.threadWelcomeMessage)
-          toSave.push({ section: 'thread_welcome', value: settings.threadWelcomeMessage });
-        if (settings.panelTitle !== settingsOriginal.panelTitle)
-          toSave.push({ section: 'panel_title', value: settings.panelTitle });
-        if (settings.panelDescription !== settingsOriginal.panelDescription)
-          toSave.push({ section: 'panel_description', value: settings.panelDescription });
-        if (settings.panelImageUrl !== settingsOriginal.panelImageUrl)
-          toSave.push({ section: 'panel_image', value: settings.panelImageUrl });
         if (settings.imageGenerationModel !== settingsOriginal.imageGenerationModel)
           toSave.push({ section: 'image_generation_model', value: settings.imageGenerationModel });
         if (JSON.stringify(settings.imageGenRoles) !== JSON.stringify(settingsOriginal.imageGenRoles))
@@ -209,8 +425,7 @@ export default function SagePage() {
           toSave.push({ section: 'owner_role_ids', value: settings.ownerRoleIds });
         if (settings.channelContextLimit !== settingsOriginal.channelContextLimit)
           toSave.push({ section: 'channel_context_limit', value: settings.channelContextLimit });
-        if (settings.threadHistoryLimit !== settingsOriginal.threadHistoryLimit)
-          toSave.push({ section: 'thread_history_limit', value: settings.threadHistoryLimit });
+
       }
       if (systemPromptChanged) {
         toSave.push({ section: 'system_prompt', value: systemPrompt });
@@ -258,6 +473,40 @@ export default function SagePage() {
     }
   }
 
+  // Save Live Chat config
+  async function saveLiveConfig() {
+    setLiveSaving(true);
+    const savedOriginal: Record<string, any> = { ...liveConfigOriginal };
+    try {
+      const fields: Array<{ section: keyof LiveChatConfig; value: any }> = [];
+      for (const key of Object.keys(liveConfig) as Array<keyof LiveChatConfig>) {
+        if (JSON.stringify(liveConfig[key]) !== JSON.stringify(liveConfigOriginal[key])) {
+          fields.push({ section: key, value: liveConfig[key] });
+        }
+      }
+      for (const { section, value } of fields) {
+        const res = await fetch('/api/admin/sage-live-chat/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+          body: JSON.stringify({ section, value }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || `Failed to save ${section}`);
+        }
+        savedOriginal[section] = value;
+      }
+      setLiveConfigOriginal({ ...liveConfig });
+      toast('Config saved successfully.', 'success');
+    } catch (err: any) {
+      setLiveConfigOriginal(savedOriginal as LiveChatConfig);
+      toast(err.message, 'error');
+    } finally {
+      setLiveSaving(false);
+    }
+  }
+
+  // Discard helpers
   function discardSettings() {
     setSettings({ ...settingsOriginal });
   }
@@ -272,6 +521,10 @@ export default function SagePage() {
 
   function discardPrivileges() {
     setPrivileges(JSON.parse(JSON.stringify(privilegesOriginal)));
+  }
+
+  function discardLiveConfig() {
+    setLiveConfig({ ...liveConfigOriginal });
   }
 
   // Privileged roles helpers
@@ -295,16 +548,315 @@ export default function SagePage() {
     setPrivileges({ ...privileges, privilegedRoles: updated });
   }
 
-  // System prompt character count thresholds
+  // System prompt character count
   const promptLen = systemPrompt.length;
   const promptWarning = promptLen > 8000 ? 'red' : promptLen > 4000 ? 'yellow' : null;
 
-  if (configLoading) {
+  // ===========================
+  // Memories
+  // ===========================
+
+  const fetchMemories = useCallback(async () => {
+    setMemoriesLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (memorySearch.trim()) params.set('search', memorySearch.trim());
+      const res = await fetch(`/api/admin/sage-live-chat/memories?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: UserMemoryDoc[] = await res.json();
+      setMemoryDocs(Array.isArray(data) ? data : []);
+    } catch {
+      toast('Failed to load user memories.', 'error');
+    } finally {
+      setMemoriesLoading(false);
+    }
+  }, [memorySearch, toast]);
+
+  useEffect(() => {
+    if (tab === 'memories') fetchMemories();
+  }, [tab, fetchMemories]);
+
+  const selectedUserFacts = memoryDocs.find(d => d.userId === selectedUserId)?.facts ?? [];
+
+  function openUserFacts(userId: string) {
+    setSelectedUserId(userId);
+    setNewFactText('');
+    setNewFactExpiry('');
+  }
+
+  async function addFact() {
+    if (!selectedUserId || !newFactText.trim()) return;
+    setAddingFact(true);
+    try {
+      const body: any = { userId: selectedUserId, text: newFactText.trim() };
+      if (newFactExpiry) body.expiresAt = new Date(newFactExpiry).toISOString();
+      const res = await fetch('/api/admin/sage-live-chat/memories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to add fact');
+      }
+      toast('Fact added.', 'success');
+      setNewFactText('');
+      setNewFactExpiry('');
+      await fetchMemories();
+    } catch (err: any) {
+      toast(err.message, 'error');
+    } finally {
+      setAddingFact(false);
+    }
+  }
+
+  async function deleteFact(factIndex: number) {
+    if (!selectedUserId) return;
+    setDeletingFactIdx(factIndex);
+    try {
+      const res = await fetch('/api/admin/sage-live-chat/memories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify({ userId: selectedUserId, factIndex }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete fact');
+      }
+      toast('Fact deleted.', 'success');
+      await fetchMemories();
+    } catch (err: any) {
+      toast(err.message, 'error');
+    } finally {
+      setDeletingFactIdx(null);
+    }
+  }
+
+  // ===========================
+  // Channels
+  // ===========================
+
+  const fetchChannels = useCallback(async () => {
+    setChannelsLoading(true);
+    try {
+      const res = await fetch('/api/admin/sage-live-chat/channels');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const overrides = data.channelOverrides ?? {};
+      const arr: ChannelOverride[] = Object.entries(overrides).map(([id, o]: [string, any]) => ({
+        channelId: id,
+        autoJoin: o.autoJoin ?? true,
+        reactions: o.reactions ?? true,
+      }));
+      setChannels(arr);
+    } catch {
+      toast('Failed to load channel overrides.', 'error');
+    } finally {
+      setChannelsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (tab === 'live_chat') fetchChannels();
+  }, [tab, fetchChannels]);
+
+  async function addChannelOverride() {
+    if (!newChannelId.trim()) return;
+    setSavingChannels(true);
+    try {
+      const res = await fetch('/api/admin/sage-live-chat/channels', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify({ channelId: newChannelId.trim(), overrides: { autoJoin: newChannelAutoJoin, reactions: newChannelReactions } }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to save channel override');
+      }
+      setNewChannelId('');
+      setNewChannelAutoJoin(true);
+      setNewChannelReactions(true);
+      toast('Channel override added.', 'success');
+      await fetchChannels();
+    } catch (err: any) {
+      toast(err.message, 'error');
+    } finally {
+      setSavingChannels(false);
+    }
+  }
+
+  async function removeChannelOverride(channelId: string) {
+    setSavingChannels(true);
+    try {
+      const res = await fetch('/api/admin/sage-live-chat/channels', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() },
+        body: JSON.stringify({ channelId }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to remove channel override');
+      }
+      toast('Channel override removed.', 'success');
+      await fetchChannels();
+    } catch (err: any) {
+      toast(err.message, 'error');
+    } finally {
+      setSavingChannels(false);
+    }
+  }
+
+  // ===========================
+  // Activity Log
+  // ===========================
+
+  const fetchActivity = useCallback(async () => {
+    setActivityLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(activityPage), limit: '20' });
+      if (activityTypeFilter) params.set('type', activityTypeFilter);
+      if (activityChannelFilter && /^\d{17,20}$/.test(activityChannelFilter)) params.set('channel', activityChannelFilter);
+      const res = await fetch(`/api/admin/sage-live-chat/activity-log?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setActivity(data.items ?? []);
+      setActivityTotal(data.total ?? 0);
+    } catch {
+      toast('Failed to load activity log.', 'error');
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [activityPage, activityTypeFilter, activityChannelFilter, toast]);
+
+  useEffect(() => {
+    if (tab === 'activity') fetchActivity();
+  }, [tab, fetchActivity]);
+
+  // Auto-refresh activity every 30 seconds
+  useEffect(() => {
+    if (tab === 'activity') {
+      activityRefreshRef.current = setInterval(fetchActivity, 30000);
+      return () => {
+        if (activityRefreshRef.current) clearInterval(activityRefreshRef.current);
+      };
+    }
+    if (activityRefreshRef.current) clearInterval(activityRefreshRef.current);
+  }, [tab, fetchActivity]);
+
+  // ===========================
+  // Column definitions
+  // ===========================
+
+  const memoryColumns: Column<{ userId: string; factsCount: number }>[] = [
+    { key: 'userId', label: 'User ID', sortable: true },
+    { key: 'factsCount', label: 'Facts', sortable: true },
+    {
+      key: 'actions',
+      label: 'Actions',
+      sortable: false,
+      render: (row) => (
+        <button
+          className="admin-btn admin-btn-ghost admin-btn-sm"
+          onClick={() => openUserFacts(row.userId)}
+        >
+          View / Manage
+        </button>
+      ),
+    },
+  ];
+
+  const channelColumns: Column<ChannelOverride>[] = [
+    { key: 'channelId', label: 'Channel ID', sortable: true },
+    {
+      key: 'autoJoin',
+      label: 'Auto-Join',
+      sortable: false,
+      render: (row) => (
+        <span style={{ color: row.autoJoin ? '#34d399' : 'var(--text-muted)' }}>
+          {row.autoJoin ? 'On' : 'Off'}
+        </span>
+      ),
+    },
+    {
+      key: 'reactions',
+      label: 'Reactions',
+      sortable: false,
+      render: (row) => (
+        <span style={{ color: row.reactions ? '#34d399' : 'var(--text-muted)' }}>
+          {row.reactions ? 'On' : 'Off'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      label: '',
+      sortable: false,
+      render: (row) => (
+        <button
+          className="admin-btn admin-btn-danger admin-btn-sm"
+          onClick={() => removeChannelOverride(row.channelId)}
+          disabled={savingChannels}
+        >
+          Remove
+        </button>
+      ),
+    },
+  ];
+
+  const activityColumns: Column<ActivityEntry>[] = [
+    {
+      key: 'time',
+      label: 'Time',
+      sortable: false,
+      render: (row) => <span style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>{formatDate(row.time)}</span>,
+    },
+    { key: 'channelId', label: 'Channel', sortable: false },
+    {
+      key: 'type',
+      label: 'Type',
+      sortable: false,
+      render: (row) => (
+        <span style={{
+          fontSize: '11px',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          background: row.type === 'keyword' ? 'rgba(59,130,246,0.15)' :
+            row.type === 'reaction' ? 'rgba(168,85,247,0.15)' :
+            row.type === 'periodic' ? 'rgba(52,211,153,0.15)' :
+            'rgba(251,191,36,0.15)',
+          color: row.type === 'keyword' ? '#60a5fa' :
+            row.type === 'reaction' ? '#a855f7' :
+            row.type === 'periodic' ? '#34d399' :
+            '#fbbf24',
+        }}>
+          {row.type}
+        </span>
+      ),
+    },
+    { key: 'reason', label: 'Reason', sortable: false },
+    { key: 'action', label: 'Action', sortable: false },
+    {
+      key: 'responsePreview',
+      label: 'Response',
+      sortable: false,
+      render: (row) => (
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '200px', display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {row.responsePreview || '-'}
+        </span>
+      ),
+    },
+  ];
+
+  // ===========================
+  // Render
+  // ===========================
+
+  if (configLoading || liveConfigLoading) {
     return (
       <>
         <div className="admin-page-header">
           <h1 className="admin-page-title"><span className="emoji-float">🧙</span> Luna Sage</h1>
-          <p className="admin-page-subtitle">AI assistant bot configuration</p>
+          <p className="admin-page-subtitle">Complete management for Luna Sage — settings, AI, live chat, and security</p>
         </div>
         <SkeletonCard count={4} />
         <SkeletonTable rows={4} />
@@ -316,11 +868,11 @@ export default function SagePage() {
     <>
       <div className="admin-page-header">
         <h1 className="admin-page-title"><span className="emoji-float">🧙</span> Luna Sage</h1>
-        <p className="admin-page-subtitle">AI assistant bot configuration</p>
+        <p className="admin-page-subtitle">Complete management for Luna Sage — settings, AI, live chat, and security</p>
       </div>
 
       {/* Status overview cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '20px' }}>
         <div className="admin-stat-card" style={{ padding: '14px 18px' }}>
           <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: '6px' }}>Provider</div>
           <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -354,6 +906,24 @@ export default function SagePage() {
             Lunarian: {privileges.lunarianAccess ? 'On' : 'Off'}
           </div>
         </div>
+        <div className="admin-stat-card" style={{ padding: '14px 18px' }}>
+          <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: '6px' }}>Auto-Join</div>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: liveConfig.autoJoinEnabled ? '#34d399' : 'var(--text-muted)' }}>
+            {liveConfig.autoJoinEnabled ? 'Enabled' : 'Disabled'}
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Cooldown: {liveConfig.autoJoinCooldownMinutes}m
+          </div>
+        </div>
+        <div className="admin-stat-card" style={{ padding: '14px 18px' }}>
+          <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: '6px' }}>Reactions</div>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: liveConfig.reactionsEnabled ? '#34d399' : 'var(--text-muted)' }}>
+            {liveConfig.reactionsEnabled ? 'Enabled' : 'Disabled'}
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Probability: {Math.round(liveConfig.reactionProbability * 100)}%
+          </div>
+        </div>
       </div>
 
       {/* Tab bar */}
@@ -384,9 +954,30 @@ export default function SagePage() {
         >
           Privileges
         </button>
+        <button
+          className={`admin-tab ${tab === 'live_chat' ? 'admin-tab-active' : ''}`}
+          onClick={() => setTab('live_chat')}
+        >
+          Live Chat
+          {liveConfigChanged && <span style={{ marginLeft: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-legendary)', display: 'inline-block' }} />}
+        </button>
+        <button
+          className={`admin-tab ${tab === 'memories' ? 'admin-tab-active' : ''}`}
+          onClick={() => setTab('memories')}
+        >
+          User Memories
+        </button>
+        <button
+          className={`admin-tab ${tab === 'activity' ? 'admin-tab-active' : ''}`}
+          onClick={() => setTab('activity')}
+        >
+          Activity Log
+        </button>
       </div>
 
-      {/* Settings Tab */}
+      {/* ============================== */}
+      {/* Settings Tab                   */}
+      {/* ============================== */}
       {tab === 'settings' && (
         <>
           <ConfigSection title="AI Provider" description="Which AI service to use for responses">
@@ -504,136 +1095,30 @@ export default function SagePage() {
             <BotBadge bot="sage" />
           </ConfigSection>
 
-          <ConfigSection title="Thread Settings" description="Thread behavior when Sage creates conversation threads">
-            <DurationInput
-              label="⏱️ Slowmode"
-              value={settings.threadSlowmode * 1000}
-              onChange={(ms) => setSettings({ ...settings, threadSlowmode: Math.round(ms / 1000) })}
-              description="Delay between messages in new threads (0 = disabled)"
+          <ConfigSection title="Context" description="How much conversation history Sage reads when responding">
+            <NumberInput
+              label="Channel Context"
+              value={settings.channelContextLimit}
+              onChange={(v) => setSettings({ ...settings, channelContextLimit: v })}
+              min={0}
+              max={100}
+              description="Number of recent channel messages included as context when Sage is triggered (0 = none)"
             />
-            <div className="admin-number-input-wrap" style={{ marginTop: '12px' }}>
-              <label className="admin-number-input-label">📝 Welcome Message</label>
-              <textarea
-                className="admin-input"
-                rows={3}
-                value={settings.threadWelcomeMessage}
-                onChange={(e) => setSettings({ ...settings, threadWelcomeMessage: e.target.value })}
-                placeholder="أهلاً بك {mention} في محادثتك الخاصة..."
-                style={{ width: '100%', resize: 'vertical' }}
-                dir="auto"
-              />
-              <span className="admin-number-input-desc">Message sent when a new thread is created. Use {'{mention}'} for the user mention.</span>
-            </div>
-            <div className="admin-config-grid" style={{ marginTop: '12px' }}>
-              <NumberInput
-                label="🔢 Channel Context"
-                value={settings.channelContextLimit}
-                onChange={(v) => setSettings({ ...settings, channelContextLimit: v })}
-                min={0}
-                max={100}
-                description="Number of recent channel messages included as context when Sage is triggered (0 = none)"
-              />
-              <NumberInput
-                label="🔢 Thread History"
-                value={settings.threadHistoryLimit}
-                onChange={(v) => setSettings({ ...settings, threadHistoryLimit: v })}
-                min={10}
-                max={500}
-                description="Maximum conversation messages sent to the AI per thread (higher = more context, more tokens)"
-              />
-            </div>
-            <BotBadge bot="sage" />
-          </ConfigSection>
-
-          <ConfigSection title="Panel" description="The embed panel shown in the Sage channel via !setai">
-            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div className="admin-number-input-wrap">
-                  <label className="admin-number-input-label">✏️ Panel Title</label>
-                  <input
-                    type="text"
-                    className="admin-number-input"
-                    value={settings.panelTitle}
-                    onChange={(e) => setSettings({ ...settings, panelTitle: e.target.value })}
-                    placeholder="Luna AI Chat"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-                <RichTextArea
-                  label="📝 Panel Description"
-                  value={settings.panelDescription}
-                  onChange={(v) => setSettings({ ...settings, panelDescription: v })}
-                  rows={3}
-                  minHeight="100px"
-                  placeholder="Panel description"
-                />
-                <ImagePicker
-                  label="🖼️ Panel Image"
-                  description="Image displayed in the panel embed"
-                  value={settings.panelImageUrl}
-                  onChange={(url) => setSettings({ ...settings, panelImageUrl: url })}
-                  uploadPrefix="sage/"
-                />
-              </div>
-              {/* Panel preview */}
-              {(settings.panelTitle || settings.panelDescription) && (
-                <div style={{
-                  flex: '0 0 280px',
-                  background: 'rgba(0,0,0,0.3)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  padding: '16px',
-                  fontSize: '13px',
-                  color: 'var(--text-secondary)',
-                  alignSelf: 'flex-start',
-                }}>
-                  <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', marginBottom: '10px' }}>Preview</div>
-                  {settings.panelImageUrl && (
-                    <div style={{
-                      width: '100%',
-                      height: '100px',
-                      borderRadius: '6px',
-                      marginBottom: '10px',
-                      background: `url(${settings.panelImageUrl}) center/cover no-repeat`,
-                      border: '1px solid rgba(255,255,255,0.06)',
-                    }} />
-                  )}
-                  {settings.panelTitle && (
-                    <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)', marginBottom: '6px' }}>
-                      {settings.panelTitle}
-                    </div>
-                  )}
-                  {settings.panelDescription && (
-                    <div style={{ lineHeight: 1.5, direction: 'rtl' }}>{settings.panelDescription}</div>
-                  )}
-                  <div style={{
-                    marginTop: '12px',
-                    padding: '6px 14px',
-                    background: 'rgba(255,255,255,0.08)',
-                    borderRadius: '4px',
-                    display: 'inline-block',
-                    fontSize: '12px',
-                    color: 'var(--text-muted)',
-                  }}>
-                    فتح شات جديد
-                  </div>
-                </div>
-              )}
-            </div>
-            <BotBadge bot="sage" />
           </ConfigSection>
 
           <SaveDeployBar
             hasChanges={settingsChanged}
             saving={saving}
-            onSave={saveConfig}
+            onSave={saveSageConfig}
             onDiscard={discardSettings}
             projectName="Sage"
           />
         </>
       )}
 
-      {/* System Prompt Tab */}
+      {/* ============================== */}
+      {/* System Prompt Tab              */}
+      {/* ============================== */}
       {tab === 'system_prompt' && (
         <>
           {/* Variable reference guide */}
@@ -708,14 +1193,16 @@ export default function SagePage() {
           <SaveDeployBar
             hasChanges={systemPromptChanged}
             saving={saving}
-            onSave={saveConfig}
+            onSave={saveSageConfig}
             onDiscard={discardSystemPrompt}
             projectName="Sage"
           />
         </>
       )}
 
-      {/* World Lore Tab */}
+      {/* ============================== */}
+      {/* World Lore Tab                 */}
+      {/* ============================== */}
       {tab === 'lore' && (
         <>
           <div className="admin-stat-card" style={{ marginBottom: 16, padding: '16px 20px', fontSize: 13, lineHeight: 1.7, color: 'var(--text-secondary)' }}>
@@ -772,14 +1259,16 @@ export default function SagePage() {
           <SaveDeployBar
             hasChanges={loreChanged}
             saving={saving}
-            onSave={saveConfig}
+            onSave={saveSageConfig}
             onDiscard={discardLore}
             projectName="Sage"
           />
         </>
       )}
 
-      {/* Privileges Tab */}
+      {/* ============================== */}
+      {/* Privileges Tab                 */}
+      {/* ============================== */}
       {tab === 'privileges' && (
         <>
           <ConfigSection title="Lunarian Access" description="Allow regular Lunarian members to use Sage">
@@ -1006,10 +1495,590 @@ export default function SagePage() {
           <SaveDeployBar
             hasChanges={privilegesChanged}
             saving={saving}
-            onSave={saveConfig}
+            onSave={saveSageConfig}
             onDiscard={discardPrivileges}
             projectName="Sage"
           />
+        </>
+      )}
+
+      {/* ============================== */}
+      {/* Live Chat Tab (with channels)  */}
+      {/* ============================== */}
+      {tab === 'live_chat' && (
+        <>
+          <ConfigSection title="Access Control" description="Emergency kill switch — restrict all Sage interactions to Masterminds only.">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <ToggleSwitch
+                label="Mastermind-only mode"
+                checked={liveConfig.mastermindOnly}
+                onChange={(v) => setLiveConfig({ ...liveConfig, mastermindOnly: v })}
+              />
+              {liveConfig.mastermindOnly && (
+                <div style={{ padding: '10px 12px', borderRadius: '6px', background: 'rgba(244,63,94,0.12)', color: '#f43f5e', fontSize: '13px', fontWeight: 500 }}>
+                  Only Masterminds can interact with Sage. All other users are blocked from prefix, mention, and live chat.
+                </div>
+              )}
+            </div>
+          </ConfigSection>
+
+          <ConfigSection title="Active Channels" description="Sage only participates in live chat in these channels. If empty, live chat is disabled everywhere.">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {liveConfig.liveChatChannels.length === 0 && (
+                <div style={{ padding: '12px', borderRadius: '6px', background: 'rgba(244,63,94,0.1)', color: '#f43f5e', fontSize: '13px' }}>
+                  No channels configured — live chat features are currently disabled.
+                </div>
+              )}
+              {liveConfig.liveChatChannels.map((chId, i) => (
+                <div key={chId} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <code style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{chId}</code>
+                  <button
+                    className="admin-btn admin-btn-danger admin-btn-sm"
+                    onClick={() => setLiveConfig({ ...liveConfig, liveChatChannels: liveConfig.liveChatChannels.filter((_, j) => j !== i) })}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                <input
+                  type="text"
+                  className="admin-input"
+                  placeholder="Channel ID (e.g., 1234567890123456)"
+                  id="newLiveChatChannel"
+                  style={{ width: '260px' }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const input = e.currentTarget;
+                      const val = input.value.trim();
+                      if (/^\d{17,20}$/.test(val) && !liveConfig.liveChatChannels.includes(val)) {
+                        setLiveConfig({ ...liveConfig, liveChatChannels: [...liveConfig.liveChatChannels, val] });
+                        input.value = '';
+                      }
+                    }
+                  }}
+                />
+                <button
+                  className="admin-btn admin-btn-ghost admin-btn-sm"
+                  onClick={() => {
+                    const input = document.getElementById('newLiveChatChannel') as HTMLInputElement;
+                    const val = input?.value.trim();
+                    if (val && /^\d{17,20}$/.test(val) && !liveConfig.liveChatChannels.includes(val)) {
+                      setLiveConfig({ ...liveConfig, liveChatChannels: [...liveConfig.liveChatChannels, val] });
+                      input.value = '';
+                    }
+                  }}
+                >
+                  Add Channel
+                </button>
+              </div>
+            </div>
+          </ConfigSection>
+
+          <ConfigSection title="Auto-Join" description="Sage automatically joins active conversations">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <ToggleSwitch
+                label="Auto-join enabled"
+                checked={liveConfig.autoJoinEnabled}
+                onChange={(v) => setLiveConfig({ ...liveConfig, autoJoinEnabled: v })}
+              />
+              <NumberInput
+                label="Auto-join cooldown"
+                description="Minutes between auto-joins (1-5)"
+                value={liveConfig.autoJoinCooldownMinutes}
+                onChange={(v) => setLiveConfig({ ...liveConfig, autoJoinCooldownMinutes: v })}
+                min={1}
+                max={5}
+              />
+            </div>
+          </ConfigSection>
+
+          <ConfigSection title="Reactions" description="Sage reacts to messages with emoji">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <ToggleSwitch
+                label="Reactions enabled"
+                checked={liveConfig.reactionsEnabled}
+                onChange={(v) => setLiveConfig({ ...liveConfig, reactionsEnabled: v })}
+              />
+              <NumberInput
+                label="Reaction probability"
+                description={`Chance of reacting to a message (10-50%). Currently: ${Math.round(liveConfig.reactionProbability * 100)}%`}
+                value={Math.round(liveConfig.reactionProbability * 100)}
+                onChange={(v) => setLiveConfig({ ...liveConfig, reactionProbability: v / 100 })}
+                min={10}
+                max={50}
+              />
+            </div>
+          </ConfigSection>
+
+          <ConfigSection title="Periodic Check-In" description="Sage periodically checks in on quiet channels">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <ToggleSwitch
+                label="Periodic check-in enabled"
+                checked={liveConfig.periodicCheckIn}
+                onChange={(v) => setLiveConfig({ ...liveConfig, periodicCheckIn: v })}
+              />
+              <NumberInput
+                label="Check-in interval"
+                description="Number of messages between check-ins (10-30)"
+                value={liveConfig.checkInInterval}
+                onChange={(v) => setLiveConfig({ ...liveConfig, checkInInterval: v })}
+                min={10}
+                max={30}
+              />
+            </div>
+          </ConfigSection>
+
+          <ConfigSection title="Cooldowns" description="Fine-tune all timing values for Sage's live chat behavior. Changes take effect within 30 seconds.">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '16px' }}>
+              <NumberInput
+                label="AI Cooldown"
+                description="Seconds between AI responses per user (1-30)"
+                value={liveConfig.aiCooldownSeconds}
+                onChange={(v) => setLiveConfig({ ...liveConfig, aiCooldownSeconds: v })}
+                min={1}
+                max={30}
+              />
+              <NumberInput
+                label="Reaction Cooldown"
+                description="Seconds between reactions per channel (5-120)"
+                value={liveConfig.reactionCooldownSeconds}
+                onChange={(v) => setLiveConfig({ ...liveConfig, reactionCooldownSeconds: v })}
+                min={5}
+                max={120}
+              />
+              <NumberInput
+                label="User Reaction Limit"
+                description="Max reactions per user within the window (1-20)"
+                value={liveConfig.userReactionLimit}
+                onChange={(v) => setLiveConfig({ ...liveConfig, userReactionLimit: v })}
+                min={1}
+                max={20}
+              />
+              <NumberInput
+                label="Reaction Window"
+                description="Minutes for the user reaction limit window (1-30)"
+                value={liveConfig.userReactionWindowMinutes}
+                onChange={(v) => setLiveConfig({ ...liveConfig, userReactionWindowMinutes: v })}
+                min={1}
+                max={30}
+              />
+              <NumberInput
+                label="Help Offer Cooldown (per user)"
+                description="Minutes between help offers to the same user (1-10)"
+                value={liveConfig.userHelpOfferCooldownMinutes}
+                onChange={(v) => setLiveConfig({ ...liveConfig, userHelpOfferCooldownMinutes: v })}
+                min={1}
+                max={10}
+              />
+              <NumberInput
+                label="Greeting Cooldown (per user)"
+                description="Minutes between greetings to the same user (1-30)"
+                value={liveConfig.userGreetingCooldownMinutes}
+                onChange={(v) => setLiveConfig({ ...liveConfig, userGreetingCooldownMinutes: v })}
+                min={1}
+                max={30}
+              />
+              <NumberInput
+                label="Greeting Cooldown (per channel)"
+                description="Seconds between greetings in the same channel (10-300)"
+                value={liveConfig.greetingCooldownSeconds}
+                onChange={(v) => setLiveConfig({ ...liveConfig, greetingCooldownSeconds: v })}
+                min={10}
+                max={300}
+              />
+              <NumberInput
+                label="Help Offer Cooldown (per channel)"
+                description="Seconds between help offers in the same channel (10-300)"
+                value={liveConfig.helpOfferCooldownSeconds}
+                onChange={(v) => setLiveConfig({ ...liveConfig, helpOfferCooldownSeconds: v })}
+                min={10}
+                max={300}
+              />
+              <NumberInput
+                label="Unanswered Question Delay"
+                description="Seconds to wait before answering unanswered questions (15-300)"
+                value={liveConfig.unansweredQuestionDelaySeconds}
+                onChange={(v) => setLiveConfig({ ...liveConfig, unansweredQuestionDelaySeconds: v })}
+                min={15}
+                max={300}
+              />
+            </div>
+          </ConfigSection>
+
+          <ConfigSection title="Luna Keywords" description="Words that trigger Sage reactions and help offers. Sage watches for these in live chat messages.">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+              {liveConfig.lunaKeywords.map((kw, i) => (
+                <span
+                  key={i}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    background: 'rgba(59, 130, 246, 0.12)',
+                    color: '#60a5fa',
+                    fontSize: '13px',
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                  }}
+                  dir="auto"
+                >
+                  {kw}
+                  <button
+                    onClick={() => setLiveConfig({ ...liveConfig, lunaKeywords: liveConfig.lunaKeywords.filter((_, j) => j !== i) })}
+                    style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', fontSize: '14px', padding: 0, lineHeight: 1 }}
+                    title="Remove keyword"
+                  >
+                    x
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="text"
+                className="admin-input"
+                placeholder="Add keyword..."
+                id="newLunaKeyword"
+                style={{ width: '220px' }}
+                dir="auto"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const val = e.currentTarget.value.trim();
+                    if (val && !liveConfig.lunaKeywords.includes(val) && liveConfig.lunaKeywords.length < 100) {
+                      setLiveConfig({ ...liveConfig, lunaKeywords: [...liveConfig.lunaKeywords, val] });
+                      e.currentTarget.value = '';
+                    }
+                  }
+                }}
+              />
+              <button
+                className="admin-btn admin-btn-ghost admin-btn-sm"
+                onClick={() => {
+                  const input = document.getElementById('newLunaKeyword') as HTMLInputElement;
+                  const val = input?.value.trim();
+                  if (val && !liveConfig.lunaKeywords.includes(val) && liveConfig.lunaKeywords.length < 100) {
+                    setLiveConfig({ ...liveConfig, lunaKeywords: [...liveConfig.lunaKeywords, val] });
+                    input.value = '';
+                  }
+                }}
+              >
+                Add
+              </button>
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
+              {liveConfig.lunaKeywords.length}/100 keywords
+            </div>
+          </ConfigSection>
+
+          <ConfigSection title="Response Templates" description="Predefined responses Sage uses for greetings and help offers. Grouped by role/language.">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Greeting Templates */}
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px' }}>Greeting Templates</div>
+                {(['arabic', 'english'] as const).map((lang) => (
+                  <div key={lang} style={{ marginBottom: '12px' }}>
+                    <label className="admin-number-input-label" style={{ textTransform: 'capitalize' }}>{lang}</label>
+                    <textarea
+                      className="admin-number-input"
+                      value={(liveConfig.greetingTemplates[lang] ?? []).join('\n')}
+                      onChange={(e) => {
+                        const lines = e.target.value.split('\n').filter(l => l.trim());
+                        setLiveConfig({
+                          ...liveConfig,
+                          greetingTemplates: { ...liveConfig.greetingTemplates, [lang]: lines },
+                        });
+                      }}
+                      placeholder={`One template per line (${lang})`}
+                      style={{ width: '100%', minHeight: '80px', resize: 'vertical', fontSize: '13px', lineHeight: '1.6' }}
+                      dir="auto"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Help Offer Templates */}
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px' }}>Help Offer Templates</div>
+                {(['mastermind', 'privileged', 'lunarian', 'default'] as const).map((role) => (
+                  <div key={role} style={{ marginBottom: '12px' }}>
+                    <label className="admin-number-input-label" style={{ textTransform: 'capitalize' }}>
+                      {role === 'mastermind' ? 'Mastermind' : role === 'privileged' ? 'Privileged' : role === 'lunarian' ? 'Lunarian' : 'Default'}
+                    </label>
+                    <textarea
+                      className="admin-number-input"
+                      value={(liveConfig.helpOfferTemplates[role] ?? []).join('\n')}
+                      onChange={(e) => {
+                        const lines = e.target.value.split('\n').filter(l => l.trim());
+                        setLiveConfig({
+                          ...liveConfig,
+                          helpOfferTemplates: { ...liveConfig.helpOfferTemplates, [role]: lines },
+                        });
+                      }}
+                      placeholder={`One template per line (${role} role)`}
+                      style={{ width: '100%', minHeight: '80px', resize: 'vertical', fontSize: '13px', lineHeight: '1.6' }}
+                      dir="auto"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ConfigSection>
+
+          <ConfigSection title="Reaction Emojis" description="Emojis Sage uses when reacting to messages in live chat.">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+              {(['luna', 'question', 'greeting', 'excitement'] as const).map((key) => (
+                <div key={key} className="admin-number-input-wrap">
+                  <label className="admin-number-input-label" style={{ textTransform: 'capitalize' }}>
+                    {key === 'luna' ? 'Luna Keywords' : key === 'question' ? 'Questions' : key === 'greeting' ? 'Greetings' : 'Excitement'}
+                  </label>
+                  <input
+                    type="text"
+                    className="admin-number-input"
+                    value={liveConfig.reactionEmojis[key] ?? ''}
+                    onChange={(e) => setLiveConfig({
+                      ...liveConfig,
+                      reactionEmojis: { ...liveConfig.reactionEmojis, [key]: e.target.value },
+                    })}
+                    style={{ width: '80px', fontSize: '20px', textAlign: 'center' }}
+                    maxLength={10}
+                  />
+                </div>
+              ))}
+            </div>
+          </ConfigSection>
+
+          {/* Channel Overrides section within Live Chat tab */}
+          {channelsLoading ? (
+            <SkeletonTable rows={4} />
+          ) : (
+            <DataTable
+              title="Channel Overrides"
+              columns={channelColumns}
+              data={channels}
+              pageSize={20}
+            />
+          )}
+
+          <ConfigSection title="Add Channel Override" description="Set per-channel auto-join and reaction toggles">
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ minWidth: '200px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Channel ID</label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  placeholder="e.g. 1234567890123456"
+                  value={newChannelId}
+                  onChange={(e) => setNewChannelId(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <ToggleSwitch label="Auto-Join" checked={newChannelAutoJoin} onChange={setNewChannelAutoJoin} />
+              <ToggleSwitch label="Reactions" checked={newChannelReactions} onChange={setNewChannelReactions} />
+              <button
+                className={`admin-btn admin-btn-primary admin-btn-sm ${savingChannels ? 'admin-btn-loading' : ''}`}
+                onClick={addChannelOverride}
+                disabled={savingChannels || !newChannelId.trim()}
+              >
+                {savingChannels ? 'Saving...' : 'Add Override'}
+              </button>
+            </div>
+          </ConfigSection>
+
+          <SaveDeployBar
+            hasChanges={liveConfigChanged}
+            saving={liveSaving}
+            onSave={saveLiveConfig}
+            onDiscard={discardLiveConfig}
+            projectName="Sage Live Chat"
+          />
+        </>
+      )}
+
+      {/* ============================== */}
+      {/* User Memories Tab              */}
+      {/* ============================== */}
+      {tab === 'memories' && (
+        <>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                className="admin-input"
+                placeholder="Filter by user ID..."
+                value={memorySearch}
+                onChange={(e) => setMemorySearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') fetchMemories(); }}
+                style={{ width: '280px', maxWidth: '100%' }}
+              />
+              <button className="admin-btn admin-btn-ghost admin-btn-sm" onClick={fetchMemories} disabled={memoriesLoading}>
+                {memoriesLoading ? 'Loading...' : 'Search'}
+              </button>
+            </div>
+          </div>
+
+          {memoriesLoading && memoryDocs.length === 0 ? (
+            <SkeletonTable rows={5} />
+          ) : (
+            <DataTable
+              title="User Memories"
+              columns={memoryColumns}
+              data={memoryDocs.map(d => ({ userId: d.userId, factsCount: d.facts?.length ?? 0 }))}
+              pageSize={20}
+            />
+          )}
+
+          {/* User facts modal */}
+          <AdminLightbox
+            isOpen={selectedUserId !== null}
+            onClose={() => setSelectedUserId(null)}
+            title={`Facts for ${selectedUserId}`}
+            size="lg"
+          >
+            <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '16px' }}>
+              {selectedUserFacts.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>No facts recorded</div>
+              ) : (
+                <table className="admin-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left' }}>Fact</th>
+                      <th style={{ textAlign: 'left' }}>Set By</th>
+                      <th style={{ textAlign: 'left' }}>Set At</th>
+                      <th style={{ textAlign: 'left' }}>Expires</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedUserFacts.map((fact, idx) => {
+                      const expired = isExpired(fact.expiresAt);
+                      return (
+                        <tr key={idx} style={expired ? { opacity: 0.45 } : undefined}>
+                          <td style={{ fontSize: '13px', maxWidth: '220px', wordBreak: 'break-word' }}>
+                            {fact.text}
+                          </td>
+                          <td style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                            {fact.setBy}
+                          </td>
+                          <td style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                            {formatDate(fact.setAt)}
+                          </td>
+                          <td style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+                            {expired ? (
+                              <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'rgba(244,63,94,0.15)', color: '#f43f5e', fontSize: '10px', fontWeight: 600 }}>
+                                Expired
+                              </span>
+                            ) : fact.expiresAt ? (
+                              <span style={{ color: 'var(--text-muted)' }}>{formatDate(fact.expiresAt)}</span>
+                            ) : '-'}
+                          </td>
+                          <td>
+                            <button
+                              className="admin-btn admin-btn-danger admin-btn-sm"
+                              onClick={() => deleteFact(idx)}
+                              disabled={deletingFactIdx === idx}
+                            >
+                              {deletingFactIdx === idx ? '...' : 'Delete'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Add fact form */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '10px' }}>Add Fact</div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Fact text</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="Enter a fact about this user..."
+                    value={newFactText}
+                    onChange={(e) => setNewFactText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && newFactText.trim()) addFact(); }}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <div style={{ minWidth: '160px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Expiry (optional)</label>
+                  <input
+                    type="datetime-local"
+                    className="admin-input"
+                    value={newFactExpiry}
+                    onChange={(e) => setNewFactExpiry(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <button
+                  className={`admin-btn admin-btn-primary admin-btn-sm ${addingFact ? 'admin-btn-loading' : ''}`}
+                  onClick={addFact}
+                  disabled={addingFact || !newFactText.trim()}
+                >
+                  {addingFact ? 'Adding...' : 'Add'}
+                </button>
+              </div>
+            </div>
+          </AdminLightbox>
+        </>
+      )}
+
+      {/* ============================== */}
+      {/* Activity Log Tab               */}
+      {/* ============================== */}
+      {tab === 'activity' && (
+        <>
+          <div className="admin-filters" style={{ marginBottom: '16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <select
+              className="admin-input"
+              value={activityTypeFilter}
+              onChange={(e) => { setActivityTypeFilter(e.target.value); setActivityPage(1); }}
+              style={{ width: '180px', cursor: 'pointer' }}
+            >
+              <option value="">All Types</option>
+              <option value="keyword">Keyword</option>
+              <option value="reaction">Reaction</option>
+              <option value="periodic">Periodic</option>
+              <option value="unanswered_question">Unanswered Question</option>
+            </select>
+            <input
+              type="text"
+              className="admin-input"
+              placeholder="Filter by channel ID..."
+              value={activityChannelFilter}
+              onChange={(e) => { setActivityChannelFilter(e.target.value); setActivityPage(1); }}
+              style={{ width: '200px' }}
+            />
+            <button
+              className="admin-btn admin-btn-ghost admin-btn-sm"
+              onClick={fetchActivity}
+              disabled={activityLoading}
+            >
+              {activityLoading ? 'Loading...' : 'Refresh'}
+            </button>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Auto-refreshes every 30s</span>
+          </div>
+
+          {activityLoading && activity.length === 0 ? (
+            <SkeletonTable rows={6} />
+          ) : (
+            <DataTable
+              title="Activity Log"
+              columns={activityColumns}
+              data={activity}
+              pageSize={20}
+              totalItems={activityTotal}
+              currentPage={activityPage}
+              onPageChange={setActivityPage}
+              serverPagination
+            />
+          )}
         </>
       )}
     </>

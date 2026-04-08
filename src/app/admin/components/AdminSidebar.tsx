@@ -52,7 +52,6 @@ const navItems: { section: string; items: NavItem[] }[] = [
     items: [
       { label: 'Bots', href: '/admin/bots', icon: 'bot' },
       { label: 'Luna Sage', href: '/admin/sage', icon: 'bot' },
-      { label: 'Sage Live Chat', href: '/admin/sage-live-chat', icon: 'chat' },
     ],
   },
   {

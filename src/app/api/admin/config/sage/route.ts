@@ -10,11 +10,10 @@ const DB_NAME = 'Database';
 
 const ALLOWED_SECTIONS = new Set([
   'provider', 'google_model', 'openrouter_model',
-  'enable_search', 'enable_image_generation', 'thread_slowmode',
-  'thread_welcome', 'panel_title', 'panel_description', 'panel_image',
+  'enable_search', 'enable_image_generation',
   'system_prompt', 'privileged_roles', 'lunarian_role_id', 'lunarian_access',
   'all_known_roles', 'image_generation_model', 'sage_prefix', 'owner_role_ids',
-  'image_gen_roles', 'lore_text', 'channel_context_limit', 'thread_history_limit',
+  'image_gen_roles', 'lore_text', 'channel_context_limit',
 ]);
 
 // Maps dashboard section names → bot_config document _id + data field path
@@ -24,11 +23,6 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   openrouter_model:   { docId: 'sage_settings', field: 'openrouter_model' },
   enable_search:      { docId: 'sage_settings', field: 'enable_search' },
   enable_image_generation: { docId: 'sage_settings', field: 'enable_image_generation' },
-  thread_slowmode:    { docId: 'sage_settings', field: 'thread_slowmode' },
-  thread_welcome:     { docId: 'sage_settings', field: 'thread_welcome' },
-  panel_title:        { docId: 'sage_settings', field: 'panel_title' },
-  panel_description:  { docId: 'sage_settings', field: 'panel_description' },
-  panel_image:        { docId: 'sage_settings', field: 'panel_image' },
   system_prompt:      { docId: 'sage_system_prompt', field: 'prompt' },
   privileged_roles:   { docId: 'sage_privileges', field: 'privilegedRoles' },
   lunarian_role_id:   { docId: 'sage_privileges', field: 'lunarianRoleId' },
@@ -40,7 +34,6 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   image_gen_roles:    { docId: 'sage_settings', field: 'image_gen_roles' },
   lore_text:          { docId: 'sage_lore', field: 'text' },
   channel_context_limit: { docId: 'sage_settings', field: 'channel_context_limit' },
-  thread_history_limit:  { docId: 'sage_settings', field: 'thread_history_limit' },
 };
 
 export async function GET() {
@@ -68,17 +61,11 @@ export async function GET() {
       sections.openrouter_model = settings.data.openrouter_model;
       sections.enable_search = settings.data.enable_search;
       sections.enable_image_generation = settings.data.enable_image_generation;
-      sections.thread_slowmode = settings.data.thread_slowmode;
-      sections.thread_welcome = settings.data.thread_welcome;
-      sections.panel_title = settings.data.panel_title;
-      sections.panel_description = settings.data.panel_description;
-      sections.panel_image = settings.data.panel_image;
       sections.image_generation_model = settings.data.image_generation_model ?? null;
       sections.sage_prefix = settings.data.sage_prefix ?? null;
       sections.owner_role_ids = settings.data.owner_role_ids ?? null;
       sections.image_gen_roles = settings.data.image_gen_roles ?? null;
       sections.channel_context_limit = settings.data.channel_context_limit ?? null;
-      sections.thread_history_limit = settings.data.thread_history_limit ?? null;
     }
 
     // System prompt
