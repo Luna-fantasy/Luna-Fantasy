@@ -612,6 +612,19 @@
   letter-spacing: 0.3px;
 }
 
+/* ── Stat Mini Cards ── */
+.admin-stat-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  border-radius: var(--radius-sm);
+  min-width: 90px;
+}
+
 .admin-table-wrap {
   overflow: visible;
   border-radius: var(--radius-sm);
