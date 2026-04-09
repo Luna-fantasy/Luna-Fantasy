@@ -24,6 +24,7 @@ export interface VendorConfig {
   title: string;
   description: string;
   image: string;
+  imageVersion?: number;
   items: VendorItem[];
 }
 

@@ -45,6 +45,7 @@ interface ShopConfig {
   title: string;
   description: string;
   image?: string;
+  imageVersion?: number;
   items: ShopItem[];
 }
 
@@ -730,7 +731,10 @@ export default function VendorsSection({ vendorTab }: { vendorTab?: 'seluna' | '
               <ImagePicker
                 label="🖼️ Vendor Image"
                 value={activeShopData.image || ''}
-                onChange={(url) => updateShopField(activeVendorTab, 'image', url)}
+                onChange={(url) => {
+                  updateShopField(activeVendorTab, 'image', url);
+                  updateShopField(activeVendorTab, 'imageVersion', Date.now());
+                }}
                 uploadPrefix="shops/"
               />
               <div style={{ gridColumn: '1 / -1' }}>
