@@ -37,11 +37,14 @@ function validateLayout(canvasType: string, layout: any): string | null {
     if (obj === null || obj === undefined) return null;
     if (typeof obj !== 'object') return null;
 
+    // Fields that must be strictly positive (>0) — any zero/negative breaks rendering
+    const POSITIVE_FIELDS = new Set(['fontSize', 'size', 'width', 'height', 'radiusX', 'radiusY', 'radius']);
+
     for (const [key, val] of Object.entries(obj)) {
       const fullPath = `${path}.${key}`;
       if (typeof val === 'number') {
         if (!Number.isFinite(val)) return `${fullPath} must be a finite number`;
-        if ((key === 'fontSize' || key === 'size' || key === 'width' || key === 'height') && val <= 0) {
+        if (POSITIVE_FIELDS.has(key) && val <= 0) {
           return `${fullPath} must be > 0`;
         }
       } else if (typeof val === 'object' && val !== null) {
