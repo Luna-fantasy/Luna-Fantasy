@@ -19,6 +19,7 @@ interface AppCategory {
   description: string;
   image?: string;
   questions: string[];
+  submitFee?: number;
 }
 
 interface ApplicationsConfig {
@@ -28,16 +29,23 @@ interface ApplicationsConfig {
   high_staff_roles: string[];
   mid_staff_roles: string[];
   categories: Record<string, AppCategory>;
+  // Passport-specific dedicated review channel (falls back to reviews_channel_id if unset)
+  passport_reviews_channel_id?: string;
 }
+
+const PASSPORT_DEFAULT_MERCHANT = 'https://assets.lunarian.app/butler/vendors/VaelorStorm.png';
+const PASSPORT_DEFAULT_BACKGROUND = 'https://assets.lunarian.app/butler/backgrounds/Passport.jpeg';
 
 export default function ApplicationsPage() {
   const [config, setConfig] = useState<ApplicationsConfig>({
     reviews_channel_id: '', logs_channel_id: '', votes_required: 3,
     high_staff_roles: [], mid_staff_roles: [], categories: {},
+    passport_reviews_channel_id: '',
   });
   const [original, setOriginal] = useState<ApplicationsConfig>({
     reviews_channel_id: '', logs_channel_id: '', votes_required: 3,
     high_staff_roles: [], mid_staff_roles: [], categories: {},
+    passport_reviews_channel_id: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -123,7 +131,8 @@ export default function ApplicationsPage() {
     );
   }
 
-  const categoryKeys = Object.keys(config.categories);
+  // Passport has its own dedicated section above — hide it from the generic category editor
+  const categoryKeys = Object.keys(config.categories).filter(k => k !== 'passport');
 
   return (
     <>
@@ -133,13 +142,88 @@ export default function ApplicationsPage() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <ConfigSection title="General" description="Channels, voting, and staff roles">
-          <ChannelPicker label="📺 Reviews Channel" description="Channel where application review embeds are posted" value={config.reviews_channel_id} onChange={v => setConfig(p => ({ ...p, reviews_channel_id: v as string }))} />
+        <ConfigSection title="General" description="Channels, voting, and staff roles (applies to Knight & Wizard applications)">
+          <ChannelPicker label="📺 Reviews Channel" description="Default channel where Knight/Wizard review embeds are posted" value={config.reviews_channel_id} onChange={v => setConfig(p => ({ ...p, reviews_channel_id: v as string }))} />
           <ChannelPicker label="📺 Logs Channel" description="Channel where application submission logs are sent" value={config.logs_channel_id} onChange={v => setConfig(p => ({ ...p, logs_channel_id: v as string }))} />
           <NumberInput label="🔢 Votes Required" value={config.votes_required} onChange={(v) => setConfig(p => ({ ...p, votes_required: v }))} min={1} description="Staff votes needed to approve/reject" />
           <RolePicker label="🛡️ High Staff Roles" description="Senior staff roles that can approve/reject applications" value={config.high_staff_roles} onChange={v => setConfig(p => ({ ...p, high_staff_roles: v as string[] }))} multi />
           <RolePicker label="🛡️ Mid Staff Roles" description="Mid-tier staff roles that can vote on applications" value={config.mid_staff_roles} onChange={v => setConfig(p => ({ ...p, mid_staff_roles: v as string[] }))} multi />
           <BotBadge bot="butler" />
+        </ConfigSection>
+
+        <ConfigSection title="🛂 Passport System" description="Dedicated settings for the Luna Passport application — the 3rd red button on /profile that's disabled until an admin approves a user's passport request">
+          <div style={{
+            background: 'rgba(0, 212, 255, 0.06)',
+            border: '1px solid rgba(0, 212, 255, 0.2)',
+            borderRadius: 8,
+            padding: '12px 14px',
+            marginBottom: 14,
+            fontSize: 13,
+            lineHeight: 1.55,
+            color: 'var(--text-secondary)',
+          }}>
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>How the passport flow works</div>
+            <div>1. Users click the <b>تقديم الآن</b> button on the passport panel → pick a faction from a select menu → fill in name + date of birth in a modal.</div>
+            <div>2. A <b>10,000 Lunari</b> fee is charged on submit. The review embed is posted to the channel below (or falls back to the general reviews channel).</div>
+            <div>3. When an admin clicks <b>قبول فوري</b>, the fee is refunded, a passport number is generated, and the user's profile gets a 3rd red Passport button. On <b>رفض فوري</b> the fee is burned.</div>
+          </div>
+
+          <ChannelPicker
+            label="📺 Passport Reviews Channel"
+            description="Dedicated channel where passport applications are posted for admin accept/reject. Leave empty to use the general reviews channel above."
+            value={config.passport_reviews_channel_id ?? ''}
+            onChange={v => setConfig(p => ({ ...p, passport_reviews_channel_id: v as string }))}
+          />
+
+          <ImagePicker
+            label="🧑‍💼 Merchant Photo (Vaelor Storm)"
+            description="Portrait of the issuing authority shown on the passport panel thumbnail. Default: Vaelor Storm from Lunvor."
+            value={config.categories?.passport?.image ?? ''}
+            defaultUrl={PASSPORT_DEFAULT_MERCHANT}
+            onChange={(url) => {
+              const cur = config.categories?.passport ?? {
+                title: 'جواز سفر لونا',
+                description: 'تقدم بطلب للحصول على جواز سفر لونا الرسمي من السيد فيلور ستورم.',
+                questions: [],
+              };
+              setConfig(p => ({
+                ...p,
+                categories: { ...p.categories, passport: { ...cur, image: url } },
+              }));
+            }}
+            uploadPrefix="butler/vendors/"
+          />
+
+          <div className="admin-form-group">
+            <label className="admin-form-label">🎨 Canvas Template</label>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '8px 0' }}>
+              <img
+                src={PASSPORT_DEFAULT_BACKGROUND}
+                alt="Passport template"
+                style={{ height: 90, borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)' }}
+              />
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                The passport card background is managed via the{' '}
+                <a href="/admin/canvas-editor" style={{ color: 'var(--accent-primary)' }}>Canvas Editor</a>.
+                Drag the field positions there to customize the card layout.
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            padding: '10px 12px',
+            background: 'rgba(184, 134, 11, 0.08)',
+            borderLeft: '3px solid #b8860b',
+            borderRadius: 4,
+            marginTop: 8,
+            fontSize: 12,
+            color: 'var(--text-secondary)',
+          }}>
+            <div style={{ fontWeight: 600, color: '#d4a017', marginBottom: 2 }}>Passport Benefits (hardcoded in bot)</div>
+            <div>• +2,500 Lunari bonus on the monthly bank salary</div>
+            <div>• 10% discount on Mells Selvair shop purchases</div>
+            <div>• Access to the 150,000 Lunari passport-only loan tier</div>
+          </div>
         </ConfigSection>
 
         {categoryKeys.length === 0 && (
