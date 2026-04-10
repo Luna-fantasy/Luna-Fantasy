@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ConfigSection from '../components/ConfigSection';
 import NumberInput from '../components/NumberInput';
 import BotBadge from '../components/BotBadge';
@@ -43,6 +43,29 @@ export default function ApplicationsPage() {
   const [saving, setSaving] = useState(false);
   const [newCategoryKey, setNewCategoryKey] = useState('');
   const { toast } = useToast();
+
+  // Application history
+  const [apps, setApps] = useState<any[]>([]);
+  const [appsLoading, setAppsLoading] = useState(true);
+  const [appFilter, setAppFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
+  const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [appCounts, setAppCounts] = useState({ pending: 0, accepted: 0, rejected: 0 });
+
+  const fetchApps = useCallback(async () => {
+    setAppsLoading(true);
+    try {
+      const params = new URLSearchParams({ limit: '100' });
+      if (appFilter !== 'all') params.set('status', appFilter);
+      const res = await fetch(`/api/admin/applications?${params}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setApps(data.applications || []);
+      setAppCounts(data.counts || { pending: 0, accepted: 0, rejected: 0 });
+    } catch { toast('Failed to load applications', 'error'); }
+    finally { setAppsLoading(false); }
+  }, [appFilter, toast]);
+
+  useEffect(() => { fetchApps(); }, [fetchApps]);
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -268,6 +291,109 @@ export default function ApplicationsPage() {
             setNewCategoryKey('');
           }}>+ Add Category</button>
         </div>
+      </div>
+
+      {/* Application History */}
+      <div style={{ marginTop: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div>
+            <h2 className="admin-section-title" style={{ margin: 0 }}>📋 Application History</h2>
+            <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>⏳ {appCounts.pending} pending</span>
+              <span style={{ fontSize: 13, color: '#3fb950' }}>✅ {appCounts.accepted} accepted</span>
+              <span style={{ fontSize: 13, color: '#f85149' }}>❌ {appCounts.rejected} rejected</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {(['all', 'pending', 'accepted', 'rejected'] as const).map(f => (
+              <button key={f} className={`admin-btn admin-btn-sm ${appFilter === f ? 'admin-btn-primary' : 'admin-btn-ghost'}`}
+                onClick={() => setAppFilter(f)} style={{ textTransform: 'capitalize' }}>
+                {f === 'all' ? 'All' : f === 'pending' ? '⏳ Pending' : f === 'accepted' ? '✅ Accepted' : '❌ Rejected'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {appsLoading ? (
+          <SkeletonTable rows={5} />
+        ) : apps.length === 0 ? (
+          <div className="admin-empty">
+            <div className="admin-empty-icon">📋</div>
+            <p>No applications found</p>
+          </div>
+        ) : (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Votes</th>
+                  <th>Date</th>
+                  <th>Decision By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {apps.map((a) => {
+                  const isSelected = selectedApp?.id === a.id;
+                  const statusBadge = a.status === 'pending'
+                    ? { cls: 'yellow', label: '⏳ Pending' }
+                    : a.status === 'accepted'
+                    ? { cls: 'green', label: '✅ Accepted' }
+                    : { cls: 'red', label: '❌ Rejected' };
+                  return (
+                    <React.Fragment key={a.id}>
+                      <tr onClick={() => setSelectedApp(isSelected ? null : a)} style={{ cursor: 'pointer', background: isSelected ? 'rgba(0,212,255,0.06)' : undefined }}>
+                        <td><span style={{ fontWeight: 500 }}>{a.username}</span></td>
+                        <td><span className="admin-badge cyan" style={{ fontSize: 11 }}>{a.categoryId}</span></td>
+                        <td><span className={`admin-badge ${statusBadge.cls}`} style={{ fontSize: 11 }}>{statusBadge.label}</span></td>
+                        <td style={{ fontSize: 13 }}>
+                          <span style={{ color: '#3fb950' }}>👍 {a.votes.likes}</span>
+                          {' / '}
+                          <span style={{ color: '#f85149' }}>👎 {a.votes.dislikes}</span>
+                        </td>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                          {a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </td>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                          {a.acceptedBy || a.rejectedBy || '—'}
+                        </td>
+                      </tr>
+                      {isSelected && (
+                        <tr>
+                          <td colSpan={6} style={{ padding: 0 }}>
+                            <div style={{
+                              background: 'rgba(0,0,0,0.3)',
+                              borderTop: '1px solid rgba(0,212,255,0.15)',
+                              borderBottom: '1px solid rgba(0,212,255,0.15)',
+                              padding: '16px 20px',
+                            }}>
+                              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                                User ID: <code>{a.userId}</code> &bull; Applied: {a.createdAt ? new Date(a.createdAt).toLocaleString() : '—'}
+                                {a.rejectionReason && (
+                                  <div style={{ marginTop: 8, color: '#f85149' }}>
+                                    <strong>Rejection Reason:</strong> {a.rejectionReason}
+                                  </div>
+                                )}
+                              </div>
+                              {Object.entries(a.answers || {}).map(([q, ans], i) => (
+                                <div key={i} style={{ marginBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: 10 }}>
+                                  <div style={{ fontWeight: 600, fontSize: 13, color: '#fff', marginBottom: 4 }}>{q}</div>
+                                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>{String(ans)}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <SaveDeployBar hasChanges={hasChanges} saving={saving} onSave={handleSave} onDiscard={handleDiscard} />
