@@ -5,6 +5,7 @@ import { getClientIp } from '@/lib/admin/sanitize';
 import { checkRateLimit } from '@/lib/bazaar/rate-limit';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { getPresignedUploadUrl, getPublicUrl, isR2Configured, purgeCdnCache } from '@/lib/admin/r2';
+import clientPromise from '@/lib/mongodb';
 
 // Client uploads directly to R2 using the presigned URL — no body size limit on our server
 export async function POST(request: NextRequest) {
@@ -56,6 +57,18 @@ export async function POST(request: NextRequest) {
     const publicUrl = getPublicUrl(key);
     // Purge CDN cache proactively so the new upload is served immediately
     purgeCdnCache([publicUrl]).catch(() => {});
+
+    // Bump asset version in MongoDB so bots bust Discord's image proxy cache.
+    // Uses dot notation to update just this key without replacing the full map.
+    clientPromise
+      .then(client =>
+        client.db('Database').collection('bot_config').updateOne(
+          { _id: 'asset_versions' as any },
+          { $set: { [`data.${key}`]: Date.now(), updatedAt: new Date() } },
+          { upsert: true }
+        )
+      )
+      .catch(err => console.error('[PRESIGN] Failed to bump asset version:', err));
 
     return NextResponse.json({
       presignedUrl,
