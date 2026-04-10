@@ -5,8 +5,7 @@ import ConfigSection from '../components/ConfigSection';
 import BotBadge from '../components/BotBadge';
 import SaveDeployBar from '../components/SaveDeployBar';
 import { useUnsavedWarning } from '../hooks/useUnsavedWarning';
-import ImagePicker from '../components/ImagePicker';
-import RichTextArea from '../components/RichTextArea';
+// ImagePicker and RichTextArea removed — category editor not used
 import RolePicker from '../components/RolePicker';
 import ChannelPicker from '../components/ChannelPicker';
 import { SkeletonCard, SkeletonTable } from '../components/Skeleton';
@@ -198,54 +197,7 @@ export default function TicketsPage() {
           <BotBadge bot="butler" />
         </ConfigSection>
 
-        {categoryKeys.map((key) => {
-          const cat = config.categories[key];
-          const staffCount = cat.staff_roles?.length ?? 0;
-          return (
-            <div key={key} className="admin-stat-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                {cat.image && (
-                  <img src={cat.image} alt={cat.title || key}
-                    style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(0,212,255,0.15)' }} />
-                )}
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <h3 className="admin-section-title" style={{ margin: 0 }}>{cat.title || key}</h3>
-                    <span className="admin-badge cyan">{key}</span>
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
-                    {staffCount > 0 ? `${staffCount} staff role${staffCount === 1 ? '' : 's'} assigned` : 'Using global staff roles'}
-                  </div>
-                </div>
-                <button className="admin-btn admin-btn-danger admin-btn-sm" onClick={() => {
-                  const updated = { ...config.categories };
-                  delete updated[key];
-                  setConfig(p => ({ ...p, categories: updated }));
-                }}>Delete</button>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div className="admin-form-group">
-                  <label className="admin-form-label">✏️ Title</label>
-                  <input className="admin-input" value={cat.title ?? ''} onChange={(e) => updateCategory(key, { title: e.target.value })} dir="auto" />
-                </div>
-                <RichTextArea label="📝 Description" value={cat.description ?? ''} onChange={(v) => updateCategory(key, { description: v })} rows={3} minHeight="100px" />
-                <ImagePicker label="🖼️ Image (optional)" value={cat.image ?? ''} onChange={(url) => updateCategory(key, { image: url })} uploadPrefix="butler/tickets/" />
-                <RolePicker label="🛡️ Staff Roles (override)" description="Roles specific to this category. Overrides global if set." value={cat.staff_roles ?? []} onChange={v => updateCategory(key, { staff_roles: v as string[] })} multi />
-              </div>
-            </div>
-          );
-        })}
-
-        <div style={{ border: '2px dashed rgba(0,212,255,0.15)', borderRadius: 'var(--radius-md)', padding: '20px 24px', display: 'flex', gap: 10, alignItems: 'center', background: 'rgba(0,0,0,0.08)' }}>
-          <input className="admin-input" style={{ maxWidth: 220 }} value={newCategoryKey} onChange={(e) => setNewCategoryKey(e.target.value)} placeholder="Category key (e.g. bugs)" />
-          <button className="admin-btn admin-btn-ghost" disabled={!newCategoryKey.trim()} onClick={() => {
-            const key = newCategoryKey.trim();
-            if (!key) return;
-            setConfig(p => ({ ...p, categories: { ...p.categories, [key]: { title: key, description: '', staff_roles: [] } } }));
-            setNewCategoryKey('');
-          }}>+ Add Category</button>
-        </div>
+        {/* Category editor + Add Category removed — config is hardcoded in bot config.ts */}
       </div>
 
       {/* Ticket History */}
