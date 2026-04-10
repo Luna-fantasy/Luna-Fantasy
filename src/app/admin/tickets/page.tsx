@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ConfigSection from '../components/ConfigSection';
 import BotBadge from '../components/BotBadge';
 import SaveDeployBar from '../components/SaveDeployBar';
@@ -68,6 +68,12 @@ export default function TicketsPage() {
   const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'closed'>('all');
   const [totalCounter, setTotalCounter] = useState(0);
 
+  // Chat viewer
+  const [selectedTicket, setSelectedTicket] = useState<TicketEntry | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState('');
+
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/config/butler');
@@ -127,6 +133,21 @@ export default function TicketsPage() {
 
   const updateCategory = (key: string, updates: Partial<TicketCategory>) => {
     setConfig(p => ({ ...p, categories: { ...p.categories, [key]: { ...p.categories[key], ...updates } } }));
+  };
+
+  const openTicket = async (ticket: TicketEntry) => {
+    if (selectedTicket?.threadId === ticket.threadId) { setSelectedTicket(null); return; }
+    setSelectedTicket(ticket);
+    setChatLoading(true);
+    setChatError('');
+    setChatMessages([]);
+    try {
+      const res = await fetch(`/api/admin/tickets/messages?threadId=${ticket.threadId}`);
+      const data = await res.json();
+      if (data.error && !data.messages?.length) { setChatError(data.error); }
+      else { setChatMessages(data.messages || []); }
+    } catch { setChatError('Failed to load messages'); }
+    finally { setChatLoading(false); }
   };
 
   const openCount = tickets.filter(t => t.status === 'open').length;
@@ -262,25 +283,96 @@ export default function TicketsPage() {
                 </tr>
               </thead>
               <tbody>
-                {tickets.map((t, i) => (
-                  <tr key={t.threadId || i}>
-                    <td style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>
-                      {t.ticketNumber ? `#${t.ticketNumber}` : '—'}
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 500 }}>{t.username}</span>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>{t.userId}</span>
-                    </td>
-                    <td>
-                      <span className={`admin-badge ${t.status === 'open' ? 'green' : 'red'}`} style={{ fontSize: 11 }}>
-                        {t.status === 'open' ? '🟢 Open' : '🔴 Closed'}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{formatDate(t.createdAt)}</td>
-                    <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>{formatDuration(t.createdAt, t.closedAt)}</td>
-                    <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t.closedByName || '—'}</td>
-                  </tr>
-                ))}
+                {tickets.map((t, i) => {
+                  const isSelected = selectedTicket?.threadId === t.threadId;
+                  return (
+                    <React.Fragment key={t.threadId || i}>
+                      <tr onClick={() => openTicket(t)} style={{ cursor: 'pointer', background: isSelected ? 'rgba(0,212,255,0.06)' : undefined }}>
+                        <td style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>
+                          {t.ticketNumber ? `#${t.ticketNumber}` : '—'}
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 500 }}>{t.username}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>{t.userId}</span>
+                        </td>
+                        <td>
+                          <span className={`admin-badge ${t.status === 'open' ? 'green' : 'red'}`} style={{ fontSize: 11 }}>
+                            {t.status === 'open' ? '🟢 Open' : '🔴 Closed'}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{formatDate(t.createdAt)}</td>
+                        <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>{formatDuration(t.createdAt, t.closedAt)}</td>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t.closedByName || '—'}</td>
+                      </tr>
+                      {isSelected && (
+                        <tr>
+                          <td colSpan={6} style={{ padding: 0 }}>
+                            <div style={{
+                              background: 'rgba(0,0,0,0.3)',
+                              borderTop: '1px solid rgba(0,212,255,0.15)',
+                              borderBottom: '1px solid rgba(0,212,255,0.15)',
+                              padding: '16px 20px',
+                              maxHeight: 400,
+                              overflowY: 'auto',
+                            }}>
+                              {chatLoading && <div style={{ color: 'var(--text-muted)', padding: 12 }}>Loading messages...</div>}
+                              {chatError && <div style={{ color: '#f85149', padding: 12 }}>{chatError}</div>}
+                              {!chatLoading && !chatError && chatMessages.length === 0 && (
+                                <div style={{ color: 'var(--text-muted)', padding: 12 }}>No messages found</div>
+                              )}
+                              {chatMessages.map((m) => (
+                                <div key={m.id} style={{
+                                  display: 'flex', gap: 10, padding: '6px 0',
+                                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                }}>
+                                  <img
+                                    src={m.avatar || `https://cdn.discordapp.com/embed/avatars/${parseInt(m.authorId || '0') % 5}.png`}
+                                    alt="" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, marginTop: 2 }}
+                                  />
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                      <span style={{
+                                        fontWeight: 600, fontSize: 13,
+                                        color: m.isBot ? 'var(--accent-primary)' : '#fff',
+                                      }}>
+                                        {m.author}
+                                        {m.isBot && <span style={{
+                                          fontSize: 9, background: 'var(--accent-primary)', color: '#fff',
+                                          padding: '1px 4px', borderRadius: 3, marginLeft: 4, verticalAlign: 'middle',
+                                        }}>BOT</span>}
+                                      </span>
+                                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                                        {new Date(m.timestamp).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                    {m.content && (
+                                      <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                        {m.content}
+                                      </div>
+                                    )}
+                                    {m.embeds > 0 && !m.content && (
+                                      <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 2 }}>[embed]</div>
+                                    )}
+                                    {m.attachments?.length > 0 && (
+                                      <div style={{ marginTop: 4, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                        {m.attachments.map((a: any, ai: number) => (
+                                          <a key={ai} href={a.url} target="_blank" rel="noopener noreferrer"
+                                            style={{ fontSize: 12, color: 'var(--accent-primary)', textDecoration: 'underline' }}>
+                                            📎 {a.name}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
