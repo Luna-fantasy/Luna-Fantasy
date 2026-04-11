@@ -62,6 +62,39 @@ export async function getUserLevel(userId: string): Promise<number> {
   return doc?.level ?? 0;
 }
 
+// ── Profile (for passport check) ──
+
+/**
+ * Read a user's profile data, handling both st.db v7 wrapped format
+ * ({ data: {...} } or { data: "JSON string" }) and top-level flat docs.
+ * Mirrors the extraction logic used by the game-data route so passport
+ * checks stay consistent across the site.
+ */
+export async function getUserProfile(userId: string): Promise<{ passport: any | null } | null> {
+  const db = await getDb();
+  const doc = await db.collection('profiles').findOne({ _id: userId as any });
+  if (!doc) return null;
+
+  // Flat / top-level passport field
+  if ((doc as any).passport) return { passport: (doc as any).passport };
+
+  const data = (doc as any).data;
+  if (!data) return { passport: null };
+
+  if (typeof data === 'object') {
+    return { passport: data.passport ?? null };
+  }
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data);
+      return { passport: parsed?.passport ?? null };
+    } catch {
+      return { passport: null };
+    }
+  }
+  return { passport: null };
+}
+
 // ── Debt ──
 
 export async function getDebtAmount(userId: string): Promise<number> {
@@ -92,32 +125,51 @@ export async function getActiveLoan(userId: string): Promise<LoanRecord | null> 
 
 export async function createLoan(
   userId: string,
-  tierAmount: number,
-  isVip: boolean
+  tierAmount: number
 ): Promise<{ loan: LoanRecord; balanceAfter: number }> {
   const config = await getLiveBankConfig();
 
-  // Validate tier
-  if (!config.loanTiers.includes(tierAmount)) {
+  // Resolve the full tier object — we need the passport_required flag and
+  // per-tier level requirement, not just the amount. Mirrors Butler's
+  // banker_commands.handleTakeLoan lookup.
+  const tier = config.loanTiersFull.find((t) => t.amount === tierAmount);
+  if (!tier) {
     throw new Error('Invalid loan tier');
   }
 
   // Fix inconsistent state before checking
   await fixOverdueLoanState(userId);
 
-  // Check preconditions
-  const [activeLoan, hasDebt, level] = await Promise.all([
+  // Check preconditions — include profile (for passport) and investment
+  // (for VIP status, derived server-side — do NOT trust client).
+  const [activeLoan, hasDebt, level, profile, investment] = await Promise.all([
     getActiveLoan(userId),
     checkDebt(userId),
     getUserLevel(userId),
+    getUserProfile(userId),
+    getInvestment(userId),
   ]);
 
   if (activeLoan) throw new Error('You already have an active loan');
   if (hasDebt) throw new Error('You have outstanding debt');
-  if (level < config.loanMinLevel) throw new Error(`You must be at least level ${config.loanMinLevel}`);
 
-  const interestRate = isVip ? config.loanVipInterestRate : config.loanInterestRate;
+  // Passport-gated tiers bypass the level check but require a passport.
+  // Mirrors Butler's banker_commands.ts:1036 logic exactly.
+  if (tier.passport_required) {
+    if (!profile?.passport) {
+      throw new Error('This loan is only available to Luna Passport holders');
+    }
+  } else if (level < tier.level) {
+    throw new Error(`You must be at least level ${tier.level} for this loan`);
+  }
+
+  // VIP is derived from active investment — NEVER taken from client input.
+  // Mirrors Butler's banker_commands.ts:1067 check.
+  const isVip = !!(investment && investment.amount > 0);
+
+  const interestRate = isVip ? config.loanVipInterestRate : (tier.interest ?? config.loanInterestRate);
   const interest = Math.floor(tierAmount * interestRate);
+  const loanDuration = tier.duration ?? config.loanDurationMs;
   const now = Date.now();
 
   const loan: LoanRecord = {
@@ -126,7 +178,7 @@ export async function createLoan(
     repaymentAmount: tierAmount + interest,
     interestRate,
     isVIP: isVip,
-    dueDate: now + config.loanDurationMs,
+    dueDate: now + loanDuration,
     active: true,
     takenAt: now,
     overdue: false,
@@ -490,6 +542,7 @@ export async function getBankDashboardData(userId: string): Promise<BankDashboar
     monthlyCooldown,
     roleIds,
     insured,
+    profile,
   ] = await Promise.all([
     getBalance(userId),
     getDebtAmount(userId),
@@ -500,6 +553,7 @@ export async function getBankDashboardData(userId: string): Promise<BankDashboar
     getCooldown('monthly', userId),
     getUserGuildRoles(userId),
     hasInsurance(userId),
+    getUserProfile(userId),
   ]);
 
   const roles = classifyUserRoles(roleIds);
@@ -518,5 +572,6 @@ export async function getBankDashboardData(userId: string): Promise<BankDashboar
     },
     roles,
     hasInsurance: insured,
+    hasPassport: !!profile?.passport,
   };
 }

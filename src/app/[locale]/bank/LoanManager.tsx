@@ -3,17 +3,19 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { LoanContractCanvas } from '@/components/LoanContractCanvas';
-import type { LoanRecord } from '@/types/bank';
+import type { LoanRecord, LoanTierDetail } from '@/types/bank';
 
 interface LoanManagerProps {
   activeLoan: LoanRecord | null;
   level: number;
   debt: number;
   isVip: boolean;
+  hasPassport: boolean;
   balance: number;
   userName?: string | null;
   userAvatar?: string | null;
   loanTiers?: number[];
+  loanTiersFull?: LoanTierDetail[];
   interestRate?: number;
   vipInterestRate?: number;
   onTakeLoan: (tier: number) => Promise<void>;
@@ -42,9 +44,19 @@ function formatCountdownDays(dueDate: number): { text: string; overdue: boolean 
   return { text: `${hours}h`, overdue: false };
 }
 
-export function LoanManager({ activeLoan, level, debt, isVip, balance, userName, userAvatar, loanTiers, interestRate, vipInterestRate, onTakeLoan, onRepayLoan, onPartialRepayLoan }: LoanManagerProps) {
+export function LoanManager({ activeLoan, level, debt, isVip, hasPassport, balance, userName, userAvatar, loanTiers, loanTiersFull, interestRate, vipInterestRate, onTakeLoan, onRepayLoan, onPartialRepayLoan }: LoanManagerProps) {
   const DEFAULT_LOAN_TIERS = [5_000, 10_000, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 75_000, 100_000];
   const tiers = loanTiers ?? DEFAULT_LOAN_TIERS;
+
+  // Map each tier amount to its full detail for quick lookups in render.
+  // Server-side createLoan is the source of truth for gating; this is purely
+  // cosmetic — it lets us show the 🛂 badge and disable the click before the
+  // user hits the API. A motivated client can still POST directly, but they
+  // will be rejected with "This loan is only available to Luna Passport holders".
+  const tierDetails = new Map<number, LoanTierDetail>();
+  if (loanTiersFull) {
+    for (const t of loanTiersFull) tierDetails.set(t.amount, t);
+  }
 
   const t = useTranslations('bankPage');
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
@@ -277,16 +289,28 @@ export function LoanManager({ activeLoan, level, debt, isVip, balance, userName,
 
           <div className="loan-tiers-title">{t('loans.tiers')}</div>
           <div className="loan-tiers-grid interactive">
-            {tiers.map((tier) => (
-              <button
-                key={tier}
-                className={`loan-tier selectable ${selectedTier === tier ? 'selected' : ''}`}
-                onClick={() => canTakeLoan && setSelectedTier(tier === selectedTier ? null : tier)}
-                disabled={!canTakeLoan}
-              >
-                {formatNumber(tier)}
-              </button>
-            ))}
+            {tiers.map((tier) => {
+              const detail = tierDetails.get(tier);
+              const passportGated = !!detail?.passport_required;
+              const tierDisabled = !canTakeLoan || (passportGated && !hasPassport);
+              const title = passportGated && !hasPassport
+                ? 'Requires Luna Passport'
+                : passportGated
+                  ? 'Passport tier'
+                  : undefined;
+              return (
+                <button
+                  key={tier}
+                  className={`loan-tier selectable ${selectedTier === tier ? 'selected' : ''} ${passportGated ? 'passport-gated' : ''} ${passportGated && !hasPassport ? 'locked' : ''}`}
+                  onClick={() => !tierDisabled && setSelectedTier(tier === selectedTier ? null : tier)}
+                  disabled={tierDisabled}
+                  title={title}
+                >
+                  {formatNumber(tier)}
+                  {passportGated && <span className="loan-tier-passport"> 🛂</span>}
+                </button>
+              );
+            })}
           </div>
 
           {selectedTier && (

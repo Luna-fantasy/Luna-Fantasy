@@ -63,7 +63,7 @@ async function readBotConfig(docId: string): Promise<any | null> {
 export interface LiveBankConfig {
   // Loans
   loanTiers: number[];
-  loanTiersFull: Array<{ level: number; amount: number; interest: number; duration: number }>;
+  loanTiersFull: Array<{ level: number; amount: number; interest: number; duration: number; passport_required?: boolean }>;
   loanInterestRate: number;
   loanVipInterestRate: number;
   loanDurationMs: number;
@@ -117,8 +117,9 @@ export async function getLiveBankConfig(): Promise<LiveBankConfig> {
     readBotConfig('butler_games'),
   ]);
 
-  // Extract loan tiers from the full tier objects
-  const fullTiers: Array<{ level: number; amount: number; interest: number; duration: number }> =
+  // Extract loan tiers from the full tier objects — keep passport_required flag
+  // so the loan route can enforce passport-gated tiers.
+  const fullTiers: Array<{ level: number; amount: number; interest: number; duration: number; passport_required?: boolean }> =
     banking?.loan_tiers ?? [];
   const tierAmounts = fullTiers.length > 0
     ? fullTiers.map((t: any) => t.amount)

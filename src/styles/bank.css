@@ -1512,6 +1512,43 @@
   transform: none;
 }
 
+/* Passport-gated loan tiers — gold accent so admins/holders see they exist,
+   locked opacity when the current user has no passport. */
+.loan-tier.passport-gated {
+  border-color: rgba(255, 215, 0, 0.45);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.10), rgba(199, 117, 0, 0.06));
+}
+
+.loan-tier.passport-gated.selectable:hover:not(:disabled) {
+  border-color: rgba(255, 215, 0, 0.9);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.25);
+}
+
+.loan-tier.passport-gated.selectable.selected {
+  border-color: rgba(255, 215, 0, 0.95);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(199, 117, 0, 0.18));
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.35);
+}
+
+.loan-tier.locked {
+  position: relative;
+}
+
+.loan-tier.locked::after {
+  content: "🔒";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.75em;
+  opacity: 0.8;
+}
+
+.loan-tier-passport {
+  font-size: 0.9em;
+  margin-left: 4px;
+  opacity: 0.85;
+}
+
 /* Loan Preview */
 .loan-preview {
   margin: 24px 0;

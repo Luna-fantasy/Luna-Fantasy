@@ -28,6 +28,7 @@ export async function GET() {
       ...data,
       config: {
         loanTiers: bankConfig.loanTiers,
+        loanTiersFull: bankConfig.loanTiersFull,
         loanInterestRate: bankConfig.loanInterestRate,
         loanVipInterestRate: bankConfig.loanVipInterestRate,
         loanDurationMs: bankConfig.loanDurationMs,

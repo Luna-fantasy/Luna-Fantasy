@@ -29,14 +29,18 @@ export async function POST(request: Request) {
 
   try {
     const config = await getLiveBankConfig();
-    const { tier, isVip } = await request.json();
+    // NOTE: We intentionally ignore any `isVip` field from the client. VIP
+    // status is derived server-side from the user's active investment inside
+    // createLoan. Trusting the client here would let anyone pick the VIP
+    // interest rate (15%) regardless of whether they actually invested.
+    const { tier } = await request.json();
 
-    if (!config.loanTiers.includes(tier)) {
+    if (typeof tier !== 'number' || !config.loanTiers.includes(tier)) {
       return NextResponse.json({ error: 'Invalid loan tier' }, { status: 400 });
     }
 
     const balanceBefore = await getBalance(discordId);
-    const { loan, balanceAfter } = await createLoan(discordId, tier, !!isVip);
+    const { loan, balanceAfter } = await createLoan(discordId, tier);
 
     await logTransaction({
       discordId,

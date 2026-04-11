@@ -31,8 +31,17 @@ export interface RoleClassification {
   roleIds: string[];
 }
 
+export interface LoanTierDetail {
+  level: number;
+  amount: number;
+  interest: number;
+  duration: number;
+  passport_required?: boolean;
+}
+
 export interface BankConfigData {
   loanTiers: number[];
+  loanTiersFull: LoanTierDetail[];
   loanInterestRate: number;
   loanVipInterestRate: number;
   loanDurationMs: number;
@@ -62,6 +71,7 @@ export interface BankDashboardData {
   };
   roles: RoleClassification;
   hasInsurance: boolean;
+  hasPassport: boolean;
   config?: BankConfigData;
 }
 

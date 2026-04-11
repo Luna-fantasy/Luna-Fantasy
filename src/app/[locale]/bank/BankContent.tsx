@@ -137,7 +137,9 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
 
   const handleTakeLoan = async (tier: number) => {
     try {
-      const data = await bankFetch('/api/bank/loan', 'POST', { tier, isVip });
+      // VIP status is now derived server-side from active investment — we no
+      // longer send isVip from the client (it would be ignored anyway).
+      const data = await bankFetch('/api/bank/loan', 'POST', { tier });
       dispatchBalanceUpdate(data.newBalance);
       showResult('success', `${t('loanAction.loanGranted')} +${tier.toLocaleString()} ${t('currency')}`);
       await refetch();
@@ -250,6 +252,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
         level={bankData.level}
         debt={bankData.debt}
         isVip={isVip}
+        hasPassport={bankData.hasPassport}
         balance={bankData.balance}
         userName={session?.user?.globalName || session?.user?.name || session?.user?.username}
         userAvatar={session?.user?.image}
@@ -257,6 +260,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
         onRepayLoan={handleRepayLoan}
         onPartialRepayLoan={handlePartialRepayLoan}
         loanTiers={bankData.config?.loanTiers}
+        loanTiersFull={bankData.config?.loanTiersFull}
         interestRate={bankData.config?.loanInterestRate}
         vipInterestRate={bankData.config?.loanVipInterestRate}
       />
