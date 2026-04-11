@@ -44,6 +44,7 @@ const navItems: { section: string; items: NavItem[] }[] = [
       { label: 'Luna Map', href: '/admin/luna-map', icon: 'map' },
       { label: 'Tickets', href: '/admin/tickets', icon: 'shield' },
       { label: 'Applications', href: '/admin/applications', icon: 'users' },
+      { label: 'Passport', href: '/admin/passport', icon: 'passport' },
       { label: 'Challenges', href: '/admin/challenges', icon: 'trophy' },
     ],
   },
@@ -231,6 +232,13 @@ function NavIcon({ name }: { name: string }) {
         <path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22" />
         <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22" />
         <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+      </svg>
+    ),
+    passport: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="2" width="16" height="20" rx="2" />
+        <circle cx="12" cy="10" r="3" />
+        <path d="M8 17h8" />
       </svg>
     ),
   };

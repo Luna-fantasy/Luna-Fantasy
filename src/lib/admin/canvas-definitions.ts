@@ -230,29 +230,27 @@ const chestElements: CanvasElementDef[] = [
 ];
 
 // ─── Passport — Butler ──────────────────────────────────────────────
-// 1004x762 Passport.jpeg template — user avatar + 7 text fields.
-// Keep these coords in sync with PASSPORT_LAYOUT in Butler's profile_card.ts
+// 1004x762 Passport.jpeg template — user avatar + 5 text values.
+// The template already prints [PASSPORT ID] [NAME] [BIRTHDAY] [DATE ISSUED] [FACTION],
+// so the bot only draws the raw value at each coordinate (no label prefix).
+// Keep these coords in sync with PASSPORT_DEFAULTS in Butler's profile_card.ts
 
 const passportLayout: Record<string, any> = {
-  avatar:       { x: 170, y: 390, radiusX: 110, radiusY: 110 },
-  name:         { x: 380, y: 275, fontSize: 26 },
-  faction:      { x: 380, y: 330, fontSize: 22 },
-  dob:          { x: 380, y: 385, fontSize: 22 },
-  number:       { x: 380, y: 440, fontSize: 22 },
-  issuedAt:     { x: 380, y: 495, fontSize: 22 },
-  placeOfIssue: { x: 380, y: 550, fontSize: 22 },
-  issuedBy:     { x: 380, y: 605, fontSize: 22 },
+  avatar:   { x: 170, y: 390, radiusX: 110, radiusY: 110 },
+  number:   { x: 620, y: 270, fontSize: 24 },
+  name:     { x: 620, y: 335, fontSize: 24 },
+  dob:      { x: 620, y: 400, fontSize: 24 },
+  issuedAt: { x: 620, y: 465, fontSize: 24 },
+  faction:  { x: 620, y: 530, fontSize: 24 },
 };
 
 const passportElements: CanvasElementDef[] = [
-  { id: 'avatar',       label: 'User Avatar',     type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Photo' },
-  { id: 'name',         label: 'Full Name',       type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
-  { id: 'faction',      label: 'Faction',         type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
-  { id: 'dob',          label: 'Date of Birth',   type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
-  { id: 'number',       label: 'Passport Number', type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
-  { id: 'issuedAt',     label: 'Issue Date',      type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
-  { id: 'placeOfIssue', label: 'Place of Issue',  type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
-  { id: 'issuedBy',     label: 'Issued By',       type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'avatar',   label: 'User Avatar',     type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Photo' },
+  { id: 'number',   label: 'Passport ID',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'name',     label: 'Full Name',       type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'dob',      label: 'Birthday',        type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'issuedAt', label: 'Date Issued',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'faction',  label: 'Faction',         type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
 ];
 
 // ─── All Canvas Definitions ─────────────────────────────────────────
@@ -412,9 +410,7 @@ export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
     elements: passportElements,
     defaultLayout: passportLayout,
     colorKeys: [
-      { key: 'label',  label: 'Label Color', default: '#44342a' },
-      { key: 'value',  label: 'Value Color', default: '#1a1208' },
-      { key: 'accent', label: 'Accent',      default: '#b8860b' },
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
     ],
   },
 ];
