@@ -213,7 +213,7 @@ export default function PassportPage() {
             color: 'var(--text-secondary)',
           }}>
             <div style={{ fontWeight: 600, color: '#d4a017', marginBottom: 2 }}>Passport Benefits (hardcoded in bot)</div>
-            <div>• +2,500 Lunari bonus on the monthly bank salary</div>
+            <div>• +2,500 Lunari bonus on the daily bank reward</div>
             <div>• 10% discount on Mells Selvair shop purchases</div>
             <div>• Access to the 150,000 Lunari passport-only loan tier (bypasses level requirement)</div>
           </div>
