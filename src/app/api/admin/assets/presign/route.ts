@@ -59,15 +59,24 @@ export async function POST(request: NextRequest) {
     purgeCdnCache([publicUrl]).catch(() => {});
 
     // Bump asset version in MongoDB so bots bust Discord's image proxy cache.
-    // Uses dot notation to update just this key without replacing the full map.
+    // We CANNOT use dot notation here — R2 keys contain dots (e.g. ".png") and
+    // MongoDB would interpret them as nested-path separators, creating
+    // { "butler/misc/Avelle-Adar": { "png": 123 } } instead of the flat
+    // { "butler/misc/Avelle-Adar.png": 123 } that the bots expect to read.
+    // Read-modify-write keeps the key literal. Concurrent uploads are rare
+    // enough in the admin dashboard that lost updates are not a real concern.
     clientPromise
-      .then(client =>
-        client.db('Database').collection('bot_config').updateOne(
+      .then(async client => {
+        const col = client.db('Database').collection('bot_config');
+        const existing = await col.findOne({ _id: 'asset_versions' as any });
+        const data: Record<string, number> = (existing as any)?.data ?? {};
+        data[key] = Date.now();
+        await col.updateOne(
           { _id: 'asset_versions' as any },
-          { $set: { [`data.${key}`]: Date.now(), updatedAt: new Date() } },
+          { $set: { data, updatedAt: new Date() } },
           { upsert: true }
-        )
-      )
+        );
+      })
       .catch(err => console.error('[PRESIGN] Failed to bump asset version:', err));
 
     return NextResponse.json({
