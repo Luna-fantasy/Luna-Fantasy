@@ -99,13 +99,14 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
   const { data: session } = useSession();
   const t = useTranslations('profilePage');
   const isPublicView = !!viewingDiscordId;
-  const { data: gameData, isLoading } = useGameData(viewingDiscordId || null);
+  const { data: gameData, isLoading, error: gameDataError } = useGameData(viewingDiscordId || null);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const activeGame: GameKey = 'lunaFantasy';
   const [lightbox, setLightbox] = useState<{ src: string; caption: string } | null>(null);
   const [selectedCard, setSelectedCard] = useState<CardDetailData | null>(null);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+  const [passportTemplateFailed, setPassportTemplateFailed] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(true);
   const [txPage, setTxPage] = useState(0);
@@ -134,6 +135,49 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
 
   if (!isPublicView && !session?.user) return null;
 
+  // Surface a hard failure from /api/profile/game-data instead of hanging
+  // in the loading skeleton forever. Retry button just reloads — simpler
+  // than plumbing a refetch signal through the existing hook.
+  if (!isLoading && gameDataError && !gameData) {
+    return (
+      <div className="profile-page">
+        <div className="profile-container" style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center' }}>
+          <div className="profile-card" style={{ padding: 32 }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+            <h2 style={{ margin: '0 0 8px' }}>Failed to load profile</h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 20px' }}>
+              {gameDataError}
+            </p>
+            <button
+              className="btn btn-primary"
+              onClick={() => window.location.reload()}
+              style={{ padding: '10px 24px' }}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Whitelist avatar origins so a compromised upstream can't inject
+  // data:/blob:/javascript: URIs into CSS url() or <img src>.
+  const isSafeAvatarUrl = (u: string | null | undefined): boolean => {
+    if (!u) return false;
+    try {
+      const url = new URL(u);
+      if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+      return (
+        url.hostname === 'cdn.discordapp.com' ||
+        url.hostname.endsWith('.discordapp.com') ||
+        url.hostname === 'assets.lunarian.app'
+      );
+    } catch {
+      return false;
+    }
+  };
+
   const user = isPublicView ? null : session!.user;
   const displayName = isPublicView
     ? (publicUser?.name || viewingDiscordId!)
@@ -141,7 +185,8 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
   const username = isPublicView
     ? (publicUser?.name || viewingDiscordId!)
     : (user!.username || user!.email?.split('@')[0] || 'user');
-  const avatarUrl = isPublicView ? publicUser?.image : user!.image;
+  const rawAvatarUrl = isPublicView ? publicUser?.image : user!.image;
+  const avatarUrl = isSafeAvatarUrl(rawAvatarUrl) ? rawAvatarUrl : null;
   const profileDiscordId = isPublicView ? viewingDiscordId! : user!.discordId;
 
   const memberSince = new Date().toLocaleDateString(undefined, {
@@ -269,6 +314,145 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
           </div>
 
         </div>
+
+        {/* Luna Passport Section */}
+        {(() => {
+          const passport = gameData?.profile?.passport ?? null;
+          const hasPassport = !!passport;
+          const issuedStr = hasPassport
+            ? (() => {
+                const d = new Date(passport!.issuedAt);
+                return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+              })()
+            : '';
+
+          // VIP variant — cosmetic only. Set upstream by the game-data API
+          // (which reads applications_system.passport_vip_roles + calls
+          // getUserGuildRoles). Using the flag means the website mirrors
+          // Butler's live role check without having to know the role list.
+          const isVipPassport = hasPassport && (gameData?.hasVipPassport ?? false);
+
+          // Canvas defaults — pixel coords on the template's NATIVE dimensions.
+          // Normal passport template is 1004x762, VIP template is 1518x1018.
+          // Mirrors the `width`/`height` + `defaultLayout` of the corresponding
+          // CanvasTypeDef entries in src/lib/admin/canvas-definitions.ts AND
+          // PASSPORT_DEFAULTS / PASSPORT_VIP_DEFAULTS in Butler's profile_card.ts.
+          // The canvas editor writes overrides into butler_canvas_layouts.passport_web
+          // (normal) or .passport_vip_web (VIP), both come down via gameData.
+          const PASSPORT_W = isVipPassport ? 1518 : 1004;
+          const PASSPORT_H = isVipPassport ? 1018 : 762;
+          const DEFAULTS = isVipPassport
+            ? {
+                avatar:   { x: 257, y: 521, radiusX: 166, radiusY: 147 },
+                number:   { x: 937, y: 361, fontSize: 36 },
+                name:     { x: 937, y: 448, fontSize: 36 },
+                dob:      { x: 937, y: 534, fontSize: 36 },
+                issuedAt: { x: 937, y: 621, fontSize: 36 },
+                faction:  { x: 937, y: 708, fontSize: 36 },
+              }
+            : {
+                avatar:   { x: 170, y: 390, radiusX: 110, radiusY: 110 },
+                number:   { x: 620, y: 270, fontSize: 24 },
+                name:     { x: 620, y: 335, fontSize: 24 },
+                dob:      { x: 620, y: 400, fontSize: 24 },
+                issuedAt: { x: 620, y: 465, fontSize: 24 },
+                faction:  { x: 620, y: 530, fontSize: 24 },
+              };
+          const layoutOverrides = (isVipPassport ? gameData?.passportVipLayout : gameData?.passportLayout) ?? {};
+          const templateUrl = isVipPassport
+            ? 'https://assets.lunarian.app/butler/backgrounds/PassportVIPFinal.png'
+            : 'https://assets.lunarian.app/butler/backgrounds/Passport.jpeg';
+          const L = {
+            avatar:   { ...DEFAULTS.avatar,   ...(layoutOverrides.avatar   || {}) },
+            number:   { ...DEFAULTS.number,   ...(layoutOverrides.number   || {}) },
+            name:     { ...DEFAULTS.name,     ...(layoutOverrides.name     || {}) },
+            dob:      { ...DEFAULTS.dob,      ...(layoutOverrides.dob      || {}) },
+            issuedAt: { ...DEFAULTS.issuedAt, ...(layoutOverrides.issuedAt || {}) },
+            faction:  { ...DEFAULTS.faction,  ...(layoutOverrides.faction  || {}) },
+          };
+
+          // Convert a text field's canvas coords → CSS inline styles.
+          // x,y are in pixels on 1004x762. fontSize is in pixels on the canvas,
+          // converted to cqi so it scales with the container width. translateY(-80%)
+          // is applied via .passport-field base class to shift baseline → top%.
+          const textStyle = (field: { x: number; y: number; fontSize: number }): React.CSSProperties => ({
+            left:     `${(field.x / PASSPORT_W) * 100}%`,
+            top:      `${(field.y / PASSPORT_H) * 100}%`,
+            fontSize: `${(field.fontSize / PASSPORT_W) * 100}cqi`,
+          });
+
+          // Avatar is drawn in a box of (radiusX*2, radiusY*2) centered at (x, y).
+          const avatarStyle: React.CSSProperties = {
+            left:          `${(L.avatar.x / PASSPORT_W) * 100}%`,
+            top:           `${(L.avatar.y / PASSPORT_H) * 100}%`,
+            width:         `${(L.avatar.radiusX * 2 / PASSPORT_W) * 100}%`,
+            height:        `${(L.avatar.radiusY * 2 / PASSPORT_H) * 100}%`,
+            aspectRatio:   'auto', // overridden since width/height are explicit
+            backgroundImage: avatarUrl ? `url(${avatarUrl})` : undefined,
+          };
+
+          return (
+            <div className={`profile-card profile-passport-card ${!hasPassport ? 'profile-passport-card--locked' : ''} ${isVipPassport ? 'profile-passport-card--vip' : ''}`}>
+              {isVipPassport && (
+                <div className="passport-vip-badge" title="VIP Passport holder">
+                  <span className="passport-vip-crown">👑</span>
+                  <span className="passport-vip-label">VIP</span>
+                </div>
+              )}
+              <div className={`passport-canvas-wrap ${!hasPassport ? 'passport-canvas-wrap--locked' : ''} ${isVipPassport ? 'passport-canvas-wrap--vip' : ''}`}>
+                <img
+                  src={templateUrl}
+                  alt={hasPassport ? (isVipPassport ? 'Luna Passport VIP' : 'Luna Passport') : ''}
+                  className="passport-template"
+                  onError={() => setPassportTemplateFailed(true)}
+                />
+                {passportTemplateFailed && (
+                  <div className="passport-template-error">
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>🛂</div>
+                    <div>Passport template unavailable</div>
+                    <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+                      Try refreshing the page
+                    </div>
+                  </div>
+                )}
+                {hasPassport ? (
+                  <>
+                    {avatarUrl && (
+                      <div
+                        className="passport-avatar-slot"
+                        style={avatarStyle}
+                      />
+                    )}
+                    <div className="passport-field" style={textStyle(L.number)}>{passport!.number}</div>
+                    <div className="passport-field" style={textStyle(L.name)}>{passport!.fullName}</div>
+                    <div className="passport-field" style={textStyle(L.dob)}>{passport!.dateOfBirth}</div>
+                    <div className="passport-field" style={textStyle(L.issuedAt)}>{issuedStr}</div>
+                    <div className="passport-field" style={textStyle(L.faction)}>{passport!.faction}</div>
+                  </>
+                ) : (
+                  <div className="passport-locked-overlay">
+                    <div className="passport-locked-icon">🛂</div>
+                    <div className="passport-locked-text">
+                      <div>No Luna Passport yet</div>
+                      <div className="passport-locked-hint">Apply via our Discord</div>
+                    </div>
+                    <a
+                      href="https://discord.gg/lunarian"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="passport-locked-discord-btn"
+                    >
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z"/>
+                      </svg>
+                      <span>Join our Discord</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Card Collection Section */}
         <div className="profile-card profile-collection-card">

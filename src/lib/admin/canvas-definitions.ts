@@ -229,10 +229,11 @@ const chestElements: CanvasElementDef[] = [
   { id: 'stone3', label: 'Stone 3 (Right)', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Stones' },
 ];
 
-// ─── Passport — Butler ──────────────────────────────────────────────
-// 1004x762 Passport.jpeg template — user avatar + 5 text values.
-// The template already prints [PASSPORT ID] [NAME] [BIRTHDAY] [DATE ISSUED] [FACTION],
-// so the bot only draws the raw value at each coordinate (no label prefix).
+// ─── Passport — Butler bot (Discord canvas render) ─────────────────
+// 1004x762 Passport.jpeg template — user avatar + 5 text values drawn via
+// @napi-rs/canvas on the VPS. The template already prints [PASSPORT ID]
+// [NAME] [BIRTHDAY] [DATE ISSUED] [FACTION], so the bot only draws the raw
+// value at each coordinate (no label prefix).
 // Keep these coords in sync with PASSPORT_DEFAULTS in Butler's profile_card.ts
 
 const passportLayout: Record<string, any> = {
@@ -252,6 +253,60 @@ const passportElements: CanvasElementDef[] = [
   { id: 'issuedAt', label: 'Date Issued',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
   { id: 'faction',  label: 'Faction',         type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
 ];
+
+// ─── Passport — Website (HTML/CSS overlay on the public profile page) ─
+// Same 1004x762 base template, but the website uses browser fallback fonts
+// (Inter/system-ui) whose metrics differ from Alexandria on the canvas side.
+// Coordinates are stored separately so admins can tune each independently.
+// Read by game-data API → rendered as inline styles on ProfileContent.
+
+const passportWebLayout: Record<string, any> = {
+  avatar:   { x: 170, y: 390, radiusX: 110, radiusY: 110 },
+  number:   { x: 620, y: 270, fontSize: 24 },
+  name:     { x: 620, y: 335, fontSize: 24 },
+  dob:      { x: 620, y: 400, fontSize: 24 },
+  issuedAt: { x: 620, y: 465, fontSize: 24 },
+  faction:  { x: 620, y: 530, fontSize: 24 },
+};
+
+const passportWebElements: CanvasElementDef[] = [
+  { id: 'avatar',   label: 'User Avatar',     type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Photo' },
+  { id: 'number',   label: 'Passport ID',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'name',     label: 'Full Name',       type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'dob',      label: 'Birthday',        type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'issuedAt', label: 'Date Issued',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'faction',  label: 'Faction',         type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+];
+
+// ─── Passport VIP — cosmetic variant (bot + website) ─────────────────
+// Automatically applied when the viewing user holds any role in
+// applications_system.passport_vip_roles. Uses a different background
+// template (PassportVIPFinal.png) but the same data fields as the normal
+// passport. Layouts are stored separately so admins can drag the photo
+// and field positions independently for the VIP art.
+// Matches PASSPORT_VIP_BACKGROUND_URL in Butler's image_config.ts.
+// Native VIP template dimensions: 1518 x 1018 — kept in sync with
+// PASSPORT_VIP_W/H + PASSPORT_VIP_DEFAULTS in Butler's profile_card.ts.
+
+const passportVipLayout: Record<string, any> = {
+  avatar:   { x: 257, y: 521, radiusX: 166, radiusY: 147 },
+  number:   { x: 937, y: 361, fontSize: 36 },
+  name:     { x: 937, y: 448, fontSize: 36 },
+  dob:      { x: 937, y: 534, fontSize: 36 },
+  issuedAt: { x: 937, y: 621, fontSize: 36 },
+  faction:  { x: 937, y: 708, fontSize: 36 },
+};
+
+const passportVipElements: CanvasElementDef[] = [
+  { id: 'avatar',   label: 'User Avatar',     type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Photo' },
+  { id: 'number',   label: 'Passport ID',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'name',     label: 'Full Name',       type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'dob',      label: 'Birthday',        type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'issuedAt', label: 'Date Issued',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'faction',  label: 'Faction',         type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+];
+
+const PASSPORT_VIP_BG_URL = 'https://assets.lunarian.app/butler/backgrounds/PassportVIPFinal.png';
 
 // ─── All Canvas Definitions ─────────────────────────────────────────
 
@@ -402,13 +457,59 @@ export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
   },
   {
     id: 'passport',
-    label: 'Passport (Butler)',
+    label: 'Luna Passport (Discord bot)',
     bot: 'butler',
     width: 1004,
     height: 762,
     backgroundUrl: 'https://assets.lunarian.app/butler/backgrounds/Passport.jpeg',
     elements: passportElements,
     defaultLayout: passportLayout,
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  {
+    id: 'passport_web',
+    label: 'Luna Passport (Website profile)',
+    bot: 'butler',
+    width: 1004,
+    height: 762,
+    backgroundUrl: 'https://assets.lunarian.app/butler/backgrounds/Passport.jpeg',
+    elements: passportWebElements,
+    defaultLayout: passportWebLayout,
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  {
+    id: 'passport_vip',
+    label: 'Luna Passport VIP (Discord bot)',
+    bot: 'butler',
+    // Native VIP template resolution — matches PASSPORT_VIP_W/H in
+    // Butler's profile_card.ts so the canvas editor preview and the
+    // actual rendered output line up pixel-for-pixel.
+    width: 1518,
+    height: 1018,
+    backgroundUrl: PASSPORT_VIP_BG_URL,
+    elements: passportVipElements,
+    defaultLayout: passportVipLayout,
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  {
+    id: 'passport_vip_web',
+    label: 'Luna Passport VIP (Website profile)',
+    bot: 'butler',
+    // VIP template native dimensions — matches PassportVIPFinal.png on R2.
+    // Different from the normal passport (1004x762) because the VIP art is
+    // wider. The website CSS wrap and ProfileContent coordinate math use
+    // these same numbers so the overlay positions map 1:1 onto the template.
+    width: 1518,
+    height: 1018,
+    backgroundUrl: PASSPORT_VIP_BG_URL,
+    elements: passportVipElements,
+    defaultLayout: passportVipLayout,
     colorKeys: [
       { key: 'value', label: 'Text Color', default: '#1a1208' },
     ],

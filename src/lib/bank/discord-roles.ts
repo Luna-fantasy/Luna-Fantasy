@@ -95,6 +95,91 @@ export async function getGuildMemberName(discordId: string): Promise<{ name: str
 }
 
 /**
+ * Add a role to a guild member via the Discord REST API.
+ * Requires DISCORD_BOT_TOKEN. Returns true on success (204) or if the member
+ * already has the role (204 is idempotent). Logs and returns false on failure
+ * so the caller can decide whether to surface the error.
+ */
+export async function addGuildMemberRole(
+  discordId: string,
+  roleId: string,
+  reason?: string
+): Promise<boolean> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) {
+    console.warn('[discord-roles] DISCORD_BOT_TOKEN not set, cannot grant role');
+    return false;
+  }
+  if (!/^\d{17,20}$/.test(discordId) || !/^\d{17,20}$/.test(roleId)) {
+    console.error('[discord-roles] Invalid discordId or roleId format');
+    return false;
+  }
+
+  try {
+    const headers: Record<string, string> = { Authorization: `Bot ${token}` };
+    if (reason) headers['X-Audit-Log-Reason'] = encodeURIComponent(reason).slice(0, 512);
+
+    const res = await fetch(
+      `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordId}/roles/${roleId}`,
+      { method: 'PUT', headers }
+    );
+
+    if (!res.ok) {
+      console.error(`[discord-roles] Failed to add role ${roleId} to ${discordId}: ${res.status} ${await res.text()}`);
+      return false;
+    }
+
+    // Invalidate cached roles for this user so next read reflects the change
+    roleCache.delete(discordId);
+    return true;
+  } catch (err) {
+    console.error('[discord-roles] addGuildMemberRole threw:', err);
+    return false;
+  }
+}
+
+/**
+ * Remove a role from a guild member via the Discord REST API.
+ * Same semantics as addGuildMemberRole — returns false on failure.
+ */
+export async function removeGuildMemberRole(
+  discordId: string,
+  roleId: string,
+  reason?: string
+): Promise<boolean> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) {
+    console.warn('[discord-roles] DISCORD_BOT_TOKEN not set, cannot revoke role');
+    return false;
+  }
+  if (!/^\d{17,20}$/.test(discordId) || !/^\d{17,20}$/.test(roleId)) {
+    console.error('[discord-roles] Invalid discordId or roleId format');
+    return false;
+  }
+
+  try {
+    const headers: Record<string, string> = { Authorization: `Bot ${token}` };
+    if (reason) headers['X-Audit-Log-Reason'] = encodeURIComponent(reason).slice(0, 512);
+
+    const res = await fetch(
+      `https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordId}/roles/${roleId}`,
+      { method: 'DELETE', headers }
+    );
+
+    if (!res.ok) {
+      console.error(`[discord-roles] Failed to remove role ${roleId} from ${discordId}: ${res.status} ${await res.text()}`);
+      return false;
+    }
+
+    roleCache.delete(discordId);
+    return true;
+  } catch (err) {
+    console.error('[discord-roles] removeGuildMemberRole threw:', err);
+    return false;
+  }
+}
+
+/**
  * Classify a set of role IDs into staff/special/booster/VIP categories.
  */
 export function classifyUserRoles(roleIds: string[]): RoleClassification {

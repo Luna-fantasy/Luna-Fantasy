@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/bazaar/rate-limit";
 import clientPromise from "@/lib/mongodb";
 import { generateCardStats } from "@/lib/bazaar/luckbox-config";
-import { getGuildMemberName } from "@/lib/bank/discord-roles";
+import { getGuildMemberName, getUserGuildRoles } from "@/lib/bank/discord-roles";
 import type {
   UserCard,
   UserStone,
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     const now = new Date();
     const todayKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
 
-    const [cardsDoc, stonesDoc, pointsDoc, levelsDoc, magicWinsDoc, nemesisDocs, inventoryDoc, ticketsDoc, chatMsgDoc, chatVoiceDoc, catalogDocs, badgesDoc, profileDoc] =
+    const [cardsDoc, stonesDoc, pointsDoc, levelsDoc, magicWinsDoc, nemesisDocs, inventoryDoc, ticketsDoc, chatMsgDoc, chatVoiceDoc, catalogDocs, badgesDoc, profileDoc, canvasLayoutsDoc, applicationsDoc] =
       await Promise.all([
         db.collection("cards").findOne({ _id: discordId as any }),
         db.collection("stones").findOne({ _id: discordId as any }),
@@ -74,6 +74,13 @@ export async function GET(request: Request) {
         db.collection("cards_config").find({}).limit(500).toArray(),
         db.collection("badges").findOne({ _id: discordId as any }),
         db.collection("profiles").findOne({ _id: discordId as any }),
+        // Canvas editor layouts — single source of truth shared with Butler bot.
+        // Edits in /admin/canvas-editor land here and propagate to both the Discord
+        // canvas render and the website passport overlay below.
+        db.collection("bot_config").findOne({ _id: "butler_canvas_layouts" as any }),
+        // Applications config — needed for passport_vip_roles list so the website
+        // can match Butler's live VIP check at render time.
+        db.collection("bot_config").findOne({ _id: "butler_applications" as any }),
       ]);
 
     // Cards — stored as native array in `cards` field
@@ -246,7 +253,7 @@ export async function GET(request: Request) {
       } catch {}
     }
 
-    // Profile — extract active backgrounds
+    // Profile — extract active backgrounds + passport
     let profile: ProfileData | null = null;
     if (profileDoc?.data) {
       try {
@@ -257,9 +264,43 @@ export async function GET(request: Request) {
           profile = {
             active_background: parsed.active_background ?? 'default',
             active_rank_background: parsed.active_rank_background ?? 'default',
+            passport: parsed.passport ?? null,
           };
         }
       } catch {}
+    }
+
+    // Website passport layout — reads from butler_canvas_layouts.passport_web
+    // (distinct from the bot-side `passport` entry so browser font metrics can
+    // be tuned independently from the canvas render on Discord).
+    // null if no overrides exist yet — the website falls back to hardcoded defaults.
+    const passportLayout: Record<string, any> | null = canvasLayoutsDoc?.data?.passport_web ?? null;
+
+    // VIP passport variant — separate layout key + a derived `hasVipPassport`
+    // flag that matches Butler's live role check. The website falls into the
+    // VIP branch when all three are true:
+    //   1. The user has a passport at all (profile?.passport is non-null)
+    //   2. The admin has configured passport_vip_roles via /admin/passport
+    //   3. The user currently holds any role in that list
+    // Role loss on Discord → next page load renders the normal variant.
+    //
+    // Runs on BOTH public + authenticated views so viewers see the VIP variant
+    // on any passport holder's profile, not just their own. Discord API drain
+    // is bounded by the existing public_profile IP rate limit (20/min) plus
+    // the 5-min per-user role cache, so worst-case ~1200 uncached Discord
+    // calls/hour — well below the bot REST limit.
+    const passportVipLayout: Record<string, any> | null = canvasLayoutsDoc?.data?.passport_vip_web ?? null;
+    const vipRoleList: string[] = Array.isArray(applicationsDoc?.data?.passport_vip_roles)
+      ? applicationsDoc!.data.passport_vip_roles
+      : [];
+    let hasVipPassport = false;
+    if (vipRoleList.length > 0 && profile?.passport) {
+      try {
+        const userRoles = await getUserGuildRoles(discordId);
+        hasVipPassport = userRoles.some((r) => vipRoleList.includes(r));
+      } catch {
+        // Non-fatal — default to normal passport variant
+      }
     }
 
     // For public profiles, look up basic user info and exclude private data
@@ -298,6 +339,9 @@ export async function GET(request: Request) {
       cardCatalog,
       badges,
       profile,
+      passportLayout,
+      passportVipLayout,
+      hasVipPassport,
       ...(publicUser ? { publicUser } : {}),
     };
 

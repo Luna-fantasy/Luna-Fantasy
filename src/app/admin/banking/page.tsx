@@ -44,6 +44,7 @@ interface LoanTier {
   amount: number;
   interest: number;
   duration: number;
+  passport_required?: boolean;
 }
 
 interface InvestmentConfig {
@@ -507,13 +508,14 @@ export default function BankingPage() {
                 { key: 'amount', label: '💰 Loan Amount (Lunari)', type: 'number' },
                 { key: 'interest', label: '📊 Interest Rate', type: 'percent' },
                 { key: 'duration', label: '⏱️ Repayment Time', type: 'duration' },
+                { key: 'passport_required', label: '🛂 Passport Only', type: 'boolean', width: '110px' },
               ]}
               rows={loanTiers}
               onChange={(rows) => setLoanTiers(rows as LoanTier[])}
               addLabel="Add Loan Tier"
             />
             <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
-              Duration is in milliseconds (86400000 = 1 day). Interest shows as percentage.
+              Duration is in milliseconds (86400000 = 1 day). Interest shows as percentage. Tiers marked <b>🛂 Passport Only</b> are visible to everyone but only passport holders can actually claim them — non-holders see the button but get blocked on click.
             </div>
             <BotBadge bot="butler" />
           </ConfigSection>

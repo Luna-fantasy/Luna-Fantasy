@@ -75,9 +75,32 @@ export interface BadgeData {
   [badgeId: string]: number; // badge_id → unix timestamp (0 or absent = not earned)
 }
 
+export interface Passport {
+  number: string;        // "LUNA-11031700001"
+  faction: string;       // one of the 11 Faction War factions
+  fullName: string;      // user's guild display name at issue time
+  dateOfBirth: string;   // "DD/MM" — no year for privacy
+  issuedAt: number;      // unix ms
+  issuedBy: string;      // discordId of the admin who accepted
+}
+
+// Canvas-editor-driven layout for the passport card. Pixel coordinates on a
+// 1004x762 template — keep in sync with PASSPORT_DEFAULTS in Butler's
+// util/canvas/profile_card.ts so the bot canvas and website overlay match.
+export interface PassportLayout {
+  avatar?:   { x: number; y: number; radiusX: number; radiusY: number };
+  number?:   { x: number; y: number; fontSize: number };
+  name?:     { x: number; y: number; fontSize: number };
+  dob?:      { x: number; y: number; fontSize: number };
+  issuedAt?: { x: number; y: number; fontSize: number };
+  faction?:  { x: number; y: number; fontSize: number };
+  [key: string]: any;
+}
+
 export interface ProfileData {
   active_background: string;      // e.g. "bg_calm_bath" or "default"
   active_rank_background: string;  // e.g. "rank_calm_bath" or "default"
+  passport: Passport | null;       // Luna Passport, nullable
 }
 
 export interface PublicUserInfo {
@@ -100,5 +123,8 @@ export interface GameDataResponse {
   cardCatalog: CatalogCard[];
   badges: BadgeData | null;
   profile: ProfileData | null;
+  passportLayout: PassportLayout | null;
+  passportVipLayout: PassportLayout | null;
+  hasVipPassport: boolean;
   publicUser?: PublicUserInfo;
 }

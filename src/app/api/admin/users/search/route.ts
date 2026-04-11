@@ -7,8 +7,11 @@ export async function GET(request: NextRequest) {
   const authResult = await requireMastermindApi();
   if (!authResult.authorized) return authResult.response;
 
+  // Dedicated bucket — user search is an expensive regex scan across two
+  // collections, so it gets a tighter budget (10/min) than other admin reads
+  // which share the generic `admin_read` key at 30/min.
   const discordId = authResult.session.user?.discordId ?? '';
-  const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 30, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('admin_user_search', discordId, 10, 60_000);
   if (!allowed) {
     return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
   }

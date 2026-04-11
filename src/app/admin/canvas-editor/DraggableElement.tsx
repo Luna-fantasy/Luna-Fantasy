@@ -31,6 +31,8 @@ export default function DraggableElement({
   const resizeRef = useRef<{
     handle: 'left' | 'right' | 'top' | 'bottom';
     startPos: number;
+    origX: number;
+    origY: number;
     origRadiusX: number;
     origRadiusY: number;
   } | null>(null);
@@ -96,6 +98,18 @@ export default function DraggableElement({
   }, [scale, values, onDragEnd]);
 
   // Resize handle interaction
+  //
+  // Semantics: each handle resizes the circle RECTANGLE-STYLE — the opposite
+  // edge stays pinned, the dragged edge moves. Because circles are stored as
+  // (center, radius), we need to update BOTH the center (x/y) AND the radius
+  // so that the opposite edge remains fixed.
+  //
+  // For a right handle drag by `delta` pixels:
+  //   newRadiusX = origRadiusX + delta/2
+  //   newX       = origX       + delta/2   (center shifts right by half the delta)
+  // This keeps the left edge at (origX - origRadiusX) unchanged while the
+  // right edge moves by the full delta. Same math with sign flips for the
+  // other three handles.
   const handleResizeStart = useCallback((handle: 'left' | 'right' | 'top' | 'bottom', e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -103,48 +117,63 @@ export default function DraggableElement({
     resizeRef.current = {
       handle,
       startPos: isHorizontal ? e.clientX : e.clientY,
+      origX: values.x ?? 0,
+      origY: values.y ?? 0,
       origRadiusX: values.radiusX ?? values.size ?? 20,
       origRadiusY: values.radiusY ?? values.size ?? 20,
     };
 
-    function computeNewValues(ev: PointerEvent | null): Record<string, number> {
+    // Given the current pointer event, returns the new (center, radius) pair
+    // for the axis being dragged. Only the changed fields are returned so the
+    // non-dragged axis is preserved via setNestedValue's shallow merge.
+    function compute(ev: PointerEvent | null): { radiusX?: number; radiusY?: number; x?: number; y?: number } | null {
       const r = resizeRef.current;
-      if (!r || !ev) return { ...values };
+      if (!r || !ev) return null;
       const isH = r.handle === 'left' || r.handle === 'right';
       const delta = isH ? ev.clientX - r.startPos : ev.clientY - r.startPos;
       const sign = (r.handle === 'right' || r.handle === 'bottom') ? 1 : -1;
-      const newValues = { ...values };
+      const halfDelta = Math.round((delta / scale) / 2);
+
       if (isH) {
-        newValues.radiusX = Math.max(1, r.origRadiusX + Math.round((delta * sign) / scale));
+        const newR = Math.max(1, r.origRadiusX + sign * halfDelta);
+        const actualDelta = newR - r.origRadiusX; // may be clamped if we hit the min-radius floor
+        return { radiusX: newR, x: r.origX + sign * actualDelta };
       } else {
-        newValues.radiusY = Math.max(1, r.origRadiusY + Math.round((delta * sign) / scale));
+        const newR = Math.max(1, r.origRadiusY + sign * halfDelta);
+        const actualDelta = newR - r.origRadiusY;
+        return { radiusY: newR, y: r.origY + sign * actualDelta };
       }
-      return newValues;
+    }
+
+    function computeNewValues(ev: PointerEvent | null): Record<string, number> {
+      const result = compute(ev);
+      if (!result) return {};
+      // Return only the changed fields — setNestedValue merges them onto the
+      // existing layout, so fields we don't touch (the other axis) are preserved.
+      return result as Record<string, number>;
     }
 
     function onMove(ev: PointerEvent) {
-      if (!resizeRef.current) return;
+      const result = compute(ev);
+      const el = elRef.current;
+      if (!result || !el || !resizeRef.current) return;
       const r = resizeRef.current;
       const isH = r.handle === 'left' || r.handle === 'right';
-      const delta = isH ? ev.clientX - r.startPos : ev.clientY - r.startPos;
-      const sign = (r.handle === 'right' || r.handle === 'bottom') ? 1 : -1;
-      const el = elRef.current;
-      if (!el) return;
 
       if (isH) {
-        const newRx = Math.max(1, r.origRadiusX + Math.round((delta * sign) / scale));
-        const newW = newRx * scale * 2;
-        const cx = (values.x ?? 0) * scale;
+        const newRx = result.radiusX!;
+        const newCx = result.x!;
+        const newW = newRx * 2 * scale;
         el.style.width = newW + 'px';
-        el.style.left = (cx - newRx * scale) + 'px';
+        el.style.left = (newCx * scale - newRx * scale) + 'px';
         const inner = el.querySelector('.ce-element') as HTMLElement;
         if (inner) inner.style.width = newW + 'px';
       } else {
-        const newRy = Math.max(1, r.origRadiusY + Math.round((delta * sign) / scale));
-        const newH = newRy * scale * 2;
-        const cy = (values.y ?? 0) * scale;
+        const newRy = result.radiusY!;
+        const newCy = result.y!;
+        const newH = newRy * 2 * scale;
         el.style.height = newH + 'px';
-        el.style.top = (cy - newRy * scale) + 'px';
+        el.style.top = (newCy * scale - newRy * scale) + 'px';
         const inner = el.querySelector('.ce-element') as HTMLElement;
         if (inner) inner.style.height = newH + 'px';
       }
@@ -158,10 +187,20 @@ export default function DraggableElement({
 
       const finalValues = commit ? computeNewValues(ev) : null;
       resizeRef.current = null;
-      resetInlineStyles();
 
-      if (finalValues) {
+      if (finalValues && Object.keys(finalValues).length > 0) {
+        // Commit path — trigger the state update BEFORE clearing inline styles.
+        // If we reset first, el.style.top becomes "" (auto) for one frame and
+        // the element flashes to the top-left of its container before React
+        // applies the new prop. Leaving the inline styles alone means the last
+        // drag preview matches what the new render will paint, so the next
+        // render quietly reuses the same pixel values without a visible jump.
         onDragEnd(finalValues);
+      } else {
+        // Cancel path — values haven't changed, so there will be no re-render
+        // to restore the prop-driven position. Clear inline styles so the
+        // element snaps back to whatever React already had rendered.
+        resetInlineStyles();
       }
     }
 

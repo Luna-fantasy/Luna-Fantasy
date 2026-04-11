@@ -449,3 +449,297 @@ html[lang="ar"] .profile-section-title {
     padding: 12px 16px;
   }
 }
+
+/* ========== Luna Passport Card ========== */
+/* Coordinates mirror Butler's PASSPORT_DEFAULTS in util/canvas/profile_card.ts — keep in sync */
+
+/* The passport card strips all the usual .profile-card chrome (background,
+   border, blur, padding) so the passport template fills the available width
+   edge-to-edge. The cyan/purple glow lives on .passport-canvas-wrap instead. */
+.profile-passport-card {
+  position: relative;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+}
+
+.passport-canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  aspect-ratio: 1004 / 762;
+  margin: 0 auto;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 0 60px rgba(0, 212, 255, 0.25),
+    0 0 120px rgba(139, 92, 246, 0.12),
+    0 20px 40px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.4s ease, transform 0.4s ease;
+  /* Establish a size container so text/avatar can scale with the card's
+     actual width rather than the viewport — matches Butler canvas scaling. */
+  container-type: inline-size;
+}
+
+.passport-canvas-wrap:hover {
+  box-shadow:
+    0 0 80px rgba(0, 212, 255, 0.35),
+    0 0 160px rgba(139, 92, 246, 0.18),
+    0 25px 50px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.passport-template {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Position (left/top/width/height/background-image) is injected via inline
+   styles from ProfileContent.tsx using the canvas-editor layout.
+   Keep visual-only properties (border, shadow, shape) here. */
+.passport-avatar-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 3px solid rgba(26, 18, 8, 0.9);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Position (left/top/font-size) is injected via inline styles from
+   ProfileContent.tsx — driven by the canvas editor layout in MongoDB. */
+.passport-field {
+  position: absolute;
+  font-family: 'Alexandria', 'Inter', system-ui, sans-serif;
+  color: #1a1208;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  /* Butler canvas draws with textBaseline = 'alphabetic' — the y coord is the
+     text BASELINE, not the top. CSS `top: y%` would place the element's top
+     edge at y, so we shift up by ~80% of the element's own height to make
+     the baseline sit where Butler draws it. */
+  transform: translateY(-80%);
+}
+
+/* Locked placeholder — user does not have a passport */
+.profile-passport-card--locked .passport-canvas-wrap {
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.15), 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.passport-canvas-wrap--locked .passport-template {
+  opacity: 0.35;
+  filter: grayscale(0.6) blur(1px);
+}
+
+.passport-locked-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: linear-gradient(180deg, rgba(12, 16, 24, 0.35), rgba(12, 16, 24, 0.82));
+  color: #e6edf3;
+  text-align: center;
+  padding: 20px;
+}
+
+.passport-locked-icon {
+  font-size: clamp(40px, 6vw, 72px);
+  opacity: 0.85;
+  filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.4));
+}
+
+.passport-locked-text {
+  font-size: clamp(14px, 2.2vw, 22px);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.passport-locked-hint {
+  font-size: clamp(11px, 1.4vw, 15px);
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+
+.passport-locked-hint code {
+  background: rgba(0, 212, 255, 0.12);
+  color: #7ee4ff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.95em;
+}
+
+.passport-locked-discord-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #5865f2, #4752c4);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: clamp(12px, 1.5cqi, 15px);
+  text-decoration: none;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.4), 0 0 0 1px rgba(88, 101, 242, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+}
+
+.passport-locked-discord-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #6873f3, #5865f2);
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.55), 0 0 0 1px rgba(88, 101, 242, 0.35);
+}
+
+.passport-locked-discord-btn:active {
+  transform: translateY(0);
+}
+
+.passport-locked-discord-btn svg {
+  flex-shrink: 0;
+}
+
+/* ========== VIP Passport Variant ========== */
+/* Gold-themed glow + badge applied when the user holds any role in
+   applications_system.passport_vip_roles. Stacks on top of the base
+   .profile-passport-card / .passport-canvas-wrap rules. */
+
+.profile-passport-card--vip {
+  position: relative;
+}
+
+.passport-canvas-wrap--vip {
+  /* VIP template (PassportVIPFinal.png) is 1518x1018 — wider aspect ratio
+     than the normal passport. Override the base 1004/762 so the image
+     renders at its native proportions instead of being cropped + zoomed. */
+  aspect-ratio: 1518 / 1018;
+  max-width: 1100px;
+  /* Gold/amber glow replaces the default cyan/purple aura so the card
+     reads as premium at a glance. Slightly stronger shadow layering to
+     distinguish it from the normal passport. */
+  box-shadow:
+    0 0 80px rgba(255, 213, 79, 0.35),
+    0 0 160px rgba(255, 164, 38, 0.15),
+    0 0 0 1px rgba(255, 213, 79, 0.4),
+    0 25px 50px rgba(0, 0, 0, 0.55);
+}
+
+.passport-canvas-wrap--vip:hover {
+  box-shadow:
+    0 0 100px rgba(255, 213, 79, 0.5),
+    0 0 200px rgba(255, 164, 38, 0.22),
+    0 0 0 1px rgba(255, 213, 79, 0.55),
+    0 30px 60px rgba(0, 0, 0, 0.65);
+  transform: translateY(-3px);
+}
+
+/* Floating VIP badge — sits in the top-right corner of the card,
+   hovers slightly above to signal "premium" status. */
+.passport-vip-badge {
+  position: absolute;
+  top: -14px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 6px 10px;
+  background: linear-gradient(135deg, #FFD54F 0%, #FFA826 60%, #C77500 100%);
+  color: #1a1208;
+  border-radius: 999px;
+  font-family: 'Alexandria', 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow:
+    0 6px 18px rgba(255, 164, 38, 0.55),
+    0 0 0 1px rgba(255, 213, 79, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(199, 117, 0, 0.4);
+  pointer-events: none;
+  animation: passport-vip-float 3s ease-in-out infinite;
+}
+
+.passport-vip-crown {
+  font-size: 16px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(199, 117, 0, 0.6));
+}
+
+.passport-vip-label {
+  line-height: 1;
+}
+
+@keyframes passport-vip-float {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow:
+      0 6px 18px rgba(255, 164, 38, 0.55),
+      0 0 0 1px rgba(255, 213, 79, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    transform: translateY(-2px);
+    box-shadow:
+      0 10px 24px rgba(255, 164, 38, 0.7),
+      0 0 0 1px rgba(255, 213, 79, 0.65),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* When a user holds a VIP passport, the text fields on the VIP template
+   look better with a slightly warmer ink color — matching the
+   burgundy/gold aesthetic of PassportVIPFinal.png. Admin can still
+   override this by editing the text color in the canvas editor; this
+   is just the starting-point default. */
+.passport-canvas-wrap--vip .passport-field {
+  color: #2a1810;
+  text-shadow: 0 1px 0 rgba(255, 235, 180, 0.25);
+}
+
+/* VIP avatar — no ring or glow. The ornate gold frame on the template
+   itself is the visual boundary, so any extra border ends up looking
+   like a double-outline clashing with the art. */
+.passport-canvas-wrap--vip .passport-avatar-slot {
+  border: none;
+  box-shadow: none;
+}
+
+/* Fallback shown when the passport template image fails to load (R2 404
+   or CDN unreachable). Covers the entire wrap so the text fields aren't
+   left floating over a blank card. */
+.passport-template-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(180deg, rgba(12, 16, 24, 0.92), rgba(20, 26, 38, 0.98));
+  color: #e6edf3;
+  font-family: 'Alexandria', 'Inter', system-ui, sans-serif;
+  font-size: clamp(14px, 2vw, 20px);
+  text-align: center;
+  padding: 20px;
+  z-index: 4;
+}
+

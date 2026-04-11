@@ -6,7 +6,7 @@ import RolePicker from './RolePicker';
 interface Column {
   key: string;
   label: string;
-  type?: 'text' | 'number' | 'duration' | 'role' | 'percent';
+  type?: 'text' | 'number' | 'duration' | 'role' | 'percent' | 'boolean';
   width?: string;
 }
 
@@ -31,6 +31,7 @@ export default function ConfigTable({ columns, rows, onChange, addLabel = 'Add R
     for (const col of columns) {
       if (col.type === 'number' || col.type === 'duration' || col.type === 'percent') empty[col.key] = 0;
       else if (col.type === 'role') empty[col.key] = '';
+      else if (col.type === 'boolean') empty[col.key] = false;
       else empty[col.key] = '';
     }
     onChange([...rows, empty]);
@@ -59,7 +60,17 @@ export default function ConfigTable({ columns, rows, onChange, addLabel = 'Add R
                 <td>{ri + 1}</td>
                 {columns.map((col) => (
                   <td key={col.key}>
-                    {col.type === 'role' ? (
+                    {col.type === 'boolean' ? (
+                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: disabled ? 'default' : 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!row[col.key]}
+                          onChange={(e) => updateCell(ri, col.key, e.target.checked)}
+                          disabled={disabled}
+                          style={{ width: 18, height: 18, cursor: disabled ? 'default' : 'pointer', accentColor: 'var(--accent-primary)' }}
+                        />
+                      </label>
+                    ) : col.type === 'role' ? (
                       <RolePicker
                         label=""
                         value={row[col.key] ?? ''}

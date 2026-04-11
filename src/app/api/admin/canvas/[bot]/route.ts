@@ -19,6 +19,22 @@ function isValidHexColor(c: string): boolean {
   return /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(c);
 }
 
+// Per-field numeric bounds. Protects the bot's @napi-rs/canvas renderer from
+// extreme values (fontSize: 99999 → multi-GB buffer, width: 1_000_000 → OOM,
+// negative radius → crash). Caps are generous enough that normal tuning isn't
+// constrained, but tight enough that any value outside them is a bug or abuse.
+const BOUNDED_FIELDS = new Map<string, { min: number; max: number }>([
+  ['fontSize', { min: 1,    max: 200 }],
+  ['size',     { min: 1,    max: 800 }],
+  ['radius',   { min: 1,    max: 1000 }],
+  ['radiusX',  { min: 1,    max: 1000 }],
+  ['radiusY',  { min: 1,    max: 1000 }],
+  ['width',    { min: 1,    max: 4000 }],
+  ['height',   { min: 1,    max: 4000 }],
+  ['x',        { min: -500, max: 4500 }],
+  ['y',        { min: -500, max: 4500 }],
+]);
+
 function validateLayout(canvasType: string, layout: any): string | null {
   const def = getCanvasDefinition(canvasType);
   if (!def) return `Unknown canvas type: ${canvasType}`;
@@ -37,15 +53,15 @@ function validateLayout(canvasType: string, layout: any): string | null {
     if (obj === null || obj === undefined) return null;
     if (typeof obj !== 'object') return null;
 
-    // Fields that must be strictly positive (>0) — any zero/negative breaks rendering
-    const POSITIVE_FIELDS = new Set(['fontSize', 'size', 'width', 'height', 'radiusX', 'radiusY', 'radius']);
-
     for (const [key, val] of Object.entries(obj)) {
       const fullPath = `${path}.${key}`;
       if (typeof val === 'number') {
         if (!Number.isFinite(val)) return `${fullPath} must be a finite number`;
-        if (POSITIVE_FIELDS.has(key) && val <= 0) {
-          return `${fullPath} must be > 0`;
+        const bounds = BOUNDED_FIELDS.get(key);
+        if (bounds) {
+          if (val < bounds.min || val > bounds.max) {
+            return `${fullPath}=${val} out of range [${bounds.min}, ${bounds.max}]`;
+          }
         }
       } else if (typeof val === 'object' && val !== null) {
         const err = checkNumbers(val, fullPath);
