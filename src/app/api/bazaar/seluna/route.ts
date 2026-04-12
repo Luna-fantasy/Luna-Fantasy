@@ -9,6 +9,7 @@ import {
   logTransaction,
   getBalance,
 } from '@/lib/bazaar/lunari-ops';
+import { getPassportDiscount } from '@/lib/bazaar/passport-discount';
 import { userOwnsCard, addCardToUser } from '@/lib/bazaar/card-ops';
 import { userOwnsStone, addStoneToUser } from '@/lib/bazaar/stone-ops';
 import { addTickets } from '@/lib/bazaar/ticket-ops';
@@ -325,17 +326,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // 5. Balance check
+    // 5. Passport discount
+    const discount = await getPassportDiscount(discordId);
+    const finalPrice = discount.apply(itemConfig.price);
+
+    // 6. Balance check
     const balance = await getBalance(discordId);
-    if (balance < itemConfig.price) {
+    if (balance < finalPrice) {
       return NextResponse.json(
         { error: 'Insufficient balance' },
         { status: 400 }
       );
     }
 
-    // 6. Deduct Lunari
-    const deduction = await deductLunari(discordId, itemConfig.price);
+    // 7. Deduct Lunari
+    const deduction = await deductLunari(discordId, finalPrice);
     if (!deduction.success) {
       return NextResponse.json(
         { error: 'Failed to deduct Lunari' },
@@ -343,8 +348,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 7. Add to bank reserve
-    void addToBankReserve(itemConfig.price);
+    // 8. Add to bank reserve
+    void addToBankReserve(finalPrice);
 
     // 8. Decrement stock (for limited items) — per-channel in shop_stocks
     if (itemConfig.stock !== -1 && itemConfig.stock > 0 && activeChannelId) {
@@ -404,8 +409,8 @@ export async function POST(request: Request) {
       case 'stone': {
         isDuplicate = await userOwnsStone(discordId, itemConfig.name);
         if (isDuplicate) {
-          // Auto-refund full price for duplicate stones
-          await creditLunari(discordId, itemConfig.price);
+          // Auto-refund discounted price for duplicate stones
+          await creditLunari(discordId, finalPrice);
           refunded = true;
         } else {
           const imageUrl = STONE_IMAGES[itemConfig.name] ?? '';
@@ -457,13 +462,13 @@ export async function POST(request: Request) {
 
     // 10. Log transaction
     const newBalance = refunded
-      ? deduction.balanceAfter + itemConfig.price
+      ? deduction.balanceAfter + finalPrice
       : deduction.balanceAfter;
 
     void logTransaction({
       discordId,
       type: 'seluna_purchase',
-      amount: refunded ? 0 : -itemConfig.price,
+      amount: refunded ? 0 : -finalPrice,
       balanceBefore: deduction.balanceBefore,
       balanceAfter: newBalance,
       metadata: {
@@ -472,7 +477,8 @@ export async function POST(request: Request) {
         itemId: itemConfig.id,
         itemType,
         isDuplicate,
-        refundAmount: refunded ? itemConfig.price : 0,
+        refundAmount: refunded ? finalPrice : 0,
+        ...(discount.eligible ? { passportDiscount: true, originalPrice: itemConfig.price } : {}),
       },
       createdAt: new Date(),
       source: 'web',

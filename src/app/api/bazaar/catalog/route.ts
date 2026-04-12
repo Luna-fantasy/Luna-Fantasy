@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { getLuckboxShopConfig, boxToLegacyTier, getStoneBoxConfig, getTicketShopConfig } from '@/lib/bazaar/shop-config';
 import { LUNARI_PACKAGES } from '@/lib/stripe';
 import { getBalance, checkDebt } from '@/lib/bazaar/lunari-ops';
+import { hasPassport as checkPassport } from '@/lib/bazaar/passport-discount';
 import { getUserTickets } from '@/lib/bazaar/ticket-ops';
 import { setCsrfCookie } from '@/lib/bazaar/csrf';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
@@ -75,17 +76,18 @@ export async function GET() {
     const ticketPackages = await getTicketShopConfig();
 
     // Optional auth for user data
-    let user: { balance: number; tickets: number; hasDebt: boolean } | undefined;
+    let user: { balance: number; tickets: number; hasDebt: boolean; hasPassport: boolean } | undefined;
     try {
       const session = await auth();
       if (session?.user?.discordId) {
         const discordId = session.user.discordId;
-        const [balance, tickets, hasDebt] = await Promise.all([
+        const [balance, tickets, hasDebt, passport] = await Promise.all([
           getBalance(discordId),
           getUserTickets(discordId),
           checkDebt(discordId),
+          checkPassport(discordId),
         ]);
-        user = { balance, tickets, hasDebt };
+        user = { balance, tickets, hasDebt, hasPassport: passport };
       }
     } catch {
       // Auth optional, ignore errors

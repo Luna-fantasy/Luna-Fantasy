@@ -8,6 +8,7 @@ import {
   logTransaction,
   getBalance,
 } from '@/lib/bazaar/lunari-ops';
+import { getPassportDiscount } from '@/lib/bazaar/passport-discount';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { getMellsShopConfig } from '@/lib/bazaar/shop-config';
@@ -173,26 +174,30 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
       );
     }
 
-    // 4. Balance check
+    // 4. Passport discount (10% off for Luna Passport holders)
+    const discount = await getPassportDiscount(discordId);
+    const finalPrice = discount.apply(item.price);
+
+    // 5. Balance check
     const balance = await getBalance(discordId);
-    if (balance < item.price) {
+    if (balance < finalPrice) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
-    // 5. Deduct Lunari
-    const deduction = await deductLunari(discordId, item.price);
+    // 6. Deduct Lunari
+    const deduction = await deductLunari(discordId, finalPrice);
     if (!deduction.success) {
       return NextResponse.json({ error: 'Failed to deduct Lunari' }, { status: 500 });
     }
 
-    // 6. Add to bank reserve
-    void addToBankReserve(item.price);
+    // 7. Add to bank reserve
+    void addToBankReserve(finalPrice);
 
-    // 7. Save to inventory collection
+    // 8. Save to inventory collection
     const purchaseRecord = {
       id: item.id,
       name: item.name,
-      price: item.price,
+      price: finalPrice,
       roleId: '',
       description: '',
       shopId: 'mells_selvair',
@@ -207,11 +212,11 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
       { upsert: true }
     );
 
-    // 8. Log transaction
+    // 9. Log transaction
     void logTransaction({
       discordId,
       type: 'mells_purchase',
-      amount: -item.price,
+      amount: -finalPrice,
       balanceBefore: deduction.balanceBefore,
       balanceAfter: deduction.balanceAfter,
       metadata: {
@@ -219,6 +224,7 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
         itemReceived: item.name,
         itemId: item.id,
         itemType: item.type,
+        ...(discount.eligible ? { passportDiscount: true, originalPrice: item.price } : {}),
       },
       createdAt: new Date(),
       source: 'web',

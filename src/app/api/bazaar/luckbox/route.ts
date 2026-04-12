@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { generateCardStats } from '@/lib/bazaar/luckbox-config';
 import { getLuckboxShopConfig } from '@/lib/bazaar/shop-config';
 import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
+import { getPassportDiscount } from '@/lib/bazaar/passport-discount';
 import { weightedRandomDraw } from '@/lib/bazaar/weighted-random';
 import { userOwnsCard, addCardToUser } from '@/lib/bazaar/card-ops';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
@@ -47,10 +48,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
     }
 
-    // 3. Balance check
+    // 3. Passport discount
+    const discount = await getPassportDiscount(discordId);
+    const finalPrice = discount.apply(boxConfig.price);
+
+    // 4. Balance check
     const balance = await getBalance(discordId);
-    console.log(`[luckbox] ${discordId} balance=${balance}, tier=${tier}, price=${boxConfig.price}`);
-    if (balance < boxConfig.price) {
+    console.log(`[luckbox] ${discordId} balance=${balance}, tier=${tier}, price=${finalPrice}${discount.eligible ? ' (passport -10%)' : ''}`);
+    if (balance < finalPrice) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
@@ -114,14 +119,14 @@ export async function POST(request: Request) {
     const isDuplicate = await userOwnsCard(discordId, drawnCard.name);
 
     // 6. Atomic deduct Lunari
-    const deductResult = await deductLunari(discordId, boxConfig.price);
+    const deductResult = await deductLunari(discordId, finalPrice);
     if (!deductResult.success) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
     try {
       // 7. Add to bank reserve
-      await addToBankReserve(boxConfig.price);
+      await addToBankReserve(finalPrice);
 
       // 8. Grant card (only if NOT duplicate)
       if (!isDuplicate) {
@@ -132,7 +137,7 @@ export async function POST(request: Request) {
       await logTransaction({
         discordId,
         type: 'luckbox_spend',
-        amount: -boxConfig.price,
+        amount: -finalPrice,
         balanceBefore: deductResult.balanceBefore,
         balanceAfter: deductResult.balanceAfter,
         metadata: {
@@ -141,6 +146,7 @@ export async function POST(request: Request) {
           itemReceived: drawnCard.name,
           itemRarity: drawnCard.rarity,
           isDuplicate,
+          ...(discount.eligible ? { passportDiscount: true, originalPrice: boxConfig.price } : {}),
         },
         createdAt: new Date(),
         source: 'web',
@@ -160,7 +166,7 @@ export async function POST(request: Request) {
       return refreshCsrf(res);
     } catch (error) {
       // REFUND on failure after deduction
-      await creditLunari(discordId, boxConfig.price).catch(() => {});
+      await creditLunari(discordId, finalPrice).catch(() => {});
       console.error('Luckbox grant error:', error);
       return NextResponse.json({ error: 'Purchase failed. Lunari refunded.' }, { status: 500 });
     }

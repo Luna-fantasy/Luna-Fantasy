@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getTicketShopConfig } from '@/lib/bazaar/shop-config';
 import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
+import { getPassportDiscount } from '@/lib/bazaar/passport-discount';
 import { addTickets } from '@/lib/bazaar/ticket-ops';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
@@ -44,21 +45,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid package' }, { status: 400 });
     }
 
-    // 3. Balance check
+    // 3. Passport discount
+    const discount = await getPassportDiscount(discordId);
+    const finalPrice = discount.apply(pkg.price);
+
+    // 4. Balance check
     const balance = await getBalance(discordId);
-    if (balance < pkg.price) {
+    if (balance < finalPrice) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
-    // 4. Atomic deduct Lunari
-    const deductResult = await deductLunari(discordId, pkg.price);
+    // 5. Atomic deduct Lunari
+    const deductResult = await deductLunari(discordId, finalPrice);
     if (!deductResult.success) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
     try {
-      // 5. Add to bank reserve
-      await addToBankReserve(pkg.price);
+      // 6. Add to bank reserve
+      await addToBankReserve(finalPrice);
 
       // 6. Add tickets
       const totalTickets = await addTickets(discordId, pkg.tickets);
@@ -67,13 +72,14 @@ export async function POST(request: Request) {
       await logTransaction({
         discordId,
         type: 'ticket_spend',
-        amount: -pkg.price,
+        amount: -finalPrice,
         balanceBefore: deductResult.balanceBefore,
         balanceAfter: deductResult.balanceAfter,
         metadata: {
           vendorId: 'zoldar',
           packageId: pkg.id,
           itemReceived: `${pkg.tickets} tickets`,
+          ...(discount.eligible ? { passportDiscount: true, originalPrice: pkg.price } : {}),
         },
         createdAt: new Date(),
         source: 'web',
@@ -87,7 +93,7 @@ export async function POST(request: Request) {
       return refreshCsrf(res);
     } catch (error) {
       // REFUND on failure after deduction
-      await creditLunari(discordId, pkg.price).catch(() => {});
+      await creditLunari(discordId, finalPrice).catch(() => {});
       console.error('Ticket purchase error:', error);
       return NextResponse.json({ error: 'Purchase failed. Lunari refunded.' }, { status: 500 });
     }

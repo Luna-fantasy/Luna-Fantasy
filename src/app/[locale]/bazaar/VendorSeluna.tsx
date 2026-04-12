@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
 
 interface SelunaItem {
@@ -30,6 +31,7 @@ interface ShopState {
 interface VendorSelunaProps {
   balance: number;
   hasDebt: boolean;
+  hasPassport: boolean;
   isLoggedIn: boolean;
 }
 
@@ -64,7 +66,7 @@ const TYPE_ICONS: Record<string, string> = {
   stone: '\u25C6',   // diamond
 };
 
-export default function VendorSeluna({ balance, hasDebt, isLoggedIn }: VendorSelunaProps) {
+export default function VendorSeluna({ balance, hasDebt, hasPassport, isLoggedIn }: VendorSelunaProps) {
   const t = useTranslations('bazaarPage');
 
   const [shop, setShop] = useState<ShopState | null>(null);
@@ -200,7 +202,7 @@ export default function VendorSeluna({ balance, hasDebt, isLoggedIn }: VendorSel
     if (!isLoggedIn) return { disabled: true, label: t('seluna.loginRequired') };
     if (hasDebt) return { disabled: true, label: t('seluna.inDebt') };
     if (item.remaining === 0) return { disabled: true, label: t('seluna.soldOut') };
-    if (currentBalance < item.price) return { disabled: true, label: t('seluna.insufficient') };
+    if (currentBalance < applyPassportDiscount(item.price, hasPassport)) return { disabled: true, label: t('seluna.insufficient') };
     return { disabled: false, label: t('seluna.purchase') };
   };
 
@@ -329,7 +331,7 @@ export default function VendorSeluna({ balance, hasDebt, isLoggedIn }: VendorSel
                 <div className="seluna-card-price">
                   <span className="seluna-price-label">{t('seluna.price')}</span>
                   <span className="seluna-price-value">
-                    {formatNumber(item.price)} {t('lunariLabel')}
+                    <PassportPrice price={item.price} hasPassport={hasPassport} /> {t('lunariLabel')}
                   </span>
                 </div>
 

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
 
 interface MellsItem {
@@ -18,6 +19,7 @@ interface MellsItem {
 interface VendorMellsProps {
   balance: number;
   hasDebt: boolean;
+  hasPassport: boolean;
   isLoggedIn: boolean;
   userAvatar?: string;
   userName?: string;
@@ -32,7 +34,7 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorMells({ balance, hasDebt, isLoggedIn, userAvatar, userName }: VendorMellsProps) {
+export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn, userAvatar, userName }: VendorMellsProps) {
   const t = useTranslations('bazaarPage');
 
   const [items, setItems] = useState<MellsItem[]>([]);
@@ -140,7 +142,7 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn, userAvatar, 
   const getButtonState = (item: MellsItem) => {
     if (!isLoggedIn) return { disabled: true, label: t('mells.loginRequired') };
     if (hasDebt) return { disabled: true, label: t('mells.inDebt') };
-    if (currentBalance < item.price) return { disabled: true, label: t('mells.insufficient') };
+    if (currentBalance < applyPassportDiscount(item.price, hasPassport)) return { disabled: true, label: t('mells.insufficient') };
     return { disabled: false, label: t('mells.purchase') };
   };
 
@@ -244,7 +246,7 @@ export default function VendorMells({ balance, hasDebt, isLoggedIn, userAvatar, 
                 <h3 className="mells-card-title">{item.name}</h3>
                 <div className="mells-card-price">
                   <span className="mells-price-value">
-                    {formatNumber(item.price)}
+                    <PassportPrice price={item.price} hasPassport={hasPassport} />
                   </span>
                   <span className="mells-price-currency"><E ns="bazaarPage" k="lunariLabel">{t('lunariLabel')}</E></span>
                 </div>

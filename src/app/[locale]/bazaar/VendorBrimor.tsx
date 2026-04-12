@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
 
 interface BrimorItem {
@@ -19,6 +20,7 @@ interface BrimorItem {
 interface VendorBrimorProps {
   balance: number;
   hasDebt: boolean;
+  hasPassport: boolean;
   isLoggedIn: boolean;
 }
 
@@ -31,7 +33,7 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorBrimor({ balance, hasDebt, isLoggedIn }: VendorBrimorProps) {
+export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn }: VendorBrimorProps) {
   const t = useTranslations('bazaarPage');
 
   const [items, setItems] = useState<BrimorItem[]>([]);
@@ -142,7 +144,7 @@ export default function VendorBrimor({ balance, hasDebt, isLoggedIn }: VendorBri
   const getButtonState = (item: BrimorItem) => {
     if (!isLoggedIn) return { disabled: true, label: t('brimor.loginRequired') };
     if (hasDebt) return { disabled: true, label: t('brimor.inDebt') };
-    if (currentBalance < item.price) return { disabled: true, label: t('brimor.insufficient') };
+    if (currentBalance < applyPassportDiscount(item.price, hasPassport)) return { disabled: true, label: t('brimor.insufficient') };
     return { disabled: false, label: t('brimor.purchase') };
   };
 
@@ -215,7 +217,7 @@ export default function VendorBrimor({ balance, hasDebt, isLoggedIn }: VendorBri
               <div className="brimor-card-price">
                 <span className="brimor-price-label">{t('brimor.price')}</span>
                 <span className="brimor-price-value">
-                  {formatNumber(item.price)} {t('lunariLabel')}
+                  <PassportPrice price={item.price} hasPassport={hasPassport} /> {t('lunariLabel')}
                 </span>
               </div>
 

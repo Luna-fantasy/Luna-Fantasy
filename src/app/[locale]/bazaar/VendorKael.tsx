@@ -4,12 +4,14 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef } from 'react';
 import type { LuckboxTierConfig, RevealData } from '@/types/bazaar';
 import LunariIcon from '@/components/LunariIcon';
+import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
 
 interface VendorKaelProps {
   tiers: (LuckboxTierConfig & { cardCount: number })[];
   balance: number;
   hasDebt: boolean;
+  hasPassport: boolean;
   isLoggedIn: boolean;
   onPurchase: (data: RevealData) => void;
   onRegisterBuyAgain?: (fn: () => void) => void;
@@ -24,7 +26,7 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurchase, onRegisterBuyAgain }: VendorKaelProps) {
+export default function VendorKael({ tiers, balance, hasDebt, hasPassport, isLoggedIn, onPurchase, onRegisterBuyAgain }: VendorKaelProps) {
   const t = useTranslations('bazaarPage');
   const [buying, setBuying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +100,8 @@ export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurc
 
       <div className="luckbox-grid">
         {(tiers || []).map((tier) => {
-          const canAfford = balance >= tier.price;
+          const effectivePrice = applyPassportDiscount(tier.price, hasPassport);
+          const canAfford = balance >= effectivePrice;
           const disabled = !isLoggedIn || hasDebt || !canAfford || !!buying;
 
           return (
@@ -116,8 +119,7 @@ export default function VendorKael({ tiers, balance, hasDebt, isLoggedIn, onPurc
                 {t('kael.poolSize', { count: tier.cardCount })}
               </div>
               <div className="luckbox-price">
-                <LunariIcon size={14} />
-                {formatNumber(tier.price)}
+                <PassportPrice price={tier.price} hasPassport={hasPassport} />
               </div>
               <button
                 className="luckbox-buy-btn"

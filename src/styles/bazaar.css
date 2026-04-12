@@ -1181,3 +1181,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Passport Discount Price ── */
+
+.passport-price-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.passport-price-discounted {
+  color: #00e5ff;
+  font-weight: 700;
+}
+
+.passport-price-original {
+  text-decoration: line-through;
+  opacity: 0.45;
+  font-size: 0.82em;
+  font-weight: 400;
+}
+
+.passport-price-badge {
+  font-size: 0.7em;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(199, 117, 0, 0.2));
+  color: #ffd700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}

@@ -8,6 +8,7 @@ import {
   logTransaction,
   getBalance,
 } from '@/lib/bazaar/lunari-ops';
+import { getPassportDiscount } from '@/lib/bazaar/passport-discount';
 import { getUserGuildRoles } from '@/lib/bank/discord-roles';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
@@ -24,7 +25,10 @@ export async function GET() {
   const session = await auth();
   const discordId = session?.user?.discordId;
 
-  const items = await getVendorItems('brimor');
+  // Filter out game abilities (roulette powers) — Brimor only sells Discord roles.
+  // Abilities share the vendor_config doc but are handled by the bot's game system.
+  const allItems = await getVendorItems('brimor');
+  const items = allItems.filter((item) => (item as any).type !== 'game_ability');
 
   if (items.length === 0) {
     return NextResponse.json({ items: [], user: null });
@@ -123,9 +127,9 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
   activePurchases.add(lockKey);
 
   try {
-    // 1. Find item in DB
+    // 1. Find item in DB — reject game abilities (roulette powers, not roles)
     const item = await findVendorItem('brimor', itemId);
-    if (!item) {
+    if (!item || (item as any).type === 'game_ability') {
       return NextResponse.json({ error: 'Invalid item' }, { status: 400 });
     }
 
@@ -149,26 +153,30 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
       );
     }
 
-    // 4. Balance check
+    // 4. Passport discount
+    const discount = await getPassportDiscount(discordId);
+    const finalPrice = discount.apply(item.price);
+
+    // 5. Balance check
     const balance = await getBalance(discordId);
-    if (balance < item.price) {
+    if (balance < finalPrice) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
-    // 5. Deduct Lunari
-    const deduction = await deductLunari(discordId, item.price);
+    // 6. Deduct Lunari
+    const deduction = await deductLunari(discordId, finalPrice);
     if (!deduction.success) {
       return NextResponse.json({ error: 'Failed to deduct Lunari' }, { status: 500 });
     }
 
-    // 6. Add to bank reserve
-    void addToBankReserve(item.price);
+    // 7. Add to bank reserve
+    void addToBankReserve(finalPrice);
 
-    // 7. Save to inventory collection
+    // 8. Save to inventory collection
     const purchaseRecord = {
       id: item.id,
       name: item.name,
-      price: item.price,
+      price: finalPrice,
       roleId: item.roleId,
       description: item.description,
       shopId: 'brimor',
@@ -231,7 +239,7 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
     void logTransaction({
       discordId,
       type: 'brimor_purchase',
-      amount: -item.price,
+      amount: -finalPrice,
       balanceBefore: deduction.balanceBefore,
       balanceAfter: deduction.balanceAfter,
       metadata: {
@@ -239,6 +247,7 @@ async function handleBuy(request: Request, discordId: string, itemId: string) {
         itemReceived: item.name,
         itemId: item.id,
         roleId: item.roleId,
+        ...(discount.eligible ? { passportDiscount: true, originalPrice: item.price } : {}),
       },
       createdAt: new Date(),
       source: 'web',

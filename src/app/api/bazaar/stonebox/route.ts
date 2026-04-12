@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getStoneBoxConfig } from '@/lib/bazaar/shop-config';
 import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
+import { getPassportDiscount } from '@/lib/bazaar/passport-discount';
 import { weightedRandomDraw } from '@/lib/bazaar/weighted-random';
 import { userOwnsStone, addStoneToUser } from '@/lib/bazaar/stone-ops';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
@@ -41,14 +42,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'You have outstanding debt. Pay your debts first.' }, { status: 403 });
     }
 
-    // 2. Balance check
+    // 2. Passport discount
+    const discount = await getPassportDiscount(discordId);
+    const finalPrice = discount.apply(price);
+
+    // 3. Balance check
     const balance = await getBalance(discordId);
-    if (balance < price) {
+    if (balance < finalPrice) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
-    // 3. Atomic deduct Lunari (full price)
-    const deductResult = await deductLunari(discordId, price);
+    // 4. Atomic deduct Lunari
+    const deductResult = await deductLunari(discordId, finalPrice);
     if (!deductResult.success) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
@@ -58,27 +63,29 @@ export async function POST(request: Request) {
       const roll = Math.random();
 
       if (roll < 0.5) {
-        // NO STONE — refund
-        await creditLunari(discordId, refundAmount);
+        // NO STONE — refund (refund amount is fixed, not discounted)
+        const actualRefund = Math.min(refundAmount, finalPrice);
+        await creditLunari(discordId, actualRefund);
 
         // Net loss goes to bank reserve
-        const netLoss = price - refundAmount;
+        const netLoss = finalPrice - actualRefund;
         if (netLoss > 0) {
           await addToBankReserve(netLoss);
         }
 
-        const newBalance = deductResult.balanceAfter + refundAmount;
+        const newBalance = deductResult.balanceAfter + actualRefund;
 
         await logTransaction({
           discordId,
           type: 'stonebox_spend',
-          amount: -(price - refundAmount),
+          amount: -netLoss,
           balanceBefore: deductResult.balanceBefore,
           balanceAfter: newBalance,
           metadata: {
             vendorId: 'meluna',
             gotStone: false,
-            refundAmount,
+            refundAmount: actualRefund,
+            ...(discount.eligible ? { passportDiscount: true, originalPrice: price } : {}),
           },
           createdAt: new Date(),
           source: 'web',
@@ -96,8 +103,8 @@ export async function POST(request: Request) {
       const drawnStone = weightedRandomDraw(stones);
       const isDuplicate = await userOwnsStone(discordId, drawnStone.name);
 
-      // Full price goes to bank reserve
-      await addToBankReserve(price);
+      // Discounted price goes to bank reserve
+      await addToBankReserve(finalPrice);
 
       // Stone is always added (even if duplicate)
       await addStoneToUser(discordId, drawnStone);
@@ -107,7 +114,7 @@ export async function POST(request: Request) {
       await logTransaction({
         discordId,
         type: 'stonebox_spend',
-        amount: -price,
+        amount: -finalPrice,
         balanceBefore: deductResult.balanceBefore,
         balanceAfter: newBalance,
         metadata: {
@@ -115,6 +122,7 @@ export async function POST(request: Request) {
           gotStone: true,
           itemReceived: drawnStone.name,
           isDuplicate,
+          ...(discount.eligible ? { passportDiscount: true, originalPrice: price } : {}),
         },
         createdAt: new Date(),
         source: 'web',
@@ -133,8 +141,8 @@ export async function POST(request: Request) {
       });
       return refreshCsrf(res);
     } catch (error) {
-      // REFUND on failure — full price back
-      await creditLunari(discordId, price).catch(() => {});
+      // REFUND on failure — discounted price back
+      await creditLunari(discordId, finalPrice).catch(() => {});
       console.error('Stonebox grant error:', error);
       return NextResponse.json({ error: 'Purchase failed. Lunari refunded.' }, { status: 500 });
     }

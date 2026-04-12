@@ -76,6 +76,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
   const [balance, setBalance] = useState(0);
   const [tickets, setTickets] = useState(0);
   const [hasDebt, setHasDebt] = useState(false);
+  const [hasPassport, setHasPassport] = useState(false);
   const [reveal, setReveal] = useState<RevealData | null>(null);
   const buyAgainRef = useRef<(() => void) | null>(null);
 
@@ -92,6 +93,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
         setBalance(data.user.balance);
         setTickets(data.user.tickets);
         setHasDebt(data.user.hasDebt);
+        setHasPassport(data.user.hasPassport ?? false);
       }
     } catch (err) {
       console.error('Failed to fetch catalog:', err);
@@ -171,6 +173,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
               tiers={catalog.luckboxTiers}
               balance={balance}
               hasDebt={hasDebt}
+              hasPassport={hasPassport}
               isLoggedIn={!!session?.user}
               onPurchase={(data) => {
                 setReveal(data);
@@ -184,6 +187,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
               stoneBox={catalog.stoneBox}
               balance={balance}
               hasDebt={hasDebt}
+              hasPassport={hasPassport}
               isLoggedIn={!!session?.user}
               onPurchase={(data) => {
                 setReveal(data);
@@ -199,6 +203,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
               balance={balance}
               tickets={tickets}
               hasDebt={hasDebt}
+              hasPassport={hasPassport}
               isLoggedIn={!!session?.user}
               onPurchase={(result) => {
                 updateBalance(result.newBalance);
@@ -210,6 +215,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
             <VendorSeluna
               balance={balance}
               hasDebt={hasDebt}
+              hasPassport={hasPassport}
               isLoggedIn={!!session?.user}
             />
           )}
@@ -217,6 +223,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
             <VendorBrimor
               balance={balance}
               hasDebt={hasDebt}
+              hasPassport={hasPassport}
               isLoggedIn={!!session?.user}
             />
           )}
@@ -224,6 +231,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
             <VendorMells
               balance={balance}
               hasDebt={hasDebt}
+              hasPassport={hasPassport}
               isLoggedIn={!!session?.user}
               userAvatar={session?.user?.image ?? undefined}
               userName={session?.user?.globalName || session?.user?.name || undefined}

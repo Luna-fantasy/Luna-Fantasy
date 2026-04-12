@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import type { TicketPackage, TicketPurchaseResponse } from '@/types/bazaar';
 import LunariIcon from '@/components/LunariIcon';
+import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
 
 interface VendorZoldarProps {
@@ -11,6 +12,7 @@ interface VendorZoldarProps {
   balance: number;
   tickets: number;
   hasDebt: boolean;
+  hasPassport: boolean;
   isLoggedIn: boolean;
   onPurchase: (result: TicketPurchaseResponse) => void;
 }
@@ -24,7 +26,7 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorZoldar({ packages, balance, tickets, hasDebt, isLoggedIn, onPurchase }: VendorZoldarProps) {
+export default function VendorZoldar({ packages, balance, tickets, hasDebt, hasPassport, isLoggedIn, onPurchase }: VendorZoldarProps) {
   const t = useTranslations('bazaarPage');
   const [buying, setBuying] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +97,8 @@ export default function VendorZoldar({ packages, balance, tickets, hasDebt, isLo
 
       <div className="ticket-grid">
         {packages.map((pkg) => {
-          const canAfford = balance >= pkg.price;
+          const effectivePrice = applyPassportDiscount(pkg.price, hasPassport);
+          const canAfford = balance >= effectivePrice;
           const disabled = !isLoggedIn || hasDebt || !canAfford || !!buying;
 
           return (
@@ -110,8 +113,7 @@ export default function VendorZoldar({ packages, balance, tickets, hasDebt, isLo
                 <span>{pkg.tickets}</span>
               </div>
               <div className="ticket-price">
-                <LunariIcon size={14} />
-                {formatNumber(pkg.price)}
+                <PassportPrice price={pkg.price} hasPassport={hasPassport} />
               </div>
               <button
                 className="ticket-buy-btn"

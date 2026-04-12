@@ -118,6 +118,7 @@ export interface CatalogResponse {
     balance: number;
     tickets: number;
     hasDebt: boolean;
+    hasPassport?: boolean;
   };
 }
 

@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import type { RevealData } from '@/types/bazaar';
 import LunariIcon from '@/components/LunariIcon';
+import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
 
 interface DuplicateStone {
@@ -20,6 +21,7 @@ interface VendorMelunaProps {
   };
   balance: number;
   hasDebt: boolean;
+  hasPassport: boolean;
   isLoggedIn: boolean;
   onPurchase: (data: RevealData) => void;
   onRegisterBuyAgain?: (fn: () => void) => void;
@@ -35,7 +37,7 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, onPurchase, onRegisterBuyAgain, onBalanceUpdate }: VendorMelunaProps) {
+export default function VendorMeluna({ stoneBox, balance, hasDebt, hasPassport, isLoggedIn, onPurchase, onRegisterBuyAgain, onBalanceUpdate }: VendorMelunaProps) {
   const t = useTranslations('bazaarPage');
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +51,8 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
   const [sellError, setSellError] = useState<string | null>(null);
   const [sellQuantities, setSellQuantities] = useState<Record<string, number>>({});
 
-  const canAfford = balance >= stoneBox.price;
+  const effectivePrice = applyPassportDiscount(stoneBox.price, hasPassport);
+  const canAfford = balance >= effectivePrice;
   const disabled = !isLoggedIn || hasDebt || !canAfford || buying;
 
   const fetchDuplicates = useCallback(async () => {
@@ -212,8 +215,7 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, isLoggedIn, o
           </div>
           <h3 className="stonebox-title"><E ns="bazaarPage" k="meluna.boxTitle">{t('meluna.boxTitle')}</E></h3>
           <div className="stonebox-price">
-            <LunariIcon size={16} />
-            {formatNumber(stoneBox.price)}
+            <PassportPrice price={stoneBox.price} hasPassport={hasPassport} iconSize={16} showLabel />
           </div>
           <p className="stonebox-duplicate-info"><E ns="bazaarPage" k="meluna.duplicateInfo">{t('meluna.duplicateInfo')}</E></p>
           <button
