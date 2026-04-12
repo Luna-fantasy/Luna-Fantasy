@@ -63,8 +63,9 @@ export async function POST(request: Request) {
       const roll = Math.random();
 
       if (roll < 0.5) {
-        // NO STONE — refund (refund amount is fixed, not discounted)
-        const actualRefund = Math.min(refundAmount, finalPrice);
+        // NO STONE — refund scales with the passport discount so the
+        // ratio stays consistent (e.g. 50% back: 2000→1000, 1800→900).
+        const actualRefund = discount.apply(refundAmount);
         await creditLunari(discordId, actualRefund);
 
         // Net loss goes to bank reserve
