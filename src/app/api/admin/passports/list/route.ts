@@ -80,15 +80,22 @@ export async function GET(_request: NextRequest) {
         avatar: u.image ?? null,
       });
     }
-    // Discord cache fills gaps (users who never logged into the website)
+    // Discord cache fills gaps (users who never logged into the website).
+    // avatar is stored as a hash — construct full CDN URL.
     for (const u of discordUsers) {
       const id = String(u._id);
-      if (!nameMap.has(id)) {
+      const existing = nameMap.get(id);
+      const avatarUrl = u.avatar
+        ? `https://cdn.discordapp.com/avatars/${id}/${u.avatar}.png?size=64`
+        : null;
+      if (!existing) {
         nameMap.set(id, {
           username: u.username ?? null,
           globalName: u.globalName ?? null,
-          avatar: u.avatar ?? null,
+          avatar: avatarUrl,
         });
+      } else if (!existing.avatar && avatarUrl) {
+        existing.avatar = avatarUrl;
       }
     }
 

@@ -497,7 +497,7 @@ export default function PassportPage() {
           }}>
             Staff passport cosmetics are auto-assigned when a user&apos;s roles change. Users must already have a passport.
             Priority: <b>Mastermind</b> &gt; <b>Sentinel</b> &gt; <b>Guardian</b>. The passport ID changes automatically
-            (e.g. GUARDIAN-01, SENTINEL-01, MASTERMIND) and reverts to the original Luna ID when the role is removed.
+            (e.g. GUARDIAN, SENTINEL, MASTERMIND) and reverts to the original Luna ID when the role is removed.
           </div>
 
           <RolePicker
