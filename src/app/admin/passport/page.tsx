@@ -175,8 +175,8 @@ export default function PassportPage() {
 
   const savePassport = async (discordId: string) => {
     // Client-side validation — mirrors the server-side checks
-    if (!/^LUNA-110317\d{5}$/.test(editForm.number)) {
-      toast('Passport number must match LUNA-110317##### format', 'error');
+    if (!/^(LUNA-110317\d{5}|GUARDIAN|SENTINEL|MASTERMIND)$/.test(editForm.number)) {
+      toast('Passport number must match LUNA-110317##### or GUARDIAN/SENTINEL/MASTERMIND', 'error');
       return;
     }
     if (!editForm.fullName.trim()) {

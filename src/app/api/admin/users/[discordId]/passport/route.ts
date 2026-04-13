@@ -19,7 +19,8 @@ const VALID_FACTIONS = [
   'Mythical Creatures', 'Strange Beings', 'Supernatural', 'Underworld', 'Warriors',
 ] as const;
 
-const PASSPORT_NUMBER_RE = /^LUNA-110317\d{5}$/;
+// Accept standard Luna IDs + staff passport IDs
+const PASSPORT_NUMBER_RE = /^(LUNA-110317\d{5}|GUARDIAN|SENTINEL|MASTERMIND)$/;
 const DOB_RE = /^\d{2}\/\d{2}$/;
 
 // Luna Passport role — granted on issue/edit, revoked on delete. Keep in sync
@@ -34,6 +35,9 @@ interface PassportPayload {
   faction: string;
   issuedAt?: number;
   issuedBy?: string;
+  // Staff passport fields — preserved across edits
+  originalNumber?: string;
+  staffRole?: string;
 }
 
 function validatePassport(body: any): { valid: PassportPayload } | { error: string } {
@@ -44,7 +48,7 @@ function validatePassport(body: any): { valid: PassportPayload } | { error: stri
   const faction = String(body.faction ?? '').trim();
 
   if (!PASSPORT_NUMBER_RE.test(number)) {
-    return { error: 'number must match LUNA-110317##### format' };
+    return { error: 'number must match LUNA-110317##### or GUARDIAN/SENTINEL/MASTERMIND' };
   }
   if (fullName.length < 1 || fullName.length > 80) {
     return { error: 'fullName must be 1–80 characters' };
@@ -69,7 +73,16 @@ function validatePassport(body: any): { valid: PassportPayload } | { error: stri
     ? body.issuedBy
     : '';
 
-  return { valid: { number, fullName, dateOfBirth, faction, issuedAt, issuedBy } };
+  // Preserve staff passport fields if present
+  const staffFields: Pick<PassportPayload, 'originalNumber' | 'staffRole'> = {};
+  if (typeof body.originalNumber === 'string' && body.originalNumber) {
+    staffFields.originalNumber = body.originalNumber;
+  }
+  if (typeof body.staffRole === 'string' && ['mastermind', 'sentinel', 'guardian'].includes(body.staffRole)) {
+    staffFields.staffRole = body.staffRole;
+  }
+
+  return { valid: { number, fullName, dateOfBirth, faction, issuedAt, issuedBy, ...staffFields } };
 }
 
 // Helper — read the passport out of either { data: { passport } } (st.db v7 wrapper)
