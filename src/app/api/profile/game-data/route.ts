@@ -290,11 +290,26 @@ export async function GET(request: Request) {
     // the 5-min per-user role cache, so worst-case ~1200 uncached Discord
     // calls/hour — well below the bot REST limit.
     const passportVipLayout: Record<string, any> | null = canvasLayoutsDoc?.data?.passport_vip_web ?? null;
+
+    // Staff passport — infer from staffRole field or passport number
+    const passportObj = profile?.passport as Record<string, any> | null;
+    const staffPassportRole: string | null = passportObj
+      ? (passportObj.staffRole
+        ?? (passportObj.number === 'MASTERMIND' ? 'mastermind'
+          : passportObj.number === 'SENTINEL' ? 'sentinel'
+          : passportObj.number === 'GUARDIAN' ? 'guardian'
+          : null))
+      : null;
+    const staffPassportLayout: Record<string, any> | null = staffPassportRole
+      ? (canvasLayoutsDoc?.data?.[`passport_${staffPassportRole}_web`] ?? null)
+      : null;
+
+    // VIP passport — only if NOT a staff passport (staff takes priority)
     const vipRoleList: string[] = Array.isArray(applicationsDoc?.data?.passport_vip_roles)
       ? applicationsDoc!.data.passport_vip_roles
       : [];
     let hasVipPassport = false;
-    if (vipRoleList.length > 0 && profile?.passport) {
+    if (!staffPassportRole && vipRoleList.length > 0 && profile?.passport) {
       try {
         const userRoles = await getUserGuildRoles(discordId);
         hasVipPassport = userRoles.some((r) => vipRoleList.includes(r));
@@ -342,6 +357,8 @@ export async function GET(request: Request) {
       passportLayout,
       passportVipLayout,
       hasVipPassport,
+      staffPassportRole,
+      staffPassportLayout,
       ...(publicUser ? { publicUser } : {}),
     };
 

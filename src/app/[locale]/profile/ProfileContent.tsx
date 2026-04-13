@@ -326,40 +326,45 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
               })()
             : '';
 
-          // VIP variant — cosmetic only. Set upstream by the game-data API
-          // (which reads applications_system.passport_vip_roles + calls
-          // getUserGuildRoles). Using the flag means the website mirrors
-          // Butler's live role check without having to know the role list.
-          const isVipPassport = hasPassport && (gameData?.hasVipPassport ?? false);
+          // Variant resolution: Staff > VIP > Normal
+          const staffRole = hasPassport ? (gameData?.staffPassportRole ?? null) : null;
+          const isStaffPassport = !!staffRole;
+          const isVipPassport = hasPassport && !isStaffPassport && (gameData?.hasVipPassport ?? false);
 
-          // Canvas defaults — pixel coords on the template's NATIVE dimensions.
-          // Normal passport template is 1004x762, VIP template is 1518x1018.
-          // Mirrors the `width`/`height` + `defaultLayout` of the corresponding
-          // CanvasTypeDef entries in src/lib/admin/canvas-definitions.ts AND
-          // PASSPORT_DEFAULTS / PASSPORT_VIP_DEFAULTS in Butler's profile_card.ts.
-          // The canvas editor writes overrides into butler_canvas_layouts.passport_web
-          // (normal) or .passport_vip_web (VIP), both come down via gameData.
-          const PASSPORT_W = isVipPassport ? 1518 : 1004;
-          const PASSPORT_H = isVipPassport ? 1018 : 762;
-          const DEFAULTS = isVipPassport
-            ? {
-                avatar:   { x: 257, y: 521, radiusX: 166, radiusY: 147 },
-                number:   { x: 937, y: 361, fontSize: 36 },
-                name:     { x: 937, y: 448, fontSize: 36 },
-                dob:      { x: 937, y: 534, fontSize: 36 },
-                issuedAt: { x: 937, y: 621, fontSize: 36 },
-                faction:  { x: 937, y: 708, fontSize: 36 },
-              }
-            : {
-                avatar:   { x: 170, y: 390, radiusX: 110, radiusY: 110 },
-                number:   { x: 620, y: 270, fontSize: 24 },
-                name:     { x: 620, y: 335, fontSize: 24 },
-                dob:      { x: 620, y: 400, fontSize: 24 },
-                issuedAt: { x: 620, y: 465, fontSize: 24 },
-                faction:  { x: 620, y: 530, fontSize: 24 },
-              };
-          const layoutOverrides = (isVipPassport ? gameData?.passportVipLayout : gameData?.passportLayout) ?? {};
-          const templateUrl = isVipPassport
+          const STAFF_DEFAULTS = {
+            avatar:   { x: 380, y: 480, radiusX: 175, radiusY: 170 },
+            number:   { x: 950, y: 385, fontSize: 30 },
+            name:     { x: 950, y: 460, fontSize: 30 },
+            dob:      { x: 950, y: 540, fontSize: 30 },
+            issuedAt: { x: 950, y: 615, fontSize: 30 },
+            faction:  { x: 950, y: 695, fontSize: 30 },
+          };
+          const VIP_DEFAULTS = {
+            avatar:   { x: 257, y: 521, radiusX: 166, radiusY: 147 },
+            number:   { x: 937, y: 361, fontSize: 36 },
+            name:     { x: 937, y: 448, fontSize: 36 },
+            dob:      { x: 937, y: 534, fontSize: 36 },
+            issuedAt: { x: 937, y: 621, fontSize: 36 },
+            faction:  { x: 937, y: 708, fontSize: 36 },
+          };
+          const NORMAL_DEFAULTS = {
+            avatar:   { x: 170, y: 390, radiusX: 110, radiusY: 110 },
+            number:   { x: 620, y: 270, fontSize: 24 },
+            name:     { x: 620, y: 335, fontSize: 24 },
+            dob:      { x: 620, y: 400, fontSize: 24 },
+            issuedAt: { x: 620, y: 465, fontSize: 24 },
+            faction:  { x: 620, y: 530, fontSize: 24 },
+          };
+
+          const PASSPORT_W = isStaffPassport ? 1536 : isVipPassport ? 1518 : 1004;
+          const PASSPORT_H = isStaffPassport ? 1024 : isVipPassport ? 1018 : 762;
+          const DEFAULTS = isStaffPassport ? STAFF_DEFAULTS : isVipPassport ? VIP_DEFAULTS : NORMAL_DEFAULTS;
+          const layoutOverrides = (isStaffPassport ? gameData?.staffPassportLayout : isVipPassport ? gameData?.passportVipLayout : gameData?.passportLayout) ?? {};
+
+          const staffTemplateName = staffRole ? staffRole.charAt(0).toUpperCase() + staffRole.slice(1) : '';
+          const templateUrl = isStaffPassport
+            ? `https://assets.lunarian.app/butler/backgrounds/Passport${staffTemplateName}.png`
+            : isVipPassport
             ? 'https://assets.lunarian.app/butler/backgrounds/PassportVIPFinal.png'
             : 'https://assets.lunarian.app/butler/backgrounds/Passport.jpeg';
           const L = {
@@ -392,17 +397,23 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
           };
 
           return (
-            <div className={`profile-card profile-passport-card ${!hasPassport ? 'profile-passport-card--locked' : ''} ${isVipPassport ? 'profile-passport-card--vip' : ''}`}>
+            <div className={`profile-card profile-passport-card ${!hasPassport ? 'profile-passport-card--locked' : ''} ${isVipPassport ? 'profile-passport-card--vip' : ''} ${isStaffPassport ? `profile-passport-card--staff profile-passport-card--${staffRole}` : ''}`}>
+              {isStaffPassport && (
+                <div className={`passport-staff-badge passport-staff-badge--${staffRole}`} title={`${staffTemplateName} Passport`}>
+                  <span className="passport-staff-crown">👑</span>
+                  <span className="passport-staff-label">{staffTemplateName}</span>
+                </div>
+              )}
               {isVipPassport && (
                 <div className="passport-vip-badge" title="VIP Passport holder">
                   <span className="passport-vip-crown">👑</span>
                   <span className="passport-vip-label">VIP</span>
                 </div>
               )}
-              <div className={`passport-canvas-wrap ${!hasPassport ? 'passport-canvas-wrap--locked' : ''} ${isVipPassport ? 'passport-canvas-wrap--vip' : ''}`}>
+              <div className={`passport-canvas-wrap ${!hasPassport ? 'passport-canvas-wrap--locked' : ''} ${isVipPassport ? 'passport-canvas-wrap--vip' : ''} ${isStaffPassport ? `passport-canvas-wrap--staff passport-canvas-wrap--${staffRole}` : ''}`}>
                 <img
                   src={templateUrl}
-                  alt={hasPassport ? (isVipPassport ? 'Luna Passport VIP' : 'Luna Passport') : ''}
+                  alt={hasPassport ? (isStaffPassport ? `${staffTemplateName} Passport` : isVipPassport ? 'Luna Passport VIP' : 'Luna Passport') : ''}
                   className="passport-template"
                   onError={() => setPassportTemplateFailed(true)}
                 />

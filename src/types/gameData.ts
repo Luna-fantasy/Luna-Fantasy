@@ -126,5 +126,7 @@ export interface GameDataResponse {
   passportLayout: PassportLayout | null;
   passportVipLayout: PassportLayout | null;
   hasVipPassport: boolean;
+  staffPassportRole: string | null;
+  staffPassportLayout: PassportLayout | null;
   publicUser?: PublicUserInfo;
 }

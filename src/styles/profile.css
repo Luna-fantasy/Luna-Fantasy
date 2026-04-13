@@ -723,6 +723,143 @@ html[lang="ar"] .profile-section-title {
   box-shadow: none;
 }
 
+/* ── Staff Passport variants (Guardian / Sentinel / Mastermind) ──
+   Auto-applied when passport.staffRole or number matches a staff role.
+   Staff takes priority over VIP. Each role has its own glow color. */
+
+.profile-passport-card--staff {
+  position: relative;
+}
+
+/* Staff badge — same structure as VIP badge */
+.passport-staff-badge {
+  position: absolute;
+  top: -14px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 6px 10px;
+  color: #1a1208;
+  border-radius: 999px;
+  font-family: 'Alexandria', 'Inter', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: passport-vip-float 3s ease-in-out infinite;
+}
+
+.passport-staff-crown {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.passport-staff-label {
+  line-height: 1;
+}
+
+/* Mastermind — purple */
+.passport-staff-badge--mastermind {
+  background: linear-gradient(135deg, #bc8cff 0%, #8b5cf6 60%, #6d28d9 100%);
+  box-shadow:
+    0 6px 18px rgba(139, 92, 246, 0.55),
+    0 0 0 1px rgba(188, 140, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(109, 40, 217, 0.4);
+  color: #fff;
+}
+
+/* Sentinel — gold */
+.passport-staff-badge--sentinel {
+  background: linear-gradient(135deg, #FFD54F 0%, #FFA826 60%, #C77500 100%);
+  box-shadow:
+    0 6px 18px rgba(255, 164, 38, 0.55),
+    0 0 0 1px rgba(255, 213, 79, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(199, 117, 0, 0.4);
+  color: #1a1208;
+}
+
+/* Guardian — deep blue */
+.passport-staff-badge--guardian {
+  background: linear-gradient(135deg, #58a6ff 0%, #2563eb 60%, #1d4ed8 100%);
+  box-shadow:
+    0 6px 18px rgba(37, 99, 235, 0.55),
+    0 0 0 1px rgba(88, 166, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(29, 78, 216, 0.4);
+  color: #fff;
+}
+
+/* Staff canvas wrap — 1536x1024 aspect ratio */
+.passport-canvas-wrap--staff {
+  aspect-ratio: 1536 / 1024;
+  max-width: 1100px;
+}
+
+.passport-canvas-wrap--mastermind {
+  box-shadow:
+    0 0 80px rgba(139, 92, 246, 0.35),
+    0 0 160px rgba(188, 140, 255, 0.15),
+    0 0 0 1px rgba(139, 92, 246, 0.4),
+    0 25px 50px rgba(0, 0, 0, 0.55);
+}
+.passport-canvas-wrap--mastermind:hover {
+  box-shadow:
+    0 0 100px rgba(139, 92, 246, 0.5),
+    0 0 200px rgba(188, 140, 255, 0.22),
+    0 0 0 1px rgba(139, 92, 246, 0.55),
+    0 30px 60px rgba(0, 0, 0, 0.65);
+  transform: translateY(-3px);
+}
+
+.passport-canvas-wrap--sentinel {
+  box-shadow:
+    0 0 80px rgba(255, 213, 79, 0.35),
+    0 0 160px rgba(255, 164, 38, 0.15),
+    0 0 0 1px rgba(255, 213, 79, 0.4),
+    0 25px 50px rgba(0, 0, 0, 0.55);
+}
+.passport-canvas-wrap--sentinel:hover {
+  box-shadow:
+    0 0 100px rgba(255, 213, 79, 0.5),
+    0 0 200px rgba(255, 164, 38, 0.22),
+    0 0 0 1px rgba(255, 213, 79, 0.55),
+    0 30px 60px rgba(0, 0, 0, 0.65);
+  transform: translateY(-3px);
+}
+
+.passport-canvas-wrap--guardian {
+  box-shadow:
+    0 0 80px rgba(37, 99, 235, 0.35),
+    0 0 160px rgba(88, 166, 255, 0.15),
+    0 0 0 1px rgba(37, 99, 235, 0.4),
+    0 25px 50px rgba(0, 0, 0, 0.55);
+}
+.passport-canvas-wrap--guardian:hover {
+  box-shadow:
+    0 0 100px rgba(37, 99, 235, 0.5),
+    0 0 200px rgba(88, 166, 255, 0.22),
+    0 0 0 1px rgba(37, 99, 235, 0.55),
+    0 30px 60px rgba(0, 0, 0, 0.65);
+  transform: translateY(-3px);
+}
+
+/* Staff text — dark brown on the parchment templates */
+.passport-canvas-wrap--staff .passport-field {
+  color: #2a1810;
+  text-shadow: 0 1px 0 rgba(255, 235, 180, 0.25);
+}
+
+/* Staff avatar — no ring, template has its own frame */
+.passport-canvas-wrap--staff .passport-avatar-slot {
+  border: none;
+  box-shadow: none;
+}
+
 /* Fallback shown when the passport template image fails to load (R2 404
    or CDN unreachable). Covers the entire wrap so the text fields aren't
    left floating over a blank card. */
