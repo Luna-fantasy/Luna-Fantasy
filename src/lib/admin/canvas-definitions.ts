@@ -163,36 +163,6 @@ const levelUpCardElements: CanvasElementDef[] = [
   { id: 'avatar', label: 'Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Content' },
 ];
 
-// ─── Luna 21 Card — Butler ──────────────────────────────────────────
-
-const luna21Layout: Record<string, any> = {
-  playerAvatar: { x: 180, y: 100, radiusX: 55, radiusY: 55 },
-  playerName:   { x: 180, y: 230, fontSize: 26 },
-  playerLabel:  { x: 180, y: 258, fontSize: 19 },
-  playerCards:  { x: 70, y: 295, fontSize: 0 },
-  playerTotal:  { x: 180, y: 545, fontSize: 50 },
-  dealerAvatar: { x: 844, y: 100, radiusX: 55, radiusY: 55 },
-  dealerName:   { x: 844, y: 230, fontSize: 26 },
-  dealerLabel:  { x: 844, y: 258, fontSize: 19 },
-  dealerCards:  { x: 734, y: 295, fontSize: 0 },
-  dealerTotal:  { x: 844, y: 545, fontSize: 50 },
-  result:       { x: 512, y: 400, fontSize: 43 },
-};
-
-const luna21Elements: CanvasElementDef[] = [
-  { id: 'playerAvatar', label: 'Player Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Player' },
-  { id: 'playerName', label: 'Player Name', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
-  { id: 'playerLabel', label: 'Player Label', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
-  { id: 'playerCards', label: 'Player Cards Area', type: 'rect', props: ['x', 'y'], group: 'Player' },
-  { id: 'playerTotal', label: 'Player Total', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
-  { id: 'dealerAvatar', label: 'Dealer Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Dealer' },
-  { id: 'dealerName', label: 'Dealer Name', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Dealer' },
-  { id: 'dealerLabel', label: 'Dealer Label', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Dealer' },
-  { id: 'dealerCards', label: 'Dealer Cards Area', type: 'rect', props: ['x', 'y'], group: 'Dealer' },
-  { id: 'dealerTotal', label: 'Dealer Total', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Dealer' },
-  { id: 'result', label: 'Result Text', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Result' },
-];
-
 // ─── Winner Image — Jester ──────────────────────────────────────────
 
 const winnerLayout: Record<string, any> = {
@@ -308,6 +278,33 @@ const passportVipElements: CanvasElementDef[] = [
 
 const PASSPORT_VIP_BG_URL = 'https://assets.lunarian.app/butler/backgrounds/PassportVIPFinal.png';
 
+// ─── Staff Passport variants (Guardian / Sentinel / Mastermind — 1536x1024) ──
+// Auto-applied when the user's passport.staffRole is set. Same 5 text fields
+// as normal passport but at the staff template's native 1536x1024 resolution.
+// Each staff role has its own layout key so admins can tune independently.
+
+const passportStaffLayout: Record<string, any> = {
+  avatar:   { x: 380, y: 480, radiusX: 175, radiusY: 170 },
+  number:   { x: 950, y: 385, fontSize: 30 },
+  name:     { x: 950, y: 460, fontSize: 30 },
+  dob:      { x: 950, y: 540, fontSize: 30 },
+  issuedAt: { x: 950, y: 615, fontSize: 30 },
+  faction:  { x: 950, y: 695, fontSize: 30 },
+};
+
+const passportStaffElements: CanvasElementDef[] = [
+  { id: 'avatar',   label: 'User Avatar',     type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Photo' },
+  { id: 'number',   label: 'Passport ID',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'name',     label: 'Full Name',       type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'dob',      label: 'Birthday',        type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'issuedAt', label: 'Date Issued',     type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+  { id: 'faction',  label: 'Faction',         type: 'text',   props: ['x', 'y', 'fontSize'], group: 'Fields' },
+];
+
+const PASSPORT_GUARDIAN_BG_URL = 'https://assets.lunarian.app/butler/backgrounds/PassportGuardian.png';
+const PASSPORT_SENTINEL_BG_URL = 'https://assets.lunarian.app/butler/backgrounds/PassportSentinel.png';
+const PASSPORT_MASTERMIND_BG_URL = 'https://assets.lunarian.app/butler/backgrounds/PassportMastermind.png';
+
 // ─── All Canvas Definitions ─────────────────────────────────────────
 
 export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
@@ -405,24 +402,6 @@ export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
     colorKeys: [],
   },
   {
-    id: 'luna21_card',
-    label: 'Luna 21 Card',
-    bot: 'butler',
-    width: 1024,
-    height: 614,
-    backgroundUrl: 'https://assets.lunarian.app/canvas-backgrounds/butler/luna21_card.png',
-    elements: luna21Elements,
-    defaultLayout: luna21Layout,
-    colorKeys: [
-      { key: 'name', label: 'Name Color', default: '#6FB3E0' },
-      { key: 'label', label: 'Label Color', default: '#8AB4D5' },
-      { key: 'total', label: 'Total Color', default: '#6FB3E0' },
-      { key: 'win', label: 'Win Color', default: '#6FB3E0' },
-      { key: 'lose', label: 'Lose Color', default: '#ED4245' },
-      { key: 'push', label: 'Push Color', default: '#FEE75C' },
-    ],
-  },
-  {
     id: 'winner_image',
     label: 'Winner Image',
     bot: 'jester',
@@ -512,6 +491,131 @@ export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
     defaultLayout: passportVipLayout,
     colorKeys: [
       { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  // ─── Staff Passports (Guardian / Sentinel / Mastermind — 1536x1024) ──
+  {
+    id: 'passport_guardian',
+    label: 'Guardian Passport (Discord bot)',
+    bot: 'butler',
+    width: 1536,
+    height: 1024,
+    backgroundUrl: PASSPORT_GUARDIAN_BG_URL,
+    elements: passportStaffElements,
+    defaultLayout: { ...passportStaffLayout },
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  {
+    id: 'passport_guardian_web',
+    label: 'Guardian Passport (Website profile)',
+    bot: 'butler',
+    width: 1536,
+    height: 1024,
+    backgroundUrl: PASSPORT_GUARDIAN_BG_URL,
+    elements: passportStaffElements,
+    defaultLayout: { ...passportStaffLayout },
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  {
+    id: 'passport_sentinel',
+    label: 'Sentinel Passport (Discord bot)',
+    bot: 'butler',
+    width: 1536,
+    height: 1024,
+    backgroundUrl: PASSPORT_SENTINEL_BG_URL,
+    elements: passportStaffElements,
+    defaultLayout: { ...passportStaffLayout },
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  {
+    id: 'passport_sentinel_web',
+    label: 'Sentinel Passport (Website profile)',
+    bot: 'butler',
+    width: 1536,
+    height: 1024,
+    backgroundUrl: PASSPORT_SENTINEL_BG_URL,
+    elements: passportStaffElements,
+    defaultLayout: { ...passportStaffLayout },
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  {
+    id: 'passport_mastermind',
+    label: 'Mastermind Passport (Discord bot)',
+    bot: 'butler',
+    width: 1536,
+    height: 1024,
+    backgroundUrl: PASSPORT_MASTERMIND_BG_URL,
+    elements: passportStaffElements,
+    defaultLayout: { ...passportStaffLayout },
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  {
+    id: 'passport_mastermind_web',
+    label: 'Mastermind Passport (Website profile)',
+    bot: 'butler',
+    width: 1536,
+    height: 1024,
+    backgroundUrl: PASSPORT_MASTERMIND_BG_URL,
+    elements: passportStaffElements,
+    defaultLayout: { ...passportStaffLayout },
+    colorKeys: [
+      { key: 'value', label: 'Text Color', default: '#1a1208' },
+    ],
+  },
+  // ─── Luna 21 (Blackjack) — Butler ────────────────────────────────────
+  {
+    id: 'luna21_card',
+    label: 'Luna 21',
+    bot: 'butler',
+    width: 1619,
+    height: 971,
+    backgroundUrl: 'https://assets.lunarian.app/butler/misc/Luna-21.png',
+    elements: [
+      // Player (left side)
+      { id: 'playerAvatar', label: 'Player Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Player' },
+      { id: 'playerName', label: 'Player Name', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
+      { id: 'playerLabel', label: 'Player Label', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
+      { id: 'playerCards', label: 'Player Cards', type: 'rect', props: ['startX', 'startY', 'spacing'], group: 'Player' },
+      { id: 'playerTotal', label: 'Player Total', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Player' },
+      // Dealer (right side)
+      { id: 'dealerAvatar', label: 'Dealer Avatar', type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group: 'Dealer' },
+      { id: 'dealerName', label: 'Dealer Name', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Dealer' },
+      { id: 'dealerLabel', label: 'Dealer Label', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Dealer' },
+      { id: 'dealerCards', label: 'Dealer Cards', type: 'rect', props: ['startX', 'startY', 'spacing'], group: 'Dealer' },
+      { id: 'dealerTotal', label: 'Dealer Total', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Dealer' },
+      // Result (center)
+      { id: 'result', label: 'Result Text', type: 'text', props: ['x', 'y', 'fontSize'], group: 'Result' },
+    ],
+    defaultLayout: {
+      playerAvatar: { x: 128, y: 115, radiusX: 60, radiusY: 60 },
+      playerName: { x: 128, y: 258, fontSize: 20 },
+      playerLabel: { x: 128, y: 280, fontSize: 14 },
+      playerCards: { startX: 250, startY: 330, spacing: 155 },
+      playerTotal: { x: 185, y: 885, fontSize: 36 },
+      dealerAvatar: { x: 1491, y: 115, radiusX: 60, radiusY: 60 },
+      dealerName: { x: 1491, y: 258, fontSize: 20 },
+      dealerLabel: { x: 1491, y: 280, fontSize: 14 },
+      dealerCards: { startX: 960, startY: 330, spacing: 155 },
+      dealerTotal: { x: 1435, y: 885, fontSize: 36 },
+      result: { x: 810, y: 500, fontSize: 68 },
+    },
+    colorKeys: [
+      { key: 'name', label: 'Name Color', default: '#6FB3E0' },
+      { key: 'label', label: 'Label Color', default: '#8AB4D5' },
+      { key: 'total', label: 'Score Color', default: '#6FB3E0' },
+      { key: 'win', label: 'Win Color', default: '#6FB3E0' },
+      { key: 'lose', label: 'Lose Color', default: '#ED4245' },
+      { key: 'push', label: 'Push Color', default: '#FEE75C' },
     ],
   },
 ];

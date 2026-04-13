@@ -35,6 +35,12 @@ interface ApplicationsConfig {
   // VIP passport role gate — users with any of these roles see the VIP cosmetic
   // variant. Empty = feature disabled. Changes propagate to both bot + website.
   passport_vip_roles?: string[];
+  // Staff passport cosmetic roles — auto-assigns staff ID + template
+  passport_staff_roles?: {
+    mastermind: string[];
+    sentinel: string[];
+    guardian: string[];
+  };
 }
 
 interface Passport {
@@ -81,6 +87,7 @@ const EMPTY_CONFIG: ApplicationsConfig = {
   passport_high_staff_roles: [],
   passport_mid_staff_roles: [],
   passport_vip_roles: [],
+  passport_staff_roles: { mastermind: [], sentinel: [], guardian: [] },
 };
 
 const PASSPORT_DEFAULT_MERCHANT = 'https://assets.lunarian.app/butler/vendors/VaelorStorm.png';
@@ -470,6 +477,81 @@ export default function PassportPage() {
                   {' '}→ pick <b>Luna Passport VIP (Discord bot)</b> or <b>Luna Passport VIP (Website profile)</b>.
                 </div>
               </div>
+            </div>
+          </div>
+
+          <BotBadge bot="butler" />
+        </ConfigSection>
+
+        {/* Staff Passport Cosmetics */}
+        <ConfigSection title="Staff Passport Cosmetics" defaultOpen={false}>
+          <div style={{
+            background: 'rgba(88, 166, 255, 0.04)',
+            border: '1px solid rgba(88, 166, 255, 0.15)',
+            borderRadius: 8,
+            padding: '12px 14px',
+            marginBottom: 14,
+            fontSize: 13,
+            lineHeight: 1.55,
+            color: 'var(--text-secondary)',
+          }}>
+            Staff passport cosmetics are auto-assigned when a user&apos;s roles change. Users must already have a passport.
+            Priority: <b>Mastermind</b> &gt; <b>Sentinel</b> &gt; <b>Guardian</b>. The passport ID changes automatically
+            (e.g. GUARDIAN-01, SENTINEL-01, MASTERMIND) and reverts to the original Luna ID when the role is removed.
+          </div>
+
+          <RolePicker
+            label="🟣 Mastermind Roles"
+            description="Users with these roles get the Mastermind passport cosmetic. ID format: MASTERMIND (no number)."
+            value={config.passport_staff_roles?.mastermind ?? []}
+            onChange={(v) => setConfig(p => ({
+              ...p,
+              passport_staff_roles: { ...p.passport_staff_roles ?? { mastermind: [], sentinel: [], guardian: [] }, mastermind: v as string[] },
+            }))}
+            multi
+          />
+
+          <RolePicker
+            label="🟡 Sentinel Roles"
+            description="Users with these roles get the Sentinel passport cosmetic. ID format: SENTINEL-01, SENTINEL-02, etc."
+            value={config.passport_staff_roles?.sentinel ?? []}
+            onChange={(v) => setConfig(p => ({
+              ...p,
+              passport_staff_roles: { ...p.passport_staff_roles ?? { mastermind: [], sentinel: [], guardian: [] }, sentinel: v as string[] },
+            }))}
+            multi
+          />
+
+          <RolePicker
+            label="🔵 Guardian Roles"
+            description="Users with these roles get the Guardian passport cosmetic. ID format: GUARDIAN-01, GUARDIAN-02, etc."
+            value={config.passport_staff_roles?.guardian ?? []}
+            onChange={(v) => setConfig(p => ({
+              ...p,
+              passport_staff_roles: { ...p.passport_staff_roles ?? { mastermind: [], sentinel: [], guardian: [] }, guardian: v as string[] },
+            }))}
+            multi
+          />
+
+          <div className="admin-form-group" style={{ marginTop: 14 }}>
+            <label className="admin-form-label">🎨 Staff Passport Templates</label>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', padding: '8px 0' }}>
+              <div style={{ textAlign: 'center' }}>
+                <img src="https://assets.lunarian.app/butler/backgrounds/PassportGuardian.png" alt="Guardian" style={{ height: 80, borderRadius: 6, border: '1px solid rgba(88, 166, 255, 0.25)' }} />
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Guardian</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <img src="https://assets.lunarian.app/butler/backgrounds/PassportSentinel.png" alt="Sentinel" style={{ height: 80, borderRadius: 6, border: '1px solid rgba(255, 213, 79, 0.25)' }} />
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Sentinel</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <img src="https://assets.lunarian.app/butler/backgrounds/PassportMastermind.png" alt="Mastermind" style={{ height: 80, borderRadius: 6, border: '1px solid rgba(188, 140, 255, 0.25)' }} />
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Mastermind</div>
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Each staff passport template has its own canvas layout. Tune positions via the{' '}
+              <a href="/admin/canvas-editor" style={{ color: 'var(--accent-primary)' }}>Canvas Editor</a>.
             </div>
           </div>
 
