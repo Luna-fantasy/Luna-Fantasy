@@ -4,7 +4,7 @@ import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { creditLunari, deductLunari, getBalance, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 
 export async function POST(
   request: NextRequest,
@@ -21,7 +21,7 @@ export async function POST(
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   const { discordId } = params;

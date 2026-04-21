@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 interface PassportRow {
@@ -30,7 +30,7 @@ export async function GET(_request: NextRequest) {
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_read', adminId, 30, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   try {

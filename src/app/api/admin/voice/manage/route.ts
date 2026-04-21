@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('voice_manage', adminId, 10, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   let body: { action: string; roomId: string; value?: string };
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       pendingAction.value = value.trim();
     }
 
-    // Push to pendingActions array — bot picks these up on next aura cycle
+    // Push to pendingActions array — Oracle poller picks these up within 30s (LunaOracle/index.ts:254)
     await col.updateOne(
       { _id: roomId as any },
       { $push: { pendingActions: pendingAction } as any },

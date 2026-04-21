@@ -1,6 +1,7 @@
 export interface FactionWarCard {
   name: string;
   image: string;
+  description?: string;
 }
 
 export interface FactionWarFaction {

@@ -7,6 +7,16 @@ let cache: FactionWarFaction[] | null = null;
 let cacheTime = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * Drop the in-memory cache so the next read pulls fresh data from MongoDB.
+ * Called by the admin API after every faction card mutation so admin edits
+ * become visible on the public website without waiting 5 minutes.
+ */
+export function invalidateFactionWarCache(): void {
+  cache = null;
+  cacheTime = 0;
+}
+
 export async function getFactionWarFactions(): Promise<FactionWarFaction[]> {
   if (cache && Date.now() - cacheTime < CACHE_TTL) return cache;
 
@@ -39,6 +49,7 @@ export async function getFactionWarFactions(): Promise<FactionWarFaction[]> {
 }
 
 export function getFactionWarImageUrl(image: string): string {
+  if (image.startsWith('http://') || image.startsWith('https://')) return image;
   return `${R2_BASE}/${image}`;
 }
 

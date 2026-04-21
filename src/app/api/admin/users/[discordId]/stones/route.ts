@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -27,8 +27,8 @@ export async function POST(
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   const { discordId } = params;
   if (!/^\d{17,20}$/.test(discordId)) return NextResponse.json({ error: 'Invalid Discord ID' }, { status: 400 });
@@ -90,8 +90,8 @@ export async function DELETE(
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   const { discordId } = params;
   if (!/^\d{17,20}$/.test(discordId)) return NextResponse.json({ error: 'Invalid Discord ID' }, { status: 400 });

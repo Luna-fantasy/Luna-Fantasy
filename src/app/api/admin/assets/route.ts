@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { listObjects, listPrefixes, deleteObject, uploadObject, isR2Configured } from '@/lib/admin/r2';
 
 export async function GET(request: NextRequest) {
@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
   if (!authResult.authorized) return authResult.response;
 
   const discordId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_read', discordId, 30, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 30, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   if (!isR2Configured()) {
     return NextResponse.json({ error: 'R2 not configured', configured: false }, { status: 503 });
@@ -42,8 +42,8 @@ export async function DELETE(request: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   if (!isR2Configured()) {
     return NextResponse.json({ error: 'R2 not configured' }, { status: 503 });
@@ -82,8 +82,8 @@ export async function PUT(request: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   if (!isR2Configured()) {
     return NextResponse.json({ error: 'R2 not configured' }, { status: 503 });

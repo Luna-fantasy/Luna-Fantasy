@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -14,8 +14,8 @@ export async function GET() {
   if (!authResult.authorized) return authResult.response;
 
   const discordId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_read', discordId, 30, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 30, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const client = await clientPromise;
@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   let body: {
     id: string;

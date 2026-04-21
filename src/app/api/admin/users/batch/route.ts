@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { validateCsrf } from '@/lib/bazaar/csrf';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -9,9 +10,12 @@ export async function POST(request: NextRequest) {
   const authResult = await requireMastermindApi();
   if (!authResult.authorized) return authResult.response;
 
+  const csrfValid = await validateCsrf(request);
+  if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_read', adminId, 30, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_read', adminId, 30, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   let body: { ids: string[] };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }

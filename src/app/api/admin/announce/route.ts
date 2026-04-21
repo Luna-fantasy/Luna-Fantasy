@@ -3,23 +3,59 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const GUILD_ID = process.env.DISCORD_GUILD_ID ?? '1243327880478462032';
 
-function getOracleToken(): string | null {
-  return process.env.ORACLE_BOT_TOKEN ?? null;
+type BotId = 'butler' | 'jester' | 'sage' | 'oracle';
+const BOT_LABELS: Record<BotId, string> = {
+  butler: 'Luna Butler',
+  jester: 'Luna Jester',
+  sage:   'Luna Sage',
+  oracle: 'Luna Oracle',
+};
+
+function getBotToken(bot: BotId): string | null {
+  switch (bot) {
+    // Butler falls back to the canonical DISCORD_BOT_TOKEN — the root CLAUDE.md
+    // convention — so we don't require a separate BUTLER_BOT_TOKEN env var.
+    case 'butler': return process.env.BUTLER_BOT_TOKEN ?? process.env.DISCORD_BOT_TOKEN ?? null;
+    case 'jester': return process.env.JESTER_BOT_TOKEN ?? null;
+    case 'sage':   return process.env.SAGE_BOT_TOKEN   ?? null;
+    case 'oracle': return process.env.ORACLE_BOT_TOKEN ?? null;
+  }
 }
 
-// GET — List available text channels grouped by category
-export async function GET() {
+function isValidBot(v: any): v is BotId {
+  return v === 'butler' || v === 'jester' || v === 'sage' || v === 'oracle';
+}
+
+function listAvailableBots(): { id: BotId; label: string; available: boolean }[] {
+  return (['butler', 'jester', 'sage', 'oracle'] as BotId[]).map((id) => ({
+    id,
+    label: BOT_LABELS[id],
+    available: Boolean(getBotToken(id)),
+  }));
+}
+
+// GET — List available text channels grouped by category, optionally for a specific bot.
+// Accepts `?botId=butler|jester|sage|oracle` (defaults to oracle for back-compat).
+// Returns the list of available bots so the dashboard can render a selector.
+export async function GET(request: NextRequest) {
   const authResult = await requireMastermindApi();
   if (!authResult.authorized) return authResult.response;
 
-  const token = getOracleToken();
+  const url = new URL(request.url);
+  const botParam = url.searchParams.get('botId');
+  const botId: BotId = isValidBot(botParam) ? botParam : 'oracle';
+
+  const token = getBotToken(botId);
   if (!token) {
-    return NextResponse.json({ error: 'ORACLE_BOT_TOKEN not configured' }, { status: 500 });
+    return NextResponse.json({
+      error: `${BOT_LABELS[botId]} token not configured (set ${botId.toUpperCase()}_BOT_TOKEN in env)`,
+      bots: listAvailableBots(),
+    }, { status: 500 });
   }
 
   try {
@@ -77,10 +113,10 @@ export async function GET() {
       }
     } catch {}
 
-    return NextResponse.json({ channels: textChannels, emojis });
+    return NextResponse.json({ channels: textChannels, emojis, bots: listAvailableBots(), botId });
   } catch (error) {
     console.error('Discord channel fetch error:', error);
-    return NextResponse.json({ error: 'Failed to fetch channels' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch channels', bots: listAvailableBots() }, { status: 500 });
   }
 }
 
@@ -95,14 +131,9 @@ export async function POST(request: NextRequest) {
   }
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 5, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 5, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited — max 5 announces per minute' }, { status: 429 });
-  }
-
-  const token = getOracleToken();
-  if (!token) {
-    return NextResponse.json({ error: 'ORACLE_BOT_TOKEN not configured' }, { status: 500 });
+    return rateLimitResponse(retryAfterMs, 'Rate limited — max 5 announces per minute');
   }
 
   let body: any;
@@ -113,6 +144,14 @@ export async function POST(request: NextRequest) {
   }
 
   const { channelId, content, imageData, imageType } = body;
+  const botId: BotId = isValidBot(body.botId) ? body.botId : 'oracle';
+
+  const token = getBotToken(botId);
+  if (!token) {
+    return NextResponse.json({
+      error: `${BOT_LABELS[botId]} token not configured (set ${botId.toUpperCase()}_BOT_TOKEN in env)`,
+    }, { status: 500 });
+  }
 
   if (!channelId || typeof channelId !== 'string') {
     return NextResponse.json({ error: 'channelId is required' }, { status: 400 });
@@ -197,19 +236,20 @@ export async function POST(request: NextRequest) {
     await logAdminAction({
       adminDiscordId: adminId,
       adminUsername: authResult.session.user?.globalName ?? 'Unknown',
-      action: 'oracle_announce',
+      action: 'bot_announce',
       before: null,
       after: {
+        botId,
         channelId,
         messageId: msg.id,
         contentPreview: content.trim().substring(0, 200),
         hasImage: !!imageData,
       },
-      metadata: { channelId, messageId: msg.id },
+      metadata: { botId, channelId, messageId: msg.id },
       ip: getClientIp(request),
     });
 
-    const response = NextResponse.json({ success: true, messageId: msg.id });
+    const response = NextResponse.json({ success: true, messageId: msg.id, botId });
     return refreshCsrf(response);
   } catch (error) {
     console.error('Announce send error:', error);

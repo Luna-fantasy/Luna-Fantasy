@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { getEconomyOverview } from '@/lib/admin/db';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 
 export async function GET() {
   const authResult = await requireMastermindApi();
@@ -12,10 +12,7 @@ export async function GET() {
 
   const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 30, 60_000);
   if (!allowed) {
-    return NextResponse.json(
-      { error: 'Rate limited', retryAfterMs },
-      { status: 429 }
-    );
+    return rateLimitResponse(retryAfterMs);
   }
 
   try {

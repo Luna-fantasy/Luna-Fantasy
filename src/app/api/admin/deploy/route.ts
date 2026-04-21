@@ -5,7 +5,7 @@ import { gitCommitAndPush } from '@/lib/admin/config-writer';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const PROJECT_PATHS: Record<string, string> = {
@@ -20,12 +20,12 @@ export async function POST(req: NextRequest) {
   const csrfValid = await validateCsrf(req);
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
-  const { allowed } = checkRateLimit('admin_deploy', auth.session.user.discordId!, 3, 300_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited — max 3 deploys per 5 minutes' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_deploy', auth.session.user.discordId!, 3, 300_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs, 'Rate limited — max 3 deploys per 5 minutes');
 
   const { project, commitMessage } = await req.json();
 
-  if (!project || !['butler', 'jester', 'oracle', 'sage', 'fantasy'].includes(project)) {
+  if (!project || !['butler', 'jester', 'oracle', 'sage'].includes(project)) {
     return NextResponse.json({ error: 'Invalid project' }, { status: 400 });
   }
 

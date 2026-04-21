@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -58,8 +58,8 @@ export async function GET() {
   if (!authResult.authorized) return authResult.response;
 
   const discordId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_read', discordId, 30, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 30, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const client = await clientPromise;
@@ -80,14 +80,17 @@ export async function PUT(request: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   let body: { vendorId: string; data: any };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
   const { vendorId, data } = body;
   if (!vendorId || !data) return NextResponse.json({ error: 'vendorId and data required' }, { status: 400 });
+  if (typeof vendorId !== 'string' || !/^[a-z0-9_-]{1,50}$/i.test(vendorId)) {
+    return NextResponse.json({ error: 'vendorId must be alphanumeric (with - or _), max 50 chars' }, { status: 400 });
+  }
 
   const sanitizedData = sanitizeObject(data);
 

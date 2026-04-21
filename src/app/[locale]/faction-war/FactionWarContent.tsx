@@ -11,7 +11,13 @@ import type { FactionWarFaction } from '@/types/faction-war';
 import type { Locale } from '@/types';
 
 const R2_BASE = 'https://assets.lunarian.app/LunaPairs';
-function getFactionWarImageUrl(image: string) { return `${R2_BASE}/${image}`; }
+function getFactionWarImageUrl(image: string) {
+  // Cards in MongoDB store either bare filenames (`lunarians_seluna.png`,
+  // optionally with a `?v=...` cache-buster appended by the admin upload) or
+  // a full URL pasted manually in the dashboard. Handle both.
+  if (image.startsWith('http://') || image.startsWith('https://')) return image;
+  return `${R2_BASE}/${image}`;
+}
 function getFactionWarBgUrl() { return 'https://assets.lunarian.app/backgrounds/FactionWarHero.png'; }
 
 interface FactionWarContentProps {
@@ -26,7 +32,7 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
   const hero = useTranslations('hero');
 
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxCard, setLightboxCard] = useState<{ src: string; name: string; description?: string } | null>(null);
 
   const filteredFactions = activeFilter === 'all'
     ? factions
@@ -188,7 +194,7 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
                       <div
                         key={card.image}
                         className="lp-card-item"
-                        onClick={() => setLightboxImage(imageUrl)}
+                        onClick={() => setLightboxCard({ src: imageUrl, name: card.name, description: card.description })}
                         style={{ '--faction-color': faction.color } as React.CSSProperties}
                       >
                         <div className="lp-card-image-wrapper">
@@ -210,12 +216,14 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
         </div>
       </section>
 
-      {/* Lightbox */}
+      {/* Lightbox — now includes card name + description (admin-editable) */}
       <Lightbox
-        isOpen={!!lightboxImage}
-        imageSrc={lightboxImage || ''}
-        alt="Card Preview"
-        onClose={() => setLightboxImage(null)}
+        isOpen={!!lightboxCard}
+        imageSrc={lightboxCard?.src || ''}
+        alt={lightboxCard?.name || 'Card Preview'}
+        title={lightboxCard?.name}
+        description={lightboxCard?.description}
+        onClose={() => setLightboxCard(null)}
       />
     </>
   );

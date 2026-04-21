@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { uploadObject, isR2Configured } from '@/lib/admin/r2';
 
@@ -15,8 +15,8 @@ export async function POST(request: NextRequest) {
   if (!authResult.authorized) return authResult.response;
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   const csrfValid = await validateCsrf(request);
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });

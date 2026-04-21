@@ -14,6 +14,7 @@ import SwapsTab from './SwapsTab';
 import CardDetailModal from '@/components/CardDetailModal';
 import type { CardDetailData } from '@/components/CardDetailModal';
 import LunariIcon from '@/components/LunariIcon';
+import { E } from '@/components/edit-mode/EditableText';
 type Tab = 'browse' | 'my-listings' | 'sell' | 'swaps';
 type SellType = 'fixed' | 'auction';
 
@@ -252,8 +253,8 @@ export default function MarketplaceContent() {
       <div className="marketplace-hero">
         <div className="marketplace-hero-bg" />
         <div className="marketplace-hero-content">
-          <h1 className="marketplace-hero-title">{t('title')}</h1>
-          <p className="marketplace-hero-desc">{t('subtitle')}</p>
+          <h1 className="marketplace-hero-title"><E ns="marketplacePage" k="title">{t('title')}</E></h1>
+          <p className="marketplace-hero-desc"><E ns="marketplacePage" k="subtitle">{t('subtitle')}</E></p>
         </div>
       </div>
 
@@ -275,14 +276,14 @@ export default function MarketplaceContent() {
         {isLoggedIn && balance !== null && (
           <div className="marketplace-balance-bar">
             <div className="marketplace-balance-info">
-              <span className="marketplace-balance-label">{t('balance')}</span>
+              <span className="marketplace-balance-label"><E ns="marketplacePage" k="balance">{t('balance')}</E></span>
               <span className="marketplace-balance-value">
                 <LunariIcon size={14} />
                 {balance.toLocaleString()}
               </span>
             </div>
             {hasDebt && (
-              <span className="marketplace-debt-badge">{t('inDebt')}</span>
+              <span className="marketplace-debt-badge"><E ns="marketplacePage" k="inDebt">{t('inDebt')}</E></span>
             )}
           </div>
         )}
@@ -293,7 +294,7 @@ export default function MarketplaceContent() {
             className={`marketplace-tab ${activeTab === 'browse' ? 'active' : ''}`}
             onClick={() => setActiveTab('browse')}
           >
-            {t('tabs.browse')}
+            <E ns="marketplacePage" k="tabs.browse">{t('tabs.browse')}</E>
           </button>
           {isLoggedIn && (
             <>
@@ -301,19 +302,19 @@ export default function MarketplaceContent() {
                 className={`marketplace-tab ${activeTab === 'my-listings' ? 'active' : ''}`}
                 onClick={() => setActiveTab('my-listings')}
               >
-                {t('tabs.myListings')}
+                <E ns="marketplacePage" k="tabs.myListings">{t('tabs.myListings')}</E>
               </button>
               <button
                 className={`marketplace-tab ${activeTab === 'sell' ? 'active' : ''}`}
                 onClick={() => setActiveTab('sell')}
               >
-                {t('tabs.sell')}
+                <E ns="marketplacePage" k="tabs.sell">{t('tabs.sell')}</E>
               </button>
               <button
                 className={`marketplace-tab ${activeTab === 'swaps' ? 'active' : ''}`}
                 onClick={() => setActiveTab('swaps')}
               >
-                {t('tabs.swaps')}
+                <E ns="marketplacePage" k="tabs.swaps">{t('tabs.swaps')}</E>
               </button>
             </>
           )}
@@ -381,7 +382,7 @@ export default function MarketplaceContent() {
                   <rect x="2" y="3" width="20" height="18" rx="2" />
                   <path d="M8 7h8M8 12h8M8 17h4" />
                 </svg>
-                <p>{t('noListings')}</p>
+                <p><E ns="marketplacePage" k="noListings">{t('noListings')}</E></p>
               </div>
             ) : (
               <div className="marketplace-grid">
@@ -464,7 +465,7 @@ export default function MarketplaceContent() {
         {/* Sell tab — type selection then modal (gated) */}
         {activeTab === 'sell' && isLoggedIn && !showSellModal && (
           <div className="marketplace-sell-type-picker">
-            <h3 className="marketplace-sell-type-title">{t('sellTypeTitle')}</h3>
+            <h3 className="marketplace-sell-type-title"><E ns="marketplacePage" k="sellTypeTitle">{t('sellTypeTitle')}</E></h3>
             <div className="marketplace-sell-type-options">
               <button
                 className={`marketplace-sell-type-btn ${sellType === 'fixed' ? 'active' : ''}`}
@@ -474,8 +475,8 @@ export default function MarketplaceContent() {
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 6v6l4 2" />
                 </svg>
-                <span className="sell-type-label">{t('sellTypeFixed')}</span>
-                <span className="sell-type-desc">{t('sellTypeFixedDesc')}</span>
+                <span className="sell-type-label"><E ns="marketplacePage" k="sellTypeFixed">{t('sellTypeFixed')}</E></span>
+                <span className="sell-type-desc"><E ns="marketplacePage" k="sellTypeFixedDesc">{t('sellTypeFixedDesc')}</E></span>
               </button>
               <button
                 className={`marketplace-sell-type-btn ${sellType === 'auction' ? 'active' : ''}`}
@@ -486,15 +487,15 @@ export default function MarketplaceContent() {
                   <path d="M2 17l10 5 10-5" />
                   <path d="M2 12l10 5 10-5" />
                 </svg>
-                <span className="sell-type-label">{t('sellTypeAuction')}</span>
-                <span className="sell-type-desc">{t('sellTypeAuctionDesc')}</span>
+                <span className="sell-type-label"><E ns="marketplacePage" k="sellTypeAuction">{t('sellTypeAuction')}</E></span>
+                <span className="sell-type-desc"><E ns="marketplacePage" k="sellTypeAuctionDesc">{t('sellTypeAuctionDesc')}</E></span>
               </button>
             </div>
             <button
               className="marketplace-sell-continue-btn"
               onClick={() => setShowSellModal(true)}
             >
-              {t('continue')}
+              <E ns="marketplacePage" k="continue">{t('continue')}</E>
             </button>
           </div>
         )}

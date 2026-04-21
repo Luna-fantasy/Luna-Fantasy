@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp, hasMongoOperator } from '@/lib/admin/sanitize';
 import clientPromise from '@/lib/mongodb';
@@ -40,7 +40,7 @@ export async function GET() {
 
   const discordId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_challenge_templates', discordId, 30, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const { doc } = await getTemplatesDoc();
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_challenge_templates_write', adminId, 5, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const body = await req.json();
@@ -178,7 +178,7 @@ export async function DELETE(req: NextRequest) {
 
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_challenge_templates_write', adminId, 5, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const body = await req.json();

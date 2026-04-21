@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { getCanvasDefinition } from '@/lib/admin/canvas-definitions';
 import clientPromise from '@/lib/mongodb';
 
@@ -20,13 +20,13 @@ export async function POST(req: NextRequest) {
   }
 
   const adminId = auth.session.user.discordId!;
-  const { allowed } = checkRateLimit('canvas_test_deploy', adminId, 3, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('canvas_test_deploy', adminId, 3, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited. Max 3 test deploys per minute.' }, { status: 429 });
+    return rateLimitResponse(retryAfterMs, 'Rate limited. Max 3 test deploys per minute.');
   }
 
   try {
-    const { canvasType, channelId, bot } = await req.json();
+    const { canvasType, channelId, bot, trialBackgroundUrl } = await req.json();
 
     if (!canvasType || typeof canvasType !== 'string') {
       return NextResponse.json({ error: 'canvasType is required' }, { status: 400 });
@@ -41,6 +41,16 @@ export async function POST(req: NextRequest) {
     const def = getCanvasDefinition(canvasType);
     if (!def || def.bot !== bot) {
       return NextResponse.json({ error: `Canvas type "${canvasType}" not valid for bot "${bot}"` }, { status: 400 });
+    }
+
+    // Optional trial background — must be from our own R2 trials folder
+    let trialUrl: string | null = null;
+    if (trialBackgroundUrl && typeof trialBackgroundUrl === 'string') {
+      const R2_PUBLIC = process.env.R2_PUBLIC_URL ?? 'https://assets.lunarian.app';
+      if (!trialBackgroundUrl.startsWith(`${R2_PUBLIC}/canvas-trials/`)) {
+        return NextResponse.json({ error: 'trialBackgroundUrl must be from canvas-trials/' }, { status: 400 });
+      }
+      trialUrl = trialBackgroundUrl;
     }
 
     const client = await clientPromise;
@@ -62,6 +72,7 @@ export async function POST(req: NextRequest) {
       status: 'pending',
       requestedBy: adminId,
       createdAt: new Date(),
+      ...(trialUrl ? { trialBackgroundUrl: trialUrl } : {}),
     });
 
     const requestId = result.insertedId;

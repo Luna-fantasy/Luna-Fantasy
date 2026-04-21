@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB = 'Database';
@@ -15,7 +15,7 @@ export async function GET() {
 
   const discordId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_challenge_texts', discordId, 20, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const client = await clientPromise;
@@ -39,7 +39,7 @@ export async function PUT(req: NextRequest) {
 
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_challenge_texts_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const body = await req.json();

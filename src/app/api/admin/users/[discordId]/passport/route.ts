@@ -8,7 +8,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 import { addGuildMemberRole, removeGuildMemberRole } from '@/lib/bank/discord-roles';
 
@@ -109,7 +109,7 @@ export async function GET(
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_read', adminId, 30, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   const { discordId } = params;
@@ -144,7 +144,7 @@ export async function PUT(
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   const { discordId } = params;
@@ -241,7 +241,7 @@ export async function DELETE(
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   const { discordId } = params;

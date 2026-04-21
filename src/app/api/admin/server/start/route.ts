@@ -4,7 +4,7 @@ import { agentFetch } from '@/lib/admin/vps-agent';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 
 export async function POST(req: NextRequest) {
   const auth = await requireMastermindApi();
@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = auth.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 5, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 5, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   const { name } = await req.json();
   if (!name || typeof name !== 'string') {

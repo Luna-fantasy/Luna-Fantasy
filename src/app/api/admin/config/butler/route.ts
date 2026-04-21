@@ -4,7 +4,7 @@ import { logAdminAction } from '@/lib/admin/audit';
 import { hasMongoOperator, getClientIp } from '@/lib/admin/sanitize';
 import { validateButlerConfig } from '@/lib/admin/config-validation';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -21,7 +21,11 @@ const ALLOWED_SECTIONS = new Set([
   'banker_enabled', 'trade_level', 'vip_interest',
   'chat_event_points', 'baloot_reward',
   'double_xp_enabled', 'level_up_mode',
-  'commands', 'badge_thresholds', 'status',
+  'commands', 'badge_thresholds', 'badges_visuals', 'status',
+  'notifications',
+  // Investor (bank-VIP renamed). Keep 'vip_reward' + 'vip_interest' as legacy aliases
+  // during migration — both resolve to the same bot_config field underneath.
+  'investor_reward', 'investor_interest',
 ]);
 
 // Maps dashboard section names → bot_config document _id + data field path
@@ -66,7 +70,11 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   level_up_mode:        { docId: 'butler_level_system', field: 'level_up_mode' },
   commands:             { docId: 'butler_commands', field: '_root' },
   badge_thresholds:     { docId: 'butler_badge_thresholds', field: '_root' },
+  badges_visuals:       { docId: 'butler_badges_visuals',   field: '_root' },
   status:               { docId: 'butler_status', field: '_root' },
+  notifications:        { docId: 'butler_notifications', field: '_root' },
+  investor_reward:      { docId: 'butler_economy', field: 'investor_reward' },
+  investor_interest:    { docId: 'butler_banking', field: 'investor_interest' },
 };
 
 export async function GET() {
@@ -78,7 +86,7 @@ export async function GET() {
     const col = client.db(DB_NAME).collection('bot_config');
 
     // Load all Butler config documents in parallel
-    const [economy, games, leveling, banking, shop, tickets, applications, autoReply, autoImages, channels, roles, leaderboard, chatEvents, baloot, commands, badgeThresholds, statusDoc] = await Promise.all([
+    const [economy, games, leveling, banking, shop, tickets, applications, autoReply, autoImages, channels, roles, leaderboard, chatEvents, baloot, commands, badgeThresholds, badgesVisuals, statusDoc, notifications] = await Promise.all([
       col.findOne({ _id: 'butler_economy' as any }),
       col.findOne({ _id: 'butler_games' as any }),
       col.findOne({ _id: 'butler_level_system' as any }),
@@ -95,7 +103,9 @@ export async function GET() {
       col.findOne({ _id: 'butler_baloot' as any }),
       col.findOne({ _id: 'butler_commands' as any }),
       col.findOne({ _id: 'butler_badge_thresholds' as any }),
+      col.findOne({ _id: 'butler_badges_visuals' as any }),
       col.findOne({ _id: 'butler_status' as any }),
+      col.findOne({ _id: 'butler_notifications' as any }),
     ]);
 
     const sections: Record<string, any> = {};
@@ -104,6 +114,9 @@ export async function GET() {
     if (economy?.data) {
       sections.daily_reward = economy.data.daily_reward;
       sections.salary = economy.data.salary;
+      // Expose both keys so dashboard can render "Investor" label but still read
+      // legacy docs that only have vip_reward during the migration window.
+      sections.investor_reward = economy.data.investor_reward ?? economy.data.vip_reward;
       sections.vip_reward = economy.data.vip_reward;
     }
 
@@ -136,6 +149,9 @@ export async function GET() {
       if (banking.data.insurance_types) sections.insurance_types = banking.data.insurance_types;
       if (banking.data.enabled !== undefined) sections.banker_enabled = banking.data.enabled;
       if (banking.data.trade_level !== undefined) sections.trade_level = banking.data.trade_level;
+      // Expose both investor_interest (new) + vip_interest (legacy) — prefer new key if present
+      const invInt = banking.data.investor_interest ?? banking.data.vip_interest;
+      if (invInt !== undefined) sections.investor_interest = invInt;
       if (banking.data.vip_interest !== undefined) sections.vip_interest = banking.data.vip_interest;
     }
 
@@ -177,11 +193,17 @@ export async function GET() {
     // Badge Thresholds
     if (badgeThresholds?.data) sections.badge_thresholds = badgeThresholds.data;
 
+    // Badge Visuals (per-badge image URLs — overrides bot-side imageFile defaults)
+    if (badgesVisuals?.data) sections.badges_visuals = badgesVisuals.data;
+
     // Status
     if (statusDoc?.data) sections.status = statusDoc.data;
 
+    // Notifications
+    if (notifications?.data) sections.notifications = notifications.data;
+
     // Collect most recent updatedAt/updatedBy across all config documents
-    const allDocs = [economy, games, leveling, banking, shop, tickets, applications, autoReply, autoImages, channels, roles, leaderboard, chatEvents, baloot, commands, badgeThresholds, statusDoc];
+    const allDocs = [economy, games, leveling, banking, shop, tickets, applications, autoReply, autoImages, channels, roles, leaderboard, chatEvents, baloot, commands, badgeThresholds, badgesVisuals, statusDoc, notifications];
     let latestAt: Date | null = null;
     let latestBy: string | null = null;
     for (const doc of allDocs) {
@@ -238,9 +260,9 @@ export async function PUT(req: NextRequest) {
 
   const adminId = auth.session.user.discordId!;
   // Games tab save batches many sequential writes. 60/min is generous enough.
-  const { allowed } = checkRateLimit('butler_config', adminId, 60, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('butler_config', adminId, 60, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Too many config changes. Wait a moment.' }, { status: 429 });
+    return rateLimitResponse(retryAfterMs, 'Too many config changes. Wait a moment.');
   }
 
   try {

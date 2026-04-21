@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { hasMongoOperator, getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const ALLOWED_SECTIONS = [
@@ -163,10 +163,7 @@ export async function PUT(req: NextRequest) {
 
   const { allowed, retryAfterMs } = checkRateLimit('sage_live_chat_config', adminId, 5, 60_000);
   if (!allowed) {
-    return NextResponse.json(
-      { error: 'Rate limited', retryAfterMs },
-      { status: 429 },
-    );
+    return rateLimitResponse(retryAfterMs);
   }
 
   try {

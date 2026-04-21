@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { uploadObject, isR2Configured } from '@/lib/admin/r2';
 import { commitTranslationChanges } from '@/lib/admin/github';
 import { invalidateOverrideCache } from '@/i18n/request';
@@ -53,8 +54,8 @@ export async function POST(request: NextRequest) {
 
   // Rate limit: 5 saves/min
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_content_save', adminId, 5, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited — max 5 saves per minute' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_content_save', adminId, 5, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs, 'Rate limited — max 5 saves per minute');
 
   try {
     const formData = await request.formData();
@@ -142,6 +143,12 @@ export async function POST(request: NextRequest) {
           console.warn(`[EditMode] Blocked disallowed DB edit: ${edit.collection}.${edit.field}`);
           continue;
         }
+        // Defense against NoSQL operator injection via edit.id — must be a plain
+        // string in slug format (no object payloads like { $ne: null }).
+        if (typeof edit.id !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(edit.id)) {
+          console.warn(`[EditMode] Blocked invalid edit.id: ${JSON.stringify(edit.id)}`);
+          continue;
+        }
 
         const sanitized = sanitizeValue(edit.value);
         const updateDoc: Record<string, any> = {};
@@ -190,11 +197,16 @@ export async function POST(request: NextRequest) {
         const r2Key = `inline-edits/${id}.${ext}`;
         const url = await uploadObject(r2Key, buffer, file.type);
 
+        // Cache-bust on write-to-DB so Discord + browsers bypass the stale
+        // copy cached against the prior version of this R2 key. Matches the
+        // pattern documented in memory `feedback_r2_cache_pattern.md`.
+        const bustedUrl = `${url}${url.includes('?') ? '&' : '?'}v=${Date.now()}`;
+
         // If meta has DB info, update the document
         if (meta.dbCollection && meta.dbId && meta.dbField) {
           if (isAllowedDbEdit(meta.dbCollection, meta.dbField)) {
             const updateDoc: Record<string, any> = {};
-            setNestedField(updateDoc, meta.dbField, url);
+            setNestedField(updateDoc, meta.dbField, bustedUrl);
             await db.collection(meta.dbCollection).updateOne(
               { id: meta.dbId },
               { $set: updateDoc }
@@ -215,6 +227,18 @@ export async function POST(request: NextRequest) {
           metadata: { imageIds: imageEntries.map((e) => e.id) },
           ip,
         });
+      }
+    }
+
+    // Fire on-demand revalidation so edits appear live within ~1–3s instead
+    // of waiting for the 60s ISR cycle. Revalidating the locale layout
+    // cascades to every public page. Wrapped in try/catch because a failing
+    // revalidate shouldn't block the save response.
+    if (results.translations > 0 || results.dbFields > 0 || results.images > 0) {
+      try {
+        revalidatePath('/', 'layout');
+      } catch (err) {
+        console.warn('[EditMode] revalidatePath failed — edits will appear on next ISR cycle:', err);
       }
     }
 

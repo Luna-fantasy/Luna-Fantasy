@@ -8,6 +8,9 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    // Tree-shake three.js + drei in Railway builds so only the instancedMesh
+    // + ShaderMaterial path we actually use ships to /admin/v2/*.
+    optimizePackageImports: ['three', '@react-three/drei', '@react-three/fiber'],
   },
   images: {
     unoptimized: true,

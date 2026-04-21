@@ -278,6 +278,126 @@ body.edit-mode-active button .editable-text {
   border-radius: 4px;
 }
 
+/* Replace-image target — separates the hover overlay from the alt button so
+   clicking alt doesn't open the file picker. */
+.editable-image-target {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* Alt-text edit affordance — pinned to the top-right of the image */
+.editable-image-alt-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(3, 3, 6, 0.85);
+  color: var(--accent-primary, #5fb3ff);
+  border: 1px solid color-mix(in srgb, var(--accent-primary, #5fb3ff) 40%, transparent);
+  border-radius: 4px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: transform 0.15s ease, background 0.15s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.editable-image-wrapper:hover .editable-image-alt-btn,
+.editable-image-alt-btn:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.editable-image-alt-btn:hover {
+  background: rgba(3, 3, 6, 0.95);
+  transform: translateY(-1px);
+}
+.editable-image-alt-btn.has-change {
+  opacity: 1;
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--accent-primary, #5fb3ff) 22%, rgba(3, 3, 6, 0.85));
+}
+
+/* Alt-text inline editor popover */
+.editable-image-alt-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  min-width: 280px;
+  max-width: 360px;
+  padding: 10px 12px;
+  background: rgba(6, 8, 14, 0.97);
+  border: 1px solid color-mix(in srgb, var(--accent-primary, #5fb3ff) 40%, transparent);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.editable-image-alt-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.editable-image-alt-input {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+.editable-image-alt-input:focus {
+  outline: none;
+  border-color: var(--accent-primary, #5fb3ff);
+  background: rgba(255, 255, 255, 0.06);
+}
+.editable-image-alt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.editable-image-alt-cancel,
+.editable-image-alt-save {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s ease;
+}
+.editable-image-alt-cancel {
+  color: var(--text-muted);
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.editable-image-alt-cancel:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+.editable-image-alt-save {
+  color: var(--bg-void, #030306);
+  background: var(--accent-primary, #5fb3ff);
+}
+.editable-image-alt-save:hover {
+  filter: brightness(1.1);
+}
+
 /* Edit save modal overlay */
 .edit-save-overlay {
   position: fixed;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
@@ -10,9 +10,9 @@ export async function GET(request: NextRequest) {
   if (!authResult.authorized) return authResult.response;
 
   const discordId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_read', discordId, 20, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 20, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   const threadId = request.nextUrl.searchParams.get('threadId');

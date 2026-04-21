@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const GUILD_ID = process.env.DISCORD_GUILD_ID ?? '1243327880478462032';
@@ -16,7 +16,7 @@ export async function GET() {
 
   const discordId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_channels', discordId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   const token = getButlerToken();
   if (!token) {

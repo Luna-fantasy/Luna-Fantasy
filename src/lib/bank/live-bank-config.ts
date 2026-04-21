@@ -60,7 +60,25 @@ async function readBotConfig(docId: string): Promise<any | null> {
   }
 }
 
+export interface BankPersona {
+  name: string;
+  title: string;
+  description: string;
+  portrait: string;
+  portraitVersion: number;
+}
+
+export interface BankInsurancePlan {
+  name: string;
+  type: string;
+  price: number;
+  duration: number;
+}
+
 export interface LiveBankConfig {
+  // Persona (Avelle Adar) — dashboard-editable, may be null if no DB override yet
+  persona: BankPersona | null;
+
   // Loans
   loanTiers: number[];
   loanTiersFull: Array<{ level: number; amount: number; interest: number; duration: number; passport_required?: boolean }>;
@@ -74,7 +92,7 @@ export interface LiveBankConfig {
   dailyMax: number;
   dailyCooldownMs: number;
 
-  // VIP
+  // VIP / Investor (reads investor_reward first, falls back to legacy vip_reward)
   dailyVipBonus: number;
   vipCooldownMs: number;
 
@@ -97,8 +115,9 @@ export interface LiveBankConfig {
   tradeCooldownMs: number;
   tradePresetAmounts: readonly number[];
 
-  // Insurance
+  // Insurance — keep scalar insuranceCost for old consumers, but expose the full plan list too
   insuranceCost: number;
+  insurancePlans: BankInsurancePlan[];
 
   // Steal system (from butler_games)
   stealSystem: {
@@ -130,10 +149,18 @@ export async function getLiveBankConfig(): Promise<LiveBankConfig> {
   const loanInterest = firstTier?.interest ?? LOAN_INTEREST_RATE;
   const loanDuration = firstTier?.duration ?? LOAN_DURATION_MS;
 
-  // Economy config
+  // Economy config — Butler's canonical shape is {amount, cooldown}. Legacy docs
+  // may still carry {min, max, cooldown}; fall back to max then min so we never
+  // show a stale zero while a migration is in flight.
   const daily = economy?.daily_reward;
+  const dailyAmount = typeof daily?.amount === 'number'
+    ? daily.amount
+    : (typeof daily?.max === 'number' ? daily.max : (typeof daily?.min === 'number' ? daily.min : DAILY_BASE));
+
   const salary = economy?.salary;
-  const vip = economy?.vip_reward;
+  // Investor reward = new key; legacy key is vip_reward. Butler already reads
+  // both with this precedence, so we mirror it for UI consistency.
+  const investor = economy?.investor_reward ?? economy?.vip_reward;
 
   // Investment config
   const inv = banking?.investment;
@@ -141,31 +168,59 @@ export async function getLiveBankConfig(): Promise<LiveBankConfig> {
   // Trade config
   const trade = banking?.trade_settings;
 
-  // Insurance config
-  const insurance = banking?.insurance;
+  // Insurance — Butler + dashboard both use insurance_types (array). Legacy
+  // scalar `insurance.cost` is read as a last-resort fallback for old docs.
+  const insuranceRaw = banking?.insurance_types;
+  const insurancePlans: BankInsurancePlan[] = Array.isArray(insuranceRaw)
+    ? insuranceRaw.map((p: any) => ({
+        name: String(p?.name ?? ''),
+        type: String(p?.type ?? ''),
+        price: Number(p?.price ?? 0),
+        duration: Number(p?.duration ?? -1),
+      }))
+    : [];
+  const legacyInsuranceCost = typeof banking?.insurance?.cost === 'number' ? banking.insurance.cost : null;
+  const insuranceCost = insurancePlans[0]?.price ?? legacyInsuranceCost ?? INSURANCE_COST;
+
+  // Persona — dashboard writes under banking.persona; fall back to null so
+  // callers can use their own hardcoded defaults if the DB has no override.
+  const personaRaw = banking?.persona;
+  const persona: BankPersona | null = personaRaw && typeof personaRaw === 'object'
+    ? {
+        name: String(personaRaw.name ?? ''),
+        title: String(personaRaw.title ?? ''),
+        description: String(personaRaw.description ?? ''),
+        portrait: String(personaRaw.portrait ?? ''),
+        portraitVersion: typeof personaRaw.portraitVersion === 'number' ? personaRaw.portraitVersion : 1,
+      }
+    : null;
 
   // Steal system config
   const steal = games?.steal_system;
 
   return {
+    // Persona
+    persona,
+
     // Loans
     loanTiers: tierAmounts,
     loanTiersFull: fullTiers.length > 0 ? fullTiers : LOAN_TIERS.map((amount) => ({
       level: 0, amount, interest: LOAN_INTEREST_RATE, duration: LOAN_DURATION_MS,
     })),
     loanInterestRate: loanInterest,
-    loanVipInterestRate: banking?.vip_interest ?? LOAN_VIP_INTEREST_RATE,
+    loanVipInterestRate: banking?.investor_interest ?? banking?.vip_interest ?? LOAN_VIP_INTEREST_RATE,
     loanDurationMs: loanDuration,
     loanMinLevel: firstTier?.level ?? LOAN_MIN_LEVEL,
 
-    // Daily
-    dailyBase: daily?.min ?? DAILY_BASE,
-    dailyMax: daily?.max ?? DAILY_BASE * 2,
+    // Daily — prefer canonical {amount}; keep dailyMax/dailyBase both set so
+    // existing UI that still reads dailyMax (e.g. BalanceSummary hints) doesn't break.
+    dailyBase: dailyAmount,
+    dailyMax: dailyAmount,
     dailyCooldownMs: daily?.cooldown ?? DAILY_COOLDOWN_MS,
 
-    // VIP
-    dailyVipBonus: vip?.amount ?? DAILY_VIP_BONUS,
-    vipCooldownMs: vip?.cooldown ?? DAILY_COOLDOWN_MS,
+    // VIP / Investor
+    dailyVipBonus: investor?.amount ?? DAILY_VIP_BONUS,
+    vipCooldownMs: investor?.cooldown ?? DAILY_COOLDOWN_MS,
 
     // Salary
     monthlyAmount: salary?.amount ?? MONTHLY_AMOUNT,
@@ -187,7 +242,8 @@ export async function getLiveBankConfig(): Promise<LiveBankConfig> {
     tradePresetAmounts: TRADE_PRESET_AMOUNTS,
 
     // Insurance
-    insuranceCost: insurance?.cost ?? INSURANCE_COST,
+    insuranceCost,
+    insurancePlans,
 
     // Steal system
     stealSystem: steal ? {

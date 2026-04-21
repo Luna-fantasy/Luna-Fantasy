@@ -4,7 +4,7 @@ import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { creditLunari, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -19,7 +19,7 @@ export async function GET() {
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_read', adminId, 30, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   try {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
   const adminId = authResult.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   let body: { discordId: string; amount: number; reason: string };

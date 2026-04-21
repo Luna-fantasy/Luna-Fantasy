@@ -1,6 +1,6 @@
 # Luna Fantasy — Project Instructions
 
-> **RSS Version**: 1.2 | **Last updated**: 2026-03-22
+> **RSS Version**: 1.3 | **Last updated**: 2026-04-13
 > **Parent config**: `~/CLAUDE.md` (read that first for ecosystem context)
 
 ## Overview
@@ -49,15 +49,13 @@ Key files:
 - `src/lib/bazaar/lunari-ops.ts` — `logTransaction()` routes records to correct collection, sends Discord embeds for web transactions
 - `src/lib/admin/discord-logger.ts` — Sends embeds to Discord log channels for web-originated transactions
 - `src/app/api/webhooks/transactions/route.ts` — Webhook receiver for external integrations (timing-safe API key auth)
-- `src/app/api/admin/cards/transactions/route.ts` — Admin API for card transaction history
-- `src/app/api/admin/stones/transactions/route.ts` — Admin API for stone transaction history
 
 ### Admin Dashboard
 
-- `src/app/admin/` — Admin pages (economy, cards, stones, users, config)
+- `src/app/admin/` — Admin pages (promoted from v2 on 2026-04-19; v1 UI deleted)
 - Protected by `requireMastermindApi()` from `src/lib/admin/auth.ts`
 - Rate limited via in-memory sliding window (`src/lib/bazaar/rate-limit.ts`)
-- Styles in `src/styles/admin.css` — modals use centered overlay with backdrop blur
+- Styles in `src/styles/admin-v2.css` — vendor-style av-* primitives, aurora/constellation backdrops
 
 ### Security Patterns
 
@@ -92,3 +90,20 @@ Before pushing changes that go to production:
 3. If you changed any API route, verify CSRF protection is still in place
 4. If you changed any MongoDB query patterns, verify they match what Butler/Jester write
 5. If you added new env vars, tell the user to add them in Railway dashboard first
+
+### Passport System (updated 2026-04-13)
+
+- **Passport variants**: Normal (1004x762), VIP (1518x1018), Staff: Guardian/Sentinel/Mastermind (1536x1024)
+- **Staff detection**: `passport.staffRole` field OR inferred from `passport.number` (GUARDIAN/SENTINEL/MASTERMIND)
+- **Priority**: Staff > VIP > Normal — staff check is pure data (no Discord API call), VIP skipped for staff
+- **Canvas editor**: 10 passport canvas definitions (normal/vip/guardian/sentinel/mastermind × bot/web)
+- **Dashboard config**: `/admin/passport` → "Staff Passport Cosmetics" section → role pickers for each staff type
+- **Profile rendering**: `ProfileContent.tsx` selects template/badge/glow by variant. Badge colors: Mastermind=purple, Sentinel=gold, Guardian=deep blue
+- **API validation**: Passport number regex accepts `LUNA-110317#####` and `GUARDIAN`/`SENTINEL`/`MASTERMIND`
+- **Passport list API**: Constructs full CDN avatar URLs from `discord_users` avatar hashes
+
+### Bazaar Passport Discount (added 2026-04-13)
+
+- All 6 bazaar shops apply 10% passport discount server-side via `getPassportDiscount()` from `src/lib/bazaar/passport-discount.ts`
+- Client shows discount via `<PassportPrice>` component (cyan discounted + strikethrough original + gold -10% pill)
+- `hasPassport` flag sent via catalog API → all vendor components

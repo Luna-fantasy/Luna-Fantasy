@@ -139,9 +139,13 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
 
         {/* Merchant Hero */}
         <div className="merchant-hero">
-          <img
+          <EImg
+            editId={`merchant-portrait-${merchant}`}
+            source="r2"
             src={config.image}
             alt={t(config.nameKey)}
+            width={320}
+            height={320}
             className="merchant-hero-img"
           />
           <div className="merchant-hero-info">

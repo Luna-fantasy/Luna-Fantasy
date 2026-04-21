@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { sanitizeErrorMessage } from '@/lib/admin/sanitize';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -15,7 +15,7 @@ export async function GET(
 
   const adminId = auth.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_read', adminId, 30, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   const { discordId } = await params;
   if (!/^\d{17,20}$/.test(discordId)) {

@@ -4,7 +4,7 @@ import { logAdminAction } from '@/lib/admin/audit';
 import { hasMongoOperator, getClientIp } from '@/lib/admin/sanitize';
 import { validateOracleConfig } from '@/lib/admin/oracle-config-validation';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -12,7 +12,7 @@ const DB_NAME = 'Database';
 const ALLOWED_SECTIONS = new Set([
   'setup', 'games_trivia', 'games_sowalef', 'games_settings',
   'content_welcome', 'content_panel', 'content_buttons', 'content_aura', 'content_whisper', 'content_expiry',
-  'assets',
+  'assets', 'music',
 ]);
 
 // Maps dashboard section names -> bot_config document _id + data field path
@@ -28,6 +28,7 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   content_whisper: { docId: 'oracle_vc_content', field: 'whisper' },
   content_expiry:  { docId: 'oracle_vc_content', field: 'expiryTitles' },
   assets:          { docId: 'oracle_vc_assets', field: '_root' },
+  music:           { docId: 'oracle_vc_music',  field: '_root' },
 };
 
 export async function GET() {
@@ -35,20 +36,21 @@ export async function GET() {
   if (!auth.authorized) return auth.response;
 
   const adminId = auth.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('oracle_config_read', adminId, 15, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('oracle_config_read', adminId, 15, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const client = await clientPromise;
     const col = client.db(DB_NAME).collection('bot_config');
 
     // Load all Oracle VC config documents in parallel
-    const [setup, games, content, vip, assets] = await Promise.all([
+    const [setup, games, content, vip, assets, music] = await Promise.all([
       col.findOne({ _id: 'oracle_vc_setup' as any }),
       col.findOne({ _id: 'oracle_vc_games' as any }),
       col.findOne({ _id: 'oracle_vc_content' as any }),
       col.findOne({ _id: 'oracle_vc_vip' as any }),
       col.findOne({ _id: 'oracle_vc_assets' as any }),
+      col.findOne({ _id: 'oracle_vc_music' as any }),
     ]);
 
     const sections: Record<string, any> = {};
@@ -107,8 +109,15 @@ export async function GET() {
     // Assets
     sections.assets = assets?.data ?? { panelBannerUrl: '', emojis: {} };
 
+    // Music library (MP3 tracks uploaded via /admin/voice Music tab).
+    // Older docs predate `localEnabled` — coerce to true so existing installs
+    // keep loading VPS-local MP3s exactly as before until an admin flips it.
+    const musicData: any = music?.data ?? { enabled: false, tracks: [] };
+    if (typeof musicData.localEnabled !== 'boolean') musicData.localEnabled = true;
+    sections.music = musicData;
+
     // Collect most recent updatedAt/updatedBy across all config documents
-    const allDocs = [setup, games, content, vip, assets];
+    const allDocs = [setup, games, content, vip, assets, music];
     let latestAt: Date | null = null;
     let latestBy: string | null = null;
     for (const doc of allDocs) {
@@ -164,9 +173,9 @@ export async function PUT(req: NextRequest) {
   }
 
   const adminId = auth.session.user.discordId!;
-  const { allowed } = checkRateLimit('oracle_config', adminId, 5, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('oracle_config', adminId, 5, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Too many config changes. Wait a moment.' }, { status: 429 });
+    return rateLimitResponse(retryAfterMs, 'Too many config changes. Wait a moment.');
   }
 
   try {
@@ -206,6 +215,15 @@ export async function PUT(req: NextRequest) {
       }
     } else {
       before = currentDoc?.data?.[mapping.field] ?? null;
+    }
+
+    // Music: default-coerce `localEnabled` to true if the client dropped it.
+    // Older dashboard sessions don't know about this field; without this
+    // seed, saving would silently turn off VPS-local loading.
+    if (section === 'music' && value && typeof value === 'object') {
+      if (typeof (value as any).localEnabled !== 'boolean') {
+        (value as any).localEnabled = true;
+      }
     }
 
     // Write to MongoDB

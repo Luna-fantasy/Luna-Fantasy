@@ -4,7 +4,7 @@ import { logAdminAction } from '@/lib/admin/audit';
 import { hasMongoOperator, sanitizeErrorMessage, getClientIp } from '@/lib/admin/sanitize';
 import { validateJesterConfig } from '@/lib/admin/config-validation';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -193,9 +193,9 @@ export async function PUT(req: NextRequest) {
   const adminId = auth.session.user.discordId!;
   // Games tab save batches many sequential writes (one per game section + commands + points).
   // 60/min is generous enough for legitimate admin flows while still limiting abuse.
-  const { allowed } = checkRateLimit('jester_config', adminId, 60, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('jester_config', adminId, 60, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Too many config changes. Wait a moment.' }, { status: 429 });
+    return rateLimitResponse(retryAfterMs, 'Too many config changes. Wait a moment.');
   }
 
   try {

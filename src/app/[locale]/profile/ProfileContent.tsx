@@ -10,6 +10,7 @@ import type { UserCard, UserStone, CardsByGame, CatalogCard, BadgeData } from '@
 import CardBook from './CardBook';
 import CardDetailModal from '@/components/CardDetailModal';
 import type { CardDetailData } from '@/components/CardDetailModal';
+import { E } from '@/components/edit-mode/EditableText';
 import '@/styles/profile.css';
 import '@/styles/profile-game.css';
 import LunariIcon from '@/components/LunariIcon';
@@ -467,7 +468,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
 
         {/* Card Collection Section */}
         <div className="profile-card profile-collection-card">
-          <h2 className="profile-section-title">{t('collection.title')}</h2>
+          <h2 className="profile-section-title"><E ns="profilePage" k="collection.title">{t('collection.title')}</E></h2>
 
           {/* Card Book */}
           <CardBook
@@ -490,7 +491,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
         {/* Activity Today Section — only show for own profile when there's activity */}
         {!isPublicView && !isLoading && ((gameData?.chatActivity?.messagesToday ?? 0) > 0 || (gameData?.chatActivity?.voiceMinutesToday ?? 0) > 0) && (
           <div className="profile-card profile-activity-card">
-            <h2 className="profile-section-title">{t('activity.title')}</h2>
+            <h2 className="profile-section-title"><E ns="profilePage" k="activity.title">{t('activity.title')}</E></h2>
             <div className="activity-grid">
               <div className="activity-item activity-messages">
                 <div className="activity-icon">
@@ -528,7 +529,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
         {/* Inventory Section — only show for own profile when user has items */}
         {!isPublicView && !isLoading && (gameData?.inventory.length ?? 0) > 0 && (
           <div className="profile-card profile-inventory-card">
-            <h2 className="profile-section-title">{t('inventory.title')}</h2>
+            <h2 className="profile-section-title"><E ns="profilePage" k="inventory.title">{t('inventory.title')}</E></h2>
             <div className="inventory-grid">
               {gameData!.inventory
                 .slice((inventoryPage - 1) * INVENTORY_PER_PAGE, inventoryPage * INVENTORY_PER_PAGE)
@@ -641,7 +642,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
 
         {/* ── Game Wins ── */}
         <div className="profile-card stats-wins-card">
-          <h2 className="profile-section-title">{t('playerStats.gameWins')}</h2>
+          <h2 className="profile-section-title"><E ns="profilePage" k="playerStats.gameWins">{t('playerStats.gameWins')}</E></h2>
           <div className="wins-grid">
             {([
               { key: 'magic_cards', label: t('playerStats.magicCards'), color: '#00d4ff', icon: <><rect x="2" y="3" width="20" height="18" rx="2" /><path d="M8 7h8M8 12h8" /></> },
@@ -671,11 +672,11 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
 
         {/* ── PvP Arena ── */}
         <div className="profile-card stats-pvp-card">
-          <h2 className="profile-section-title">{t('playerStats.pvp')}</h2>
+          <h2 className="profile-section-title"><E ns="profilePage" k="playerStats.pvp">{t('playerStats.pvp')}</E></h2>
           {isLoading ? (
             <div className="skeleton" style={{ width: '200px', height: '24px', margin: '0 auto' }} />
           ) : pvpTotal === 0 ? (
-            <div className="pvp-empty">{t('playerStats.noBattles')}</div>
+            <div className="pvp-empty"><E ns="profilePage" k="playerStats.noBattles">{t('playerStats.noBattles')}</E></div>
           ) : (
             <div className="pvp-arena">
               {/* Win-rate ring */}
@@ -744,7 +745,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
           return (
             <div className="profile-card transaction-history-card">
               <div className="transaction-header">
-                <h2 className="transaction-header-title">{t('transactions.title')}</h2>
+                <h2 className="transaction-header-title"><E ns="profilePage" k="transactions.title">{t('transactions.title')}</E></h2>
                 <span className="transaction-header-count">{transactions.length}</span>
               </div>
               <div className="transactions-list">
@@ -849,7 +850,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
         {/* Account Details Card — own profile only */}
         {!isPublicView && (
           <div className="profile-card profile-details-card">
-            <h2 className="profile-section-title">{t('accountDetails')}</h2>
+            <h2 className="profile-section-title"><E ns="profilePage" k="accountDetails">{t('accountDetails')}</E></h2>
 
             <div className="profile-details">
               <div
@@ -938,8 +939,8 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
       {!isPublicView && showSignOutModal && (
         <div className="signout-modal-overlay" onClick={() => setShowSignOutModal(false)}>
           <div className="signout-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 className="signout-modal-title">{t('signOutConfirmTitle')}</h3>
-            <p className="signout-modal-desc">{t('signOutConfirmDesc')}</p>
+            <h3 className="signout-modal-title"><E ns="profilePage" k="signOutConfirmTitle">{t('signOutConfirmTitle')}</E></h3>
+            <p className="signout-modal-desc"><E ns="profilePage" k="signOutConfirmDesc">{t('signOutConfirmDesc')}</E></p>
             <div className="signout-modal-actions">
               <button
                 className="signout-modal-cancel"
@@ -1002,7 +1003,7 @@ function AchievementsSection({
   if (isLoading) {
     return (
       <div className="profile-card achievements-card">
-        <h2 className="profile-section-title">{t('achievements.title')}</h2>
+        <h2 className="profile-section-title"><E ns="profilePage" k="achievements.title">{t('achievements.title')}</E></h2>
         <div className="skeleton" style={{ width: '100%', height: '200px', borderRadius: '12px' }} />
       </div>
     );
@@ -1011,7 +1012,7 @@ function AchievementsSection({
   return (
     <div className="profile-card achievements-card">
       <div className="achievements-header">
-        <h2 className="profile-section-title">{t('achievements.title')}</h2>
+        <h2 className="profile-section-title"><E ns="profilePage" k="achievements.title">{t('achievements.title')}</E></h2>
         <span className="achievements-count">{earnedCount} / {BADGE_DEFS.length}</span>
       </div>
       <div className="achievements-grid">
@@ -1166,7 +1167,7 @@ function StoneCollection({
   if (isLoading) {
     return (
       <div className="profile-card profile-stones-card">
-        <h2 className="profile-section-title">{t('stones.title')}</h2>
+        <h2 className="profile-section-title"><E ns="profilePage" k="stones.title">{t('stones.title')}</E></h2>
         <div className="skeleton" style={{ width: '100%', height: '200px', borderRadius: '12px' }} />
       </div>
     );
@@ -1176,7 +1177,7 @@ function StoneCollection({
     <div className="profile-card profile-stones-card">
       {/* Header with title + tier badge */}
       <div className="stones-header">
-        <h2 className="profile-section-title">{t('stones.title')}</h2>
+        <h2 className="profile-section-title"><E ns="profilePage" k="stones.title">{t('stones.title')}</E></h2>
         <span className={`stones-tier-badge ${tierClass}`}>
           {t(`stones.${tierKey}`)}
         </span>

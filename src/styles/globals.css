@@ -760,6 +760,44 @@ footer::before {
   transform: scale(1);
 }
 
+/* Caption shown below the card in the Lightbox (Faction War name + description,
+   editable from the admin dashboard). */
+.lightbox-content {
+  position: relative;
+  z-index: 2;
+}
+.lightbox-caption {
+  max-width: 560px;
+  width: calc(100vw - 48px);
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(20, 25, 38, 0.96), rgba(10, 14, 24, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #e6e8ec;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: lightboxCaptionIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+.lightbox-caption-title {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+.lightbox-caption-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #b9bfcc;
+  white-space: pre-wrap;
+}
+@keyframes lightboxCaptionIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ============================================
    SCROLLBAR
    ============================================ */

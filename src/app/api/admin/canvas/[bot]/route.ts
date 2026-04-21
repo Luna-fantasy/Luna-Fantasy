@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp, hasMongoOperator } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 import { getCanvasDefinition, getCanvasDefinitionsForBot } from '@/lib/admin/canvas-definitions';
 
@@ -92,7 +92,7 @@ export async function GET(
   const discordId = auth.session.user?.discordId ?? '';
   const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 30, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   try {
@@ -135,9 +135,9 @@ export async function PUT(
   }
 
   const adminId = auth.session.user.discordId!;
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Too many actions. Wait a moment.' }, { status: 429 });
+    return rateLimitResponse(retryAfterMs, 'Too many actions. Wait a moment.');
   }
 
   try {

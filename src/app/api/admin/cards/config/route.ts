@@ -3,10 +3,11 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { readJesterConfig } from '@/lib/admin/config-writer';
 import { uploadObject, deleteObject, isR2Configured } from '@/lib/admin/r2';
 import clientPromise from '@/lib/mongodb';
+import { invalidateFactionWarCache } from '@/lib/faction-war';
 
 const DB_NAME = 'Database';
 const JESTER_PATH = process.env.JESTER_PROJECT_PATH || 'C:\\Users\\Admin\\Desktop\\Luna Bot\\LunaJesterMain';
@@ -27,6 +28,42 @@ interface CardItem {
 interface FactionCard {
   name: string;
   image: string;
+  description?: string;
+}
+
+/**
+ * Faction data source of truth is `luna_pairs_config` — one doc per faction
+ * keyed by lowercase id (e.g. "lunarians"), shape `{ data: { name, color, cards[] } }`.
+ * The public website and the bot both read from here. The previous version of
+ * this file ALSO tried to maintain a copy at
+ * `bot_config.jester_game_settings.data.FactionWar.factions` as a "master",
+ * but that path never existed in production — only the FactionWar game settings
+ * (ticket_cost, prizes, etc.) live there, not the card array. Every admin edit
+ * was failing with "FactionWar config not found in database" because of it.
+ */
+async function readFactionCards(
+  db: import('mongodb').Db,
+  factionName: string,
+): Promise<{ factionId: string; cards: FactionCard[] } | null> {
+  const factionId = factionName.toLowerCase().replace(/\s+/g, '_');
+  const doc = await db.collection('luna_pairs_config').findOne({ _id: factionId as any });
+  if (!doc) return null;
+  const data = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
+  const cards = Array.isArray(data?.cards) ? (data.cards as FactionCard[]) : [];
+  return { factionId, cards };
+}
+
+async function writeFactionCards(
+  db: import('mongodb').Db,
+  factionId: string,
+  cards: FactionCard[],
+): Promise<void> {
+  await db.collection('luna_pairs_config').updateOne(
+    { _id: factionId as any },
+    { $set: { 'data.cards': cards } },
+    { upsert: false }, // Don't create — faction doc with name/color must already exist
+  );
+  invalidateFactionWarCache(); // public website will refetch on next request
 }
 
 /**
@@ -248,8 +285,8 @@ export async function GET() {
   if (!authResult.authorized) return authResult.response;
 
   const discordId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_read', discordId, 30, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 30, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const client = await clientPromise;
@@ -286,14 +323,26 @@ export async function GET() {
       } catch { /* config.ts not available on Railway — that's fine if MongoDB has data */ }
     }
 
-    // FactionWar factions — read from bot_config (config.ts fallback disabled on Railway)
-    let factionWar = null;
+    // FactionWar factions — try bot_config first, then fall back to Jester
+    // config.ts (matches the rarity fallback path above — needed locally where
+    // the DB doc hasn't been seeded yet).
+    let factionWar: Record<string, any> | null = null;
     try {
       const fwDoc = await db.collection('bot_config').findOne({ _id: 'jester_game_settings' as any });
       if (fwDoc?.data?.FactionWar?.factions) {
         factionWar = fwDoc.data.FactionWar.factions;
       }
     } catch { /* non-critical — faction war data is optional */ }
+
+    if (!factionWar) {
+      try {
+        const configContent = await readJesterConfig();
+        const parsed = parseFactionWarFull(configContent);
+        if (parsed?.factions) {
+          factionWar = parsed.factions;
+        }
+      } catch { /* config.ts unavailable on Railway — bot_config should have the data there */ }
+    }
 
     return NextResponse.json({ rarities, factionWar });
   } catch (error) {
@@ -312,8 +361,8 @@ export async function PUT(request: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   let body: { rarity: string; items: CardItem[]; deploy?: boolean };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
@@ -399,8 +448,8 @@ export async function POST(request: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   let body: any;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
@@ -580,7 +629,9 @@ async function handleUploadImageOnly(body: any) {
     const r2Key = `cards/${rarityFolder}/${safeCardName}.png`;
     const buffer = Buffer.from(imageData, 'base64');
     const mimeType = contentType || 'image/png';
-    const imageUrl = await uploadObject(r2Key, buffer, mimeType);
+    const baseUrl = await uploadObject(r2Key, buffer, mimeType);
+    // Cache-bust so re-uploads to the same R2 key show up immediately.
+    const imageUrl = `${baseUrl}?v=${Date.now()}`;
     return NextResponse.json({ success: true, imageUrl });
   } catch (error) {
     console.error('Upload image only error:', error);
@@ -605,37 +656,28 @@ async function handleAddFactionCard(body: any, adminId: string, authResult: any,
 
   try {
     const client = await clientPromise;
-    const col = client.db(DB_NAME).collection('bot_config');
+    const db = client.db(DB_NAME);
 
-    // Read FactionWar data from bot_config
-    const doc = await col.findOne({ _id: 'jester_game_settings' as any });
-    const fwData = doc?.data?.FactionWar;
-    if (!fwData || !fwData.factions) {
-      return NextResponse.json({ error: 'FactionWar config not found in database' }, { status: 500 });
+    const existing = await readFactionCards(db, faction);
+    if (!existing) {
+      return NextResponse.json({ error: `Faction "${faction}" not found in luna_pairs_config` }, { status: 404 });
     }
 
-    const factionData = fwData.factions[faction];
-    if (!factionData) {
-      return NextResponse.json({ error: `Faction "${faction}" not found in config` }, { status: 404 });
-    }
-
-    if (!Array.isArray(factionData.cards)) {
-      factionData.cards = [];
-    }
-
-    const exists = factionData.cards.some((c: FactionCard) => c.name === card.name.trim());
-    if (exists) {
+    const cards = [...existing.cards];
+    if (cards.some((c) => c.name === card.name.trim())) {
       return NextResponse.json({ error: `Card "${card.name}" already exists in ${faction}` }, { status: 409 });
     }
 
-    const newCard: FactionCard = { name: card.name.trim(), image: card.image };
-    factionData.cards.push(newCard);
+    const newCard: FactionCard = {
+      name: card.name.trim(),
+      image: card.image,
+      ...(typeof card.description === 'string' && card.description.trim()
+        ? { description: card.description.trim().slice(0, 2000) }
+        : {}),
+    };
+    cards.push(newCard);
 
-    // Write back to MongoDB
-    await col.updateOne(
-      { _id: 'jester_game_settings' as any },
-      { $set: { 'data.FactionWar.factions': fwData.factions, updatedAt: new Date(), updatedBy: adminId } }
-    );
+    await writeFactionCards(db, existing.factionId, cards);
 
     await logAdminAction({
       adminDiscordId: adminId,
@@ -674,50 +716,48 @@ async function handleUpdateFactionCard(body: any, adminId: string, authResult: a
 
   try {
     const client = await clientPromise;
-    const col = client.db(DB_NAME).collection('bot_config');
+    const db = client.db(DB_NAME);
 
-    const doc = await col.findOne({ _id: 'jester_game_settings' as any });
-    const fwData = doc?.data?.FactionWar;
-    if (!fwData || !fwData.factions) {
-      return NextResponse.json({ error: 'FactionWar config not found in database' }, { status: 500 });
+    const existing = await readFactionCards(db, faction);
+    if (!existing) {
+      return NextResponse.json({ error: `Faction "${faction}" not found in luna_pairs_config` }, { status: 404 });
     }
 
-    const factionData = fwData.factions[faction];
-    if (!factionData || !Array.isArray(factionData.cards)) {
-      return NextResponse.json({ error: `Faction "${faction}" not found or has no cards` }, { status: 404 });
-    }
-
-    const cardIdx = factionData.cards.findIndex((c: FactionCard) => c.name === oldName);
+    const cards = [...existing.cards];
+    const cardIdx = cards.findIndex((c) => c.name === oldName);
     if (cardIdx === -1) {
       return NextResponse.json({ error: `Card "${oldName}" not found in ${faction}` }, { status: 404 });
     }
 
     if (card.name.trim() !== oldName) {
-      const dup = factionData.cards.some((c: FactionCard) => c.name === card.name.trim());
+      const dup = cards.some((c) => c.name === card.name.trim());
       if (dup) {
         return NextResponse.json({ error: `Card "${card.name}" already exists in ${faction}` }, { status: 409 });
       }
     }
 
-    const beforeCard = { ...factionData.cards[cardIdx] };
-    factionData.cards[cardIdx] = { name: card.name.trim(), image: card.image };
+    const beforeCard = { ...cards[cardIdx] };
+    cards[cardIdx] = {
+      name: card.name.trim(),
+      image: card.image,
+      ...(typeof card.description === 'string' && card.description.trim()
+        ? { description: card.description.trim().slice(0, 2000) }
+        : {}),
+    };
 
-    await col.updateOne(
-      { _id: 'jester_game_settings' as any },
-      { $set: { 'data.FactionWar.factions': fwData.factions, updatedAt: new Date(), updatedBy: adminId } }
-    );
+    await writeFactionCards(db, existing.factionId, cards);
 
     await logAdminAction({
       adminDiscordId: adminId,
       adminUsername: authResult.session.user?.globalName ?? 'Unknown',
       action: 'faction_card_update',
       before: { faction, card: beforeCard },
-      after: { faction, card: factionData.cards[cardIdx] },
+      after: { faction, card: cards[cardIdx] },
       metadata: { faction, oldName, newName: card.name.trim() },
       ip: getClientIp(request),
     });
 
-    return NextResponse.json({ success: true, card: factionData.cards[cardIdx] });
+    return NextResponse.json({ success: true, card: cards[cardIdx] });
   } catch (error) {
     console.error('Update faction card error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -738,41 +778,33 @@ async function handleDeleteFactionCard(body: any, adminId: string, authResult: a
 
   try {
     const client = await clientPromise;
-    const col = client.db(DB_NAME).collection('bot_config');
+    const db = client.db(DB_NAME);
 
-    const doc = await col.findOne({ _id: 'jester_game_settings' as any });
-    const fwData = doc?.data?.FactionWar;
-    if (!fwData || !fwData.factions) {
-      return NextResponse.json({ error: 'FactionWar config not found in database' }, { status: 500 });
+    const existing = await readFactionCards(db, faction);
+    if (!existing) {
+      return NextResponse.json({ error: `Faction "${faction}" not found in luna_pairs_config` }, { status: 404 });
     }
 
-    const factionData = fwData.factions[faction];
-    if (!factionData || !Array.isArray(factionData.cards)) {
-      return NextResponse.json({ error: `Faction "${faction}" not found or has no cards` }, { status: 404 });
-    }
-
-    const cardIdx = factionData.cards.findIndex((c: FactionCard) => c.name === cardName);
+    const cards = [...existing.cards];
+    const cardIdx = cards.findIndex((c) => c.name === cardName);
     if (cardIdx === -1) {
       return NextResponse.json({ error: `Card "${cardName}" not found in ${faction}` }, { status: 404 });
     }
 
-    const deletedCard = factionData.cards.splice(cardIdx, 1)[0];
+    const deletedCard = cards.splice(cardIdx, 1)[0];
 
-    await col.updateOne(
-      { _id: 'jester_game_settings' as any },
-      { $set: { 'data.FactionWar.factions': fwData.factions, updatedAt: new Date(), updatedBy: adminId } }
-    );
+    await writeFactionCards(db, existing.factionId, cards);
 
-    // Clean up R2 image
+    // Clean up R2 image. Stored values are either a bare filename (optionally
+    // with a `?v=...` cache-buster) under LunaPairs/, or a full URL. Strip the
+    // query string before deriving the R2 key so we hit the actual object.
     if (deletedCard.image) {
-      if (deletedCard.image.startsWith('https://assets.lunarian.app/')) {
-        const r2Key = deletedCard.image.replace('https://assets.lunarian.app/', '');
+      const bareValue = deletedCard.image.split('?')[0];
+      if (bareValue.startsWith('https://assets.lunarian.app/')) {
+        const r2Key = bareValue.replace('https://assets.lunarian.app/', '');
         deleteObject(r2Key).catch(() => {});
       } else {
-        const factionFolder = faction.toLowerCase().replace(/\s+/g, '_');
-        const safeCardName = cardName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
-        const possibleKey = `cards/FactionWar/${factionFolder}_${safeCardName}.png`;
-        deleteObject(possibleKey).catch(() => {});
+        deleteObject(`LunaPairs/${bareValue}`).catch(() => {});
       }
     }
 
@@ -816,22 +848,33 @@ async function handleUploadFactionImage(body: any, adminId: string, authResult: 
     // Sanitize filename: lowercase faction, replace spaces with underscores
     const factionFolder = faction.toLowerCase().replace(/\s+/g, '_');
     const safeCardName = cardName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
-    const r2Key = `cards/FactionWar/${factionFolder}_${safeCardName}.png`;
+    const filename = `${factionFolder}_${safeCardName}.png`;
+    // IMPORTANT: must match the path the public Faction War page reads from
+    // (`R2_BASE = "https://assets.lunarian.app/LunaPairs"` in src/lib/faction-war.ts).
+    // Earlier this uploaded to `cards/FactionWar/...` which left the public site
+    // showing the old image because the file landed where nothing read it.
+    const r2Key = `LunaPairs/${filename}`;
     const buffer = Buffer.from(imageData, 'base64');
     const mimeType = contentType || 'image/png';
-    const newUrl = await uploadObject(r2Key, buffer, mimeType);
+    await uploadObject(r2Key, buffer, mimeType);
+
+    // Return the BARE filename (matches the existing schema for cards already in
+    // luna_pairs_config) + a `?v=<timestamp>` cache-buster. R2 ignores the query
+    // string for routing but the browser treats the URL as new, forcing a fresh
+    // fetch after the admin overwrites the same key.
+    const versionedFilename = `${filename}?v=${Date.now()}`;
 
     await logAdminAction({
       adminDiscordId: adminId,
       adminUsername: authResult.session.user?.globalName ?? 'Unknown',
       action: 'faction_card_image_upload',
       before: null,
-      after: { faction, cardName, imageUrl: newUrl },
+      after: { faction, cardName, filename: versionedFilename },
       metadata: { faction, cardName, r2Key },
       ip: getClientIp(request),
     });
 
-    return NextResponse.json({ success: true, imageUrl: newUrl });
+    return NextResponse.json({ success: true, imageUrl: versionedFilename });
   } catch (error) {
     console.error('Upload faction image error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { uploadObject, isR2Configured } from '@/lib/admin/r2';
 import clientPromise from '@/lib/mongodb';
@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
   }
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('oracle_upload', adminId, 3, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('oracle_upload', adminId, 3, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   if (!isR2Configured()) {

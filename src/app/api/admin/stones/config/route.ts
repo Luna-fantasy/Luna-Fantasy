@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { uploadObject, deleteObject, isR2Configured } from '@/lib/admin/r2';
 import clientPromise from '@/lib/mongodb';
 
@@ -65,8 +65,8 @@ export async function GET() {
   if (!authResult.authorized) return authResult.response;
 
   const discordId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_read', discordId, 30, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_read', discordId, 30, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   try {
     const client = await clientPromise;
@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return NextResponse.json({ error: 'Rate limited' }, { status: 429 });
+  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs);
 
   let body: any;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
@@ -276,10 +276,19 @@ export async function POST(request: NextRequest) {
       const r2Key = `stones/${snakeName}.png`;
       const buffer = Buffer.from(imageData, 'base64');
       const mimeType = contentType || 'image/png';
-      const publicUrl = await uploadObject(r2Key, buffer, mimeType);
+      const baseUrl = await uploadObject(r2Key, buffer, mimeType);
+      // Cache-bust: R2 ignores query strings for routing but the browser and
+      // the bot's image cache treat the URL as new, forcing a fresh fetch even
+      // when the admin re-uploads to the same key (which is the common case).
+      const publicUrl = `${baseUrl}?v=${Date.now()}`;
 
-      if (oldImageUrl?.startsWith('https://assets.lunarian.app/') && oldImageUrl !== publicUrl) {
-        const oldKey = oldImageUrl.replace('https://assets.lunarian.app/', '');
+      // Only delete the old object if it's a DIFFERENT key (not the same file
+      // re-uploaded). Strip any `?v=` query before comparing so versioned URLs
+      // compare by key equality, not query equality.
+      const oldBase = oldImageUrl?.split('?')[0];
+      const newBase = baseUrl.split('?')[0];
+      if (oldBase?.startsWith('https://assets.lunarian.app/') && oldBase !== newBase) {
+        const oldKey = oldBase.replace('https://assets.lunarian.app/', '');
         deleteObject(oldKey).catch(err => console.error('Failed to delete old stone R2 image:', err));
       }
 

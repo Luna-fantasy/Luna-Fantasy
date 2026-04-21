@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -17,7 +17,7 @@ export async function GET() {
   // Higher rate limit since this is polled every 10s (max ~6/min)
   const { allowed, retryAfterMs } = checkRateLimit('admin_recent_tx', discordId, 12, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Rate limited', retryAfterMs }, { status: 429 });
+    return rateLimitResponse(retryAfterMs);
   }
 
   try {

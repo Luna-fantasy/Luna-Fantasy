@@ -38,3 +38,7 @@ next-env.d.ts
 # Dev scripts with credentials
 scripts/tmp.js
 scripts/seed-bot-config.mjs
+
+# Stray seeding logs (never commit)
+bot-config-errors.log
+shops-errors.log

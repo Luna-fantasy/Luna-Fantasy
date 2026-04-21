@@ -363,7 +363,6 @@ export interface JesterConfigSections {
   rps?: JesterGameConfig;
   guessthecountry?: JesterGameConfig;
   bombroulette?: JesterGameConfig;
-  magicbot?: JesterGameConfig;
   LunaFantasy?: JesterGameConfig;
   LunaFantasyEvent?: JesterGameConfig;
   GrandFantasy?: JesterGameConfig;
@@ -394,7 +393,7 @@ export function parseJesterConfig(content: string): JesterConfigSections {
 
     const gameKeys = [
       'all_of_games', 'roulette', 'mafia', 'rps', 'guessthecountry',
-      'bombroulette', 'magicbot', 'LunaFantasy', 'LunaFantasyEvent',
+      'bombroulette', 'LunaFantasy', 'LunaFantasyEvent',
       'GrandFantasy', 'FactionWar'
     ];
 

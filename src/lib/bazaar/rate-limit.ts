@@ -69,6 +69,21 @@ export function checkRateLimit(
   return { allowed: true, retryAfterMs: 0 };
 }
 
+/**
+ * Standard 429 response with both JSON body and HTTP Retry-After header.
+ * Always use this for rate-limit rejections so clients see consistent signaling.
+ */
+export function rateLimitResponse(retryAfterMs: number, message = 'Rate limited') {
+  const retryAfterSec = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  return new Response(JSON.stringify({ error: message, retryAfterMs }), {
+    status: 429,
+    headers: {
+      'content-type': 'application/json',
+      'Retry-After': String(retryAfterSec),
+    },
+  });
+}
+
 /** Extract client IP from request headers (for public endpoint rate limiting). */
 export function getClientIp(req: Request): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()

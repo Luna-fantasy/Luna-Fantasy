@@ -3,7 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { hasMongoOperator, getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
-import { checkRateLimit } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
@@ -124,9 +124,9 @@ export async function PUT(req: NextRequest) {
   }
 
   const adminId = auth.session.user.discordId!;
-  const { allowed } = checkRateLimit('sage_config', adminId, 5, 60_000);
+  const { allowed, retryAfterMs } = checkRateLimit('sage_config', adminId, 5, 60_000);
   if (!allowed) {
-    return NextResponse.json({ error: 'Too many config changes. Wait a moment.' }, { status: 429 });
+    return rateLimitResponse(retryAfterMs, 'Too many config changes. Wait a moment.');
   }
 
   try {

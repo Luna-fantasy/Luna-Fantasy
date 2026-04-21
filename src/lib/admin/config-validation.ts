@@ -157,13 +157,21 @@ function validateBadgeThresholds(value: any): ValidationError[] {
 
 // Section-specific validators for Butler config
 const BUTLER_VALIDATORS: Record<string, Validator> = {
-  daily_reward: (v) => [
-    ...nonNegative(v, ['min', 'max']),
-    ...positive(v, ['cooldown']),
-    ...minMax(v, 'min', 'max'),
-  ],
+  daily_reward: (v) => [...nonNegative(v, ['amount']), ...positive(v, ['cooldown'])],
   salary: (v) => [...nonNegative(v, ['amount']), ...positive(v, ['cooldown'])],
   vip_reward: (v) => [...nonNegative(v, ['amount']), ...positive(v, ['cooldown'])],
+  investor_reward: (v) => [...nonNegative(v, ['amount']), ...positive(v, ['cooldown'])],
+  investor_interest: (v) => {
+    const errs: ValidationError[] = [];
+    if (typeof v !== 'number' || !Number.isFinite(v)) errs.push({ field: 'root', message: 'Must be a number' });
+    else if (v < 0 || v > 1) errs.push({ field: 'root', message: 'Interest rate must be between 0 and 1 (e.g. 0.15 = 15%)' });
+    return errs;
+  },
+  notifications: (v) => {
+    const errs: ValidationError[] = [];
+    if (typeof v !== 'object' || v === null) errs.push({ field: 'root', message: 'Must be an object' });
+    return errs;
+  },
   text_xp: (v) => [
     ...nonNegative(v, ['min', 'max']),
     ...positive(v, ['cooldown']),
