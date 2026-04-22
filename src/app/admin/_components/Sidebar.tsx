@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Icon from './Icon';
 import { CLUSTERS } from './nav-config';
 import RecentlyViewed from './RecentlyViewed';
+import { useMobileNav } from './MobileNavProvider';
 
 interface SidebarUser {
   name: string;
@@ -17,6 +18,7 @@ const STORAGE_KEY = 'av-sidebar-state';
 
 export default function Sidebar({ user }: { user: SidebarUser }) {
   const pathname = usePathname();
+  const { open: mobileOpen, setOpen: setMobileOpen } = useMobileNav();
   const [collapsed, setCollapsed] = useState(false);
   const [filter, setFilter] = useState('');
   // Default: all clusters start collapsed. The cluster containing the active
@@ -55,14 +57,29 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
   }, [filter]);
 
   return (
-    <aside className="av-sidebar" data-collapsed={collapsed} aria-label="Admin navigation">
-      <Link href="/admin" className="av-sidebar-brand">
-        <Image src="/images/logo.png" alt="" width={32} height={32} priority />
-        <div>
-          <div className="av-sidebar-brand-text">Luna</div>
-          <div className="av-sidebar-brand-sub">Admin · v2</div>
-        </div>
-      </Link>
+    <aside
+      className="av-sidebar"
+      data-collapsed={collapsed}
+      data-mobile-open={mobileOpen ? 'true' : undefined}
+      aria-label="Admin navigation"
+    >
+      <div className="av-sidebar-mobile-top">
+        <Link href="/admin" className="av-sidebar-brand">
+          <Image src="/images/logo.png" alt="" width={32} height={32} priority />
+          <div>
+            <div className="av-sidebar-brand-text">Luna</div>
+            <div className="av-sidebar-brand-sub">Admin · v2</div>
+          </div>
+        </Link>
+        <button
+          type="button"
+          className="av-sidebar-mobile-close"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close navigation"
+        >
+          ×
+        </button>
+      </div>
 
       <div className="av-sidebar-filter">
         <input

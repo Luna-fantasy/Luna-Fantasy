@@ -9,6 +9,7 @@ import PresencePill from './PresencePill';
 import type { ThemeState } from './theme-cookie';
 import { useCmdK } from './CmdKProvider';
 import { useTimezone } from './TimezoneProvider';
+import { useMobileNav } from './MobileNavProvider';
 
 const LABELS: Record<string, string> = {
   v2: 'Dashboard',
@@ -70,6 +71,7 @@ export default function Topbar({
 
   return (
     <header className="av-topbar">
+      <MobileNavToggle />
       <nav className="av-topbar-breadcrumb" aria-label="Breadcrumb">
         {crumbs.map((c, i) => {
           const last = i === crumbs.length - 1;
@@ -128,6 +130,23 @@ function CmdKButton() {
       <Icon name="search" size={12} />
       <span>Search</span>
       <kbd>⌘K</kbd>
+    </button>
+  );
+}
+
+function MobileNavToggle() {
+  const { open, toggle } = useMobileNav();
+  return (
+    <button
+      type="button"
+      className="av-mobile-nav-toggle"
+      onClick={toggle}
+      aria-label={open ? 'Close navigation' : 'Open navigation'}
+      aria-expanded={open}
+    >
+      <span aria-hidden="true" />
+      <span aria-hidden="true" />
+      <span aria-hidden="true" />
     </button>
   );
 }

@@ -18,6 +18,8 @@ import ErrorBoundary from './_components/ErrorBoundary';
 import SpotlightCursor from './_components/SpotlightCursor';
 import AvPageFooter from './_components/AvPageFooter';
 import { TimezoneProvider } from './_components/TimezoneProvider';
+import MobileNavProvider from './_components/MobileNavProvider';
+import MobileNavOverlay from './_components/MobileNavOverlay';
 import { decodeTheme, effectiveTheme, THEME_COOKIE } from './_components/theme-cookie';
 import '@/styles/admin-v2.css';
 
@@ -39,6 +41,7 @@ export default async function AdminV2Layout({ children }: { children: React.Reac
           <UndoProvider>
             <PendingActionProvider>
             <GuildDataProvider>
+              <MobileNavProvider>
               <div
                 className="admin-v2-shell"
                 data-theme={effectiveTheme(themeState)}
@@ -70,7 +73,9 @@ export default async function AdminV2Layout({ children }: { children: React.Reac
                 <CmdK />
                 <UndoDrawer />
                 <PendingActionPill />
+                <MobileNavOverlay />
               </div>
+              </MobileNavProvider>
             </GuildDataProvider>
             </PendingActionProvider>
           </UndoProvider>

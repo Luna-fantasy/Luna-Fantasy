@@ -1,10 +1,19 @@
 import { ReactNode } from 'react';
+import type { Viewport } from 'next';
 import '@/styles/globals.css';
 import '@/styles/notifications.css';
 import { AuthProvider } from '@/components/AuthProvider';
 
 type Props = {
   children: ReactNode;
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
+  themeColor: '#0a0a12',
 };
 
 export default function RootLayout({ children }: Props) {

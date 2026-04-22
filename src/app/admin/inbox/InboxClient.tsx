@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ContextMenu from '../_components/ContextMenu';
 import { usePeek } from '../_components/PeekProvider';
 import { useTableKeys } from '../_components/useTableKeys';
@@ -52,8 +53,20 @@ export default function InboxClient({ initial, categories, adminId, guildId, vot
   const { fmtRel, absolute } = useTimezone();
   const { openPeek } = usePeek();
   const savedViews = useSavedViews<Filters>('inbox');
+  const search = useSearchParams();
 
-  const [filters, setFilters] = useState<Filters>(EMPTY);
+  const initialFilters = useMemo<Filters>(() => {
+    const kindParam = search?.get('kind');
+    const statusParam = search?.get('status');
+    const kind: Filters['kind'] = kindParam === 'ticket' || kindParam === 'application' ? kindParam : 'all';
+    const status: Filters['status'] =
+      statusParam === 'open' || statusParam === 'pending' || statusParam === 'accepted'
+        || statusParam === 'closed' || statusParam === 'rejected'
+        ? statusParam : 'all';
+    return { ...EMPTY, kind, status };
+  }, [search]);
+
+  const [filters, setFilters] = useState<Filters>(initialFilters);
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<UnifiedInboxItem[]>(initial.items);
   const [total, setTotal] = useState(initial.total);
