@@ -9,14 +9,16 @@ import {
   type ItemCatalogEntry, type PropertyCatalogEntry,
   type UserPropertyRow, type PropertyTier, type Rarity, type ItemCategory,
 } from '@/lib/admin/vaelcroft-types';
+import FamilyHomePanel from './FamilyHomePanel';
 
 async function fetchCsrf(): Promise<string> {
   const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
   return (await res.json()).token;
 }
 
-type Tab = 'properties' | ItemCategory | 'ownership';
+type Tab = 'family' | 'properties' | ItemCategory | 'ownership';
 const TABS: { key: Tab; label: string }[] = [
+  { key: 'family',     label: 'Family & Home' },
   { key: 'properties', label: 'Properties' },
   { key: 'furniture',  label: 'Furniture' },
   { key: 'horse',      label: 'Horses' },
@@ -25,7 +27,7 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 export default function VaelcroftClient() {
-  const [tab, setTab] = useState<Tab>('properties');
+  const [tab, setTab] = useState<Tab>('family');
 
   return (
     <section className="av-surface" style={{ padding: 24, marginTop: 24 }}>
@@ -54,6 +56,7 @@ export default function VaelcroftClient() {
         ))}
       </div>
 
+      {tab === 'family' && <FamilyHomePanel />}
       {tab === 'properties' && <PropertiesTab />}
       {(tab === 'furniture' || tab === 'horse' || tab === 'sword') && <ItemsTab category={tab} />}
       {tab === 'ownership' && <OwnershipTab />}

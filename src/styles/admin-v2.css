@@ -18802,6 +18802,77 @@ body > div[role="dialog"] select option:hover {
 }
 
 /* ============================================================
+   VAELCROFT · FAMILY & HOME EDITOR
+   ============================================================ */
+.av-vaellore {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.av-vaellore-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.av-vaellore-head h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+.av-vaellore-head p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+.av-vaellore-section {
+  padding: 16px;
+  border: 1px solid var(--av-border-soft);
+  border-radius: 12px;
+  background: var(--av-surface-raised);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.av-vaellore-section h4 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+.av-vaellore-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.av-vaellore-gallery {
+  padding-top: 12px;
+  border-top: 1px dashed var(--av-border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.av-vaellore-gallery-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.av-vaellore-gallery-item {
+  padding: 10px;
+  border: 1px solid var(--av-border-soft);
+  border-radius: 10px;
+  background: var(--av-surface-deep);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ============================================================
    MOBILE + TABLET — full responsive shell
    ============================================================
    Strategy:
