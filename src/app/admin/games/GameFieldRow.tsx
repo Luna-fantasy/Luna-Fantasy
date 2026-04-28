@@ -135,6 +135,45 @@ export default function GameFieldRow({ game, field, gameValue, onPatch }: Props)
       );
       break;
 
+    case 'color-hex': {
+      // Native color input only accepts #rrggbb. Fall back to placeholder when current is empty/invalid.
+      const HEX = /^#[0-9a-fA-F]{6}$/;
+      const fallback = field.placeholder && HEX.test(field.placeholder) ? field.placeholder : '#000000';
+      const raw = typeof current === 'string' ? current : '';
+      const colorVal = HEX.test(raw) ? raw : fallback;
+      const isCustom = HEX.test(raw);
+      control = (
+        <div className="av-games-field-control" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            type="color"
+            value={colorVal}
+            onChange={(e) => setValue(e.target.value)}
+            style={{ width: 56, height: 32, padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+            aria-label={field.label}
+          />
+          <input
+            className="av-games-field-input"
+            value={raw}
+            placeholder={field.placeholder}
+            onChange={(e) => setValue(e.target.value)}
+            style={{ width: 120, fontFamily: 'monospace' }}
+          />
+          {isCustom && (
+            <button
+              type="button"
+              className="av-games-field-input"
+              onClick={() => setValue(undefined)}
+              style={{ width: 'auto', padding: '4px 10px', cursor: 'pointer' }}
+              title="Reset to default"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      );
+      break;
+    }
+
     case 'locked-nested':
       control = (
         <LockedNestedNotice

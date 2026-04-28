@@ -25,6 +25,7 @@ export type FieldType =
   | 'chips-channel'
   | 'single-channel'
   | 'image-url'
+  | 'color-hex'
   | 'locked-nested';
 
 export type FieldSection =
@@ -33,7 +34,8 @@ export type FieldSection =
   | 'Cost & Reward'
   | 'Limits'
   | 'Permissions'
-  | 'Rules';
+  | 'Rules'
+  | 'Visuals';
 
 export interface GameField {
   /** Dotted path within the game's value. e.g. "prizes.base" */
@@ -400,6 +402,21 @@ const jesterFactionWar: GameSpec = {
     { key: 'factions',         label: 'Factions',           type: 'locked-nested',  section: 'Rules',
       locked: { where: 'Cards page', href: '/admin/cards',
                 summary: 'Faction rosters share the card pool — edit them alongside cards to keep artwork and balance aligned.' } },
+    // Visuals — background image + per-faction badge colors. All optional; missing values fall back to bot defaults.
+    { key: 'backgroundUrl',          label: 'Background image',     type: 'image-url',  section: 'Visuals',
+      help: 'Background used in the hand, playing-field, and victory images. Leave empty to use the default LunaPairs background.',
+      placeholder: 'https://assets.lunarian.app/LunaPairs/LunaPairs_BG.png' },
+    { key: 'colors.Beasts',             label: 'Beasts color',             type: 'color-hex', section: 'Visuals', help: 'Default: #8B4513 (saddle brown).',     placeholder: '#8B4513' },
+    { key: 'colors.Colossals',          label: 'Colossals color',          type: 'color-hex', section: 'Visuals', help: 'Default: #708090 (slate gray).',       placeholder: '#708090' },
+    { key: 'colors.Dragons',            label: 'Dragons color',            type: 'color-hex', section: 'Visuals', help: 'Default: #DC143C (crimson).',          placeholder: '#DC143C' },
+    { key: 'colors.Knights',            label: 'Knights color',            type: 'color-hex', section: 'Visuals', help: 'Default: #4169E1 (royal blue).',       placeholder: '#4169E1' },
+    { key: 'colors.Lunarians',          label: 'Lunarians color',          type: 'color-hex', section: 'Visuals', help: 'Default: #9370DB (medium purple).',    placeholder: '#9370DB' },
+    { key: 'colors.Moon Creatures',     label: 'Moon Creatures color',     type: 'color-hex', section: 'Visuals', help: 'Default: #2E8B57 (sea green).',        placeholder: '#2E8B57' },
+    { key: 'colors.Mythical Creatures', label: 'Mythical Creatures color', type: 'color-hex', section: 'Visuals', help: 'Default: #DAA520 (goldenrod).',        placeholder: '#DAA520' },
+    { key: 'colors.Strange Beings',     label: 'Strange Beings color',     type: 'color-hex', section: 'Visuals', help: 'Default: #8A2BE2 (blue violet).',      placeholder: '#8A2BE2' },
+    { key: 'colors.Supernatural',       label: 'Supernatural color',       type: 'color-hex', section: 'Visuals', help: 'Default: #800020 (maroon).',           placeholder: '#800020' },
+    { key: 'colors.Underworld',         label: 'Underworld color',         type: 'color-hex', section: 'Visuals', help: 'Default: #2F4F4F (dark slate gray).',  placeholder: '#2F4F4F' },
+    { key: 'colors.Warriors',           label: 'Warriors color',           type: 'color-hex', section: 'Visuals', help: 'Default: #CD853F (peru).',             placeholder: '#CD853F' },
   ],
 };
 

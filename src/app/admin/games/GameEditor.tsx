@@ -16,6 +16,7 @@ const SECTION_ORDER: FieldSection[] = [
   'Limits',
   'Rules',
   'Permissions',
+  'Visuals',
 ];
 
 export default function GameEditor({ game, gameValue, onGamePatch }: Props) {
