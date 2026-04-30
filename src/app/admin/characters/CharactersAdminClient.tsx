@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useToast } from '../_components/Toast';
 import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
 
@@ -343,12 +343,35 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
     // cursor crossed sibling children quickly — flipping dragActive off
     // mid-drag and "cancelling" the visual replace state.
     const dragTimeoutRef = useRef<number | null>(null);
+    // Each upload bumps this id; if a stale upload finishes after a newer one
+    // started, we ignore its setC/onSave so we don't overwrite the latest
+    // image with the older one. Without this, rapid drops while a previous
+    // upload was still in-flight could write the wrong URL or get stuck with
+    // uploading=true on an unmounted/superseded run.
+    const uploadIdRef = useRef(0);
+
+    // Some browsers swallow the next drop event when a file drop fires while
+    // the document body has a stale `dragover` registration. Pinning a
+    // window-level dragover/drop preventDefault while the modal is open keeps
+    // the drop on our handler and stops the browser from navigating to the
+    // dropped file when a drop happens *just outside* our backdrop bounds.
+    useEffect(() => {
+        const handler = (e: DragEvent) => { e.preventDefault(); };
+        window.addEventListener('dragover', handler);
+        window.addEventListener('drop', handler);
+        return () => {
+            window.removeEventListener('dragover', handler);
+            window.removeEventListener('drop', handler);
+            if (dragTimeoutRef.current) window.clearTimeout(dragTimeoutRef.current);
+        };
+    }, []);
 
     const handleUpload = async (file: File) => {
         if (!c.id.trim()) {
             toast.show({ tone: 'error', title: 'Set an ID first', message: 'Character ID is part of the upload key.' });
             return;
         }
+        const myId = ++uploadIdRef.current;
         setUploading(true);
         try {
             const ext = (file.name.split('.').pop() ?? 'png').toLowerCase();
@@ -366,6 +389,9 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
                 body: file,
             });
             if (!putRes.ok) throw new Error(`Upload to R2 failed: ${putRes.status}`);
+            // Discard if a newer upload superseded this one — its result is the
+            // one the user wants, not ours.
+            if (myId !== uploadIdRef.current) return;
             const cacheBust = `${presignData.publicUrl}?v=${Date.now()}`;
             const updated = { ...c, imageUrl: cacheBust };
             setC(updated);
@@ -380,16 +406,20 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
                 toast.show({ tone: 'success', title: 'Uploaded', message: 'Click Create to add this character.' });
             }
         } catch (err: any) {
-            toast.show({ tone: 'error', title: 'Upload failed', message: err?.message ?? 'Unknown error' });
+            if (myId === uploadIdRef.current) {
+                toast.show({ tone: 'error', title: 'Upload failed', message: err?.message ?? 'Unknown error' });
+            }
         } finally {
-            setUploading(false);
+            // Only clear the busy flag if we're the latest upload — a stale run
+            // finishing after a newer one started must not flip uploading off
+            // and let a third drop sneak through against the in-flight upload.
+            if (myId === uploadIdRef.current) setUploading(false);
             if (fileRef.current) fileRef.current.value = '';
         }
     };
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
-        if (uploading) return;
         if (!e.dataTransfer.types?.includes('Files')) return;
         e.dataTransfer.dropEffect = 'copy';
         if (!dragActive) setDragActive(true);
@@ -400,7 +430,9 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
         e.preventDefault();
         if (dragTimeoutRef.current) { window.clearTimeout(dragTimeoutRef.current); dragTimeoutRef.current = null; }
         setDragActive(false);
-        if (uploading) return;
+        // Don't gate on `uploading` — a fast second drop must still start a
+        // fresh upload. handleUpload's myId/uploadIdRef pair guarantees only
+        // the latest one applies state.
         const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
         if (file) void handleUpload(file);
     };
