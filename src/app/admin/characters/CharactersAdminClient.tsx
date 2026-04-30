@@ -336,7 +336,13 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
     const [dragActive, setDragActive] = useState(false);
     const { bustVersion, bump } = useBustVersion();
     const fileRef = useRef<HTMLInputElement | null>(null);
-    const dragCounter = useRef(0);
+    // dragOver fires constantly while a drag is over the surface. We use a
+    // keep-alive timer so dragActive stays true between consecutive dragOver
+    // ticks, and only clears when the cursor truly leaves (no events for
+    // ~150ms). Counter-based enter/leave bookkeeping was unreliable when the
+    // cursor crossed sibling children quickly — flipping dragActive off
+    // mid-drag and "cancelling" the visual replace state.
+    const dragTimeoutRef = useRef<number | null>(null);
 
     const handleUpload = async (file: File) => {
         if (!c.id.trim()) {
@@ -381,38 +387,34 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
         }
     };
 
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        if (uploading) return;
+        if (!e.dataTransfer.types?.includes('Files')) return;
+        e.dataTransfer.dropEffect = 'copy';
+        if (!dragActive) setDragActive(true);
+        if (dragTimeoutRef.current) window.clearTimeout(dragTimeoutRef.current);
+        dragTimeoutRef.current = window.setTimeout(() => setDragActive(false), 150);
+    };
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        if (dragTimeoutRef.current) { window.clearTimeout(dragTimeoutRef.current); dragTimeoutRef.current = null; }
+        setDragActive(false);
+        if (uploading) return;
+        const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
+        if (file) void handleUpload(file);
+    };
+
     return (
-        <div className="chr-modal-bg" onClick={onCancel}>
+        <div
+            className="chr-modal-bg"
+            onClick={onCancel}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+        >
             <div
                 className="chr-modal"
                 onClick={e => e.stopPropagation()}
-                onDragEnter={(e) => {
-                    e.preventDefault();
-                    if (uploading) return;
-                    if (e.dataTransfer.types?.includes('Files')) {
-                        dragCounter.current += 1;
-                        setDragActive(true);
-                    }
-                }}
-                onDragLeave={(e) => {
-                    e.preventDefault();
-                    dragCounter.current = Math.max(0, dragCounter.current - 1);
-                    if (dragCounter.current === 0) setDragActive(false);
-                }}
-                onDragOver={(e) => {
-                    e.preventDefault();
-                    if (e.dataTransfer.types?.includes('Files')) {
-                        e.dataTransfer.dropEffect = 'copy';
-                    }
-                }}
-                onDrop={(e) => {
-                    e.preventDefault();
-                    dragCounter.current = 0;
-                    setDragActive(false);
-                    if (uploading) return;
-                    const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
-                    if (file) void handleUpload(file);
-                }}
             >
                 <header className="chr-modal-head">
                     <h3>{mode === 'create' ? 'New character' : `Edit "${initial.name.en}"`}</h3>
