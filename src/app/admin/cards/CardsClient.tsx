@@ -33,6 +33,58 @@ function fmt(n: number): string {
 
 type Sort = 'owned' | 'name' | 'weight' | 'attack';
 
+/**
+ * Card-tile image with a React-managed fallback. Previously this used a raw
+ * <img onError={...}> that mutated the DOM by `parent.insertBefore`-ing a
+ * placeholder div, then setting `display:none` on the img. Two problems:
+ *   1. React doesn't track DOM nodes inserted outside its tree, so on re-render
+ *      the leftover placeholders stayed put — even after the imageUrl became
+ *      valid again. (This is what caused 24 of 25 commons to render as the
+ *      "L" placeholder after a card-config restore: stale DOM from earlier
+ *      failed loads while imageUrl was null/wiped.)
+ *   2. The leftover divs blocked the new img from being visible because the
+ *      img was still display:none from a prior error event.
+ * Now: a `failed` state flips to true on error, React renders the placeholder,
+ * and resetting it on imageUrl change is automatic via the keyed component.
+ */
+/**
+ * Stable per-tile image component. Critical constraints:
+ *
+ *   1. NO `key` prop on the <img> — keying by url+bustVersion forces a
+ *      remount whenever bustVersion changes, which kills the in-flight
+ *      fetch with NS_BINDING_ABORTED. We let React reconcile by src.
+ *   2. NO `loading="lazy"` — the dev-mode strict-mode double-mount races
+ *      the lazy fetch and aborts it, even when src is stable.
+ *   3. The src is computed ONCE at mount via useMemo. bustVersion is read
+ *      only as the initial value; subsequent bumps don't change the src
+ *      (the data refetch from refreshSnapshot is what brings new URLs in,
+ *      and React reconciles by src).
+ *   4. `failed` resets when `card.imageUrl` changes (via the dependency on
+ *      imageUrl in useEffect) so a fixed URL re-tries the fetch.
+ */
+function CardTileImage({ card, bustVersion }: { card: CardDef; bustVersion: number }) {
+  const [failed, setFailed] = useState(false);
+  // Compute the src once per imageUrl, not per bustVersion change. Reading
+  // bustVersion here just seeds the fallback `?v=` for legacy URLs without
+  // a stamp; we don't refresh on bumps because (a) cards rarely re-upload
+  // mid-session and (b) refreshing aborts in-flight fetches.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const src = useMemo(() => withBust(card.imageUrl ?? '', bustVersion), [card.imageUrl]);
+  // Reset the failed flag whenever the URL changes — covers the case where
+  // an admin fixes a broken image and we want the new one to load.
+  useEffect(() => { setFailed(false); }, [card.imageUrl]);
+  if (!card.imageUrl || failed) {
+    return <div className="av-card-tile-placeholder">{card.name.slice(0, 1)}</div>;
+  }
+  return (
+    <img
+      src={src}
+      alt={card.name}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function CardsClient({ snapshot }: { snapshot: CardsSnapshot }) {
   const firstWithContent = RARITY_ORDER.find((r) => (snapshot.byRarity[r]?.length ?? 0) > 0) ?? 'COMMON';
   const router = useRouter();
@@ -43,9 +95,14 @@ export default function CardsClient({ snapshot }: { snapshot: CardsSnapshot }) {
   const [sort, setSort] = useState<Sort>('attack');
   const [selected, setSelected] = useState<CardDef | null>(null);
   const [editor, setEditor] = useState<{ mode: 'create' | 'edit'; card?: CardDef } | null>(null);
-  const { bustVersion, bump } = useBustVersion();
-
-  const refreshSnapshot = () => { router.refresh(); bump(); };
+  const { bustVersion } = useBustVersion();
+  // NOTE: refreshSnapshot intentionally does NOT call bump(). Re-rendering
+  // with a new bustVersion would invalidate every <img> src on the page and
+  // abort their in-flight fetches. The data layer's imageUrl strings are
+  // already DB-stamped with `?v=` after every upload (see /api/admin/cards/
+  // config POST handlers); router.refresh() pulls those in, React reconciles
+  // by src, fresh URLs fetch normally, unchanged URLs reuse their cached fetch.
+  const refreshSnapshot = () => { router.refresh(); };
 
   const cards = useMemo<CardDef[]>(() => {
     const rows = [...(snapshot.byRarity[activeRarity] ?? [])];
@@ -200,27 +257,7 @@ export default function CardsClient({ snapshot }: { snapshot: CardsSnapshot }) {
                 <BulkCheckbox id={c.name} aria-label={`Select ${c.name}`} />
               </span>
               <div className="av-card-tile-img">
-                {c.imageUrl ? (
-                  <img
-                    key={`${c.imageUrl}-${bustVersion}`}
-                    src={withBust(c.imageUrl, bustVersion)}
-                    alt={c.name}
-                    loading="lazy"
-                    onError={(e) => {
-                      const img = e.currentTarget;
-                      img.style.display = 'none';
-                      const parent = img.parentElement;
-                      if (parent && !parent.querySelector('.av-card-tile-placeholder')) {
-                        const ph = document.createElement('div');
-                        ph.className = 'av-card-tile-placeholder';
-                        ph.textContent = c.name.slice(0, 1);
-                        parent.insertBefore(ph, img);
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="av-card-tile-placeholder">{c.name.slice(0, 1)}</div>
-                )}
+                <CardTileImage card={c} bustVersion={bustVersion} />
                 <span className="av-card-tile-rarity">{c.rarity}</span>
               </div>
               <div className="av-card-tile-body">

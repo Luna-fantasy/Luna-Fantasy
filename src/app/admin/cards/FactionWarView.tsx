@@ -59,6 +59,15 @@ function resolveImage(image: string | undefined): string {
   return `https://assets.lunarian.app/LunaPairs/${image}`;
 }
 
+// Strip any `?v=...` cache-buster from the stored image string so the
+// card-tile footer shows a clean filename instead of "name.png?v=1777509540463"
+// — long query suffixes were wrapping inside the tile and visually breaking
+// the grid layout.
+function displayImageName(image: string | undefined): string {
+  if (!image) return '—';
+  return image.split('?')[0];
+}
+
 function fileToBase64(file: File): Promise<{ data: string; contentType: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -124,6 +133,12 @@ export default function FactionWarView() {
   const [q, setQ] = useState('');
   const [editor, setEditor] = useState<{ faction: string; card?: FactionCard } | null>(null);
 
+  // load is the imperative refetch — used by the retry button, reload button,
+  // and onSaved handlers. It is intentionally NOT in any useEffect dep array
+  // because `useToast()` returns a fresh object on every render, which would
+  // make this callback unstable and cause the effect to refire on every state
+  // update (the source of the "5 refreshes per upload" + "bounced back to
+  // Beasts" bug — every refire reset activeFaction).
   const load = useCallback(async (opts?: { keepFaction?: boolean }) => {
     setLoading(true);
     try {
@@ -132,8 +147,6 @@ export default function FactionWarView() {
       if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
       setFactionWar(body.factionWar ?? null);
       bump();
-      // Pick the first faction with cards on initial load — but keep current
-      // selection on reload after a save so users don't get bounced to Beasts.
       if (body.factionWar && !opts?.keepFaction) {
         const first = FACTION_NAMES.find((n) => (body.factionWar?.[n]?.cards?.length ?? 0) > 0);
         if (first) setActiveFaction(first);
@@ -145,7 +158,31 @@ export default function FactionWarView() {
     }
   }, [toast, bump]);
 
-  useEffect(() => { void load(); }, [load]);
+  // Initial mount only. Inline the fetch logic so we don't depend on `load`.
+  // The eslint exhaustive-deps rule flags this; intentional — see the load
+  // comment above. Re-fetches on save are triggered imperatively via onSaved.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/cards/config', { cache: 'no-store' });
+        const body = await res.json();
+        if (cancelled) return;
+        if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+        setFactionWar(body.factionWar ?? null);
+        if (body.factionWar) {
+          const first = FACTION_NAMES.find((n) => (body.factionWar?.[n]?.cards?.length ?? 0) > 0);
+          if (first) setActiveFaction(first);
+        }
+      } catch (e) {
+        if (!cancelled) console.error('[FactionWarView] initial load failed:', (e as Error).message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activeCards = useMemo<FactionCard[]>(() => {
     const cards = factionWar?.[activeFaction]?.cards ?? [];
@@ -333,7 +370,13 @@ export default function FactionWarView() {
               </div>
               <div className="av-card-tile-body">
                 <div className="av-card-tile-name">{card.name}</div>
-                <div className="av-card-tile-stats av-fw-tile-file">{card.image || '—'}</div>
+                <div
+                  className="av-card-tile-stats av-fw-tile-file"
+                  title={card.image || ''}
+                  style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
+                  {displayImageName(card.image)}
+                </div>
               </div>
             </button>
           </ContextMenu>

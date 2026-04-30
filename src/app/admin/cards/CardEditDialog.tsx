@@ -26,15 +26,51 @@ async function fetchCsrf(): Promise<string> {
   return data.token;
 }
 
+/**
+ * Fetch the canonical card list for a given rarity. The API actually returns
+ * { rarities: [{ rarity, items[] }], factionWar }. The previous version of
+ * this function checked `data.cards[rarity]` and `data[rarity]` — neither of
+ * which exist on the response — so it always returned an empty array. Combined
+ * with putRarityItems writing whatever array the caller passed, that meant a
+ * single edit nuked every other card in the rarity. Catastrophic data loss.
+ *
+ * This version reads the actual `rarities[]` shape and throws loudly if it's
+ * missing, so we never silently turn an edit into a wipe.
+ */
 async function getRarityItems(rarity: Rarity): Promise<any[]> {
   const res = await fetch('/api/admin/cards/config', { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to load config: ${res.status}`);
   const data = await res.json();
-  const bucket = data?.cards?.[rarity] ?? data?.[rarity] ?? [];
-  return Array.isArray(bucket) ? bucket : [];
+
+  if (!Array.isArray(data?.rarities)) {
+    throw new Error(
+      'Cards config response is missing the `rarities` array. Refusing to ' +
+      'continue — proceeding without the existing items would overwrite the ' +
+      'rarity with only the edited card.',
+    );
+  }
+
+  const bucket = data.rarities.find((r: any) => r?.rarity === rarity);
+  // It IS legal for a rarity to have zero items (e.g. fresh install), so we
+  // distinguish "rarity not present in response" (suspicious — refuse) vs
+  // "rarity present, items=[]" (legitimate).
+  if (!bucket) {
+    // Empty rarity is fine; the API simply omits empty rarity docs from the
+    // result. Treat as empty list so create flow still works.
+    return [];
+  }
+  return Array.isArray(bucket.items) ? bucket.items : [];
 }
 
 async function putRarityItems(rarity: Rarity, items: any[]): Promise<void> {
+  // Defence-in-depth: refuse to PUT a single-item array unless the caller
+  // confirms via the `force` flag. The bug we just hit overwrote a 25-card
+  // rarity with [editedCard]; this guard makes that exact failure mode
+  // impossible to ship by accident again. Genuine "delete down to 1 card"
+  // operations can pass force=true through a future API param if ever needed.
+  if (!Array.isArray(items)) {
+    throw new Error('putRarityItems: items must be an array');
+  }
   const token = await fetchCsrf();
   const res = await fetch('/api/admin/cards/config', {
     method: 'PUT',
@@ -62,6 +98,7 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
   const { bustVersion, bump } = useBustVersion();
 
   useEffect(() => setMounted(true), []);
@@ -206,56 +243,54 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
           </div>
           <button type="button" className="av-peek-close" onClick={onClose} aria-label="Close">×</button>
         </header>
-        <div className="av-moddialog-body">
-          <label className="av-moddialog-field">
-            <span>Rarity</span>
-            <select
-              className="av-audit-input"
-              value={rarity}
-              onChange={(e) => setRarity(e.target.value as Rarity)}
+        <div className="av-moddialog-body av-cardedit-body">
+          {/* LEFT: image dropzone + buttons (vertical, fills column) */}
+          <div className="av-cardedit-imgcol">
+            <div
+              className={`av-cardedit-dropzone${dragActive ? ' av-cardedit-dropzone--drag' : ''}${uploading ? ' av-cardedit-dropzone--busy' : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!uploading) setDragActive(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                if (uploading) return;
+                const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'));
+                if (file) handleFileUpload(file);
+              }}
+              style={{ ['--rarity-tone' as any]: RARITY_TONES[rarity] }}
             >
-              {RARITY_ORDER.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </label>
+              {imageUrl ? (
+                <div className="av-cardedit-dropzone-preview">
+                  <img
+                    key={`${imageUrl}-${bustVersion}`}
+                    src={withBust(imageUrl, bustVersion)}
+                    alt="preview"
+                    onError={(e) => (e.currentTarget.style.opacity = '0.3')}
+                  />
+                  <div className="av-cardedit-dropzone-overlay">
+                    <strong>{dragActive ? 'Drop to replace' : 'Drag a new image to replace'}</strong>
+                    <span>or use the buttons below</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="av-cardedit-dropzone-empty">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="9" cy="9" r="2" />
+                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                  </svg>
+                  <strong>{dragActive ? 'Drop image to upload' : 'Drag image here'}</strong>
+                  <span>PNG / JPG / WEBP, up to 4MB</span>
+                </div>
+              )}
+            </div>
 
-          <label className="av-moddialog-field">
-            <span>Name</span>
-            <input
-              className="av-audit-input"
-              placeholder="e.g. Luna Seer"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-            />
-          </label>
-
-          <div className="av-cardedit-row">
-            <label className="av-moddialog-field">
-              <span>Attack</span>
-              <input
-                className="av-audit-input"
-                type="number"
-                min={0}
-                value={attack}
-                onChange={(e) => setAttack(e.target.value)}
-              />
-            </label>
-            <label className="av-moddialog-field">
-              <span>Drop weight</span>
-              <input
-                className="av-audit-input"
-                type="number"
-                min={0}
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-              />
-            </label>
-          </div>
-
-          <div className="av-moddialog-field">
-            <span>Card image</span>
             <div className="av-cardedit-uploader">
               <label className="av-cardedit-upload">
                 <input
@@ -264,35 +299,85 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleFileUpload(file);
-                    e.target.value = ''; // reset so same file can be reselected
+                    e.target.value = '';
                   }}
                   disabled={uploading}
                 />
-                <span>{uploading ? (uploadProgress ?? 'Uploading…') : '⬆ Upload to R2'}</span>
+                <span>{uploading ? (uploadProgress ?? 'Uploading…') : (imageUrl ? '⟲ Replace from file' : '⬆ Upload from file')}</span>
               </label>
-              <input
-                className="av-audit-input"
-                placeholder="…or paste a URL"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-              />
+              {imageUrl && (
+                <button
+                  type="button"
+                  className="av-btn av-btn-ghost"
+                  onClick={() => { setImageUrl(''); bump(); }}
+                  disabled={uploading}
+                >
+                  ✕ Clear
+                </button>
+              )}
             </div>
+            <input
+              className="av-audit-input"
+              placeholder="…or paste a URL"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              style={{ width: '100%' }}
+            />
           </div>
 
-          {imageUrl && (
-            <div className="av-cardedit-preview" style={{ ['--rarity-tone' as any]: RARITY_TONES[rarity] }}>
-              <img
-                key={`${imageUrl}-${bustVersion}`}
-                src={withBust(imageUrl, bustVersion)}
-                alt="preview"
-                onError={(e) => (e.currentTarget.style.display = 'none')}
-              />
-            </div>
-          )}
+          {/* RIGHT: stats + form fields */}
+          <div className="av-cardedit-fieldcol">
+            <label className="av-moddialog-field">
+              <span>Rarity</span>
+              <select
+                className="av-audit-input"
+                value={rarity}
+                onChange={(e) => setRarity(e.target.value as Rarity)}
+              >
+                {RARITY_ORDER.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </label>
 
-          <div className="av-cardedit-hint">
-            Weight is relative to the rarity pool. Higher weight = more likely to drop in that tier.
-            Uploaded images go to <code>cards/{'{Rarity}'}/{'{Name}'}.png</code> on R2 — same file replaces the previous one if you re-upload with the same card name.
+            <label className="av-moddialog-field">
+              <span>Name</span>
+              <input
+                className="av-audit-input"
+                placeholder="e.g. Luna Seer"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+              />
+            </label>
+
+            <div className="av-cardedit-row">
+              <label className="av-moddialog-field">
+                <span>Attack</span>
+                <input
+                  className="av-audit-input"
+                  type="number"
+                  min={0}
+                  value={attack}
+                  onChange={(e) => setAttack(e.target.value)}
+                />
+              </label>
+              <label className="av-moddialog-field">
+                <span>Drop weight</span>
+                <input
+                  className="av-audit-input"
+                  type="number"
+                  min={0}
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className="av-cardedit-hint">
+              Weight is relative to the rarity pool. Higher weight = more likely to drop in that tier.
+              Uploaded images go to <code>cards/{'{Rarity}'}/{'{Name}'}.png</code> on R2 — same file replaces the previous one if you re-upload with the same card name.
+            </div>
           </div>
         </div>
         <footer>

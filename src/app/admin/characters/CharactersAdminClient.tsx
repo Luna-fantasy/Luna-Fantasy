@@ -231,7 +231,102 @@ export default function CharactersAdminClient({ initialCharacters, factions }: P
                 .chr-card-meta { display: flex; justify-content: space-between; font-size: 11px; color: #88a0c8; }
                 .chr-card-id { font-family: monospace; opacity: 0.8; }
                 .chr-empty { grid-column: 1 / -1; padding: 60px 24px; text-align: center; color: #88a0c8; }
+
+                .chr-dropzone {
+                    position: relative;
+                    border: 2px dashed rgba(140, 200, 255, 0.25);
+                    border-radius: 12px;
+                    background: rgba(20, 24, 48, 0.45);
+                    min-height: 220px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                    transition: border-color 0.18s, background 0.18s;
+                }
+                .chr-dropzone-drag { border-color: rgba(140, 200, 255, 0.85); background: rgba(80, 180, 255, 0.12); }
+                .chr-dropzone-busy { opacity: 0.7; pointer-events: none; }
+                .chr-dropzone-empty {
+                    display: flex; flex-direction: column; align-items: center; gap: 8px;
+                    color: #88a0c8; padding: 28px;
+                }
+                .chr-dropzone-empty strong { color: #f1f5ff; font-size: 14px; font-weight: 600; }
+                .chr-dropzone-empty span { font-size: 12px; }
+                .chr-dropzone-preview { position: relative; width: 100%; height: 280px; }
+                .chr-dropzone-preview img {
+                    width: 100%; height: 100%; object-fit: contain; background: rgba(0, 0, 0, 0.4);
+                }
+                .chr-dropzone-overlay {
+                    position: absolute; inset: 0;
+                    background: linear-gradient(180deg, rgba(10,12,28,0) 30%, rgba(10,12,28,0.78) 100%);
+                    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+                    padding: 16px; gap: 4px;
+                    opacity: 0; transition: opacity 0.18s;
+                }
+                .chr-dropzone:hover .chr-dropzone-overlay,
+                .chr-dropzone-drag .chr-dropzone-overlay { opacity: 1; }
+                .chr-dropzone-overlay strong { color: #f1f5ff; font-size: 14px; font-weight: 600; }
+                .chr-dropzone-overlay span { color: #b9c4e0; font-size: 11px; }
+                .chr-dropzone-clear {
+                    position: absolute; top: 8px; right: 8px;
+                    width: 28px; height: 28px; padding: 0;
+                    border: 1px solid rgba(255,80,80,0.4); background: rgba(0,0,0,0.65);
+                    color: #ff7a7a; border-radius: 50%; cursor: pointer; font-size: 13px;
+                    transition: background 0.15s, color 0.15s;
+                }
+                .chr-dropzone-clear:hover { background: rgba(255,80,80,0.2); color: #fff; }
             `}</style>
+        </div>
+    );
+}
+
+function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, setDragActive, onUpload, onClear }: {
+    imageUrl: string;
+    bustVersion: number;
+    uploading: boolean;
+    dragActive: boolean;
+    setDragActive: (v: boolean) => void;
+    onUpload: (file: File) => void;
+    onClear: () => void;
+}) {
+    return (
+        <div
+            className={`chr-dropzone${dragActive ? ' chr-dropzone-drag' : ''}${uploading ? ' chr-dropzone-busy' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); if (!uploading) setDragActive(true); }}
+            onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
+            onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                if (uploading) return;
+                const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
+                if (file) onUpload(file);
+            }}
+        >
+            {imageUrl ? (
+                <div className="chr-dropzone-preview">
+                    <img
+                        key={`${imageUrl}-${bustVersion}`}
+                        src={withBust(imageUrl, bustVersion)}
+                        alt=""
+                        onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
+                    />
+                    <div className="chr-dropzone-overlay">
+                        <strong>{dragActive ? 'Drop to replace' : 'Drag a new image to replace'}</strong>
+                        <span>or use the buttons below</span>
+                    </div>
+                    <button type="button" className="chr-dropzone-clear" onClick={onClear} disabled={uploading} aria-label="Clear image">✕</button>
+                </div>
+            ) : (
+                <div className="chr-dropzone-empty">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                    </svg>
+                    <strong>{dragActive ? 'Drop image to upload' : 'Drag image here'}</strong>
+                    <span>PNG / JPG / WEBP, up to 4MB</span>
+                </div>
+            )}
         </div>
     );
 }
@@ -248,6 +343,8 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
     const toast = useToast();
     const [c, setC] = useState<AdminCharacter>(initial);
     const [uploading, setUploading] = useState(false);
+    const [dragActive, setDragActive] = useState(false);
+    const { bustVersion, bump } = useBustVersion();
     const fileRef = useRef<HTMLInputElement | null>(null);
 
     const handleUpload = async (file: File) => {
@@ -274,6 +371,7 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
             if (!putRes.ok) throw new Error(`Upload to R2 failed: ${putRes.status}`);
             const cacheBust = `${presignData.publicUrl}?v=${Date.now()}`;
             setC(prev => ({ ...prev, imageUrl: cacheBust }));
+            bump();
             toast.show({ tone: 'success', title: 'Uploaded', message: 'Click Save to apply.' });
         } catch (err: any) {
             toast.show({ tone: 'error', title: 'Upload failed', message: err?.message ?? 'Unknown error' });
@@ -330,15 +428,29 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
                         <textarea rows={3} dir="rtl" value={c.lore?.ar ?? ''} onChange={e => setC(p => ({ ...p, lore: { en: p.lore?.en ?? '', ar: e.target.value } }))} />
                     </label>
                     <label className="chr-form-full">
-                        <span>Image URL</span>
-                        <input value={c.imageUrl} onChange={e => setC(p => ({ ...p, imageUrl: e.target.value }))} placeholder="https://assets.lunarian.app/characters/…" />
+                        <span>Character image</span>
+                        <ImageDropZone
+                            imageUrl={c.imageUrl}
+                            bustVersion={bustVersion}
+                            uploading={uploading}
+                            dragActive={dragActive}
+                            setDragActive={setDragActive}
+                            onUpload={(f) => void handleUpload(f)}
+                            onClear={() => { setC(prev => ({ ...prev, imageUrl: '' })); bump(); }}
+                        />
                     </label>
                     <div className="chr-upload-row">
                         <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) void handleUpload(f); }} />
                         <button className="chr-btn chr-btn-secondary" disabled={uploading || !c.id.trim()} onClick={() => fileRef.current?.click()}>
-                            {uploading ? 'Uploading…' : '↑ Upload to R2'}
+                            {uploading ? 'Uploading…' : (c.imageUrl ? '⟲ Replace from file' : '↑ Upload from file')}
                         </button>
-                        {c.imageUrl && <img key={c.imageUrl} src={withBust(c.imageUrl, Date.now())} alt="" className="chr-preview" />}
+                        <input
+                            className="chr-search"
+                            style={{ flex: 1, marginLeft: 8 }}
+                            placeholder="…or paste an image URL"
+                            value={c.imageUrl}
+                            onChange={e => setC(p => ({ ...p, imageUrl: e.target.value }))}
+                        />
                     </div>
                     <div className="chr-form-row">
                         <label className="chr-form-checkbox">

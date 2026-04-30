@@ -8,6 +8,7 @@ import { readJesterConfig } from '@/lib/admin/config-writer';
 import { uploadObject, deleteObject, isR2Configured } from '@/lib/admin/r2';
 import clientPromise from '@/lib/mongodb';
 import { invalidateFactionWarCache } from '@/lib/faction-war';
+import { assertNoWipe } from '@/lib/admin/wipe-guard';
 
 const DB_NAME = 'Database';
 const JESTER_PATH = process.env.JESTER_PROJECT_PATH || 'C:\\Users\\Admin\\Desktop\\Luna Bot\\LunaJesterMain';
@@ -74,7 +75,34 @@ async function writeFactionCards(
   db: import('mongodb').Db,
   factionId: string,
   cards: FactionCard[],
+  /**
+   * Defensive wipe guard. Pass the count of cards present BEFORE the in-memory
+   * mutation so this function can refuse a catastrophic shrink. Caller must
+   * pass `confirmShrink: true` for legitimate mass-deletion. Default is to
+   * enforce. Skip only when the caller has already enforced equivalent checks.
+   */
+  guardOpts?: { beforeCount?: number; confirmShrink?: boolean; skipGuard?: boolean },
 ): Promise<void> {
+  if (!guardOpts?.skipGuard) {
+    // Re-read current count from the DB to make the guard race-free even if
+    // the caller's in-memory `beforeCount` was wrong. If the read fails,
+    // refuse the write — better safe than sorry.
+    const currentDoc = await db.collection('luna_pairs_config').findOne({ _id: factionId as any });
+    const currentCount = Array.isArray((currentDoc as any)?.data?.cards)
+      ? ((currentDoc as any).data.cards as unknown[]).length
+      : 0;
+    const guardResult = assertNoWipe(currentCount, cards.length, {
+      label: `${factionId} faction cards`,
+      confirmShrink: !!guardOpts?.confirmShrink,
+    });
+    if (!guardResult.ok && guardResult.error) {
+      const err: any = new Error(guardResult.error.message);
+      err.statusCode = 409;
+      err.beforeCount = guardResult.error.before;
+      err.afterCount = guardResult.error.after;
+      throw err;
+    }
+  }
   await db.collection('luna_pairs_config').updateOne(
     { _id: factionId as any },
     { $set: { 'data.cards': cards } },
@@ -415,10 +443,10 @@ export async function PUT(request: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
   if (!allowed) return rateLimitResponse(retryAfterMs);
 
-  let body: { rarity: string; items: CardItem[]; deploy?: boolean };
+  let body: { rarity: string; items: CardItem[]; deploy?: boolean; confirmShrink?: boolean };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  const { rarity, items, deploy } = body;
+  const { rarity, items, deploy, confirmShrink } = body;
   if (!rarity || !Array.isArray(items)) {
     return NextResponse.json({ error: 'rarity and items[] required' }, { status: 400 });
   }
@@ -452,6 +480,20 @@ export async function PUT(request: NextRequest) {
       beforeItems = Array.isArray(currentDoc.items) ? currentDoc.items
         : typeof currentDoc.data === 'string' ? JSON.parse(currentDoc.data)
         : [];
+    }
+
+    // 1b. WIPE GUARD — see src/lib/admin/wipe-guard.ts. The CardEditDialog
+    // edit path should NEVER trigger this; if it does, something on the
+    // client is broken and we fail loudly instead of nuking data.
+    const guardResult = assertNoWipe(beforeItems.length, items.length, {
+      label: `${upperRarity} cards`,
+      confirmShrink: !!confirmShrink,
+    });
+    if (!guardResult.ok && guardResult.error) {
+      return NextResponse.json(
+        { error: guardResult.error.message, before: guardResult.error.before, after: guardResult.error.after },
+        { status: 409 },
+      );
     }
 
     // 2. Write to MongoDB cards_config (canonical source)
@@ -602,6 +644,24 @@ async function handleUpdateImage(body: any, adminId: string, authResult: any, re
     }
 
     configCards[cardIdx].imageUrl = newUrl;
+
+    // Wipe guard. update_image only mutates one card's imageUrl in place, so
+    // configCards.length should equal beforeItems.length. If a future bug
+    // accidentally reassigns configCards = [], this catches it.
+    {
+      const before = await db.collection('cards_config').findOne({ _id: upperRarity as any });
+      const beforeCount = Array.isArray(before?.items) ? before!.items.length : configCards.length;
+      const guardResult = assertNoWipe(beforeCount, configCards.length, {
+        label: `${upperRarity} cards (update_image)`,
+      });
+      if (!guardResult.ok && guardResult.error) {
+        return NextResponse.json(
+          { error: guardResult.error.message, before: guardResult.error.before, after: guardResult.error.after },
+          { status: 409 },
+        );
+      }
+    }
+
     await db.collection('cards_config').updateOne(
       { _id: upperRarity as any },
       { $set: { items: configCards, updatedAt: new Date() }, $unset: { data: '' } }

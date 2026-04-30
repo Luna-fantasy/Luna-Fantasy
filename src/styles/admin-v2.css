@@ -5508,6 +5508,7 @@ kbd, .av-kbd {
   position: absolute;
   bottom: 6px;
   left: 6px;
+  max-width: calc(100% - 12px);
   padding: 2px 8px;
   background: rgba(0, 0, 0, 0.75);
   border: 1px solid color-mix(in srgb, var(--rarity-tone) 60%, transparent);
@@ -5516,7 +5517,62 @@ kbd, .av-kbd {
   font-weight: 700;
   letter-spacing: 0.14em;
   color: var(--rarity-tone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* Drag-and-drop zone in CardEditDialog. Lives above the existing url-input
+   row; users can either drop a file, click "Upload from file", or paste a
+   URL. Bust-versioned <img key> below ensures replacements always paint. */
+.admin-v2-shell .av-cardedit-dropzone {
+  position: relative;
+  border: 2px dashed rgba(140, 200, 255, 0.25);
+  border-radius: 12px;
+  background: rgba(20, 24, 48, 0.45);
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Removed bottom margin — column-flex gap on .av-cardedit-imgcol now
+     spaces the dropzone from the buttons below. */
+  transition: border-color 0.18s, background 0.18s;
+}
+.admin-v2-shell .av-cardedit-dropzone--drag {
+  border-color: color-mix(in srgb, var(--rarity-tone) 70%, white);
+  background: color-mix(in srgb, var(--rarity-tone) 12%, transparent);
+}
+.admin-v2-shell .av-cardedit-dropzone--busy { opacity: 0.7; pointer-events: none; }
+.admin-v2-shell .av-cardedit-dropzone-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--text-muted); padding: 28px;
+}
+.admin-v2-shell .av-cardedit-dropzone-empty strong {
+  color: var(--text); font-size: 14px; font-weight: 600;
+}
+.admin-v2-shell .av-cardedit-dropzone-empty span { font-size: 12px; }
+.admin-v2-shell .av-cardedit-dropzone-empty svg { color: var(--rarity-tone); opacity: 0.7; }
+.admin-v2-shell .av-cardedit-dropzone-preview {
+  position: relative; width: 100%;
+  /* Cap by viewport so a tall card image (1024×1792 ratio common on Luna
+     Fantasy) doesn't push the dialog past the screen and clip the footer. */
+  height: clamp(320px, 60vh, 560px);
+}
+.admin-v2-shell .av-cardedit-dropzone-preview img {
+  width: 100%; height: 100%; object-fit: contain; background: rgba(0, 0, 0, 0.4);
+}
+.admin-v2-shell .av-cardedit-dropzone-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(10,12,28,0) 30%, rgba(10,12,28,0.78) 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding: 16px; gap: 4px;
+  opacity: 0; transition: opacity 0.18s;
+}
+.admin-v2-shell .av-cardedit-dropzone:hover .av-cardedit-dropzone-overlay,
+.admin-v2-shell .av-cardedit-dropzone--drag .av-cardedit-dropzone-overlay { opacity: 1; }
+.admin-v2-shell .av-cardedit-dropzone-overlay strong { color: var(--text); font-size: 14px; font-weight: 600; }
+.admin-v2-shell .av-cardedit-dropzone-overlay span { color: var(--text-muted); font-size: 11px; }
 .av-card-tile-body {
   padding: 10px 12px 12px;
   display: flex;
@@ -5644,7 +5700,24 @@ kbd, .av-kbd {
   background: color-mix(in srgb, var(--rarity-tone) 35%, transparent);
   color: #fff;
 }
-.av-cardedit { width: min(520px, 94vw); }
+/* Wider dialog so the 2-column layout has room. Falls back to single column
+   on narrow viewports. */
+.av-cardedit { width: min(960px, 96vw); max-height: 92vh; display: flex; flex-direction: column; }
+.av-cardedit .av-moddialog-body.av-cardedit-body {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: start;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+@media (max-width: 720px) {
+  .av-cardedit .av-moddialog-body.av-cardedit-body {
+    grid-template-columns: 1fr;
+  }
+}
+.av-cardedit-imgcol { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.av-cardedit-fieldcol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .av-cardedit-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

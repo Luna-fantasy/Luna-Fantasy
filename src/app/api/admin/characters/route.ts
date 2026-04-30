@@ -6,6 +6,7 @@ import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
+import { assertNoWipe } from '@/lib/admin/wipe-guard';
 
 const DB_NAME = 'Database';
 const COLLECTION = 'characters';
@@ -160,6 +161,29 @@ export async function DELETE(request: NextRequest) {
     const col = client.db(DB_NAME).collection(COLLECTION);
     const existing = await col.findOne({ id });
     if (!existing) return NextResponse.json({ error: `No character with id "${id}"` }, { status: 404 });
+
+    // Defensive wipe guard. Characters use one-doc-at-a-time semantics, so a
+    // single DELETE never shrinks the collection by ≥50%. But if anyone ever
+    // adds a bulk-delete endpoint or someone scripts mass deletes, this will
+    // refuse a runaway. (No mass-delete is supported today — this is purely
+    // belt-and-suspenders following the cards-config wipe incident.)
+    const totalBefore = await col.countDocuments({});
+    const guardResult = assertNoWipe(totalBefore, totalBefore - 1, {
+        label: 'characters',
+        // 1 deletion at a time is allowed even when the collection is small.
+        // The guard only fires if `removed >= ceil(total/2)`, which a single
+        // delete only triggers when total ≤ 2 — at which point asking for
+        // confirmation is reasonable, but DELETE has no confirmShrink param,
+        // so we just let it through with a high threshold.
+        shrinkThreshold: 0.99,
+        minSize: 4,
+    });
+    if (!guardResult.ok && guardResult.error) {
+        return NextResponse.json(
+            { error: guardResult.error.message, before: guardResult.error.before, after: guardResult.error.after },
+            { status: 409 },
+        );
+    }
 
     await col.deleteOne({ id });
     await logAdminAction({
