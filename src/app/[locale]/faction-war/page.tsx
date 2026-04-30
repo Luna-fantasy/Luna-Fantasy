@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/faction-war.css';
 import { FactionWarContent } from './FactionWarContent';
 import { getFactionWarFactions } from '@/lib/faction-war';
+import TabGuard from '@/components/TabGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,9 +45,11 @@ export default async function FactionWarPage({ params }: { params: Promise<{ loc
   const factions = await getFactionWarFactions();
 
   return (
-    <FactionWarContent
-      factions={factions}
-      locale={locale as 'en' | 'ar'}
-    />
+    <TabGuard tabKey="faction-war">
+      <FactionWarContent
+        factions={factions}
+        locale={locale as 'en' | 'ar'}
+      />
+    </TabGuard>
   );
 }

@@ -93,7 +93,7 @@ export default function CardDetailDrawer({ card, onClose, onEdit, onDeleted }: P
         <div className="av-carddet-hero">
           <div className="av-carddet-img">
             {card.imageUrl
-              ? <img src={card.imageUrl} alt={card.name} />
+              ? <img src={`${card.imageUrl}${card.imageUrl.includes('?') ? '&' : '?'}cb=${Date.now()}`} alt={card.name} />
               : <div className="av-card-tile-placeholder av-carddet-placeholder">{card.name.slice(0, 1)}</div>}
           </div>
           <div className="av-carddet-meta">

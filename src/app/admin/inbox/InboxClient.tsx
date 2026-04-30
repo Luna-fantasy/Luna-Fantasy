@@ -164,19 +164,7 @@ export default function InboxClient({ initial, categories, adminId, guildId, vot
             )}
           </div>
 
-          <div className="av-inbox-chipset" role="tablist" aria-label="Kind">
-            {(['all', 'ticket', 'application'] as const).map((k) => (
-              <button
-                key={k}
-                type="button"
-                role="tab"
-                aria-selected={filters.kind === k}
-                className={`av-inbox-chip${filters.kind === k ? ' av-inbox-chip--active' : ''}`}
-                data-kind={k}
-                onClick={() => update({ kind: k })}
-              >{KIND_LABEL[k]}</button>
-            ))}
-          </div>
+          {/* Tickets/Applications kind chips removed by request — staff inbox shows everything */}
 
           <div className="av-inbox-chipset" role="tablist" aria-label="Status">
             {(['all', 'open', 'pending', 'accepted', 'closed', 'rejected'] as const).map((s) => (

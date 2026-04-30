@@ -17,6 +17,7 @@ import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import type { CardsSnapshot, CardDef, Rarity } from '@/lib/admin/cards-v2-types';
 import { RARITY_ORDER, RARITY_TONES } from '@/lib/admin/cards-v2-types';
+import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
 import CardDetailDrawer from './CardDetailDrawer';
 import CardEditDialog, { deleteCard, reAddCard } from './CardEditDialog';
 import FactionWarView from './FactionWarView';
@@ -42,8 +43,9 @@ export default function CardsClient({ snapshot }: { snapshot: CardsSnapshot }) {
   const [sort, setSort] = useState<Sort>('attack');
   const [selected, setSelected] = useState<CardDef | null>(null);
   const [editor, setEditor] = useState<{ mode: 'create' | 'edit'; card?: CardDef } | null>(null);
+  const { bustVersion, bump } = useBustVersion();
 
-  const refreshSnapshot = () => router.refresh();
+  const refreshSnapshot = () => { router.refresh(); bump(); };
 
   const cards = useMemo<CardDef[]>(() => {
     const rows = [...(snapshot.byRarity[activeRarity] ?? [])];
@@ -200,7 +202,8 @@ export default function CardsClient({ snapshot }: { snapshot: CardsSnapshot }) {
               <div className="av-card-tile-img">
                 {c.imageUrl ? (
                   <img
-                    src={c.imageUrl}
+                    key={`${c.imageUrl}-${bustVersion}`}
+                    src={withBust(c.imageUrl, bustVersion)}
                     alt={c.name}
                     loading="lazy"
                     onError={(e) => {

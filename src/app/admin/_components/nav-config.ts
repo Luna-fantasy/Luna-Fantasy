@@ -70,6 +70,8 @@ export const CLUSTERS: NavCluster[] = [
     id: 'content',
     label: 'Content',
     items: [
+      { label: 'Characters',     href: '/admin/characters',    icon: 'users' },
+      { label: 'Site Tabs',      href: '/admin/site-tabs',     icon: 'shield' },
       { label: 'Media',          href: '/admin/media',         icon: 'canvas' },
       { label: 'Website',        href: '/admin/website',       icon: 'pencil' },
       { label: 'Info',           href: '/admin/info',          icon: 'globe' },

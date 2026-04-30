@@ -7,6 +7,7 @@ import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useFocusTrap } from '../_components/a11y';
 import { RARITY_ORDER, RARITY_TONES, type CardDef, type Rarity } from '@/lib/admin/cards-v2-types';
+import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
 
 type Mode = 'create' | 'edit';
 
@@ -61,6 +62,7 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const { bustVersion, bump } = useBustVersion();
 
   useEffect(() => setMounted(true), []);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -116,6 +118,7 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
       }
       const data = await res.json();
       setImageUrl(data.imageUrl);
+      bump();
       toast.show({ tone: 'success', title: 'Uploaded', message: 'Image saved to R2 — remember to save the card to attach it.' });
     } catch (e) {
       toast.show({ tone: 'error', title: 'Upload failed', message: (e as Error).message });
@@ -278,7 +281,12 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
 
           {imageUrl && (
             <div className="av-cardedit-preview" style={{ ['--rarity-tone' as any]: RARITY_TONES[rarity] }}>
-              <img src={imageUrl} alt="preview" onError={(e) => (e.currentTarget.style.display = 'none')} />
+              <img
+                key={`${imageUrl}-${bustVersion}`}
+                src={withBust(imageUrl, bustVersion)}
+                alt="preview"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
             </div>
           )}
 

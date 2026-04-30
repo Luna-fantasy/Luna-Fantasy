@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/partners.css';
 import { PartnersContent } from './PartnersContent';
+import TabGuard from '@/components/TabGuard';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -38,5 +39,5 @@ export default async function PartnersPage({ params }: { params: Promise<{ local
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <PartnersContent locale={locale as 'en' | 'ar'} />;
+  return <TabGuard tabKey="partners"><PartnersContent locale={locale as 'en' | 'ar'} /></TabGuard>;
 }

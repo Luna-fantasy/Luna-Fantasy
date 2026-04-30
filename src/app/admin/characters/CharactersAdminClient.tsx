@@ -1,0 +1,387 @@
+'use client';
+
+import { useState, useCallback, useMemo, useRef } from 'react';
+import { useToast } from '../_components/Toast';
+import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
+
+interface FactionLite {
+    id: string;
+    name: { en: string; ar: string };
+}
+
+interface AdminCharacter {
+    _id: string | null;
+    id: string;
+    name: { en: string; ar: string };
+    lore: { en: string; ar: string } | null;
+    faction: string;
+    imageUrl: string;
+    isMainCharacter: boolean;
+    cardId: string | null;
+}
+
+interface Props {
+    initialCharacters: AdminCharacter[];
+    factions: FactionLite[];
+}
+
+async function fetchCsrf(): Promise<string> {
+    const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
+    if (!res.ok) return '';
+    const data = await res.json().catch(() => ({}));
+    return data?.token ?? '';
+}
+
+function emptyChar(): AdminCharacter {
+    return {
+        _id: null, id: '', name: { en: '', ar: '' }, lore: null,
+        faction: '', imageUrl: '', isMainCharacter: false, cardId: null,
+    };
+}
+
+export default function CharactersAdminClient({ initialCharacters, factions }: Props) {
+    const toast = useToast();
+    const [characters, setCharacters] = useState<AdminCharacter[]>(initialCharacters);
+    const [activeFaction, setActiveFaction] = useState<string>('all');
+    const [search, setSearch] = useState('');
+    const [editor, setEditor] = useState<{ char: AdminCharacter; mode: 'create' | 'edit' } | null>(null);
+    const [busy, setBusy] = useState(false);
+    const { bustVersion, bump } = useBustVersion();
+
+    const filtered = useMemo(() => {
+        let out = characters;
+        if (activeFaction === 'main') {
+            out = out.filter(c => c.isMainCharacter);
+        } else if (activeFaction !== 'all') {
+            out = out.filter(c => c.faction === activeFaction);
+        }
+        const q = search.trim().toLowerCase();
+        if (q) {
+            out = out.filter(c =>
+                c.id.toLowerCase().includes(q) ||
+                c.name.en.toLowerCase().includes(q) ||
+                c.name.ar.toLowerCase().includes(q),
+            );
+        }
+        return out;
+    }, [characters, activeFaction, search]);
+
+    const counts = useMemo(() => {
+        const m: Record<string, number> = { all: characters.length, main: 0 };
+        for (const c of characters) {
+            m[c.faction] = (m[c.faction] ?? 0) + 1;
+            if (c.isMainCharacter) m.main = (m.main ?? 0) + 1;
+        }
+        return m;
+    }, [characters]);
+
+    const save = useCallback(async (char: AdminCharacter, mode: 'create' | 'edit') => {
+        setBusy(true);
+        try {
+            const res = await fetch('/api/admin/characters', {
+                method: mode === 'create' ? 'POST' : 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': await fetchCsrf() },
+                body: JSON.stringify(char),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+            setCharacters(prev => {
+                if (mode === 'create') return [...prev, { ...char, _id: data._id ?? null }];
+                return prev.map(c => c.id === char.id ? char : c);
+            });
+            bump();
+            toast.show({ tone: 'success', title: mode === 'create' ? 'Character added' : 'Character updated', message: char.name.en });
+            setEditor(null);
+        } catch (err: any) {
+            toast.show({ tone: 'error', title: 'Save failed', message: err?.message ?? 'Unknown error' });
+        } finally {
+            setBusy(false);
+        }
+    }, [toast]);
+
+    const remove = useCallback(async (char: AdminCharacter) => {
+        if (!confirm(`Delete "${char.name.en}"? This cannot be undone.`)) return;
+        setBusy(true);
+        try {
+            const res = await fetch(`/api/admin/characters?id=${encodeURIComponent(char.id)}`, {
+                method: 'DELETE',
+                headers: { 'x-csrf-token': await fetchCsrf() },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+            setCharacters(prev => prev.filter(c => c.id !== char.id));
+            toast.show({ tone: 'success', title: 'Character deleted', message: char.name.en });
+            setEditor(null);
+        } catch (err: any) {
+            toast.show({ tone: 'error', title: 'Delete failed', message: err?.message ?? 'Unknown error' });
+        } finally {
+            setBusy(false);
+        }
+    }, [toast]);
+
+    return (
+        <div className="chr-admin">
+            <header className="chr-head">
+                <div>
+                    <h1>Characters</h1>
+                    <p>Manage the public Characters page on lunarian.app/<code>characters</code>. Edits go live within seconds — Mongo collection: <code>characters</code>.</p>
+                </div>
+                <button className="chr-btn chr-btn-primary" onClick={() => setEditor({ char: emptyChar(), mode: 'create' })}>
+                    + New character
+                </button>
+            </header>
+
+            <div className="chr-filters">
+                <input
+                    className="chr-search"
+                    placeholder="Search by id or name…"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
+                <div className="chr-tabs">
+                    {[{ id: 'all', name: { en: 'All', ar: '' } }, { id: 'main', name: { en: 'Main', ar: '' } }, ...factions.filter(f => f.id !== 'all' && f.id !== 'main')].map(f => (
+                        <button
+                            key={f.id}
+                            className={`chr-tab${activeFaction === f.id ? ' active' : ''}`}
+                            onClick={() => setActiveFaction(f.id)}
+                        >
+                            {f.name.en}
+                            <span className="chr-tab-count">{counts[f.id] ?? 0}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="chr-grid">
+                {filtered.length === 0 && (
+                    <div className="chr-empty">No characters match. Try clearing search or pick another faction.</div>
+                )}
+                {filtered.map(c => (
+                    <button
+                        key={c.id}
+                        className="chr-card"
+                        onClick={() => setEditor({ char: { ...c }, mode: 'edit' })}
+                    >
+                        <div className="chr-card-img">
+                            {c.imageUrl ? (
+                                <img
+                                    key={`${c.imageUrl}-${bustVersion}`}
+                                    src={withBust(c.imageUrl, bustVersion)}
+                                    alt={c.name.en}
+                                    loading="lazy"
+                                    onError={e => { (e.target as HTMLImageElement).style.opacity = '0.2'; }}
+                                />
+                            ) : (
+                                <div className="chr-card-placeholder">{c.name.en.charAt(0)}</div>
+                            )}
+                            {c.isMainCharacter && <span className="chr-pin-main">Main</span>}
+                        </div>
+                        <div className="chr-card-body">
+                            <div className="chr-card-name">{c.name.en}</div>
+                            <div className="chr-card-meta">
+                                <span className="chr-card-id">{c.id}</span>
+                                <span className="chr-card-faction">{c.faction}</span>
+                            </div>
+                        </div>
+                    </button>
+                ))}
+            </div>
+
+            {editor && (
+                <CharacterEditor
+                    initial={editor.char}
+                    mode={editor.mode}
+                    factions={factions}
+                    busy={busy}
+                    onSave={(c) => save(c, editor.mode)}
+                    onDelete={editor.mode === 'edit' ? () => remove(editor.char) : undefined}
+                    onCancel={() => setEditor(null)}
+                />
+            )}
+
+            <style>{`
+                .chr-admin { padding: 24px 32px 80px; max-width: 1280px; margin: 0 auto; }
+                .chr-head { display: flex; align-items: flex-start; gap: 24px; margin-bottom: 28px; }
+                .chr-head h1 { font-family: 'Cinzel', serif; font-size: 30px; margin: 0 0 6px; color: #f1f5ff; }
+                .chr-head p { color: #b9c4e0; font-size: 13px; margin: 0; max-width: 720px; line-height: 1.6; }
+                .chr-head p code { background: rgba(140, 200, 255, 0.1); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+                .chr-btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.15s; }
+                .chr-btn-primary { background: linear-gradient(90deg, #5b8def, #7c5fff); color: #fff; margin-left: auto; }
+                .chr-btn-primary:hover { opacity: 0.92; }
+                .chr-btn-secondary { background: rgba(140, 200, 255, 0.1); color: #b9c4e0; }
+                .chr-btn-danger { background: linear-gradient(90deg, #ff5566, #c8344b); color: #fff; }
+                .chr-filters { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+                .chr-search { padding: 10px 14px; background: rgba(20, 24, 48, 0.6); border: 1px solid rgba(140, 200, 255, 0.18); border-radius: 8px; color: #f1f5ff; font-size: 13px; max-width: 400px; }
+                .chr-search:focus { outline: none; border-color: rgba(140, 200, 255, 0.45); }
+                .chr-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+                .chr-tab { background: rgba(20, 24, 48, 0.5); border: 1px solid rgba(140, 200, 255, 0.12); padding: 6px 12px; border-radius: 18px; color: #b9c4e0; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+                .chr-tab:hover { border-color: rgba(140, 200, 255, 0.3); }
+                .chr-tab.active { background: rgba(120, 80, 200, 0.2); border-color: rgba(120, 80, 200, 0.5); color: #f1f5ff; }
+                .chr-tab-count { background: rgba(140, 200, 255, 0.12); padding: 1px 7px; border-radius: 10px; font-size: 10px; color: #88a0c8; }
+                .chr-tab.active .chr-tab-count { background: rgba(255, 255, 255, 0.15); color: #fff; }
+                .chr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+                .chr-card { display: flex; flex-direction: column; padding: 0; border: 1px solid rgba(140, 200, 255, 0.12); border-radius: 12px; background: rgba(20, 24, 48, 0.5); cursor: pointer; overflow: hidden; transition: all 0.15s; text-align: left; }
+                .chr-card:hover { border-color: rgba(140, 200, 255, 0.3); transform: translateY(-2px); }
+                .chr-card-img { position: relative; aspect-ratio: 3/4; background: rgba(0, 0, 0, 0.4); overflow: hidden; }
+                .chr-card-img img { width: 100%; height: 100%; object-fit: cover; }
+                .chr-card-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: rgba(140, 200, 255, 0.3); font-family: 'Cinzel', serif; font-weight: 700; }
+                .chr-pin-main { position: absolute; top: 8px; right: 8px; padding: 2px 7px; background: rgba(120, 80, 200, 0.85); color: #fff; font-size: 10px; border-radius: 4px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
+                .chr-card-body { padding: 10px 12px 12px; }
+                .chr-card-name { font-size: 14px; color: #f1f5ff; font-weight: 600; margin-bottom: 4px; }
+                .chr-card-meta { display: flex; justify-content: space-between; font-size: 11px; color: #88a0c8; }
+                .chr-card-id { font-family: monospace; opacity: 0.8; }
+                .chr-empty { grid-column: 1 / -1; padding: 60px 24px; text-align: center; color: #88a0c8; }
+            `}</style>
+        </div>
+    );
+}
+
+function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCancel }: {
+    initial: AdminCharacter;
+    mode: 'create' | 'edit';
+    factions: FactionLite[];
+    busy: boolean;
+    onSave: (c: AdminCharacter) => void;
+    onDelete?: () => void;
+    onCancel: () => void;
+}) {
+    const toast = useToast();
+    const [c, setC] = useState<AdminCharacter>(initial);
+    const [uploading, setUploading] = useState(false);
+    const fileRef = useRef<HTMLInputElement | null>(null);
+
+    const handleUpload = async (file: File) => {
+        if (!c.id.trim()) {
+            toast.show({ tone: 'error', title: 'Set an ID first', message: 'Character ID is part of the upload key.' });
+            return;
+        }
+        setUploading(true);
+        try {
+            const ext = (file.name.split('.').pop() ?? 'png').toLowerCase();
+            const key = `characters/${c.id}.${ext}`;
+            const presignRes = await fetch('/api/admin/assets/presign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': await fetchCsrf() },
+                body: JSON.stringify({ key, contentType: file.type || 'image/png', size: file.size }),
+            });
+            const presignData = await presignRes.json();
+            if (!presignRes.ok) throw new Error(presignData?.error ?? 'Presign failed');
+            const putRes = await fetch(presignData.presignedUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': file.type || 'image/png' },
+                body: file,
+            });
+            if (!putRes.ok) throw new Error(`Upload to R2 failed: ${putRes.status}`);
+            const cacheBust = `${presignData.publicUrl}?v=${Date.now()}`;
+            setC(prev => ({ ...prev, imageUrl: cacheBust }));
+            toast.show({ tone: 'success', title: 'Uploaded', message: 'Click Save to apply.' });
+        } catch (err: any) {
+            toast.show({ tone: 'error', title: 'Upload failed', message: err?.message ?? 'Unknown error' });
+        } finally {
+            setUploading(false);
+            if (fileRef.current) fileRef.current.value = '';
+        }
+    };
+
+    return (
+        <div className="chr-modal-bg" onClick={onCancel}>
+            <div className="chr-modal" onClick={e => e.stopPropagation()}>
+                <header className="chr-modal-head">
+                    <h3>{mode === 'create' ? 'New character' : `Edit "${initial.name.en}"`}</h3>
+                    <button onClick={onCancel} className="chr-btn chr-btn-secondary chr-btn-x">×</button>
+                </header>
+                <div className="chr-modal-body">
+                    <div className="chr-form-row">
+                        <label>
+                            <span>ID (slug)</span>
+                            <input
+                                value={c.id}
+                                onChange={e => setC(p => ({ ...p, id: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 60) }))}
+                                placeholder="e.g. luna_thief"
+                                disabled={mode === 'edit'}
+                            />
+                        </label>
+                        <label>
+                            <span>Faction</span>
+                            <select value={c.faction} onChange={e => setC(p => ({ ...p, faction: e.target.value }))}>
+                                <option value="">— pick one —</option>
+                                {factions.filter(f => f.id !== 'all' && f.id !== 'main').map(f => (
+                                    <option key={f.id} value={f.id}>{f.name.en}</option>
+                                ))}
+                            </select>
+                        </label>
+                    </div>
+                    <div className="chr-form-row">
+                        <label>
+                            <span>Name (English)</span>
+                            <input value={c.name.en} onChange={e => setC(p => ({ ...p, name: { ...p.name, en: e.target.value } }))} placeholder="Luna Thief" />
+                        </label>
+                        <label>
+                            <span>Name (Arabic)</span>
+                            <input value={c.name.ar} onChange={e => setC(p => ({ ...p, name: { ...p.name, ar: e.target.value } }))} dir="rtl" />
+                        </label>
+                    </div>
+                    <label className="chr-form-full">
+                        <span>Lore (English)</span>
+                        <textarea rows={3} value={c.lore?.en ?? ''} onChange={e => setC(p => ({ ...p, lore: { en: e.target.value, ar: p.lore?.ar ?? '' } }))} />
+                    </label>
+                    <label className="chr-form-full">
+                        <span>Lore (Arabic)</span>
+                        <textarea rows={3} dir="rtl" value={c.lore?.ar ?? ''} onChange={e => setC(p => ({ ...p, lore: { en: p.lore?.en ?? '', ar: e.target.value } }))} />
+                    </label>
+                    <label className="chr-form-full">
+                        <span>Image URL</span>
+                        <input value={c.imageUrl} onChange={e => setC(p => ({ ...p, imageUrl: e.target.value }))} placeholder="https://assets.lunarian.app/characters/…" />
+                    </label>
+                    <div className="chr-upload-row">
+                        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) void handleUpload(f); }} />
+                        <button className="chr-btn chr-btn-secondary" disabled={uploading || !c.id.trim()} onClick={() => fileRef.current?.click()}>
+                            {uploading ? 'Uploading…' : '↑ Upload to R2'}
+                        </button>
+                        {c.imageUrl && <img key={c.imageUrl} src={withBust(c.imageUrl, Date.now())} alt="" className="chr-preview" />}
+                    </div>
+                    <div className="chr-form-row">
+                        <label className="chr-form-checkbox">
+                            <input type="checkbox" checked={c.isMainCharacter} onChange={e => setC(p => ({ ...p, isMainCharacter: e.target.checked }))} />
+                            <span>Featured as Main Character</span>
+                        </label>
+                        <label>
+                            <span>Linked Card ID (optional)</span>
+                            <input value={c.cardId ?? ''} onChange={e => setC(p => ({ ...p, cardId: e.target.value || null }))} placeholder="card slug" />
+                        </label>
+                    </div>
+                </div>
+                <footer className="chr-modal-foot">
+                    {onDelete && (
+                        <button className="chr-btn chr-btn-danger" onClick={onDelete} disabled={busy}>Delete</button>
+                    )}
+                    <span style={{ flex: 1 }} />
+                    <button className="chr-btn chr-btn-secondary" onClick={onCancel} disabled={busy}>Cancel</button>
+                    <button className="chr-btn chr-btn-primary" onClick={() => onSave(c)} disabled={busy || uploading || !c.id || !c.faction || !c.name.en || !c.imageUrl}>
+                        {busy ? 'Saving…' : (mode === 'create' ? 'Create' : 'Save')}
+                    </button>
+                </footer>
+            </div>
+            <style>{`
+                .chr-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 100; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+                .chr-modal { width: min(720px, 95vw); max-height: 92vh; background: linear-gradient(180deg, #1a1d35, #0f1226); border: 1px solid rgba(140, 200, 255, 0.18); border-radius: 14px; display: flex; flex-direction: column; }
+                .chr-modal-head { padding: 18px 22px 12px; display: flex; align-items: center; gap: 12px; }
+                .chr-modal-head h3 { margin: 0; font-family: 'Cinzel', serif; font-size: 19px; color: #f1f5ff; flex: 1; }
+                .chr-btn-x { padding: 4px 12px; font-size: 18px; line-height: 1; }
+                .chr-modal-body { padding: 4px 22px 22px; overflow: auto; display: flex; flex-direction: column; gap: 14px; }
+                .chr-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+                .chr-form-full label, .chr-form-row label, .chr-modal-body > label { display: flex; flex-direction: column; gap: 5px; }
+                .chr-modal-body label > span:not(.chr-tab-count) { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #88a0c8; font-weight: 600; }
+                .chr-modal-body input, .chr-modal-body textarea, .chr-modal-body select { padding: 8px 11px; background: rgba(0,0,0,0.3); border: 1px solid rgba(140, 200, 255, 0.18); border-radius: 7px; color: #f1f5ff; font-size: 13px; font-family: inherit; }
+                .chr-modal-body input:focus, .chr-modal-body textarea:focus, .chr-modal-body select:focus { outline: none; border-color: rgba(140, 200, 255, 0.45); }
+                .chr-modal-body input:disabled { opacity: 0.5; cursor: not-allowed; }
+                .chr-upload-row { display: flex; align-items: center; gap: 14px; }
+                .chr-preview { width: 60px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(140, 200, 255, 0.2); }
+                .chr-form-checkbox { flex-direction: row !important; align-items: center; gap: 8px !important; cursor: pointer; padding: 8px 0; }
+                .chr-form-checkbox input { width: 16px; height: 16px; }
+                .chr-form-checkbox span { font-size: 13px !important; text-transform: none !important; letter-spacing: 0 !important; color: #f1f5ff !important; font-weight: 400 !important; }
+                .chr-modal-foot { padding: 14px 22px; border-top: 1px solid rgba(140, 200, 255, 0.1); display: flex; gap: 10px; align-items: center; }
+            `}</style>
+        </div>
+    );
+}

@@ -3,6 +3,7 @@ import '@/styles/cards.css';
 import { CardsContent } from './CardsContent';
 import { getCardCatalog } from '@/lib/cards';
 import type { Card } from '@/types';
+import TabGuard from '@/components/TabGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,9 +47,11 @@ export default async function GrandFantasyPage({ params }: { params: Promise<{ l
   const cards = allCards.filter(c => c.rarity !== 'secret');
 
   return (
-    <CardsContent
-      cards={cards as Card[]}
-      locale={locale as 'en' | 'ar'}
-    />
+    <TabGuard tabKey="grand-fantasy">
+      <CardsContent
+        cards={cards as Card[]}
+        locale={locale as 'en' | 'ar'}
+      />
+    </TabGuard>
   );
 }

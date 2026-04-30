@@ -32,6 +32,27 @@ export function Navbar() {
   const worldDropdownRef = useRef<HTMLDivElement>(null);
   const economyDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
+  const [closedTabs, setClosedTabs] = useState<Set<string>>(new Set());
+  const isMM = !!session?.user?.isMastermind;
+  const isClosed = (key: string) => closedTabs.has(key);
+  const hideForViewer = (key: string) => isClosed(key) && !isMM;
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch('/api/site-tabs/state', { cache: 'no-store' });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled && Array.isArray(data?.closed)) {
+          setClosedTabs(new Set<string>(data.closed));
+        }
+      } catch {}
+    };
+    void load();
+    const id = setInterval(load, 30_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
   const gameRoutes = ['/luna-fantasy', '/grand-fantasy', '/faction-war'];
   const worldRoutes = ['/story', '/characters', '/partners', '/members'];
@@ -150,14 +171,21 @@ export function Navbar() {
           </div>
 
           <div className="nav">
-            <Link href="/" className={`nav-link ${isActive('/') && pathname === '/' ? 'active' : ''}`}>
-              <E ns="nav" k="home">{t('home')}</E>
-            </Link>
+            {!hideForViewer('home') && (
+              <Link
+                href="/"
+                className={`nav-link ${isActive('/') && pathname === '/' ? 'active' : ''} ${isClosed('home') ? 'nav-link-closed' : ''}`}
+                title={isClosed('home') ? 'Closed to public — Mastermind view' : undefined}
+              >
+                <E ns="nav" k="home">{t('home')}</E>
+              </Link>
+            )}
 
             {/* Games Dropdown */}
+            {!hideForViewer('games') && (
             <div className="games-dropdown-wrap" ref={gamesDropdownRef}>
               <button
-                className={`games-dropdown-trigger ${isGamesActive ? 'active' : ''}`}
+                className={`games-dropdown-trigger ${isGamesActive ? 'active' : ''} ${isClosed('games') ? 'nav-link-closed' : ''}`}
                 onClick={() => { setGamesDropdownOpen(!gamesDropdownOpen); setWorldDropdownOpen(false); setEconomyDropdownOpen(false); }}
                 onMouseEnter={() => { setGamesDropdownOpen(true); setWorldDropdownOpen(false); setEconomyDropdownOpen(false); }}
               >
@@ -169,35 +197,43 @@ export function Navbar() {
                   className="games-dropdown"
                   onMouseLeave={() => setGamesDropdownOpen(false)}
                 >
-                  <Link
-                    href="/luna-fantasy"
-                    className={`games-dropdown-item ${isActive('/luna-fantasy') ? 'active' : ''}`}
-                    onClick={() => setGamesDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="lunaFantasy">{t('lunaFantasy')}</E>
-                  </Link>
-                  <Link
-                    href="/grand-fantasy"
-                    className={`games-dropdown-item ${isActive('/grand-fantasy') ? 'active' : ''}`}
-                    onClick={() => setGamesDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="grandFantasy">{t('grandFantasy')}</E>
-                  </Link>
-                  <Link
-                    href="/faction-war"
-                    className={`games-dropdown-item ${isActive('/faction-war') ? 'active' : ''}`}
-                    onClick={() => setGamesDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="factionWar">{t('factionWar')}</E>
-                  </Link>
+                  {!hideForViewer('luna-fantasy') && (
+                    <Link
+                      href="/luna-fantasy"
+                      className={`games-dropdown-item ${isActive('/luna-fantasy') ? 'active' : ''} ${isClosed('luna-fantasy') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setGamesDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="lunaFantasy">{t('lunaFantasy')}</E>
+                    </Link>
+                  )}
+                  {!hideForViewer('grand-fantasy') && (
+                    <Link
+                      href="/grand-fantasy"
+                      className={`games-dropdown-item ${isActive('/grand-fantasy') ? 'active' : ''} ${isClosed('grand-fantasy') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setGamesDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="grandFantasy">{t('grandFantasy')}</E>
+                    </Link>
+                  )}
+                  {!hideForViewer('faction-war') && (
+                    <Link
+                      href="/faction-war"
+                      className={`games-dropdown-item ${isActive('/faction-war') ? 'active' : ''} ${isClosed('faction-war') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setGamesDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="factionWar">{t('factionWar')}</E>
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
+            )}
 
             {/* World Dropdown */}
+            {!hideForViewer('world') && (
             <div className="games-dropdown-wrap" ref={worldDropdownRef}>
               <button
-                className={`games-dropdown-trigger ${isWorldActive ? 'active' : ''}`}
+                className={`games-dropdown-trigger ${isWorldActive ? 'active' : ''} ${isClosed('world') ? 'nav-link-closed' : ''}`}
                 onClick={() => { setWorldDropdownOpen(!worldDropdownOpen); setGamesDropdownOpen(false); setEconomyDropdownOpen(false); }}
                 onMouseEnter={() => { setWorldDropdownOpen(true); setGamesDropdownOpen(false); setEconomyDropdownOpen(false); }}
               >
@@ -209,42 +245,52 @@ export function Navbar() {
                   className="games-dropdown"
                   onMouseLeave={() => setWorldDropdownOpen(false)}
                 >
-                  <Link
-                    href="/story"
-                    className={`games-dropdown-item ${isActive('/story') ? 'active' : ''}`}
-                    onClick={() => setWorldDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="story">{t('story')}</E>
-                  </Link>
-                  <Link
-                    href="/characters"
-                    className={`games-dropdown-item ${isActive('/characters') ? 'active' : ''}`}
-                    onClick={() => setWorldDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="characters">{t('characters')}</E>
-                  </Link>
-                  <Link
-                    href="/partners"
-                    className={`games-dropdown-item ${isActive('/partners') ? 'active' : ''}`}
-                    onClick={() => setWorldDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="partners">{t('partners')}</E>
-                  </Link>
-                  <Link
-                    href="/members"
-                    className={`games-dropdown-item ${isActive('/members') ? 'active' : ''}`}
-                    onClick={() => setWorldDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="members">{t('members')}</E>
-                  </Link>
+                  {!hideForViewer('story') && (
+                    <Link
+                      href="/story"
+                      className={`games-dropdown-item ${isActive('/story') ? 'active' : ''} ${isClosed('story') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setWorldDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="story">{t('story')}</E>
+                    </Link>
+                  )}
+                  {!hideForViewer('characters') && (
+                    <Link
+                      href="/characters"
+                      className={`games-dropdown-item ${isActive('/characters') ? 'active' : ''} ${isClosed('characters') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setWorldDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="characters">{t('characters')}</E>
+                    </Link>
+                  )}
+                  {!hideForViewer('partners') && (
+                    <Link
+                      href="/partners"
+                      className={`games-dropdown-item ${isActive('/partners') ? 'active' : ''} ${isClosed('partners') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setWorldDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="partners">{t('partners')}</E>
+                    </Link>
+                  )}
+                  {!hideForViewer('members') && (
+                    <Link
+                      href="/members"
+                      className={`games-dropdown-item ${isActive('/members') ? 'active' : ''} ${isClosed('members') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setWorldDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="members">{t('members')}</E>
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
+            )}
 
             {/* Economy Dropdown */}
+            {!hideForViewer('economy') && (
             <div className="games-dropdown-wrap" ref={economyDropdownRef}>
               <button
-                className={`games-dropdown-trigger ${isEconomyActive ? 'active' : ''}`}
+                className={`games-dropdown-trigger ${isEconomyActive ? 'active' : ''} ${isClosed('economy') ? 'nav-link-closed' : ''}`}
                 onClick={() => { setEconomyDropdownOpen(!economyDropdownOpen); setGamesDropdownOpen(false); setWorldDropdownOpen(false); }}
                 onMouseEnter={() => { setEconomyDropdownOpen(true); setGamesDropdownOpen(false); setWorldDropdownOpen(false); }}
               >
@@ -256,31 +302,37 @@ export function Navbar() {
                   className="games-dropdown"
                   onMouseLeave={() => setEconomyDropdownOpen(false)}
                 >
-                  <Link
-                    href="/bank"
-                    className={`games-dropdown-item ${isActive('/bank') ? 'active' : ''}`}
-                    onClick={() => setEconomyDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="bank">{t('bank')}</E>
-                  </Link>
-                  <Link
-                    href="/bazaar"
-                    className={`games-dropdown-item ${isActive('/bazaar') ? 'active' : ''}`}
-                    onClick={() => setEconomyDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="bazaar">{t('bazaar')}</E>
-                  </Link>
-                  <Link
-                    href="/trading"
-                    className={`games-dropdown-item ${isActive('/trading') ? 'active' : ''}`}
-                    onClick={() => setEconomyDropdownOpen(false)}
-                  >
-                    <E ns="nav" k="trading">{t('trading')}</E>
-                  </Link>
-                  {FEATURE_FLAGS.marketplace && (
+                  {!hideForViewer('bank') && (
+                    <Link
+                      href="/bank"
+                      className={`games-dropdown-item ${isActive('/bank') ? 'active' : ''} ${isClosed('bank') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setEconomyDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="bank">{t('bank')}</E>
+                    </Link>
+                  )}
+                  {!hideForViewer('bazaar') && (
+                    <Link
+                      href="/bazaar"
+                      className={`games-dropdown-item ${isActive('/bazaar') ? 'active' : ''} ${isClosed('bazaar') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setEconomyDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="bazaar">{t('bazaar')}</E>
+                    </Link>
+                  )}
+                  {!hideForViewer('trading') && (
+                    <Link
+                      href="/trading"
+                      className={`games-dropdown-item ${isActive('/trading') ? 'active' : ''} ${isClosed('trading') ? 'nav-link-closed' : ''}`}
+                      onClick={() => setEconomyDropdownOpen(false)}
+                    >
+                      <E ns="nav" k="trading">{t('trading')}</E>
+                    </Link>
+                  )}
+                  {FEATURE_FLAGS.marketplace && !hideForViewer('marketplace') && (
                     <Link
                       href="/marketplace"
-                      className={`games-dropdown-item ${isActive('/marketplace') ? 'active' : ''}`}
+                      className={`games-dropdown-item ${isActive('/marketplace') ? 'active' : ''} ${isClosed('marketplace') ? 'nav-link-closed' : ''}`}
                       onClick={() => setEconomyDropdownOpen(false)}
                     >
                       <E ns="nav" k="marketplace">{t('marketplace')}</E>
@@ -289,7 +341,12 @@ export function Navbar() {
                 </div>
               )}
             </div>
+            )}
           </div>
+          <style jsx>{`
+            .nav-link-closed { opacity: 0.55; position: relative; }
+            .nav-link-closed::after { content: '🔒'; font-size: 9px; margin-left: 6px; opacity: 0.85; }
+          `}</style>
 
           <div className="actions-box">
             {/* Admin Dashboard Link - Desktop */}

@@ -6,6 +6,7 @@ import factions from '@/data/factions.json';
 import { getCardCatalog } from '@/lib/cards';
 import { getCharacters } from '@/lib/characters';
 import type { Character, Faction, Card } from '@/types';
+import TabGuard from '@/components/TabGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,11 +50,13 @@ export default async function CharactersPage({ params }: { params: Promise<{ loc
   const [allCharacters, cards] = await Promise.all([getCharacters(), getCardCatalog()]);
 
   return (
-    <CharactersContent
-      characters={allCharacters}
-      factions={factions as Faction[]}
-      cards={cards as Card[]}
-      locale={locale as 'en' | 'ar'}
-    />
+    <TabGuard tabKey="characters">
+      <CharactersContent
+        characters={allCharacters}
+        factions={factions as Faction[]}
+        cards={cards as Card[]}
+        locale={locale as 'en' | 'ar'}
+      />
+    </TabGuard>
   );
 }

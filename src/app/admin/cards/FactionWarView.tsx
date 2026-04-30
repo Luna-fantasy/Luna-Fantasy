@@ -5,6 +5,7 @@ import ContextMenu from '../_components/ContextMenu';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useUndo } from '../_components/UndoProvider';
+import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
 
 export interface FactionCard {
   name: string;
@@ -115,6 +116,7 @@ export default function FactionWarView() {
   const toast = useToast();
   const pending = usePendingAction();
   const undo = useUndo();
+  const { bustVersion, bump } = useBustVersion();
 
   const [factionWar, setFactionWar] = useState<Record<string, FactionData> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,15 +124,17 @@ export default function FactionWarView() {
   const [q, setQ] = useState('');
   const [editor, setEditor] = useState<{ faction: string; card?: FactionCard } | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { keepFaction?: boolean }) => {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/cards/config', { cache: 'no-store' });
       const body = await res.json();
       if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
       setFactionWar(body.factionWar ?? null);
-      // Pick the first faction with cards on initial load
-      if (body.factionWar) {
+      bump();
+      // Pick the first faction with cards on initial load — but keep current
+      // selection on reload after a save so users don't get bounced to Beasts.
+      if (body.factionWar && !opts?.keepFaction) {
         const first = FACTION_NAMES.find((n) => (body.factionWar?.[n]?.cards?.length ?? 0) > 0);
         if (first) setActiveFaction(first);
       }
@@ -139,7 +143,7 @@ export default function FactionWarView() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, bump]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -203,7 +207,7 @@ export default function FactionWarView() {
           Jester's FactionWar block wasn't found in <code>bot_config.jester_game_settings</code> or <code>config.ts</code>.
           Seed the deck from Jester config to start editing.
         </p>
-        <button type="button" className="av-btn av-btn-ghost" onClick={load}>↻ Retry</button>
+        <button type="button" className="av-btn av-btn-ghost" onClick={() => void load()}>↻ Retry</button>
       </div>
     );
   }
@@ -269,7 +273,7 @@ export default function FactionWarView() {
           <button
             type="button"
             className="av-btn av-btn-ghost"
-            onClick={load}
+            onClick={() => void load()}
           >
             ↻
           </button>
@@ -313,7 +317,8 @@ export default function FactionWarView() {
               <div className="av-card-tile-img">
                 {card.image ? (
                   <img
-                    src={resolveImage(card.image)}
+                    key={`${card.image}-${bustVersion}`}
+                    src={withBust(resolveImage(card.image), bustVersion)}
                     alt={card.name}
                     loading="lazy"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -340,7 +345,7 @@ export default function FactionWarView() {
           faction={editor.faction}
           card={editor.card}
           onClose={() => setEditor(null)}
-          onSaved={() => { setEditor(null); void load(); }}
+          onSaved={() => { setEditor(null); void load({ keepFaction: true }); }}
         />
       )}
     </div>
@@ -358,6 +363,7 @@ function FactionCardEditDialog({
   onSaved: () => void;
 }) {
   const toast = useToast();
+  const { bustVersion, bump } = useBustVersion();
   const [name, setName] = useState(card?.name ?? '');
   const [image, setImage] = useState(card?.image ?? '');
   const [saving, setSaving] = useState(false);
@@ -365,6 +371,35 @@ function FactionCardEditDialog({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mode = card ? 'edit' : 'create';
+
+  // Persist the card record. Returns true on success so callers can chain (e.g.
+  // upload-then-save) without re-toasting.
+  const persist = useCallback(async (nextImage: string, opts?: { silent?: boolean }): Promise<boolean> => {
+    if (!name.trim()) {
+      if (!opts?.silent) toast.show({ tone: 'error', title: 'Invalid', message: 'Name is required' });
+      return false;
+    }
+    const cardPayload = {
+      name: name.trim(),
+      image: nextImage.trim(),
+      ...(card?.description ? { description: card.description } : {}),
+    };
+    if (mode === 'edit' && card) {
+      await postAction({
+        action: 'update_faction_card',
+        faction,
+        oldName: card.name,
+        card: cardPayload,
+      });
+    } else {
+      await postAction({
+        action: 'add_faction_card',
+        faction,
+        card: cardPayload,
+      });
+    }
+    return true;
+  }, [name, card, faction, mode, toast]);
 
   const handleUpload = async (file: File) => {
     if (!name.trim()) {
@@ -391,7 +426,25 @@ function FactionCardEditDialog({
       });
       if (!res?.imageUrl) throw new Error('Upload returned no URL');
       setImage(res.imageUrl);
-      toast.show({ tone: 'success', title: 'Uploaded', message: 'Click Save to apply.' });
+      bump();
+      toast.show({ tone: 'success', title: 'Image uploaded', message: 'Saving card…' });
+
+      // Auto-persist so the user doesn't have to click Save twice. This was the
+      // root cause of "image stays the same after replacing": uploads landed on
+      // R2 + bumped the cache-bust query, but the DB doc still pointed at the
+      // unversioned filename, so subsequent renders served the cached image.
+      if (mode === 'edit' && card) {
+        try {
+          await persist(res.imageUrl, { silent: true });
+          toast.show({ tone: 'success', title: 'Replaced', message: `${name} now uses the new image.` });
+          onSaved();
+          return;
+        } catch (saveErr) {
+          toast.show({ tone: 'error', title: 'Auto-save failed', message: `Image is on R2, but the card record didn't update: ${(saveErr as Error).message}. Click Save to retry.` });
+        }
+      } else {
+        toast.show({ tone: 'info', title: 'Image staged', message: 'Click "Add card" below to create the card with this image.' });
+      }
     } catch (e) {
       toast.show({ tone: 'error', title: 'Upload failed', message: (e as Error).message });
     } finally {
@@ -402,36 +455,16 @@ function FactionCardEditDialog({
 
   const clearImage = () => {
     setImage('');
+    bump();
     toast.show({ tone: 'info', title: 'Image cleared', message: 'Card will show a placeholder. Click Save to apply.' });
   };
 
   const save = async () => {
-    if (!name.trim()) { toast.show({ tone: 'error', title: 'Invalid', message: 'Name is required' }); return; }
     setSaving(true);
     try {
-      // Description is owned by another surface — preserve whatever's already on
-      // the card so saving here doesn't clobber it.
-      const cardPayload = {
-        name: name.trim(),
-        image: image.trim(),
-        ...(card?.description ? { description: card.description } : {}),
-      };
-      if (mode === 'edit' && card) {
-        await postAction({
-          action: 'update_faction_card',
-          faction,
-          oldName: card.name,        // ← API expects `oldName`, not `originalName` (previous bug)
-          card: cardPayload,
-        });
-        toast.show({ tone: 'success', title: 'Saved', message: name });
-      } else {
-        await postAction({
-          action: 'add_faction_card',
-          faction,
-          card: cardPayload,
-        });
-        toast.show({ tone: 'success', title: 'Added', message: name });
-      }
+      const ok = await persist(image);
+      if (!ok) return;
+      toast.show({ tone: 'success', title: mode === 'edit' ? 'Saved' : 'Added', message: name });
       onSaved();
     } catch (e) {
       toast.show({ tone: 'error', title: 'Save failed', message: (e as Error).message });
@@ -440,7 +473,7 @@ function FactionCardEditDialog({
     }
   };
 
-  const previewUrl = image ? resolveImage(image) : null;
+  const previewUrl = image ? withBust(resolveImage(image), bustVersion) : null;
 
   return (
     <div className="av-modal-backdrop" onClick={onClose}>
@@ -482,6 +515,7 @@ function FactionCardEditDialog({
                 <div className="av-fw-image-preview">
                   {previewUrl ? (
                     <img
+                      key={`${image}-${bustVersion}`}
                       src={previewUrl}
                       alt=""
                       onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}

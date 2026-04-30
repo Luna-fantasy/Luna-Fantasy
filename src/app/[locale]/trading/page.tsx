@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/trading.css';
 import TradingContent from './TradingContent';
+import TabGuard from '@/components/TabGuard';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -40,8 +41,10 @@ export default async function TradingPage({ params }: { params: Promise<{ locale
   setRequestLocale(locale);
 
   return (
-    <Suspense>
-      <TradingContent />
-    </Suspense>
+    <TabGuard tabKey="trading">
+      <Suspense>
+        <TradingContent />
+      </Suspense>
+    </TabGuard>
   );
 }

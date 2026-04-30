@@ -11,12 +11,28 @@ import type { FactionWarFaction } from '@/types/faction-war';
 import type { Locale } from '@/types';
 
 const R2_BASE = 'https://assets.lunarian.app/LunaPairs';
+
+// Build-time fallback bust. Bumped on every deploy so cards stored without
+// their own `?v=` stamp still refresh whenever the site redeploys. The admin
+// API now always saves cards with a `?v=` token, but legacy DB entries from
+// before that change have no version of their own — this is the safety net.
+const FALLBACK_BUST =
+  process.env.NEXT_PUBLIC_BUILD_ID
+  ?? process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA
+  ?? process.env.NEXT_PUBLIC_RAILWAY_DEPLOYMENT_ID
+  ?? '1';
+
 function getFactionWarImageUrl(image: string) {
   // Cards in MongoDB store either bare filenames (`lunarians_seluna.png`,
   // optionally with a `?v=...` cache-buster appended by the admin upload) or
   // a full URL pasted manually in the dashboard. Handle both.
-  if (image.startsWith('http://') || image.startsWith('https://')) return image;
-  return `${R2_BASE}/${image}`;
+  const baseUrl = (image.startsWith('http://') || image.startsWith('https://'))
+    ? image
+    : `${R2_BASE}/${image}`;
+
+  if (/[?&]v=/.test(baseUrl)) return baseUrl;
+  const sep = baseUrl.includes('?') ? '&' : '?';
+  return `${baseUrl}${sep}v=${FALLBACK_BUST}`;
 }
 function getFactionWarBgUrl() { return 'https://assets.lunarian.app/backgrounds/FactionWarHero.png'; }
 

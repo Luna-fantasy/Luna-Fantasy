@@ -3,6 +3,7 @@ import '@/styles/bank.css';
 import { BankContent } from './BankContent';
 import bankData from '@/data/bank.json';
 import { getLiveBankConfig } from '@/lib/bank/live-bank-config';
+import TabGuard from '@/components/TabGuard';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -79,9 +80,11 @@ export default async function BankPage({ params }: { params: Promise<{ locale: s
   };
 
   return (
-    <BankContent
-      data={mergedData}
-      locale={locale as 'en' | 'ar'}
-    />
+    <TabGuard tabKey="bank">
+      <BankContent
+        data={mergedData}
+        locale={locale as 'en' | 'ar'}
+      />
+    </TabGuard>
   );
 }

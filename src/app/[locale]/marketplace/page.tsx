@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/marketplace.css';
 import MarketplaceContent from './MarketplaceContent';
 import { FEATURE_FLAGS } from '@/lib/feature-flags';
+import TabGuard from '@/components/TabGuard';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -47,8 +48,10 @@ export default async function MarketplacePage({ params }: { params: Promise<{ lo
   setRequestLocale(locale);
 
   return (
-    <Suspense>
-      <MarketplaceContent />
-    </Suspense>
+    <TabGuard tabKey="marketplace">
+      <Suspense>
+        <MarketplaceContent />
+      </Suspense>
+    </TabGuard>
   );
 }

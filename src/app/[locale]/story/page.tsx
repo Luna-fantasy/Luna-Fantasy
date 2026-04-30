@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { E } from '@/components/edit-mode/EditableText';
 import { EImg } from '@/components/edit-mode/EditableImage';
+import TabGuard from '@/components/TabGuard';
 import '@/styles/story.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -40,7 +41,7 @@ export default async function StoryPage({ params }: { params: Promise<{ locale: 
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <StoryContent />;
+  return <TabGuard tabKey="story"><StoryContent /></TabGuard>;
 }
 
 function StoryContent() {

@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/members.css';
 import MembersContent from './MembersContent';
+import TabGuard from '@/components/TabGuard';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -40,8 +41,10 @@ export default async function MembersPage({ params }: { params: Promise<{ locale
   setRequestLocale(locale);
 
   return (
-    <Suspense>
-      <MembersContent />
-    </Suspense>
+    <TabGuard tabKey="members">
+      <Suspense>
+        <MembersContent />
+      </Suspense>
+    </TabGuard>
   );
 }

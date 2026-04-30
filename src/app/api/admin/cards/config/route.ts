@@ -41,6 +41,23 @@ interface FactionCard {
  * (ticket_cost, prizes, etc.) live there, not the card array. Every admin edit
  * was failing with "FactionWar config not found in database" because of it.
  */
+
+/**
+ * Force a `?v=<timestamp>` cache-buster onto every saved image filename.
+ * Without this, the public Faction War page (and Cloudflare's CDN) keeps
+ * serving the cached version of the same R2 key after we overwrite it.
+ * Skips data: URLs and preserves any existing query params.
+ */
+function stampCacheBust(image: string): string {
+    if (!image) return image;
+    if (image.startsWith('data:') || image.startsWith('blob:')) return image;
+    const v = Date.now().toString();
+    if (!image.includes('?')) return `${image}?v=${v}`;
+    const [base, query] = image.split('?', 2);
+    const params = new URLSearchParams(query);
+    params.set('v', v);
+    return `${base}?${params.toString()}`;
+}
 async function readFactionCards(
   db: import('mongodb').Db,
   factionName: string,
@@ -323,16 +340,50 @@ export async function GET() {
       } catch { /* config.ts not available on Railway — that's fine if MongoDB has data */ }
     }
 
-    // FactionWar factions — try bot_config first, then fall back to Jester
-    // config.ts (matches the rarity fallback path above — needed locally where
-    // the DB doc hasn't been seeded yet).
+    // FactionWar factions — read from luna_pairs_config (canonical source).
+    // Each faction has its own doc keyed by lowercase id ('lunarians',
+    // 'mythical_creatures', etc) with `data.cards[]` containing the card list.
+    // The previous implementation looked at bot_config.jester_game_settings
+    // which only stores game tuning (ticket_cost, prizes) — never the cards —
+    // so it always returned empty and the dashboard rendered "data not available".
     let factionWar: Record<string, any> | null = null;
     try {
-      const fwDoc = await db.collection('bot_config').findOne({ _id: 'jester_game_settings' as any });
-      if (fwDoc?.data?.FactionWar?.factions) {
-        factionWar = fwDoc.data.FactionWar.factions;
+      const factionDocs = await db.collection('luna_pairs_config').find({}).toArray();
+      if (factionDocs.length > 0) {
+        const built: Record<string, any> = {};
+        for (const doc of factionDocs) {
+          const data = typeof doc.data === 'string' ? JSON.parse(doc.data) : doc.data;
+          if (!data) continue;
+          const docId = String(doc._id);
+          // data.name is a LocalizedString { en, ar } — extract .en for keying.
+          // Fall back to mapping doc._id ('moon_creatures') → display name ('Moon Creatures').
+          let factionDisplayName: string | undefined;
+          const rawName = data.name;
+          if (typeof rawName === 'string') factionDisplayName = rawName;
+          else if (rawName && typeof rawName === 'object' && typeof rawName.en === 'string') factionDisplayName = rawName.en;
+          if (!factionDisplayName) {
+            factionDisplayName = VALID_FACTIONS.find(f => f.toLowerCase().replace(/\s+/g, '_') === docId);
+          }
+          if (!factionDisplayName) continue;
+          built[factionDisplayName] = {
+            emoji: data.emoji ?? data.icon ?? undefined,
+            cards: Array.isArray(data.cards) ? data.cards : [],
+          };
+        }
+        if (Object.keys(built).length > 0) factionWar = built;
       }
-    } catch { /* non-critical — faction war data is optional */ }
+    } catch (err) { console.error('[CARDS-CONFIG] luna_pairs_config read failed:', err); }
+
+    // Fallback to bot_config / config.ts only if luna_pairs_config is empty
+    // (e.g. local dev where the data hasn't been seeded yet).
+    if (!factionWar) {
+      try {
+        const fwDoc = await db.collection('bot_config').findOne({ _id: 'jester_game_settings' as any });
+        if (fwDoc?.data?.FactionWar?.factions) {
+          factionWar = fwDoc.data.FactionWar.factions;
+        }
+      } catch { /* non-critical */ }
+    }
 
     if (!factionWar) {
       try {
@@ -341,7 +392,7 @@ export async function GET() {
         if (parsed?.factions) {
           factionWar = parsed.factions;
         }
-      } catch { /* config.ts unavailable on Railway — bot_config should have the data there */ }
+      } catch { /* config.ts unavailable on Railway */ }
     }
 
     return NextResponse.json({ rarities, factionWar });
@@ -670,7 +721,7 @@ async function handleAddFactionCard(body: any, adminId: string, authResult: any,
 
     const newCard: FactionCard = {
       name: card.name.trim(),
-      image: card.image,
+      image: stampCacheBust(card.image),
       ...(typeof card.description === 'string' && card.description.trim()
         ? { description: card.description.trim().slice(0, 2000) }
         : {}),
@@ -737,9 +788,16 @@ async function handleUpdateFactionCard(body: any, adminId: string, authResult: a
     }
 
     const beforeCard = { ...cards[cardIdx] };
+    // Always re-stamp `?v=` on save. This guarantees the public site's URL
+    // changes whenever an admin touches the card, even if they only renamed it
+    // or didn't upload a new image — overkill but cheap, and it eliminates the
+    // entire class of "image stays the same" bugs caused by missing version stamps.
+    const nextImage = card.image === beforeCard.image
+      ? beforeCard.image  // image unchanged → keep existing stamp (don't refresh CDN unnecessarily)
+      : stampCacheBust(card.image);
     cards[cardIdx] = {
       name: card.name.trim(),
-      image: card.image,
+      image: nextImage,
       ...(typeof card.description === 'string' && card.description.trim()
         ? { description: card.description.trim().slice(0, 2000) }
         : {}),
