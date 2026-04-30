@@ -14,7 +14,7 @@ export default function ValecroftStatsCard({ stats }: { stats: ValecroftStats })
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
         <Stat label="Properties in Catalog" value={fmt(stats.properties_total)} hint={`${sold}% sold`} />
         <Stat label="Active for Sale" value={fmt(stats.properties_active_for_sale)} hint="Not yet owned" />
-        <Stat label="Items in Catalog" value={fmt(stats.items_total)} hint="Furniture + horses + swords" />
+        <Stat label="Items in Catalog" value={fmt(stats.items_total)} hint="Artifacts + horses + swords" />
         <Stat label="Active Eclipses" value={fmt(stats.active_eclipses)} hint="Damaged, awaiting repair" tone={stats.active_eclipses > 0 ? 'warn' : 'ok'} />
         <Stat label="Pending Foreclosures" value={fmt(stats.pending_foreclosures)} hint="Past grace deadline" tone={stats.pending_foreclosures > 0 ? 'danger' : 'ok'} />
         <Stat label="Lunari Sunk (30d)" value={fmt(stats.lunari_sunk_last_30d)} hint="Paid to the bank reserve" />

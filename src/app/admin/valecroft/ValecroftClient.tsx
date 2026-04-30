@@ -20,7 +20,7 @@ type Tab = 'family' | 'properties' | ItemCategory | 'ownership';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'family',     label: 'Family & Home' },
   { key: 'properties', label: 'Properties' },
-  { key: 'furniture',  label: 'Furniture' },
+  { key: 'artifact',   label: 'Artifacts' },
   { key: 'horse',      label: 'Horses' },
   { key: 'sword',      label: 'Swords' },
   { key: 'ownership',  label: 'Ownership' },
@@ -58,7 +58,7 @@ export default function ValecroftClient() {
 
       {tab === 'family' && <FamilyHomePanel />}
       {tab === 'properties' && <PropertiesTab />}
-      {(tab === 'furniture' || tab === 'horse' || tab === 'sword') && <ItemsTab category={tab} />}
+      {(tab === 'artifact' || tab === 'horse' || tab === 'sword') && <ItemsTab category={tab} />}
       {tab === 'ownership' && <OwnershipTab />}
     </section>
   );

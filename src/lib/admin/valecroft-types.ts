@@ -7,8 +7,8 @@ export const PROPERTY_TIERS: PropertyTier[] = ['shack', 'cottage', 'villa', 'man
 export type Rarity = 'common' | 'rare' | 'epic' | 'unique' | 'legendary';
 export const RARITIES: Rarity[] = ['common', 'rare', 'epic', 'unique', 'legendary'];
 
-export type ItemCategory = 'furniture' | 'horse' | 'sword';
-export const ITEM_CATEGORIES: ItemCategory[] = ['furniture', 'horse', 'sword'];
+export type ItemCategory = 'artifact' | 'horse' | 'sword';
+export const ITEM_CATEGORIES: ItemCategory[] = ['artifact', 'horse', 'sword'];
 
 export interface SlotRule {
   total: number;

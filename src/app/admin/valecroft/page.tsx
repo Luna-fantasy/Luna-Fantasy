@@ -24,7 +24,7 @@ export default function ValecroftPage() {
       </div>
       <PageHeader
         title="Valecroft Family"
-        subtitle="Manage properties, furniture, horses, swords — and the users who own them."
+        subtitle="Manage properties, artifacts, horses, swords — and the users who own them."
       />
       <Suspense fallback={<Skeleton variant="card" height={120} />}>
         <StatsSection />
