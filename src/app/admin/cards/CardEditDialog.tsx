@@ -106,6 +106,34 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
   const handleEscape = useCallback(() => { if (!busy) onClose(); }, [busy, onClose]);
   useFocusTrap(dialogRef, mounted, handleEscape);
 
+  // Drag enter/leave counter — fixes the flicker bug where dragLeave fires
+  // every time the cursor crosses over a child element (the preview img, the
+  // overlay text, etc.), which toggled dragActive off mid-drag and sometimes
+  // made drops miss entirely. We count enters vs leaves; only when the count
+  // returns to 0 do we treat the drag as "left".
+  //
+  // CRITICAL: these hooks MUST stay above the `if (!mounted)` early return.
+  // Adding hooks after the return crashes React with "Rendered more hooks
+  // than during the previous render" once `mounted` flips true.
+  const dragCounter = useRef(0);
+  const handleDialogDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (uploading) return;
+    if (e.dataTransfer.types?.includes('Files')) {
+      dragCounter.current += 1;
+      setDragActive(true);
+    }
+  }, [uploading]);
+  const handleDialogDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current = Math.max(0, dragCounter.current - 1);
+    if (dragCounter.current === 0) setDragActive(false);
+  }, []);
+  const handleDialogDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+
   if (!mounted) return null;
 
   const handleFileUpload = async (file: File) => {
@@ -269,37 +297,19 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
     if (ok !== false) onClose();
   };
 
-  // Drag enter/leave counter — fixes the flicker bug where dragLeave fires
-  // every time the cursor crosses over a child element (the preview img,
-  // the overlay text, etc.), which toggled dragActive off mid-drag and
-  // sometimes made drops miss entirely. We count enters vs leaves; only
-  // when the count returns to 0 do we treat the drag as "left".
-  const dragCounter = useRef(0);
-  const handleDialogDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (uploading) return;
-    if (e.dataTransfer.types?.includes('Files')) {
-      dragCounter.current += 1;
-      setDragActive(true);
-    }
-  }, [uploading]);
-  const handleDialogDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    dragCounter.current = Math.max(0, dragCounter.current - 1);
-    if (dragCounter.current === 0) setDragActive(false);
-  }, []);
-  const handleDialogDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  }, []);
-  const handleDialogDrop = useCallback((e: React.DragEvent) => {
+  // handleDialogDrop is a plain function (not a useCallback) because it
+  // closes over `handleFileUpload`, which itself is a non-hook function
+  // declared *after* the early return. We can't useCallback it without
+  // restructuring the whole component. A plain function recreated each
+  // render is fine — no descendants depend on its identity.
+  const handleDialogDrop = (e: React.DragEvent) => {
     e.preventDefault();
     dragCounter.current = 0;
     setDragActive(false);
     if (uploading) return;
     const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'));
     if (file) handleFileUpload(file);
-  }, [uploading, handleFileUpload]);
+  };
 
   return createPortal(
     <>
