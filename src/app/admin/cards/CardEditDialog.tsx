@@ -184,10 +184,14 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
 
     const label = mode === 'create' ? `Create ${rarity} card: ${newItem.name}` : `Edit ${rarity} card: ${newItem.name}`;
 
+    // delayMs: 0 — submit immediately. The 4s "pending action" buffer was
+    // designed for undo-on-misclick, but it makes bulk uploads (180 cards)
+    // intolerable. Each Save now goes straight through; the wipe-guard +
+    // 409 protection at the API layer is the real safety net, not the UI delay.
     const ok = await pending.queue({
       label,
       detail: `attack ${parsedAttack} · weight ${parsedWeight}`,
-      delayMs: 4000,
+      delayMs: 0,
       run: async () => {
         try {
           // If rarity changed on edit, need to remove from old AND add to new
