@@ -16,8 +16,13 @@ export async function POST(request: NextRequest) {
   if (!csrfValid) return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
 
   const adminId = authResult.session.user?.discordId ?? '';
-  const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
-  if (!allowed) return rateLimitResponse(retryAfterMs);
+  // Asset uploads get their own bucket — they used to share `admin_write`
+  // with every other admin mutation, which capped bulk image uploads at
+  // ~5 drops/minute (2 hits per drop: presign + the resource PATCH that
+  // followed). 120/min is comfortable for bulk-replacing 250 character
+  // images without throttling, and the underlying R2 PUT is direct.
+  const { allowed, retryAfterMs } = checkRateLimit('admin_asset_upload', adminId, 120, 60_000);
+  if (!allowed) return rateLimitResponse(retryAfterMs, 'Asset upload rate limited');
 
   if (!isR2Configured()) {
     return NextResponse.json({ error: 'R2 not configured' }, { status: 503 });

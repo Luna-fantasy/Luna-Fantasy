@@ -114,8 +114,11 @@ export async function PATCH(request: NextRequest) {
 
     const adminId = authResult.session.user?.discordId ?? '';
     const adminName = authResult.session.user?.globalName ?? 'Mastermind';
-    const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 60, 60_000);
-    if (!allowed) return rateLimitResponse(retryAfterMs);
+    // Bulk-edit window: 250 character image replacements should fit in a
+    // few minutes of focused work (~2/sec). 200/min keeps that headroom
+    // while still capping a runaway script.
+    const { allowed, retryAfterMs } = checkRateLimit('admin_character_write', adminId, 200, 60_000);
+    if (!allowed) return rateLimitResponse(retryAfterMs, 'Character edit rate limited');
 
     let body: any;
     try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }

@@ -6,7 +6,7 @@ import { useToast } from '../../_components/Toast';
 interface Props {
   value: string;
   onChange: (next: string) => void;
-  folder: 'butler' | 'jester' | 'oracle' | 'sage' | 'vaelcroft';
+  folder: 'butler' | 'jester' | 'oracle' | 'sage' | 'valecroft';
   filenameHint: string;
 }
 

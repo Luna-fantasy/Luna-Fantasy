@@ -9,7 +9,7 @@ import { sanitizeErrorMessage } from '@/lib/admin/sanitize';
 export const dynamic = 'force-dynamic';
 
 const ALLOWED_FOLDERS = new Set([
-  'shops', 'profiles', 'cards', 'stones', 'jester', 'butler', 'sage', 'oracle', 'avatars', 'bots', 'badges', 'vaelcroft',
+  'shops', 'profiles', 'cards', 'stones', 'jester', 'butler', 'sage', 'oracle', 'avatars', 'bots', 'badges', 'valecroft',
 ]);
 
 function getClientIp(req: NextRequest): string {

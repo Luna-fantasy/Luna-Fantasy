@@ -53,7 +53,7 @@ export const CLUSTERS: NavCluster[] = [
       { label: 'Cards',      href: '/admin/cards',     icon: 'cards' },
       { label: 'Stones',     href: '/admin/stones',    icon: 'gem' },
       { label: 'Shops',      href: '/admin/shops',     icon: 'shop' },
-      { label: 'Vaelcroft',  href: '/admin/vaelcroft', icon: 'map' },
+      { label: 'Valecroft',  href: '/admin/valecroft', icon: 'map' },
     ],
   },
   {

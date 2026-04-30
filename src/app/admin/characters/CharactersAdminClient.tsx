@@ -84,7 +84,13 @@ export default function CharactersAdminClient({ initialCharacters, factions }: P
                 body: JSON.stringify(char),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+            if (!res.ok) {
+                if (res.status === 429) {
+                    const wait = Math.ceil((data?.retryAfterMs ?? 1000) / 1000);
+                    throw new Error(`Rate limited — wait ${wait}s before saving again`);
+                }
+                throw new Error(data?.error ?? `HTTP ${res.status}`);
+            }
             setCharacters(prev => {
                 if (mode === 'create') return [...prev, { ...char, _id: data._id ?? null }];
                 return prev.map(c => c.id === char.id ? char : c);
@@ -165,10 +171,8 @@ export default function CharactersAdminClient({ initialCharacters, factions }: P
                         <div className="chr-card-img">
                             {c.imageUrl ? (
                                 <img
-                                    key={`${c.imageUrl}-${bustVersion}`}
                                     src={withBust(c.imageUrl, bustVersion)}
                                     alt={c.name.en}
-                                    loading="lazy"
                                     onError={e => { (e.target as HTMLImageElement).style.opacity = '0.2'; }}
                                 />
                             ) : (
@@ -295,7 +299,6 @@ function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, onClear }
             {imageUrl ? (
                 <div className="chr-dropzone-preview">
                     <img
-                        key={`${imageUrl}-${bustVersion}`}
                         src={withBust(imageUrl, bustVersion)}
                         alt=""
                         onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
@@ -382,7 +385,13 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
                 body: JSON.stringify({ key, contentType: file.type || 'image/png', size: file.size }),
             });
             const presignData = await presignRes.json();
-            if (!presignRes.ok) throw new Error(presignData?.error ?? 'Presign failed');
+            if (!presignRes.ok) {
+                if (presignRes.status === 429) {
+                    const wait = Math.ceil((presignData?.retryAfterMs ?? 1000) / 1000);
+                    throw new Error(`Rate limited — wait ${wait}s before next upload`);
+                }
+                throw new Error(presignData?.error ?? `Presign failed (${presignRes.status})`);
+            }
             const putRes = await fetch(presignData.presignedUrl, {
                 method: 'PUT',
                 headers: { 'Content-Type': file.type || 'image/png' },

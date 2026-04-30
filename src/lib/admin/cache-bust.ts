@@ -2,6 +2,15 @@
 
 import { useCallback, useState } from 'react';
 
+// Stable initial value for `useBustVersion` so SSR and client hydration
+// produce identical output. We seed with 0 (deterministic on the server)
+// and only flip to Date.now() inside `bump()` which runs after a user
+// action — never during initial render. Without this, `useState(() => Date.now())`
+// returned a different number on the server and on the client, and any
+// component that included it in JSX (key props, query strings) would
+// trigger React's "Text content does not match server-rendered HTML"
+// hydration error.
+
 /**
  * Pass-through. The dashboard previously synthesised a `?v=<bustVersion>`
  * suffix for URLs that didn't already have one, but Cloudflare's edge cache
@@ -59,7 +68,7 @@ export function softBust(url: string | null | undefined, _fallbackVersion?: numb
  *   await save(...); bump();  // forces all bust-stamped URLs to refetch
  */
 export function useBustVersion(): { bustVersion: number; bump: () => void } {
-    const [bustVersion, setBustVersion] = useState<number>(() => Date.now());
+    const [bustVersion, setBustVersion] = useState<number>(0);
     const bump = useCallback(() => setBustVersion(Date.now()), []);
     return { bustVersion, bump };
 }
