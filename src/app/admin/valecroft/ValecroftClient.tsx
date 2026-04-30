@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { onButtonKey } from '../_components/a11y';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useToast } from '../_components/Toast';
@@ -163,6 +163,161 @@ function PropertiesTab() {
   );
 }
 
+// Reusable image drop / upload field. Uploads via /api/admin/assets/presign
+// to R2 directly, then reports the public URL back to the parent through
+// onChange. Supports drag-drop, click-to-upload, replace, and clear.
+// Pasting a URL into the textbox at the bottom still works.
+function ImageDropField({ value, onChange, folder, filenameHint, disabledHint }: {
+    value: string;
+    onChange: (next: string) => void;
+    folder: 'valecroft/properties' | 'valecroft/items';
+    filenameHint: string;
+    disabledHint?: string | null;
+}) {
+    const [uploading, setUploading] = useState(false);
+    const [drag, setDrag] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
+    const fileRef = useRef<HTMLInputElement | null>(null);
+    const dragTimeout = useRef<number | null>(null);
+    const uploadId = useRef(0);
+
+    const handleUpload = async (file: File) => {
+        if (disabledHint) { setErr(disabledHint); return; }
+        if (!filenameHint.trim()) { setErr('Set a name/key first — the upload key uses it.'); return; }
+        const myId = ++uploadId.current;
+        setErr(null);
+        setUploading(true);
+        try {
+            const ext = (file.name.split('.').pop() ?? 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+            const key = `${folder}/${filenameHint}.${ext === 'jpeg' ? 'jpeg' : ext}`;
+            const token = await fetchCsrf();
+            const presignRes = await fetch('/api/admin/assets/presign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
+                credentials: 'include',
+                body: JSON.stringify({ key, contentType: file.type || 'image/png', size: file.size }),
+            });
+            const presignData = await presignRes.json().catch(() => ({}));
+            if (!presignRes.ok) {
+                if (presignRes.status === 429) {
+                    const wait = Math.ceil((presignData?.retryAfterMs ?? 1000) / 1000);
+                    throw new Error(`Rate limited — wait ${wait}s before next upload`);
+                }
+                throw new Error(presignData?.error ?? `Presign failed (${presignRes.status})`);
+            }
+            const putRes = await fetch(presignData.presignedUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': file.type || 'image/png' },
+                body: file,
+            });
+            if (!putRes.ok) throw new Error(`R2 upload failed: ${putRes.status}`);
+            if (myId !== uploadId.current) return;
+            const publicUrl = `${presignData.publicUrl}?v=${Date.now()}`;
+            onChange(publicUrl);
+        } catch (e: any) {
+            if (myId === uploadId.current) setErr(e?.message ?? 'Upload failed');
+        } finally {
+            if (myId === uploadId.current) setUploading(false);
+            if (fileRef.current) fileRef.current.value = '';
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        if (!e.dataTransfer.types?.includes('Files')) return;
+        e.dataTransfer.dropEffect = 'copy';
+        if (!drag) setDrag(true);
+        if (dragTimeout.current) window.clearTimeout(dragTimeout.current);
+        dragTimeout.current = window.setTimeout(() => setDrag(false), 150);
+    };
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        if (dragTimeout.current) { window.clearTimeout(dragTimeout.current); dragTimeout.current = null; }
+        setDrag(false);
+        const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
+        if (file) void handleUpload(file);
+    };
+
+    return (
+        <div>
+            <div
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={() => fileRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                style={{
+                    border: drag ? '2px dashed rgba(91,108,255,0.85)' : '2px dashed rgba(255,255,255,0.18)',
+                    background: drag ? 'rgba(91,108,255,0.08)' : 'rgba(0,0,0,0.25)',
+                    borderRadius: 12,
+                    minHeight: 220,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    overflow: 'hidden', cursor: 'pointer',
+                    transition: 'border-color .15s, background .15s',
+                    position: 'relative',
+                }}
+            >
+                {value ? (
+                    <>
+                        <img src={value} alt="" style={{ maxWidth: '100%', maxHeight: 320, objectFit: 'contain' }} />
+                        <div style={{
+                            position: 'absolute', inset: 0,
+                            background: 'linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.7) 100%)',
+                            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+                            padding: 12, gap: 8,
+                            opacity: drag || uploading ? 1 : 0,
+                            transition: 'opacity .15s',
+                            pointerEvents: 'none',
+                        }}>
+                            <span style={{ color: '#f1f5ff', fontSize: 13, fontWeight: 500 }}>
+                                {uploading ? 'Uploading…' : (drag ? 'Drop to replace' : '')}
+                            </span>
+                        </div>
+                    </>
+                ) : (
+                    <div style={{ textAlign: 'center', color: '#88a0c8', fontSize: 13, padding: 24 }}>
+                        <div style={{ fontSize: 36, marginBottom: 6, opacity: 0.5 }}>↑</div>
+                        <div style={{ color: '#f1f5ff', fontWeight: 500 }}>{drag ? 'Drop image to upload' : 'Drag image here, or click to browse'}</div>
+                        <div style={{ fontSize: 11, marginTop: 4 }}>PNG / JPG / WEBP — uploads to R2 automatically</div>
+                    </div>
+                )}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button type="button" style={btnSecondary} onClick={() => fileRef.current?.click()} disabled={uploading || !!disabledHint}>
+                    {uploading ? 'Uploading…' : (value ? '⟲ Replace' : '↑ Upload')}
+                </button>
+                {value && (
+                    <button type="button" style={btnSecondary} onClick={() => { onChange(''); }} disabled={uploading}>
+                        Clear
+                    </button>
+                )}
+                <input
+                    style={{ ...inp, flex: 1, minWidth: 240 }}
+                    placeholder="…or paste an image URL"
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    disabled={uploading}
+                />
+            </div>
+            <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={e => { const f = e.target.files?.[0]; if (f) void handleUpload(f); }}
+            />
+            {disabledHint && <div style={{ fontSize: 11, color: '#f7b500', marginTop: 6 }}>{disabledHint}</div>}
+            {err && <div style={{ ...errBox, marginTop: 8 }}>{err}</div>}
+        </div>
+    );
+}
+
+// Slugifier identical to the API side so the user can preview the key
+// the upload will use before they drop a file.
+function slugify(s: string): string {
+    return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60);
+}
+
 function PropertyForm({ initial, onClose, onSaved }: {
   initial?: PropertyCatalogEntry;
   onClose: () => void;
@@ -179,6 +334,12 @@ function PropertyForm({ initial, onClose, onSaved }: {
   const [active, setActive] = useState(initial?.active !== false);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Resolved key for the R2 upload path. In edit mode the key is locked
+  // to the existing one; in create mode we use the user-typed key, or
+  // slugify the name as a preview.
+  const resolvedKey = isEdit ? initial!.key : (key.trim() ? slugify(key) : slugify(name));
+  const uploadDisabledHint = !resolvedKey ? 'Type a name first — it becomes the upload filename.' : null;
 
   async function save() {
     setErr(null);
@@ -207,24 +368,39 @@ function PropertyForm({ initial, onClose, onSaved }: {
   }
 
   return (
-    <div style={formBox}>
-      <h3 style={{ margin: 0, marginBottom: 14 }}>{isEdit ? 'Edit Property' : 'New Property'}</h3>
+    <div style={editorBox}>
+      <h3 style={{ margin: 0, marginBottom: 14 }}>{isEdit ? `Edit Property — ${initial!.name}` : 'New Property'}</h3>
       {err && <div style={errBox}>{err}</div>}
-      <div style={grid2}>
-        <Label>Name<input style={inp} value={name} onChange={e => setName(e.target.value)} /></Label>
-        {!isEdit && <Label>Key (optional, auto-slug)<input style={inp} value={key} onChange={e => setKey(e.target.value)} placeholder="auto" /></Label>}
-        <Label>Tier
-          <select style={inp} value={tier} onChange={e => setTier(e.target.value as PropertyTier)}>
-            {PROPERTY_TIERS.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </Label>
-        <Label>Price (Lunari)<input style={inp} type="number" value={price} onChange={e => setPrice(e.target.value)} /></Label>
-        <Label>Base Income<input style={inp} type="number" value={base_income} onChange={e => setBaseIncome(e.target.value)} /></Label>
-        <Label>Image URL<input style={inp} value={image_url} onChange={e => setImageUrl(e.target.value)} placeholder="https://assets.lunarian.app/..." /></Label>
-        <Label style={{ gridColumn: '1 / -1' }}>Description<textarea style={{ ...inp, minHeight: 72, resize: 'vertical' }} value={description} onChange={e => setDescription(e.target.value)} /></Label>
-        <Label><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} /> Active (visible in /valecroft)</Label>
+      <div style={editorGrid}>
+        <div>
+          <ImageDropField
+            value={image_url}
+            onChange={setImageUrl}
+            folder="valecroft/properties"
+            filenameHint={resolvedKey}
+            disabledHint={uploadDisabledHint}
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Label>Name<input style={inp} value={name} onChange={e => setName(e.target.value)} placeholder="Eclipsehold Manor" /></Label>
+          {!isEdit && <Label>Key (optional, auto-slug)<input style={inp} value={key} onChange={e => setKey(e.target.value)} placeholder={resolvedKey || 'auto'} /></Label>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Label>Tier
+              <select style={inp} value={tier} onChange={e => setTier(e.target.value as PropertyTier)}>
+                {PROPERTY_TIERS.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </Label>
+            <Label>Price (Lunari)<input style={inp} type="number" value={price} onChange={e => setPrice(e.target.value)} /></Label>
+          </div>
+          <Label>Base Income (per cycle)<input style={inp} type="number" value={base_income} onChange={e => setBaseIncome(e.target.value)} /></Label>
+          <Label>Description<textarea style={{ ...inp, minHeight: 90, resize: 'vertical' }} value={description} onChange={e => setDescription(e.target.value)} placeholder="A short flavour description shown to players." /></Label>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+            <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
+            Active (visible in /valecroft)
+          </label>
+        </div>
       </div>
-      <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 18, justifyContent: 'flex-end' }}>
         <button style={btnSecondary} onClick={onClose}>Cancel</button>
         <button style={btnPrimary} onClick={save} disabled={saving || !name}>{saving ? 'Saving...' : (isEdit ? 'Save' : 'Create')}</button>
       </div>
@@ -348,6 +524,9 @@ function ItemForm({ defaultCategory, initial, onClose, onSaved }: {
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const resolvedKey = isEdit ? initial!.key : (key.trim() ? slugify(key) : slugify(name));
+  const uploadDisabledHint = !resolvedKey ? 'Type a name first — it becomes the upload filename.' : null;
+
   async function save() {
     setErr(null);
     setSaving(true);
@@ -370,29 +549,46 @@ function ItemForm({ defaultCategory, initial, onClose, onSaved }: {
   }
 
   return (
-    <div style={formBox}>
-      <h3 style={{ margin: 0, marginBottom: 14 }}>{isEdit ? 'Edit Item' : 'New Item'}</h3>
+    <div style={editorBox}>
+      <h3 style={{ margin: 0, marginBottom: 14 }}>{isEdit ? `Edit Item — ${initial!.name}` : `New ${defaultCategory}`}</h3>
       {err && <div style={errBox}>{err}</div>}
-      <div style={grid2}>
-        <Label>Name<input style={inp} value={name} onChange={e => setName(e.target.value)} /></Label>
-        {!isEdit && <Label>Key (optional)<input style={inp} value={key} onChange={e => setKey(e.target.value)} placeholder="auto" /></Label>}
-        <Label>Category
-          <select style={inp} value={category} onChange={e => setCategory(e.target.value as ItemCategory)}>
-            {ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </Label>
-        <Label>Rarity
-          <select style={inp} value={rarity} onChange={e => setRarity(e.target.value as Rarity)}>
-            {RARITIES.map(r => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </Label>
-        <Label>Price (Lunari)<input style={inp} type="number" value={price} onChange={e => setPrice(e.target.value)} /></Label>
-        <Label>Income Bonus<input style={inp} type="number" value={income_bonus} onChange={e => setIncomeBonus(e.target.value)} /></Label>
-        <Label style={{ gridColumn: '1 / -1' }}>Image URL<input style={inp} value={image_url} onChange={e => setImageUrl(e.target.value)} placeholder="https://assets.lunarian.app/..." /></Label>
-        <Label style={{ gridColumn: '1 / -1' }}>Description<textarea style={{ ...inp, minHeight: 72, resize: 'vertical' }} value={description} onChange={e => setDescription(e.target.value)} /></Label>
-        <Label><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} /> Active</Label>
+      <div style={editorGrid}>
+        <div>
+          <ImageDropField
+            value={image_url}
+            onChange={setImageUrl}
+            folder="valecroft/items"
+            filenameHint={resolvedKey}
+            disabledHint={uploadDisabledHint}
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Label>Name<input style={inp} value={name} onChange={e => setName(e.target.value)} placeholder="Sunfire Dagger" /></Label>
+          {!isEdit && <Label>Key (optional, auto-slug)<input style={inp} value={key} onChange={e => setKey(e.target.value)} placeholder={resolvedKey || 'auto'} /></Label>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Label>Category
+              <select style={inp} value={category} onChange={e => setCategory(e.target.value as ItemCategory)}>
+                {ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Label>
+            <Label>Rarity
+              <select style={inp} value={rarity} onChange={e => setRarity(e.target.value as Rarity)}>
+                {RARITIES.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </Label>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Label>Price (Lunari)<input style={inp} type="number" value={price} onChange={e => setPrice(e.target.value)} /></Label>
+            <Label>Income Bonus<input style={inp} type="number" value={income_bonus} onChange={e => setIncomeBonus(e.target.value)} /></Label>
+          </div>
+          <Label>Description<textarea style={{ ...inp, minHeight: 90, resize: 'vertical' }} value={description} onChange={e => setDescription(e.target.value)} placeholder="A short flavour description shown to players." /></Label>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+            <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
+            Active
+          </label>
+        </div>
       </div>
-      <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 18, justifyContent: 'flex-end' }}>
         <button style={btnSecondary} onClick={onClose}>Cancel</button>
         <button style={btnPrimary} onClick={save} disabled={saving || !name}>{saving ? 'Saving...' : (isEdit ? 'Save' : 'Create')}</button>
       </div>
@@ -531,6 +727,22 @@ const td: React.CSSProperties = { padding: '10px 12px', fontSize: 13, borderBott
 const formBox: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', padding: 18, borderRadius: 12, marginTop: 14, marginBottom: 14 };
 const grid2: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 };
 const errBox: React.CSSProperties = { padding: 10, borderRadius: 8, background: 'rgba(255,80,80,0.12)', color: '#ff8c8c', marginBottom: 10, fontSize: 13 };
+// Wider edit dialog body — image preview on the left, all fields on the right.
+// Collapses to a single column under ~720px so it stays usable on narrow screens.
+const editorBox: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.03)',
+    padding: 22,
+    borderRadius: 14,
+    marginTop: 14,
+    marginBottom: 14,
+    border: '1px solid rgba(255,255,255,0.06)',
+};
+const editorGrid: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(280px, 380px) 1fr',
+    gap: 24,
+    alignItems: 'start',
+};
 
 function rarityColor(r: Rarity): string {
   switch (r) {
