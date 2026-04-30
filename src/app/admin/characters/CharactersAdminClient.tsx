@@ -280,48 +280,18 @@ export default function CharactersAdminClient({ initialCharacters, factions }: P
     );
 }
 
-function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, setDragActive, onUpload, onClear }: {
+function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, onClear }: {
     imageUrl: string;
     bustVersion: number;
     uploading: boolean;
     dragActive: boolean;
-    setDragActive: (v: boolean) => void;
-    onUpload: (file: File) => void;
     onClear: () => void;
 }) {
-    // Counter-based drag tracking — see CardEditDialog for context. Without
-    // this, dragLeave fires when the cursor crosses the preview img / overlay
-    // text and the dropzone deactivates mid-drag, sometimes losing the drop.
-    const dragCounter = useRef(0);
+    // Drag handlers moved to the modal root (see CharacterEditor) so a drop
+    // anywhere inside the dialog uploads. The dropzone itself is now
+    // visual-only — `dragActive` is owned by the parent.
     return (
-        <div
-            className={`chr-dropzone${dragActive ? ' chr-dropzone-drag' : ''}${uploading ? ' chr-dropzone-busy' : ''}`}
-            onDragEnter={(e) => {
-                e.preventDefault();
-                if (uploading) return;
-                if (e.dataTransfer.types?.includes('Files')) {
-                    dragCounter.current += 1;
-                    setDragActive(true);
-                }
-            }}
-            onDragLeave={(e) => {
-                e.preventDefault();
-                dragCounter.current = Math.max(0, dragCounter.current - 1);
-                if (dragCounter.current === 0) setDragActive(false);
-            }}
-            onDragOver={(e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'copy';
-            }}
-            onDrop={(e) => {
-                e.preventDefault();
-                dragCounter.current = 0;
-                setDragActive(false);
-                if (uploading) return;
-                const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
-                if (file) onUpload(file);
-            }}
-        >
+        <div className={`chr-dropzone${dragActive ? ' chr-dropzone-drag' : ''}${uploading ? ' chr-dropzone-busy' : ''}`}>
             {imageUrl ? (
                 <div className="chr-dropzone-preview">
                     <img
@@ -366,6 +336,7 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
     const [dragActive, setDragActive] = useState(false);
     const { bustVersion, bump } = useBustVersion();
     const fileRef = useRef<HTMLInputElement | null>(null);
+    const dragCounter = useRef(0);
 
     const handleUpload = async (file: File) => {
         if (!c.id.trim()) {
@@ -412,7 +383,37 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
 
     return (
         <div className="chr-modal-bg" onClick={onCancel}>
-            <div className="chr-modal" onClick={e => e.stopPropagation()}>
+            <div
+                className="chr-modal"
+                onClick={e => e.stopPropagation()}
+                onDragEnter={(e) => {
+                    e.preventDefault();
+                    if (uploading) return;
+                    if (e.dataTransfer.types?.includes('Files')) {
+                        dragCounter.current += 1;
+                        setDragActive(true);
+                    }
+                }}
+                onDragLeave={(e) => {
+                    e.preventDefault();
+                    dragCounter.current = Math.max(0, dragCounter.current - 1);
+                    if (dragCounter.current === 0) setDragActive(false);
+                }}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.types?.includes('Files')) {
+                        e.dataTransfer.dropEffect = 'copy';
+                    }
+                }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    dragCounter.current = 0;
+                    setDragActive(false);
+                    if (uploading) return;
+                    const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
+                    if (file) void handleUpload(file);
+                }}
+            >
                 <header className="chr-modal-head">
                     <h3>{mode === 'create' ? 'New character' : `Edit "${initial.name.en}"`}</h3>
                     <button onClick={onCancel} className="chr-btn chr-btn-secondary chr-btn-x">×</button>
@@ -463,8 +464,6 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
                             bustVersion={bustVersion}
                             uploading={uploading}
                             dragActive={dragActive}
-                            setDragActive={setDragActive}
-                            onUpload={(f) => void handleUpload(f)}
                             onClear={() => { setC(prev => ({ ...prev, imageUrl: '' })); bump(); }}
                         />
                     </label>
