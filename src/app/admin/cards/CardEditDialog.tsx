@@ -156,7 +156,40 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
       const data = await res.json();
       setImageUrl(data.imageUrl);
       bump();
-      toast.show({ tone: 'success', title: 'Uploaded', message: 'Image saved to R2 — remember to save the card to attach it.' });
+
+      // Auto-persist on edit. The user dragged a new image expecting the
+      // card to update — they shouldn't also have to click Save. For new
+      // cards (mode === 'create') we still require Save because attack /
+      // weight haven't been confirmed yet.
+      if (mode === 'edit' && card) {
+        setUploadProgress('Saving card…');
+        try {
+          const items = await getRarityItems(card.rarity);
+          const next = items.map((c: any) =>
+            c.name === card.name
+              ? { ...c, imageUrl: data.imageUrl }
+              : c,
+          );
+          // If the card somehow isn't in the rarity (e.g. mid-rename), fall
+          // through to the manual Save flow. Don't push, that risks
+          // duplicating it.
+          if (next.some((c: any) => c.name === card.name)) {
+            await putRarityItems(card.rarity, next);
+            toast.show({ tone: 'success', title: 'Replaced', message: `${card.name} now uses the new image.` });
+            await onSaved();
+          } else {
+            toast.show({ tone: 'info', title: 'Uploaded', message: 'Image staged — click Save to attach.' });
+          }
+        } catch (saveErr) {
+          toast.show({
+            tone: 'error',
+            title: 'Auto-save failed',
+            message: `Image is on R2 but the card record didn't update: ${(saveErr as Error).message}. Click Save to retry.`,
+          });
+        }
+      } else {
+        toast.show({ tone: 'success', title: 'Uploaded', message: 'Image staged — click Save to attach.' });
+      }
     } catch (e) {
       toast.show({ tone: 'error', title: 'Upload failed', message: (e as Error).message });
     } finally {
