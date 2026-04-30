@@ -269,10 +269,56 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
     if (ok !== false) onClose();
   };
 
+  // Drag enter/leave counter — fixes the flicker bug where dragLeave fires
+  // every time the cursor crosses over a child element (the preview img,
+  // the overlay text, etc.), which toggled dragActive off mid-drag and
+  // sometimes made drops miss entirely. We count enters vs leaves; only
+  // when the count returns to 0 do we treat the drag as "left".
+  const dragCounter = useRef(0);
+  const handleDialogDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (uploading) return;
+    if (e.dataTransfer.types?.includes('Files')) {
+      dragCounter.current += 1;
+      setDragActive(true);
+    }
+  }, [uploading]);
+  const handleDialogDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current = Math.max(0, dragCounter.current - 1);
+    if (dragCounter.current === 0) setDragActive(false);
+  }, []);
+  const handleDialogDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+  const handleDialogDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setDragActive(false);
+    if (uploading) return;
+    const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'));
+    if (file) handleFileUpload(file);
+  }, [uploading, handleFileUpload]);
+
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={busy ? undefined : onClose} />
-      <div ref={dialogRef} className="av-moddialog av-cardedit" role="dialog" aria-modal="true" aria-label={mode === 'create' ? 'Add card' : 'Edit card'}>
+      <div
+        ref={dialogRef}
+        className="av-moddialog av-cardedit"
+        role="dialog"
+        aria-modal="true"
+        aria-label={mode === 'create' ? 'Add card' : 'Edit card'}
+        // Drop targeting moved to the dialog root so dropping anywhere in
+        // the modal works — even on the form fields. Previously the user
+        // had to land precisely on the dropzone, and crossing onto the
+        // preview img killed the dragActive flag.
+        onDragEnter={handleDialogDragEnter}
+        onDragLeave={handleDialogDragLeave}
+        onDragOver={handleDialogDragOver}
+        onDrop={handleDialogDrop}
+      >
         <header>
           <div>
             <h3>{mode === 'create' ? 'Add New Card' : `Edit: ${card?.name ?? ''}`}</h3>
@@ -284,22 +330,11 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
           {/* LEFT: image dropzone + buttons (vertical, fills column) */}
           <div className="av-cardedit-imgcol">
             <div
+              // Drag handlers moved up to the dialog root — see
+              // handleDialogDrop. The dropzone is now purely visual; any drop
+              // anywhere in the modal triggers the upload, removing the need
+              // to land on this exact element.
               className={`av-cardedit-dropzone${dragActive ? ' av-cardedit-dropzone--drag' : ''}${uploading ? ' av-cardedit-dropzone--busy' : ''}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                if (!uploading) setDragActive(true);
-              }}
-              onDragLeave={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-                if (uploading) return;
-                const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith('image/'));
-                if (file) handleFileUpload(file);
-              }}
               style={{ ['--rarity-tone' as any]: RARITY_TONES[rarity] }}
             >
               {imageUrl ? (

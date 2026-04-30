@@ -412,6 +412,7 @@ function FactionCardEditDialog({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const fwDragCounter = useRef(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mode = card ? 'edit' : 'create';
 
@@ -543,15 +544,35 @@ function FactionCardEditDialog({
             <div>
               <label className="av-games-field-label">Card image</label>
 
-              {/* Drop zone + preview + actions */}
+              {/* Drop zone + preview + actions. Uses an enter/leave counter
+                  to fix the flicker bug where dragLeave fires when entering
+                  child elements (preview img, action buttons) and toggles
+                  dragOver off mid-drag. */}
               <div
                 className={`av-fw-image-zone${dragOver ? ' av-fw-image-zone--drag' : ''}${uploading ? ' av-fw-image-zone--busy' : ''}`}
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  if (uploading) return;
+                  if (e.dataTransfer.types?.includes('Files')) {
+                    fwDragCounter.current += 1;
+                    setDragOver(true);
+                  }
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  fwDragCounter.current = Math.max(0, fwDragCounter.current - 1);
+                  if (fwDragCounter.current === 0) setDragOver(false);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'copy';
+                }}
                 onDrop={(e) => {
                   e.preventDefault();
+                  fwDragCounter.current = 0;
                   setDragOver(false);
-                  const f = e.dataTransfer.files?.[0];
+                  if (uploading) return;
+                  const f = Array.from(e.dataTransfer.files).find(file => file.type.startsWith('image/'));
                   if (f) void handleUpload(f);
                 }}
               >

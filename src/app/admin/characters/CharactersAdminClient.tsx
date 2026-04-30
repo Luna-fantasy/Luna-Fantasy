@@ -289,13 +289,33 @@ function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, setDragAc
     onUpload: (file: File) => void;
     onClear: () => void;
 }) {
+    // Counter-based drag tracking — see CardEditDialog for context. Without
+    // this, dragLeave fires when the cursor crosses the preview img / overlay
+    // text and the dropzone deactivates mid-drag, sometimes losing the drop.
+    const dragCounter = useRef(0);
     return (
         <div
             className={`chr-dropzone${dragActive ? ' chr-dropzone-drag' : ''}${uploading ? ' chr-dropzone-busy' : ''}`}
-            onDragOver={(e) => { e.preventDefault(); if (!uploading) setDragActive(true); }}
-            onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
+            onDragEnter={(e) => {
+                e.preventDefault();
+                if (uploading) return;
+                if (e.dataTransfer.types?.includes('Files')) {
+                    dragCounter.current += 1;
+                    setDragActive(true);
+                }
+            }}
+            onDragLeave={(e) => {
+                e.preventDefault();
+                dragCounter.current = Math.max(0, dragCounter.current - 1);
+                if (dragCounter.current === 0) setDragActive(false);
+            }}
+            onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            }}
             onDrop={(e) => {
                 e.preventDefault();
+                dragCounter.current = 0;
                 setDragActive(false);
                 if (uploading) return;
                 const file = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
