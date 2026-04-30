@@ -238,8 +238,8 @@ export default function CardsClient({ snapshot }: { snapshot: CardsSnapshot }) {
           <ContextMenu
             key={c.name}
             items={[
-              { label: 'View holders', icon: '◇', run: () => setSelected(c) },
               { label: 'Edit card', icon: '✎', run: () => setEditor({ mode: 'edit', card: c }) },
+              { label: 'View holders', icon: '◇', run: () => setSelected(c) },
               'separator' as const,
               { label: 'Copy card name', icon: '⧉', run: () => navigator.clipboard?.writeText(c.name) },
               ...(c.imageUrl ? [{ label: 'Copy image URL', icon: '⧉', run: () => navigator.clipboard?.writeText(c.imageUrl!) }] : []),
@@ -248,7 +248,10 @@ export default function CardsClient({ snapshot }: { snapshot: CardsSnapshot }) {
             <button
               type="button"
               className="av-card-tile"
-              onClick={() => setSelected(c)}
+              // Click → straight to edit dialog. Holders + delete moved to
+              // right-click ContextMenu since users replacing 180 images
+              // shouldn't have to click through a detail drawer first.
+              onClick={() => setEditor({ mode: 'edit', card: c })}
               style={{
                 ['--rarity-tone' as any]: RARITY_TONES[c.rarity],
               }}
