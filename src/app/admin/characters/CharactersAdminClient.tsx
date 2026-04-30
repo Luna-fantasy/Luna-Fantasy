@@ -390,9 +390,18 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
             });
             if (!putRes.ok) throw new Error(`Upload to R2 failed: ${putRes.status}`);
             const cacheBust = `${presignData.publicUrl}?v=${Date.now()}`;
-            setC(prev => ({ ...prev, imageUrl: cacheBust }));
+            const updated = { ...c, imageUrl: cacheBust };
+            setC(updated);
             bump();
-            toast.show({ tone: 'success', title: 'Uploaded', message: 'Click Save to apply.' });
+            // Auto-save in edit mode so the user can bulk-replace 250 characters
+            // by drag-dropping without a separate Save click. In create mode the
+            // character record doesn't exist yet, so we still wait for the Save
+            // button (id/faction/name need to be filled in first).
+            if (mode === 'edit') {
+                onSave(updated);
+            } else {
+                toast.show({ tone: 'success', title: 'Uploaded', message: 'Click Create to add this character.' });
+            }
         } catch (err: any) {
             toast.show({ tone: 'error', title: 'Upload failed', message: err?.message ?? 'Unknown error' });
         } finally {
