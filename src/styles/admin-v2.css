@@ -11819,7 +11819,35 @@ details[open] .av-chaltext-vars-summary::before {
 .av-canvas-element-type[data-type="text"]   { background: color-mix(in srgb, var(--accent-primary) 30%, transparent); }
 .av-canvas-element-type[data-type="rect"]   { background: color-mix(in srgb, #f97316 30%, transparent); }
 
-.av-media-test-dialog { max-width: 520px; }
+.av-media-test-dialog {
+  max-width: 520px;
+  background: linear-gradient(180deg, #161a2e 0%, #0c0f1f 100%);
+  border: 1px solid rgba(140, 200, 255, 0.16);
+  box-shadow: 0 24px 64px -8px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(91, 108, 255, 0.08);
+}
+/* Stronger backdrop variant for full-blocking dialogs (e.g. canvas test
+   render) — the default `.av-peek-scrim` is too translucent and lets
+   the page behind read through. */
+.av-peek-scrim--strong {
+  background: rgba(5, 7, 16, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.av-canvas-channel-loading {
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(91, 108, 255, 0.08);
+  color: #b9c4e0;
+  font-size: 12px;
+}
+.av-canvas-channel-error {
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(255, 80, 80, 0.12);
+  color: #ff8c8c;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
 .av-media-test-status {
   padding: 10px 12px;
   border-radius: 8px;

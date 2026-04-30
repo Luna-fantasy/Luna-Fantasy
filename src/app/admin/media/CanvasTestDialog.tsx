@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useToast } from '../_components/Toast';
 import { useFocusTrap } from '../_components/a11y';
@@ -13,6 +13,13 @@ interface Props {
   onClose: () => void;
 }
 
+interface DiscordChannel {
+  id: string;
+  name: string;
+  parentName: string;
+  position: number;
+}
+
 async function fetchCsrf(): Promise<string> {
   const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
   return (await res.json()).token;
@@ -23,9 +30,52 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
   const [channelId, setChannelId] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ tone: 'info' | 'ok' | 'err'; text: string; href?: string } | null>(null);
+  const [channels, setChannels] = useState<DiscordChannel[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(true);
+  const [channelsError, setChannelsError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const handleEscape = useCallback(() => { if (!busy) onClose(); }, [busy, onClose]);
   useFocusTrap(dialogRef, true, handleEscape);
+
+  // Load the bot's accessible text channels so the user can pick from a
+  // dropdown rather than copy-pasting raw IDs from Discord.
+  useEffect(() => {
+    let cancelled = false;
+    setChannelsLoading(true);
+    setChannelsError(null);
+    fetch(`/api/admin/announce?botId=${bot}`, { credentials: 'include', cache: 'no-store' })
+      .then(r => r.json().then(d => ({ ok: r.ok, status: r.status, data: d })))
+      .then(({ ok, status: s, data }) => {
+        if (cancelled) return;
+        if (!ok) {
+          setChannelsError(data?.error || `Failed to load channels (${s})`);
+          setChannels([]);
+          return;
+        }
+        setChannels(Array.isArray(data?.channels) ? data.channels : []);
+      })
+      .catch(e => {
+        if (cancelled) return;
+        setChannelsError(e?.message || 'Failed to load channels');
+      })
+      .finally(() => {
+        if (!cancelled) setChannelsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [bot]);
+
+  // Group channels by category for the dropdown <optgroup>s.
+  const grouped = useMemo(() => {
+    const map: Record<string, DiscordChannel[]> = {};
+    for (const c of channels) {
+      const key = c.parentName || 'No Category';
+      (map[key] ??= []).push(c);
+    }
+    for (const key of Object.keys(map)) {
+      map[key].sort((a: DiscordChannel, b: DiscordChannel) => a.position - b.position);
+    }
+    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
+  }, [channels]);
 
   const run = async () => {
     if (!/^\d{17,20}$/.test(channelId.trim())) {
@@ -62,7 +112,7 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
 
   return createPortal(
     <>
-      <div className="av-peek-scrim" onClick={busy ? undefined : onClose} />
+      <div className="av-peek-scrim av-peek-scrim--strong" onClick={busy ? undefined : onClose} />
       <div ref={dialogRef} className="av-itemdialog av-media-test-dialog" role="dialog" aria-modal="true" aria-label="Test render in Discord">
         <header className="av-itemdialog-head">
           <div>
@@ -79,14 +129,36 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
             </div>
           )}
           <label className="av-shopf-field">
-            <span>Discord channel ID</span>
-            <input
-              className="av-shopf-input av-shopf-input--mono"
-              value={channelId}
-              onChange={(e) => setChannelId(e.target.value.replace(/[^\d]/g, ''))}
-              placeholder="e.g. 1418437086985453598"
-              inputMode="numeric"
-            />
+            <span>Discord channel</span>
+            {channelsLoading ? (
+              <div className="av-canvas-channel-loading">Loading channels…</div>
+            ) : channelsError ? (
+              <>
+                <div className="av-canvas-channel-error">{channelsError}</div>
+                <input
+                  className="av-shopf-input av-shopf-input--mono"
+                  value={channelId}
+                  onChange={(e) => setChannelId(e.target.value.replace(/[^\d]/g, ''))}
+                  placeholder="…or paste a channel ID"
+                  inputMode="numeric"
+                />
+              </>
+            ) : (
+              <select
+                className="av-shopf-input"
+                value={channelId}
+                onChange={(e) => setChannelId(e.target.value)}
+              >
+                <option value="">— pick a channel —</option>
+                {grouped.map(([category, list]) => (
+                  <optgroup key={category} label={category}>
+                    {list.map(c => (
+                      <option key={c.id} value={c.id}>#{c.name}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            )}
           </label>
 
           {status && (
