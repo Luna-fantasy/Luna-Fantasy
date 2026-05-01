@@ -50,7 +50,7 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
           <EImg
             editId="grand-fantasy-hero-bg"
             source="r2"
-            src="https://assets.lunarian.app/backgrounds/GrandFantasyHero.jpeg"
+            src={`https://assets.lunarian.app/backgrounds/GrandFantasyHero.jpeg?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? process.env.NEXT_PUBLIC_RAILWAY_DEPLOYMENT_ID ?? '1'}`}
             alt="Grand Fantasy Card Game"
             fill
             priority
