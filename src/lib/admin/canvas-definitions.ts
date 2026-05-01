@@ -324,6 +324,154 @@ const PASSPORT_GUARDIAN_BG_URL = 'https://assets.lunarian.app/butler/backgrounds
 const PASSPORT_SENTINEL_BG_URL = 'https://assets.lunarian.app/butler/backgrounds/PassportSentinel.png';
 const PASSPORT_MASTERMIND_BG_URL = 'https://assets.lunarian.app/butler/backgrounds/PassportMastermind.png';
 
+// ─── Game canvas stages — Luna Fantasy / Grand Fantasy / Faction War ──
+// Each stage of each PvP card game is its own editable canvas. The bot
+// reads `getCanvasLayout(stageId)` + `getBackgroundUrl(stageId, fallback)`
+// at render time, so dashboard edits show up live without a bot restart.
+
+// Backgrounds shared by Luna Fantasy / Grand Fantasy / Faction War. Each stage
+// uses one of these as the *default* fallback; the dashboard can override per
+// stage via the canvas editor.
+const LF_BG_DEFAULT = 'https://assets.lunarian.app/backgrounds/LunaFantasyBG.png';
+const LF_VERDICT_BG_DEFAULT = 'https://assets.lunarian.app/backgrounds/LunaFantasyVerdict.png';
+const GF_BG_DEFAULT = 'https://assets.lunarian.app/backgrounds/GrandFantasyBG.png';
+const FW_BG_DEFAULT = 'https://assets.lunarian.app/LunaPairs/LunaPairs_BG.png';
+
+// Reusable element factories — keep dashboard prop-pickers consistent
+// across stages.
+
+function rectArea(id: string, label: string, group: string): CanvasElementDef {
+  return { id, label, type: 'rect', props: ['x', 'y', 'width', 'height'], group };
+}
+function textPos(id: string, label: string, group: string): CanvasElementDef {
+  return { id, label, type: 'text', props: ['x', 'y', 'fontSize'], group };
+}
+
+// LF hand (5-card 3+2 grid centered in cardsArea on a 1800x1200 canvas)
+const lunafantasyHandLayout: Record<string, any> = {
+  cardsArea: { x: 60, y: 60, width: 1680, height: 1080 },
+};
+const lunafantasyHandElements: CanvasElementDef[] = [
+  rectArea('cardsArea', 'Cards Grid Area', 'Layout'),
+];
+
+// LF showdown (2 cards side-by-side with Winner/Lost banner + name)
+const lunafantasyShowdownLayout: Record<string, any> = {
+  card1:  { x: 60,   y: 200, width: 1024, height: 1536 },
+  card2:  { x: 1204, y: 200, width: 1024, height: 1536 },
+  header: { y: 95,  fontSize: 64 },
+  name:   { y: 160, fontSize: 44 },
+  vs:     { x: 1144, y: 968, fontSize: 80 },
+};
+const lunafantasyShowdownElements: CanvasElementDef[] = [
+  rectArea('card1', 'Player 1 Card', 'Cards'),
+  rectArea('card2', 'Player 2 Card', 'Cards'),
+  textPos('header', 'Winner / Lost Banner', 'Text'),
+  textPos('name',   'Player Names', 'Text'),
+  textPos('vs',     'VS Centerpiece', 'Text'),
+];
+
+// LF verdict (2 player areas, each holding 5 cards in 3+2)
+const lunafantasyVerdictLayout: Record<string, any> = {
+  player1Area: { x: 40,   y: 40, width: 1135, height: 1220 },
+  player2Area: { x: 1225, y: 40, width: 1135, height: 1220 },
+  status: { fontSize: 38 },
+  name:   { fontSize: 28 },
+};
+const lunafantasyVerdictElements: CanvasElementDef[] = [
+  rectArea('player1Area', 'Player 1 Area', 'Layout'),
+  rectArea('player2Area', 'Player 2 Area', 'Layout'),
+  { id: 'status', label: 'Status (Winner/Lost)', type: 'text', props: ['fontSize'], group: 'Text' },
+  { id: 'name',   label: 'Name + Score',         type: 'text', props: ['fontSize'], group: 'Text' },
+];
+
+// GF hand (5 rarity rows on a computed canvas — defaults match legacy).
+// Bot constants: PADDING=50, CARD_WIDTH=512, CARD_HEIGHT=768, CARD_GAP=20,
+// SECTION_GAP=50. canvasWidth = 2238, canvasHeight = 2504.
+//   commonRow.x   = PADDING                                       = 50
+//   rareRow.x     = PADDING + 2*CARD_WIDTH + CARD_GAP + SECTION_GAP = 1144
+//   epicRow.y     = PADDING + CARD_HEIGHT + SECTION_GAP            = 868
+//   legendaryRow  = canvas-centered, y = PADDING + 2*(CARD_HEIGHT + SECTION_GAP) = 1686
+//   legendaryRow.x = (canvasWidth - (2*CARD_WIDTH + CARD_GAP)) / 2 = 597
+const grandfantasyHandLayout: Record<string, any> = {
+  commonRow:    { x: 50,   y: 50 },
+  rareRow:      { x: 1144, y: 50 },
+  epicRow:      { x: 50,   y: 868 },
+  uniqueRow:    { x: 1144, y: 868 },
+  legendaryRow: { x: 597,  y: 1686 },
+};
+const grandfantasyHandElements: CanvasElementDef[] = [
+  textPos('commonRow',    'Common Row',    'Rarities'),
+  textPos('rareRow',      'Rare Row',      'Rarities'),
+  textPos('epicRow',      'Epic Row',      'Rarities'),
+  textPos('uniqueRow',    'Unique Row',    'Rarities'),
+  textPos('legendaryRow', 'Legendary Row', 'Rarities'),
+];
+
+// GF verdict (2 player areas each holding 5 rarities).
+// Bot constants: PADDING=60, CARD_WIDTH=512, CARD_HEIGHT=768, CARD_GAP=16,
+// SECTION_GAP=40, SIDE_GAP=100, HEADER_HEIGHT=160.
+//   sideWidth  = (2*CARD_WIDTH + CARD_GAP)*2 + SECTION_GAP = 2120
+//   sideHeight = 3*CARD_HEIGHT + 2*SECTION_GAP            = 2384
+//   player1Area = { x:60, y:60, w:2120, h:HEADER_HEIGHT+sideHeight = 2544 }
+//   player2Area = { x:60+2120+100=2280, y:60, w:2120, h:2544 }
+const grandfantasyVerdictLayout: Record<string, any> = {
+  player1Area: { x: 60,   y: 60, width: 2120, height: 2544 },
+  player2Area: { x: 2280, y: 60, width: 2120, height: 2544 },
+  status: { fontSize: 72 },
+  name:   { fontSize: 48 },
+};
+const grandfantasyVerdictElements: CanvasElementDef[] = [
+  rectArea('player1Area', 'Player 1 Area', 'Layout'),
+  rectArea('player2Area', 'Player 2 Area', 'Layout'),
+  { id: 'status', label: 'Status (Winner/Lost)', type: 'text', props: ['fontSize'], group: 'Text' },
+  { id: 'name',   label: 'Name + Score',         type: 'text', props: ['fontSize'], group: 'Text' },
+];
+
+// FW hand (5x2 grid with title on top — 1800x1200)
+const factionwarHandLayout: Record<string, any> = {
+  cardsArea: { x: 40, y: 90, width: 1720, height: 1040 },
+  title:     { x: 900, y: 28, fontSize: 36 },
+};
+const factionwarHandElements: CanvasElementDef[] = [
+  rectArea('cardsArea', 'Cards Grid Area', 'Layout'),
+  textPos('title',     'Title Banner',     'Text'),
+];
+
+// FW playing field (single card centered — 900x750)
+const factionwarFieldLayout: Record<string, any> = {
+  card:  { x: 277, y: 80, width: 347, height: 520 },
+  title: { x: 450, y: 20, fontSize: 36 },
+};
+const factionwarFieldElements: CanvasElementDef[] = [
+  rectArea('card',  'Played Card',  'Layout'),
+  textPos('title', 'Table Title', 'Text'),
+];
+
+// FW result (winner row on top, optional loser row below).
+// Bot defaults (showLoser=true on a 2400x1550 canvas):
+//   winnerArea y=170, bottom=730 → height=560
+//   maxCardH = 560 - LABEL_H(40) - 10 = 510, cardH=510
+//   summaryY = 170 + 510 + 40 + 10 = 730
+//   sepY     = summaryY + 50 = 780
+//   loserName.y = sepY + 12 = 792
+//   loserArea y = sepY + 65 = 845, bottom = canvasHeight - 60 = 1490, height = 645
+const factionwarResultLayout: Record<string, any> = {
+  title:       { x: 1200, y: 20,  fontSize: 72 },
+  winnerName:  { x: 1200, y: 105, fontSize: 42 },
+  winnerArea:  { x: 40, y: 170, width: 2320, height: 560 },
+  separator:   { y: 780 },
+  loserName:   { x: 1200, y: 792, fontSize: 36 },
+  loserArea:   { x: 40, y: 845, width: 2320, height: 645 },
+};
+const factionwarResultElements: CanvasElementDef[] = [
+  textPos('title',      'Victory Title', 'Text'),
+  textPos('winnerName', 'Winner Name',   'Text'),
+  rectArea('winnerArea', 'Winner Cards Row', 'Layout'),
+  textPos('loserName', 'Loser Name', 'Text'),
+  rectArea('loserArea', 'Loser Cards Row', 'Layout'),
+];
+
 // ─── All Canvas Definitions ─────────────────────────────────────────
 
 export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
@@ -601,6 +749,101 @@ export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
     colorKeys: [
       { key: 'value', label: 'Text Color', default: '#1a1208' },
     ],
+  },
+  // ─── Game canvas stages — Luna Fantasy / Grand Fantasy / Faction War ──
+  {
+    id: 'lunafantasy_hand',
+    label: 'Luna Fantasy — Card Selection',
+    bot: 'jester',
+    width: 1800,
+    height: 1200,
+    backgroundUrl: LF_BG_DEFAULT,
+    elements: lunafantasyHandElements,
+    defaultLayout: lunafantasyHandLayout,
+    colorKeys: [],
+  },
+  {
+    id: 'lunafantasy_showdown',
+    label: 'Luna Fantasy — Showdown',
+    bot: 'jester',
+    // Default canvas: 2*1024 + 120 + 60*2 = 2288 wide, 1536 + 140 + 60*2 = 1796 tall
+    width: 2288,
+    height: 1796,
+    backgroundUrl: LF_BG_DEFAULT,
+    elements: lunafantasyShowdownElements,
+    defaultLayout: lunafantasyShowdownLayout,
+    colorKeys: [],
+  },
+  {
+    id: 'lunafantasy_verdict',
+    label: 'Luna Fantasy — Verdict',
+    bot: 'jester',
+    width: 2400,
+    height: 1300,
+    backgroundUrl: LF_VERDICT_BG_DEFAULT,
+    elements: lunafantasyVerdictElements,
+    defaultLayout: lunafantasyVerdictLayout,
+    colorKeys: [],
+  },
+  {
+    id: 'grandfantasy_hand',
+    label: 'Grand Fantasy — Card Selection',
+    bot: 'jester',
+    // Default canvas dims computed from CARD_WIDTH=512, CARD_GAP=20, SECTION_GAP=50, PADDING=50
+    // rowWidth = (512*2+20)*2 + 50 = 2138; canvasWidth = 2138 + 100 = 2238
+    // canvasHeight = 768*3 + 50*2 + 50*2 = 2504
+    width: 2238,
+    height: 2504,
+    backgroundUrl: GF_BG_DEFAULT,
+    elements: grandfantasyHandElements,
+    defaultLayout: grandfantasyHandLayout,
+    colorKeys: [],
+  },
+  {
+    id: 'grandfantasy_verdict',
+    label: 'Grand Fantasy — Verdict',
+    bot: 'jester',
+    // sideWidth = (512*2+16)*2 + 40 = 2120; canvasWidth = 2*2120 + 100 + 60*2 = 4460
+    // sideHeight = 768*3 + 40*2 = 2384; canvasHeight = 160 + 2384 + 120 = 2664
+    width: 4460,
+    height: 2664,
+    backgroundUrl: GF_BG_DEFAULT,
+    elements: grandfantasyVerdictElements,
+    defaultLayout: grandfantasyVerdictLayout,
+    colorKeys: [],
+  },
+  {
+    id: 'factionwar_hand',
+    label: 'Faction War — Card Selection',
+    bot: 'jester',
+    width: 1800,
+    height: 1200,
+    backgroundUrl: FW_BG_DEFAULT,
+    elements: factionwarHandElements,
+    defaultLayout: factionwarHandLayout,
+    colorKeys: [],
+  },
+  {
+    id: 'factionwar_field',
+    label: 'Faction War — Played Card',
+    bot: 'jester',
+    width: 900,
+    height: 750,
+    backgroundUrl: FW_BG_DEFAULT,
+    elements: factionwarFieldElements,
+    defaultLayout: factionwarFieldLayout,
+    colorKeys: [],
+  },
+  {
+    id: 'factionwar_result',
+    label: 'Faction War — Verdict',
+    bot: 'jester',
+    width: 2400,
+    height: 1550,
+    backgroundUrl: FW_BG_DEFAULT,
+    elements: factionwarResultElements,
+    defaultLayout: factionwarResultLayout,
+    colorKeys: [],
   },
   // ─── Luna 21 (Blackjack) — Butler ────────────────────────────────────
   {
