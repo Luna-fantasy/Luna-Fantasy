@@ -127,7 +127,22 @@ export async function listItems(opts: { category?: ItemCategory; activeOnly?: bo
   const q: any = {};
   if (opts.category) q.category = opts.category;
   if (opts.activeOnly) q.active = true;
-  return col.find(q).sort({ category: 1, rarity: 1, price: 1 }).toArray() as unknown as ItemCatalogEntry[];
+  // Mongo sorts rarity strings alphabetically (common, epic, forbidden,
+  // legendary, rare, unique) which is not the canonical ladder. Re-sort
+  // in JS so the admin table + bot vendors read in tier order:
+  // common → rare → epic → unique → legendary → forbidden.
+  const RARITY_RANK: Record<string, number> = {
+    common: 0, rare: 1, epic: 2, unique: 3, legendary: 4, forbidden: 5,
+  };
+  const rows = await col.find(q).toArray();
+  rows.sort((a: any, b: any) => {
+    if (a.category !== b.category) return String(a.category).localeCompare(String(b.category));
+    const ra = RARITY_RANK[a.rarity] ?? 99;
+    const rb = RARITY_RANK[b.rarity] ?? 99;
+    if (ra !== rb) return ra - rb;
+    return (a.price ?? 0) - (b.price ?? 0);
+  });
+  return rows as unknown as ItemCatalogEntry[];
 }
 
 export async function getItem(key: string): Promise<ItemCatalogEntry | null> {
