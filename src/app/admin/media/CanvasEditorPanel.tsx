@@ -253,7 +253,12 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
     });
   }, [bot, canvas.id, canvas.defaultLayout, history]);
 
-  const handleMove = (elementId: string, patch: { x: number; y: number }) => {
+  const handleMove = (elementId: string, patch: Partial<{
+    x: number; y: number;
+    width: number; height: number;
+    radiusX: number; radiusY: number;
+    fontSize: number;
+  }>) => {
     patchElement(elementId, patch);
   };
 
