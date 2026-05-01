@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
+import VendorPortraitUploader from './VendorPortraitUploader';
 
 interface Stone {
   name: string;
@@ -31,6 +32,7 @@ export default function MelunaEditor({ tone }: { tone: string }) {
   const [refundChance, setRefundChance] = useState<number>(0.5);
   const [stones, setStones] = useState<Stone[]>([]);
   const [image, setImage] = useState<string>('');
+  const [imageVersion, setImageVersion] = useState<number | undefined>(undefined);
   const [dirty, setDirty] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export default function MelunaEditor({ tone }: { tone: string }) {
       setRefundChance(body.refund_chance ?? 0.5);
       setStones(Array.isArray(body.stones) ? body.stones : []);
       setImage(body.image ?? '');
+      setImageVersion(body.imageVersion);
       setUpdatedAt(body.updatedAt ?? null);
       setDirty(false);
       setLoadError(null);
@@ -78,6 +81,7 @@ export default function MelunaEditor({ tone }: { tone: string }) {
               refund_chance: refundChance,
               stones,
               image,
+              imageVersion,
             }),
           });
           if (!res.ok) {
@@ -129,6 +133,14 @@ export default function MelunaEditor({ tone }: { tone: string }) {
             </button>
           )}
         </header>
+
+        <VendorPortraitUploader
+          vendorId="meluna"
+          image={image}
+          imageVersion={imageVersion}
+          tone={tone}
+          onChange={(url, version) => { setImage(url); setImageVersion(version); setDirty(true); }}
+        />
 
         {loadError ? (
           <div className="av-flows-empty" style={{ marginTop: 8 }}>

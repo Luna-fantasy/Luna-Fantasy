@@ -61,6 +61,7 @@ export async function GET() {
     return NextResponse.json({
       packages,
       image: (doc?.data?.image as string) ?? null,
+      imageVersion: typeof doc?.data?.imageVersion === 'number' ? doc.data.imageVersion : undefined,
       updatedAt: doc?.updatedAt ?? null,
       updatedBy: doc?.updatedBy ?? null,
     });
@@ -81,10 +82,10 @@ export async function POST(req: NextRequest) {
   const { allowed, retryAfterMs } = checkRateLimit('admin_write', adminId, 10, 60_000);
   if (!allowed) return rateLimitResponse(retryAfterMs);
 
-  let body: { packages?: TicketPackage[]; image?: string };
+  let body: { packages?: TicketPackage[]; image?: string; imageVersion?: number };
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
-  const { packages, image } = body;
+  const { packages, image, imageVersion } = body;
   if (!packages) return NextResponse.json({ error: 'packages required' }, { status: 400 });
 
   const cleaned = packages.map((p) => ({
@@ -107,6 +108,7 @@ export async function POST(req: NextRequest) {
       ...beforeData,
       packages: cleaned,
       ...(typeof image === 'string' ? { image: image.slice(0, 500) } : {}),
+      ...(typeof imageVersion === 'number' && Number.isFinite(imageVersion) ? { imageVersion: Math.floor(imageVersion) } : {}),
     };
 
     await col.updateOne(

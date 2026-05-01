@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
+import VendorPortraitUploader from './VendorPortraitUploader';
 
 interface TicketPackage {
   id: string;
@@ -23,6 +24,7 @@ export default function ZoldarEditor({ tone }: { tone: string }) {
   const [loading, setLoading] = useState(true);
   const [packages, setPackages] = useState<TicketPackage[]>([]);
   const [image, setImage] = useState<string>('');
+  const [imageVersion, setImageVersion] = useState<number | undefined>(undefined);
   const [dirty, setDirty] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export default function ZoldarEditor({ tone }: { tone: string }) {
       if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
       setPackages(body.packages ?? []);
       setImage(body.image ?? '');
+      setImageVersion(body.imageVersion);
       setUpdatedAt(body.updatedAt ?? null);
       setDirty(false);
       setLoadError(null);
@@ -61,7 +64,7 @@ export default function ZoldarEditor({ tone }: { tone: string }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
             credentials: 'include',
-            body: JSON.stringify({ packages, image }),
+            body: JSON.stringify({ packages, image, imageVersion }),
           });
           if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -114,6 +117,14 @@ export default function ZoldarEditor({ tone }: { tone: string }) {
             </button>
           )}
         </header>
+
+        <VendorPortraitUploader
+          vendorId="zoldar"
+          image={image}
+          imageVersion={imageVersion}
+          tone={tone}
+          onChange={(url, version) => { setImage(url); setImageVersion(version); setDirty(true); }}
+        />
 
         {loadError ? (
           <div className="av-flows-empty av-zoldar-load-err" style={{ marginTop: 8 }}>

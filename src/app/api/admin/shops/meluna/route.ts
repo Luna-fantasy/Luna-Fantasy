@@ -63,6 +63,7 @@ export async function GET() {
       refund_chance: typeof data.refund_chance === 'number' ? data.refund_chance : 0.5,
       stones: Array.isArray(data.stones) ? data.stones : [],
       image: (data.image as string) ?? null,
+      imageVersion: typeof data.imageVersion === 'number' ? data.imageVersion : undefined,
       title: (data.title as string) ?? 'Meluna',
       description: (data.description as string) ?? '',
       updatedAt: doc?.updatedAt ?? null,
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest) {
     refund_chance?: number;
     stones?: StoneEntry[];
     image?: string;
+    imageVersion?: number;
     title?: string;
     description?: string;
   };
@@ -133,6 +135,7 @@ export async function POST(req: NextRequest) {
       refund_chance: refundChance,
       stones,
       ...(typeof body.image === 'string' ? { image: body.image.slice(0, 500) } : {}),
+      ...(typeof body.imageVersion === 'number' && Number.isFinite(body.imageVersion) ? { imageVersion: Math.floor(body.imageVersion) } : {}),
       ...(typeof body.title === 'string' ? { title: body.title.slice(0, 120) } : {}),
       ...(typeof body.description === 'string' ? { description: body.description.slice(0, 600) } : {}),
     };
