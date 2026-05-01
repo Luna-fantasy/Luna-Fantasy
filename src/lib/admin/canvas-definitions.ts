@@ -354,7 +354,7 @@ const lunafantasyHandLayout: Record<string, any> = {
   cardsArea: { x: 60, y: 60, width: 1680, height: 1080 },
 };
 const lunafantasyHandElements: CanvasElementDef[] = [
-  rectArea('cardsArea', 'Cards Grid Area', 'Layout'),
+  rectArea('cardsArea', 'Hand Area — 5 cards in 3+2 grid', 'Cards'),
 ];
 
 // LF showdown (2 cards side-by-side with Winner/Lost banner + name)
@@ -366,14 +366,14 @@ const lunafantasyShowdownLayout: Record<string, any> = {
   vs:     { x: 1144, y: 968, fontSize: 80 },
 };
 const lunafantasyShowdownElements: CanvasElementDef[] = [
-  rectArea('card1', 'Player 1 Card', 'Cards'),
-  rectArea('card2', 'Player 2 Card', 'Cards'),
+  rectArea('card1', 'Player 1 — Played Card', 'Cards'),
+  rectArea('card2', 'Player 2 — Played Card', 'Cards'),
   // Header + name banners auto-center over each card → only y / fontSize
   // are honored at render time. Locking the dashboard to those props avoids
   // the "I dragged the X but nothing moved" surprise.
-  { id: 'header', label: 'Winner / Lost Banner', type: 'text', props: ['y', 'fontSize'], group: 'Text' },
-  { id: 'name',   label: 'Player Names',         type: 'text', props: ['y', 'fontSize'], group: 'Text' },
-  textPos('vs',   'VS Centerpiece', 'Text'),
+  { id: 'header', label: '"Winner!" / "Lost!" banner — Y + size', type: 'text', props: ['y', 'fontSize'], group: 'Text' },
+  { id: 'name',   label: 'Player names — Y + size',                type: 'text', props: ['y', 'fontSize'], group: 'Text' },
+  textPos('vs',   '"VS" text — between cards', 'Text'),
 ];
 
 // LF verdict (2 player areas, each holding 5 cards in 3+2)
@@ -384,10 +384,10 @@ const lunafantasyVerdictLayout: Record<string, any> = {
   name:   { fontSize: 28 },
 };
 const lunafantasyVerdictElements: CanvasElementDef[] = [
-  rectArea('player1Area', 'Player 1 Area', 'Layout'),
-  rectArea('player2Area', 'Player 2 Area', 'Layout'),
-  { id: 'status', label: 'Status (Winner/Lost)', type: 'text', props: ['fontSize'], group: 'Text' },
-  { id: 'name',   label: 'Name + Score',         type: 'text', props: ['fontSize'], group: 'Text' },
+  rectArea('player1Area', 'Player 1 — Cards + Header Area', 'Cards'),
+  rectArea('player2Area', 'Player 2 — Cards + Header Area', 'Cards'),
+  { id: 'status', label: '"Winner!" / "Lost!" text — size only', type: 'text', props: ['fontSize'], group: 'Text' },
+  { id: 'name',   label: 'Name + Score text — size only',         type: 'text', props: ['fontSize'], group: 'Text' },
 ];
 
 // GF hand (5 rarity rows on a computed canvas — defaults match legacy).
@@ -406,11 +406,11 @@ const grandfantasyHandLayout: Record<string, any> = {
   legendaryRow: { x: 597,  y: 1686 },
 };
 const grandfantasyHandElements: CanvasElementDef[] = [
-  textPos('commonRow',    'Common Row',    'Rarities'),
-  textPos('rareRow',      'Rare Row',      'Rarities'),
-  textPos('epicRow',      'Epic Row',      'Rarities'),
-  textPos('uniqueRow',    'Unique Row',    'Rarities'),
-  textPos('legendaryRow', 'Legendary Row', 'Rarities'),
+  textPos('commonRow',    'Common cards (×2) — top-left',     'Rarities'),
+  textPos('rareRow',      'Rare cards (×2) — top-right',      'Rarities'),
+  textPos('epicRow',      'Epic cards (×2) — middle-left',    'Rarities'),
+  textPos('uniqueRow',    'Unique cards (×2) — middle-right', 'Rarities'),
+  textPos('legendaryRow', 'Legendary cards (×2) — bottom',    'Rarities'),
 ];
 
 // GF verdict (2 player areas each holding 5 rarities).
@@ -427,10 +427,10 @@ const grandfantasyVerdictLayout: Record<string, any> = {
   name:   { fontSize: 48 },
 };
 const grandfantasyVerdictElements: CanvasElementDef[] = [
-  rectArea('player1Area', 'Player 1 Area', 'Layout'),
-  rectArea('player2Area', 'Player 2 Area', 'Layout'),
-  { id: 'status', label: 'Status (Winner/Lost)', type: 'text', props: ['fontSize'], group: 'Text' },
-  { id: 'name',   label: 'Name + Score',         type: 'text', props: ['fontSize'], group: 'Text' },
+  rectArea('player1Area', 'Player 1 — All 5 Rarities Area', 'Cards'),
+  rectArea('player2Area', 'Player 2 — All 5 Rarities Area', 'Cards'),
+  { id: 'status', label: '"Winner!" / "Lost!" text — size only', type: 'text', props: ['fontSize'], group: 'Text' },
+  { id: 'name',   label: 'Name + Score text — size only',         type: 'text', props: ['fontSize'], group: 'Text' },
 ];
 
 // FW hand (5x2 grid with title on top — 1800x1200)
@@ -439,8 +439,8 @@ const factionwarHandLayout: Record<string, any> = {
   title:     { x: 900, y: 28, fontSize: 36 },
 };
 const factionwarHandElements: CanvasElementDef[] = [
-  rectArea('cardsArea', 'Cards Grid Area', 'Layout'),
-  textPos('title',     'Title Banner',     'Text'),
+  rectArea('cardsArea', 'Hand Area — 10 cards in 5×2 grid', 'Cards'),
+  textPos('title',     'Title — "🃏 Your Hand (N cards)"',   'Text'),
 ];
 
 // FW playing field (single card centered — 900x750)
@@ -449,32 +449,32 @@ const factionwarFieldLayout: Record<string, any> = {
   title: { x: 450, y: 20, fontSize: 36 },
 };
 const factionwarFieldElements: CanvasElementDef[] = [
-  rectArea('card',  'Played Card',  'Layout'),
-  textPos('title', 'Table Title', 'Text'),
+  rectArea('card',  'Played Card — center of table', 'Cards'),
+  textPos('title', 'Title — "Table"',                'Text'),
 ];
 
 // FW result (winner row on top, optional loser row below).
-// Bot defaults (showLoser=true on a 2400x1550 canvas):
-//   winnerArea y=170, bottom=730 → height=560
-//   maxCardH = 560 - LABEL_H(40) - 10 = 510, cardH=510
-//   summaryY = 170 + 510 + 40 + 10 = 730
-//   sepY     = summaryY + 50 = 780
-//   loserName.y = sepY + 12 = 792
-//   loserArea y = sepY + 65 = 845, bottom = canvasHeight - 60 = 1490, height = 645
+// Defaults sit inside the ornate frame's inner play area (~120px inset on
+// each edge, ~150px side insets), so the editor preview lines up with what
+// the bot actually renders against the dashboard-supplied background.
+//   title.y=80     — inside the upper border, room for the 72px banner
+//   winnerName.y=170 — under the title
+//   winnerArea     — y=240, height=510 → cardH ~= 460, summaryY ≈ 750
+//   sepY ≈ 800, loserName.y ≈ 812, loserArea y=865 height=560 (bottom 1425)
 const factionwarResultLayout: Record<string, any> = {
-  title:       { x: 1200, y: 20,  fontSize: 72 },
-  winnerName:  { x: 1200, y: 105, fontSize: 42 },
-  winnerArea:  { x: 40, y: 170, width: 2320, height: 560 },
-  separator:   { y: 780 },
-  loserName:   { x: 1200, y: 792, fontSize: 36 },
-  loserArea:   { x: 40, y: 845, width: 2320, height: 645 },
+  title:       { x: 1200, y: 80,  fontSize: 72 },
+  winnerName:  { x: 1200, y: 170, fontSize: 42 },
+  winnerArea:  { x: 150, y: 240, width: 2100, height: 510 },
+  separator:   { y: 800 },
+  loserName:   { x: 1200, y: 812, fontSize: 36 },
+  loserArea:   { x: 150, y: 865, width: 2100, height: 560 },
 };
 const factionwarResultElements: CanvasElementDef[] = [
-  textPos('title',      'Victory Title', 'Text'),
-  textPos('winnerName', 'Winner Name',   'Text'),
-  rectArea('winnerArea', 'Winner Cards Row', 'Layout'),
-  textPos('loserName', 'Loser Name', 'Text'),
-  rectArea('loserArea', 'Loser Cards Row', 'Layout'),
+  textPos('title',       'Title — "🏆 VICTORY!" banner',           'Text'),
+  textPos('winnerName',  'Winner — name + score line',             'Text'),
+  rectArea('winnerArea', 'Winner — 9 cards row',                   'Cards'),
+  textPos('loserName',   'Defeated player — name + score line',    'Text'),
+  rectArea('loserArea',  'Defeated player — 9 cards row (if any)', 'Cards'),
 ];
 
 // ─── All Canvas Definitions ─────────────────────────────────────────
