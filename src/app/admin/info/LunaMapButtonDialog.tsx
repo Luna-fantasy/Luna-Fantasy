@@ -12,6 +12,36 @@ interface Props {
   filenameHint: string;
 }
 
+// Build the LunaMapButton payload from the current local state.
+// Pulled out of submit() so we can reuse it for auto-commit on image uploads.
+function buildPayload(args: {
+  mode: 'direct' | 'menu';
+  name: string;
+  nameEn: string;
+  emojiId: string;
+  btnStyle: LunaMapButton['btnStyle'];
+  content: string;
+  contentEn: string;
+  image: string;
+  menu: LunaMapMenuItem[];
+}): LunaMapButton {
+  const base: LunaMapButton = {
+    name: args.name.trim() || 'Untitled',
+    name_en: args.nameEn.trim() || undefined,
+    emojiId: args.emojiId.trim(),
+    btnStyle: args.btnStyle,
+  };
+  if (args.mode === 'direct') {
+    base.content = args.content.trim();
+    if (args.contentEn.trim()) base.content_en = args.contentEn.trim();
+    if (args.image.trim()) base.image = args.image.trim();
+    base.menu = undefined;
+  } else {
+    base.menu = args.menu;
+  }
+  return base;
+}
+
 type Mode = 'direct' | 'menu';
 
 export default function LunaMapButtonDialog({ initial, onSave, onClose, filenameHint }: Props) {
@@ -50,22 +80,20 @@ export default function LunaMapButtonDialog({ initial, onSave, onClose, filename
   };
 
   const submit = () => {
-    const base: LunaMapButton = {
-      name: name.trim() || 'Untitled',
-      name_en: nameEn.trim() || undefined,
-      emojiId: emojiId.trim(),
-      btnStyle,
-    };
-    if (mode === 'direct') {
-      base.content = content.trim();
-      if (contentEn.trim()) base.content_en = contentEn.trim();
-      if (image.trim()) base.image = image.trim();
-      // Explicit: no menu in direct mode
-      base.menu = undefined;
-    } else {
-      base.menu = menu;
-    }
-    onSave(base);
+    onSave(buildPayload({ mode, name, nameEn, emojiId, btnStyle, content, contentEn, image, menu }));
+  };
+
+  // Auto-commit on image upload — uploads are atomic events and the file is
+  // already on R2; deferring them behind a Save click is what caused the
+  // "I uploaded but it reverted" symptom. Text edits still wait for Save.
+  const commitWithImage = (nextImage: string) => {
+    setImage(nextImage);
+    onSave(buildPayload({ mode: 'direct', name, nameEn, emojiId, btnStyle, content, contentEn, image: nextImage, menu }));
+  };
+  const commitMenuWithImage = (i: number, nextImage: string) => {
+    const nextMenu = menu.map((m, idx) => idx === i ? { ...m, image: nextImage } : m);
+    setMenu(nextMenu);
+    onSave(buildPayload({ mode: 'menu', name, nameEn, emojiId, btnStyle, content, contentEn, image, menu: nextMenu }));
   };
 
   return createPortal(
@@ -150,7 +178,7 @@ export default function LunaMapButtonDialog({ initial, onSave, onClose, filename
                 <span>Image (optional)</span>
                 <ImageUrlInput
                   value={image}
-                  onChange={setImage}
+                  onChange={commitWithImage}
                   folder="butler"
                   filenameHint={`luna_map_${filenameHint}`}
                 />
@@ -199,7 +227,7 @@ export default function LunaMapButtonDialog({ initial, onSave, onClose, filename
                       <span>Image</span>
                       <ImageUrlInput
                         value={m.image ?? ''}
-                        onChange={(v) => patchMenuItem(i, { image: v })}
+                        onChange={(v) => commitMenuWithImage(i, v)}
                         folder="butler"
                         filenameHint={`luna_map_${filenameHint}_${i + 1}`}
                       />

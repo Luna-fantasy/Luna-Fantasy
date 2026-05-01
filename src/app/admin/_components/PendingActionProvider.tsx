@@ -68,13 +68,9 @@ export function PendingActionProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Esc cancels
-  useEffect(() => {
-    if (!action) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); cancel(); } };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [action, cancel]);
+  // Esc used to cancel any pending save · that silently dropped uploads/edits
+  // when the user pressed Esc to close a dialog. Cancellation is now opt-in
+  // through the visible Cancel button on the pending UI; Esc is harmless.
 
   return <C.Provider value={{ action, queue, cancel }}>{children}</C.Provider>;
 }
