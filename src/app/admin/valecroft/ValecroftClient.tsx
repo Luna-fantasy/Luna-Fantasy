@@ -68,12 +68,15 @@ export default function ValecroftClient() {
 
 // ── Properties Tab ──
 
+interface OwnersTarget { kind: 'property' | 'item'; key: string; name: string }
+
 function PropertiesTab() {
   const [rows, setRows] = useState<PropertyCatalogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<PropertyCatalogEntry | null>(null);
   const [creating, setCreating] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [ownersOf, setOwnersOf] = useState<OwnersTarget | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -153,6 +156,7 @@ function PropertiesTab() {
                 <td style={td}>{r.base_income.toLocaleString()}</td>
                 <td style={td}>{r.active ? '✓' : '—'}</td>
                 <td style={td}>
+                  <button style={btnSecondary} onClick={() => setOwnersOf({ kind: 'property', key: r.key, name: r.name })}>Owners</button>
                   <button style={btnSecondary} onClick={() => setEditing(r)}>Edit</button>
                   <button style={btnDanger} onClick={() => doDelete(r.key)}>Delete</button>
                 </td>
@@ -160,6 +164,15 @@ function PropertiesTab() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {ownersOf && (
+        <OwnersDialog
+          kind={ownersOf.kind}
+          targetKey={ownersOf.key}
+          targetName={ownersOf.name}
+          onClose={() => setOwnersOf(null)}
+        />
       )}
     </div>
   );
@@ -418,6 +431,7 @@ function ItemsTab({ category }: { category: ItemCategory }) {
   const [editing, setEditing] = useState<ItemCatalogEntry | null>(null);
   const [creating, setCreating] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [ownersOf, setOwnersOf] = useState<OwnersTarget | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -495,6 +509,7 @@ function ItemsTab({ category }: { category: ItemCategory }) {
                 <td style={td}>+{r.income_bonus.toLocaleString()}</td>
                 <td style={td}>{r.active ? '✓' : '—'}</td>
                 <td style={td}>
+                  <button style={btnSecondary} onClick={() => setOwnersOf({ kind: 'item', key: r.key, name: r.name })}>Owners</button>
                   <button style={btnSecondary} onClick={() => setEditing(r)}>Edit</button>
                   <button style={btnDanger} onClick={() => doDelete(r.key)}>Delete</button>
                 </td>
@@ -502,6 +517,15 @@ function ItemsTab({ category }: { category: ItemCategory }) {
             ))}
           </tbody>
         </table>
+      )}
+
+      {ownersOf && (
+        <OwnersDialog
+          kind={ownersOf.kind}
+          targetKey={ownersOf.key}
+          targetName={ownersOf.name}
+          onClose={() => setOwnersOf(null)}
+        />
       )}
     </div>
   );
@@ -850,6 +874,187 @@ function OwnershipTab() {
 }
 
 // ── Shared UI bits ──
+
+// Owners dialog · lists every user who owns the given property/item, with a
+// Revoke button per row and a "grant by Discord ID" form at the top. Closes
+// over the table refresh isn't necessary · the dialog just refetches its own
+// list on each grant/revoke.
+interface OwnerEntry {
+    discord_id: string;
+    name: string | null;
+    avatar?: string | null;
+    state?: string;
+    damage_percent?: number;
+    custom_name?: string | null;
+    granted_by_admin?: boolean;
+    copies?: number;
+    placed?: number;
+    damaged?: number;
+}
+
+function OwnersDialog({ kind, targetKey, targetName, onClose }: {
+    kind: 'property' | 'item';
+    targetKey: string;
+    targetName: string;
+    onClose: () => void;
+}) {
+    const toast = useToast();
+    const [owners, setOwners] = useState<OwnerEntry[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [grantId, setGrantId] = useState('');
+    const [busy, setBusy] = useState(false);
+
+    const baseUrl = `/api/admin/v2/valecroft/${kind === 'property' ? 'properties' : 'items'}/${encodeURIComponent(targetKey)}/owners`;
+
+    const refresh = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(baseUrl, { cache: 'no-store' });
+            const data = await res.json();
+            setOwners(Array.isArray(data?.rows) ? data.rows : []);
+        } catch (e: any) {
+            toast.show({ tone: 'error', title: 'Load failed', message: e?.message || 'Network error' });
+        } finally {
+            setLoading(false);
+        }
+    }, [baseUrl, toast]);
+    useEffect(() => { void refresh(); }, [refresh]);
+
+    async function doGrant() {
+        if (!/^\d{17,20}$/.test(grantId.trim())) {
+            toast.show({ tone: 'warn', title: 'Invalid Discord ID', message: 'Paste a 17-20 digit user ID.' });
+            return;
+        }
+        setBusy(true);
+        try {
+            const csrf = await fetchCsrf();
+            const res = await fetch(baseUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+                credentials: 'include',
+                body: JSON.stringify({ discordId: grantId.trim() }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                toast.show({ tone: 'error', title: 'Grant failed', message: data?.error || `HTTP ${res.status}` });
+                return;
+            }
+            toast.show({ tone: 'success', title: 'Granted', message: `${targetName} → ${grantId.trim()}` });
+            setGrantId('');
+            await refresh();
+        } finally { setBusy(false); }
+    }
+
+    async function doRevoke(discordId: string) {
+        if (!confirm(`Revoke "${targetName}" from ${discordId}? ${kind === 'property' ? 'Placed items will return to their storage.' : 'Removes one copy.'}`)) return;
+        setBusy(true);
+        try {
+            const csrf = await fetchCsrf();
+            const res = await fetch(`${baseUrl}/${encodeURIComponent(discordId)}`, {
+                method: 'DELETE',
+                headers: { 'x-csrf-token': csrf },
+                credentials: 'include',
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                toast.show({ tone: 'error', title: 'Revoke failed', message: data?.error || `HTTP ${res.status}` });
+                return;
+            }
+            const extra = data?.itemsReturned ? ` · ${data.itemsReturned} items returned` : '';
+            toast.show({ tone: 'success', title: 'Revoked', message: `${discordId}${extra}` });
+            await refresh();
+        } finally { setBusy(false); }
+    }
+
+    return (
+        <div style={modalBg} onClick={onClose}>
+            <div style={modalBox} onClick={e => e.stopPropagation()}>
+                <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                    <div style={{ flex: 1 }}>
+                        <h3 style={{ margin: 0, fontFamily: 'Cinzel, serif' }}>Owners · {targetName}</h3>
+                        <div style={{ fontSize: 12, opacity: 0.6 }}><code>{targetKey}</code> · {kind}</div>
+                    </div>
+                    <button style={btnSecondary} onClick={onClose}>Close</button>
+                </header>
+
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16, padding: 12, background: 'rgba(91,108,255,0.06)', borderRadius: 10, border: '1px solid rgba(91,108,255,0.2)' }}>
+                    <input
+                        style={{ ...inp, flex: 1 }}
+                        placeholder="Discord user ID to grant…"
+                        value={grantId}
+                        onChange={e => setGrantId(e.target.value.replace(/[^\d]/g, '').slice(0, 20))}
+                        inputMode="numeric"
+                    />
+                    <button style={btnPrimary} onClick={doGrant} disabled={busy || !grantId.trim()}>
+                        {busy ? '…' : 'Grant'}
+                    </button>
+                </div>
+
+                {loading ? (
+                    <p style={{ opacity: 0.7 }}>Loading owners…</p>
+                ) : owners.length === 0 ? (
+                    <p style={{ opacity: 0.7, padding: 16, textAlign: 'center' }}>No owners yet.</p>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 380, overflowY: 'auto' }}>
+                        {owners.map(o => (
+                            <div key={`${o.discord_id}`} style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                padding: 10, borderRadius: 8,
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.06)',
+                            }}>
+                                {o.avatar
+                                    ? <img src={o.avatar} alt="" width={32} height={32} style={{ borderRadius: '50%', flexShrink: 0 }} />
+                                    : <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+                                }
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontWeight: 500, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {o.name ?? 'Unknown'}
+                                    </div>
+                                    <div style={{ fontSize: 11, opacity: 0.6, fontFamily: 'monospace' }}>{o.discord_id}</div>
+                                    {kind === 'property' && (
+                                        <div style={{ fontSize: 11, marginTop: 2, opacity: 0.75 }}>
+                                            {o.state ?? 'owned'}
+                                            {(o.damage_percent ?? 0) > 0 && <> · 🛠️ {o.damage_percent}% dmg</>}
+                                            {o.custom_name && <> · "{o.custom_name}"</>}
+                                            {o.granted_by_admin && <> · ✦ admin grant</>}
+                                        </div>
+                                    )}
+                                    {kind === 'item' && (
+                                        <div style={{ fontSize: 11, marginTop: 2, opacity: 0.75 }}>
+                                            ×{o.copies ?? 1}
+                                            {o.placed ? <> · 🏠 {o.placed} placed</> : null}
+                                            {o.damaged ? <> · 🛠️ {o.damaged} damaged</> : null}
+                                        </div>
+                                    )}
+                                </div>
+                                <button style={btnDanger} onClick={() => doRevoke(o.discord_id)} disabled={busy}>
+                                    {kind === 'property' ? 'Revoke' : 'Take 1'}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+const modalBg: React.CSSProperties = {
+    position: 'fixed', inset: 0,
+    background: 'rgba(5,7,16,0.78)', backdropFilter: 'blur(6px)',
+    zIndex: 100,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+};
+const modalBox: React.CSSProperties = {
+    background: 'linear-gradient(180deg, #161a2e 0%, #0c0f1f 100%)',
+    border: '1px solid rgba(140, 200, 255, 0.18)',
+    borderRadius: 14,
+    width: 'min(640px, 95vw)',
+    maxHeight: '92vh',
+    padding: 22,
+    overflow: 'auto',
+};
 
 function Label(props: { children: React.ReactNode; style?: React.CSSProperties }) {
   return <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, ...props.style }}>{props.children}</label>;

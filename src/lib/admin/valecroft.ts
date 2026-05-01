@@ -67,6 +67,109 @@ export async function updateProperty(key: string, patch: Partial<Omit<PropertyCa
   await col.updateOne({ key }, { $set: sanitized });
 }
 
+// ── Owners (per-property + per-item) ──
+
+export interface OwnerRow {
+    discord_id: string;
+    state?: string;
+    damage_percent?: number;
+    purchased_at?: Date | string;
+    custom_name?: string | null;
+    granted_by_admin?: boolean;
+}
+
+export async function listPropertyOwners(key: string): Promise<OwnerRow[]> {
+    const d = await db();
+    const rows = await d.collection('user_properties').find({ property_key: key }).toArray();
+    return rows.map((r: any) => ({
+        discord_id: String(r.discord_id),
+        state: r.state,
+        damage_percent: r.damage_percent ?? 0,
+        purchased_at: r.purchased_at,
+        custom_name: r.custom_name ?? null,
+        granted_by_admin: r.granted_by_admin === true,
+    }));
+}
+
+/** Grant a property to a user without payment. One-property-per-user is still
+ *  enforced — if the user already owns a different property this returns false. */
+export async function grantPropertyToUser(discordId: string, key: string): Promise<{ ok: boolean; reason?: string }> {
+    const d = await db();
+    const prop = await d.collection<PropertyCatalogEntry>('properties_catalog').findOne({ key });
+    if (!prop) return { ok: false, reason: 'unknown_property' };
+    if (prop.active === false) return { ok: false, reason: 'inactive' };
+
+    const existing = await d.collection('user_properties').findOne({ discord_id: discordId });
+    if (existing) {
+        return { ok: false, reason: existing.property_key === key ? 'already_owns_this' : 'already_owns_other' };
+    }
+    await d.collection('user_properties').insertOne({
+        discord_id: discordId,
+        property_key: key,
+        custom_name: null,
+        purchased_at: new Date(),
+        last_repaired_at: null,
+        damage_percent: 0,
+        foreclosure_deadline: null,
+        state: 'owned',
+        granted_by_admin: true,
+    } as any);
+    return { ok: true };
+}
+
+/** Revoke a property from a user. Returns placed items to storage so the user
+ *  doesn't lose them. */
+export async function revokePropertyFromUser(discordId: string, key: string): Promise<{ ok: boolean; itemsReturned: number }> {
+    const d = await db();
+    const owner = await d.collection('user_properties').findOne({ discord_id: discordId, property_key: key });
+    if (!owner) return { ok: false, itemsReturned: 0 };
+    const itemsRes = await d.collection('user_property_items').updateMany(
+        { discord_id: discordId, placed_in_property_key: key },
+        { $set: { placed_in_property_key: null, placed_slot_index: null } },
+    );
+    await d.collection('user_properties').deleteOne({ _id: (owner as any)._id });
+    return { ok: true, itemsReturned: itemsRes.modifiedCount };
+}
+
+export async function listItemOwners(key: string): Promise<Array<{ discord_id: string; copies: number; placed: number; damaged: number }>> {
+    const d = await db();
+    const rows = await d.collection('user_property_items').find({ item_key: key }).toArray();
+    const map = new Map<string, { copies: number; placed: number; damaged: number }>();
+    for (const r of rows as any[]) {
+        const id = String(r.discord_id);
+        const cur = map.get(id) ?? { copies: 0, placed: 0, damaged: 0 };
+        cur.copies += 1;
+        if (r.placed_in_property_key) cur.placed += 1;
+        if ((r.damage_percent ?? 0) > 0) cur.damaged += 1;
+        map.set(id, cur);
+    }
+    return Array.from(map.entries()).map(([discord_id, v]) => ({ discord_id, ...v }));
+}
+
+export async function grantItemToUser(discordId: string, key: string): Promise<{ ok: boolean; reason?: string }> {
+    const d = await db();
+    const def = await d.collection('properties_items_catalog').findOne({ key });
+    if (!def) return { ok: false, reason: 'unknown_item' };
+    await d.collection('user_property_items').insertOne({
+        discord_id: discordId,
+        item_key: key,
+        placed_in_property_key: null,
+        placed_slot_index: null,
+        acquired_at: new Date(),
+        damage_percent: 0,
+    } as any);
+    return { ok: true };
+}
+
+/** Remove ONE copy of the item from the user. */
+export async function revokeOneItemFromUser(discordId: string, key: string): Promise<{ ok: boolean }> {
+    const d = await db();
+    const row = await d.collection('user_property_items').findOne({ discord_id: discordId, item_key: key });
+    if (!row) return { ok: false };
+    await d.collection('user_property_items').deleteOne({ _id: (row as any)._id });
+    return { ok: true };
+}
+
 // ── Special property grants (Mastermind only) ──
 
 export interface GrantSpecialResult {
