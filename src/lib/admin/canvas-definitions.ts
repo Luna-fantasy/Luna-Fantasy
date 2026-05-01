@@ -185,7 +185,7 @@ const bookElements: CanvasElementDef[] = [
   { id: 'rightArea', label: 'Right Page Area', type: 'rect', props: ['x', 'y', 'width', 'height'], group: 'Pages' },
 ];
 
-// ─── Tome Image — Jester (Luna Pairs collection viewer) ────────────
+// ─── Tome Image — Jester (Faction War collection viewer) ───────────
 // Same canvas dimensions as Book (2304×1536, two-page layout). The bot
 // reads the background URL via getBackgroundUrl('tome_image', ...) so a
 // dashboard re-upload swaps the page art without a bot restart.
@@ -335,6 +335,8 @@ const PASSPORT_MASTERMIND_BG_URL = 'https://assets.lunarian.app/butler/backgroun
 const LF_BG_DEFAULT = 'https://assets.lunarian.app/backgrounds/LunaFantasyBG.png';
 const LF_VERDICT_BG_DEFAULT = 'https://assets.lunarian.app/backgrounds/LunaFantasyVerdict.png';
 const GF_BG_DEFAULT = 'https://assets.lunarian.app/backgrounds/GrandFantasyBG.png';
+// Faction War assets are stored under R2's legacy `LunaPairs/` path; only
+// the storage prefix carries the old name now.
 const FW_BG_DEFAULT = 'https://assets.lunarian.app/LunaPairs/LunaPairs_BG.png';
 
 // Reusable element factories — keep dashboard prop-pickers consistent
@@ -595,7 +597,7 @@ export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
   },
   {
     id: 'tome_image',
-    label: 'Luna Pairs Tome',
+    label: 'Faction War Tome',
     bot: 'jester',
     width: 2304,
     height: 1536,
