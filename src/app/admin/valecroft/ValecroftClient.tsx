@@ -16,7 +16,7 @@ async function fetchCsrf(): Promise<string> {
   return (await res.json()).token;
 }
 
-type Tab = 'family' | 'properties' | ItemCategory | 'ownership';
+type Tab = 'family' | 'properties' | ItemCategory | 'ownership' | 'grant';
 const TABS: { key: Tab; label: string }[] = [
   { key: 'family',     label: 'Family & Home' },
   { key: 'properties', label: 'Properties' },
@@ -24,6 +24,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'horse',      label: 'Horses' },
   { key: 'sword',      label: 'Swords' },
   { key: 'ownership',  label: 'Ownership' },
+  { key: 'grant',      label: '✦ Grant Special' },
 ];
 
 export default function ValecroftClient() {
@@ -60,6 +61,7 @@ export default function ValecroftClient() {
       {tab === 'properties' && <PropertiesTab />}
       {(tab === 'artifact' || tab === 'horse' || tab === 'sword') && <ItemsTab category={tab} />}
       {tab === 'ownership' && <OwnershipTab />}
+      {tab === 'grant' && <GrantSpecialTab />}
     </section>
   );
 }
@@ -596,6 +598,161 @@ function ItemForm({ defaultCategory, initial, onClose, onSaved }: {
   );
 }
 
+// ── Grant Special Tab — Mastermind-only gift flow for `special`-tier props ──
+
+interface SpecialPropertyRow { key: string; name: string; image_url: string; active: boolean }
+
+function GrantSpecialTab() {
+  const [specials, setSpecials] = useState<SpecialPropertyRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [discordId, setDiscordId] = useState('');
+  const [propertyKey, setPropertyKey] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ tone: 'ok' | 'err' | 'info'; text: string } | null>(null);
+  const toast = useToast();
+  const pending = usePendingAction();
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/v2/valecroft/grant-special', { cache: 'no-store' });
+      const data = await res.json();
+      setSpecials(data.rows ?? []);
+    } finally { setLoading(false); }
+  }, []);
+  useEffect(() => { refresh(); }, [refresh]);
+
+  function doGrant() {
+    if (!/^\d{17,20}$/.test(discordId.trim())) {
+      toast.show({ tone: 'warn', title: 'Invalid Discord ID', message: 'Paste a 17-20 digit user ID.' });
+      return;
+    }
+    if (!propertyKey) {
+      toast.show({ tone: 'warn', title: 'Pick a property', message: 'Select a special property to grant.' });
+      return;
+    }
+    const chosen = specials.find(s => s.key === propertyKey);
+    pending.queue({
+      label: `Grant "${chosen?.name ?? propertyKey}" to ${discordId.trim()}`,
+      detail: 'User must already be a member of the Luna server. Cannot be undone except by Force Foreclose.',
+      delayMs: 5000,
+      tone: 'danger',
+      run: async () => {
+        setBusy(true);
+        setMsg(null);
+        try {
+          const csrf = await fetchCsrf();
+          const res = await fetch('/api/admin/v2/valecroft/grant-special', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+            credentials: 'include',
+            body: JSON.stringify({ discordId: discordId.trim(), key: propertyKey }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            setMsg({ tone: 'err', text: data?.error ?? `HTTP ${res.status}` });
+            toast.show({ tone: 'error', title: 'Grant failed', message: data?.error ?? `HTTP ${res.status}` });
+            return;
+          }
+          const who = data?.memberName ? ` (${data.memberName})` : '';
+          setMsg({ tone: 'ok', text: `Granted to ${discordId.trim()}${who}.` });
+          toast.show({ tone: 'success', title: 'Granted', message: `${chosen?.name ?? propertyKey} → ${data?.memberName || discordId.trim()}` });
+          setDiscordId('');
+          setPropertyKey('');
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
+  }
+
+  return (
+    <div>
+      <div style={{ padding: 14, marginBottom: 16, borderRadius: 10, background: 'rgba(255, 213, 79, 0.08)', border: '1px solid rgba(255, 213, 79, 0.3)' }}>
+        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4, color: '#FFD54F' }}>✦ Special Property grant</div>
+        <div style={{ fontSize: 12, opacity: 0.85, lineHeight: 1.6 }}>
+          Special properties are <strong>never sold or shown</strong> in the Cassian shop. They can only be granted here, by a Mastermind, to a specific Discord user.
+          The user must be in the Luna server. Special properties stack on top of the user&apos;s regular property — they do not replace it.
+        </div>
+      </div>
+
+      {loading ? (
+        <p style={{ opacity: 0.7 }}>Loading…</p>
+      ) : specials.length === 0 ? (
+        <p style={{ opacity: 0.7 }}>
+          No special properties exist yet. Go to the Properties tab → <strong>+ New Property</strong>, set tier to <code>special</code>, then come back here to grant it.
+        </p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
+          <div>
+            <label style={{ fontSize: 13, opacity: 0.8, display: 'block', marginBottom: 6 }}>Recipient Discord ID</label>
+            <input
+              style={inp}
+              value={discordId}
+              onChange={e => setDiscordId(e.target.value.replace(/[^\d]/g, '').slice(0, 20))}
+              placeholder="e.g. 462550591547572224"
+              inputMode="numeric"
+            />
+            <div style={{ fontSize: 11, opacity: 0.6, marginTop: 4 }}>17-20 digit Discord snowflake. Right-click a user → Copy ID (Developer Mode).</div>
+
+            <label style={{ fontSize: 13, opacity: 0.8, display: 'block', marginTop: 16, marginBottom: 6 }}>Special property to grant</label>
+            <select style={inp} value={propertyKey} onChange={e => setPropertyKey(e.target.value)}>
+              <option value="">— pick one —</option>
+              {specials.map(s => (
+                <option key={s.key} value={s.key} disabled={!s.active}>
+                  {s.name} {s.active ? '' : '(inactive)'}
+                </option>
+              ))}
+            </select>
+
+            <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
+              <button style={btnPrimary} onClick={doGrant} disabled={busy || !discordId || !propertyKey}>
+                {busy ? 'Granting…' : 'Grant property'}
+              </button>
+            </div>
+
+            {msg && (
+              <div style={{
+                marginTop: 14,
+                padding: 10, borderRadius: 8, fontSize: 13,
+                background: msg.tone === 'ok' ? 'rgba(91, 200, 130, 0.12)' : msg.tone === 'err' ? 'rgba(255,80,80,0.12)' : 'rgba(91,108,255,0.12)',
+                color: msg.tone === 'ok' ? '#8be39b' : msg.tone === 'err' ? '#ff8c8c' : '#c7d0ff',
+              }}>
+                {msg.text}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6 }}>Preview</div>
+            {propertyKey ? (() => {
+              const chosen = specials.find(s => s.key === propertyKey);
+              if (!chosen) return null;
+              return (
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  {chosen.image_url ? (
+                    <img src={chosen.image_url} alt="" style={{ width: '100%', display: 'block', maxHeight: 280, objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ height: 200, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}>no image</div>
+                  )}
+                  <div style={{ padding: 14 }}>
+                    <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{chosen.name}</div>
+                    <div style={{ fontSize: 12, opacity: 0.6 }}>{chosen.key}</div>
+                  </div>
+                </div>
+              );
+            })() : (
+              <div style={{ padding: 24, textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: 12, border: '1px dashed rgba(255,255,255,0.1)', opacity: 0.6, fontSize: 13 }}>
+                Pick a property to preview
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Ownership Tab ──
 
 function OwnershipTab() {
@@ -751,6 +908,7 @@ function rarityColor(r: Rarity): string {
     case 'epic':      return '#B066FF';
     case 'unique':    return '#FF3366';
     case 'legendary': return '#FFD54F';
+    case 'forbidden': return '#B71C1C'; // deep crimson — above-legendary
   }
 }
 function stateColor(s: string): string {

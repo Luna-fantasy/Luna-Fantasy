@@ -1,11 +1,17 @@
 // Pure types + runtime constants for Valecroft — safe to import from client components.
 // Server-only helpers (DB ops) live in `valecroft.ts`.
 
-export type PropertyTier = 'shack' | 'cottage' | 'villa' | 'manor' | 'palace';
-export const PROPERTY_TIERS: PropertyTier[] = ['shack', 'cottage', 'villa', 'manor', 'palace'];
+// `special` is a Mastermind-only tier — never listed in the Valecroft shop,
+// never purchasable. Granted directly to a Discord user via the dashboard.
+export type PropertyTier = 'shack' | 'cottage' | 'villa' | 'manor' | 'palace' | 'special';
+export const PROPERTY_TIERS: PropertyTier[] = ['shack', 'cottage', 'villa', 'manor', 'palace', 'special'];
+/** Tiers the public Cassian shop is allowed to list. `special` is excluded. */
+export const PUBLIC_PROPERTY_TIERS: PropertyTier[] = ['shack', 'cottage', 'villa', 'manor', 'palace'];
 
-export type Rarity = 'common' | 'rare' | 'epic' | 'unique' | 'legendary';
-export const RARITIES: Rarity[] = ['common', 'rare', 'epic', 'unique', 'legendary'];
+// `forbidden` is a above-legendary item rarity. Applies to artifact / horse /
+// sword (all 3 item categories), NOT to property tiers.
+export type Rarity = 'common' | 'rare' | 'epic' | 'unique' | 'legendary' | 'forbidden';
+export const RARITIES: Rarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'forbidden'];
 
 export type ItemCategory = 'artifact' | 'horse' | 'sword';
 export const ITEM_CATEGORIES: ItemCategory[] = ['artifact', 'horse', 'sword'];
@@ -21,6 +27,9 @@ export const DEFAULT_TIER_SLOT_RULES: Record<PropertyTier, SlotRule> = {
   villa:   { total: 7,  by_rarity: { rare: 4, epic: 2, unique: 1 } },
   manor:   { total: 9,  by_rarity: { rare: 3, epic: 3, unique: 2, legendary: 1 } },
   palace:  { total: 12, by_rarity: { rare: 2, epic: 4, unique: 4, legendary: 2 } },
+  // Special properties are bespoke gifts — generous slot allocation that can
+  // hold any rarity including forbidden. Override per-grant if needed.
+  special: { total: 16, by_rarity: { epic: 4, unique: 4, legendary: 4, forbidden: 4 } },
 };
 
 export interface PropertyCatalogEntry {

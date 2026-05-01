@@ -29,9 +29,14 @@ function db() {
   return clientPromise.then(c => c.db('Database'));
 }
 
-export async function listProperties(opts: { activeOnly?: boolean } = {}): Promise<PropertyCatalogEntry[]> {
+export async function listProperties(opts: { activeOnly?: boolean; includeSpecial?: boolean } = {}): Promise<PropertyCatalogEntry[]> {
   const col = (await db()).collection<PropertyCatalogEntry>('properties_catalog');
-  const q: any = opts.activeOnly ? { active: true } : {};
+  const q: any = {};
+  if (opts.activeOnly) q.active = true;
+  // Special properties are gifts — never listed in any public catalog
+  // surface. The admin dashboard can still see them by passing
+  // `includeSpecial: true`.
+  if (!opts.includeSpecial) q.tier = { $ne: 'special' };
   return col.find(q).sort({ tier: 1, price: 1 }).toArray() as unknown as PropertyCatalogEntry[];
 }
 
@@ -60,6 +65,49 @@ export async function updateProperty(key: string, patch: Partial<Omit<PropertyCa
   }
   sanitized.updated_at = new Date();
   await col.updateOne({ key }, { $set: sanitized });
+}
+
+// ── Special property grants (Mastermind only) ──
+
+export interface GrantSpecialResult {
+  ok: boolean;
+  reason?: 'already_owns' | 'not_in_guild' | 'unknown_property' | 'not_special_tier' | 'inactive';
+}
+
+/**
+ * Grant a `special`-tier property to a user. Bypasses purchase / price /
+ * one-per-user checks because special properties are gifts. Refuses to
+ * grant non-`special` tiers — those are sold normally and shouldn't be
+ * handed out by this path.
+ */
+export async function grantSpecialProperty(discordId: string, key: string): Promise<GrantSpecialResult> {
+  const d = await db();
+  const prop = await d.collection<PropertyCatalogEntry>('properties_catalog').findOne({ key });
+  if (!prop) return { ok: false, reason: 'unknown_property' };
+  if (prop.tier !== 'special') return { ok: false, reason: 'not_special_tier' };
+  if (prop.active === false) return { ok: false, reason: 'inactive' };
+
+  // Special properties relax the one-property-per-user constraint:
+  // a Mastermind can stack a Special grant on top of a regular property.
+  // But we still don't want duplicate Special grants of the same key.
+  const existing = await d.collection('user_properties').findOne({
+    discord_id: discordId,
+    property_key: key,
+  });
+  if (existing) return { ok: false, reason: 'already_owns' };
+
+  await d.collection('user_properties').insertOne({
+    discord_id: discordId,
+    property_key: key,
+    custom_name: null,
+    purchased_at: new Date(),
+    last_repaired_at: null,
+    damage_percent: 0,
+    foreclosure_deadline: null,
+    state: 'owned',
+    granted_by_admin: true,
+  } as any);
+  return { ok: true };
 }
 
 export async function deleteProperty(key: string): Promise<{ deletedCatalog: boolean; hadOwner: boolean }> {

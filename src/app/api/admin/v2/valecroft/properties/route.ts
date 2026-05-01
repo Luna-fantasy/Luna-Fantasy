@@ -18,7 +18,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const activeOnly = req.nextUrl.searchParams.get('activeOnly') === '1';
-    const rows = await listProperties({ activeOnly });
+    // Admin always sees Special properties so they can edit / grant them;
+    // the public catalog API filters them out.
+    const rows = await listProperties({ activeOnly, includeSpecial: true });
     return NextResponse.json({ rows });
   } catch (err) {
     console.error('Valecroft properties list error:', err);
