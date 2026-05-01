@@ -185,6 +185,21 @@ const bookElements: CanvasElementDef[] = [
   { id: 'rightArea', label: 'Right Page Area', type: 'rect', props: ['x', 'y', 'width', 'height'], group: 'Pages' },
 ];
 
+// ─── Tome Image — Jester (Luna Pairs collection viewer) ────────────
+// Same canvas dimensions as Book (2304×1536, two-page layout). The bot
+// reads the background URL via getBackgroundUrl('tome_image', ...) so a
+// dashboard re-upload swaps the page art without a bot restart.
+
+const tomeLayout: Record<string, any> = {
+  leftArea:  { x: 82, y: 98, width: 930, height: 1327 },
+  rightArea: { x: 1305, y: 98, width: 893, height: 1327 },
+};
+
+const tomeElements: CanvasElementDef[] = [
+  { id: 'leftArea', label: 'Left Page Area', type: 'rect', props: ['x', 'y', 'width', 'height'], group: 'Pages' },
+  { id: 'rightArea', label: 'Right Page Area', type: 'rect', props: ['x', 'y', 'width', 'height'], group: 'Pages' },
+];
+
 // ─── Chest Image — Jester ───────────────────────────────────────────
 
 const chestLayout: Record<string, any> = {
@@ -421,6 +436,17 @@ export const CANVAS_DEFINITIONS: CanvasTypeDef[] = [
     backgroundUrl: 'https://assets.lunarian.app/canvas-backgrounds/jester/book_image.png',
     elements: bookElements,
     defaultLayout: bookLayout,
+    colorKeys: [],
+  },
+  {
+    id: 'tome_image',
+    label: 'Luna Pairs Tome',
+    bot: 'jester',
+    width: 2304,
+    height: 1536,
+    backgroundUrl: 'https://assets.lunarian.app/backgrounds/pairs_book.png',
+    elements: tomeElements,
+    defaultLayout: tomeLayout,
     colorKeys: [],
   },
   {
