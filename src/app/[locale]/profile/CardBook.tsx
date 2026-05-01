@@ -5,6 +5,21 @@ import { useTranslations } from 'next-intl';
 import type { UserCard, CatalogCard } from '@/types/gameData';
 import type { CardDetailData } from '@/components/CardDetailModal';
 
+// Build-time cache-bust applied to legacy URLs that have no `?v=` query.
+// New uploads carry a server-stamped `?v=<ts>` already; this only kicks in
+// for cards uploaded before that change. Resets on every dashboard deploy
+// (Next.js bundles a fresh module), which is exactly when CDN-edge caches
+// might still be serving an outdated render.
+const LEGACY_BUST = String(Math.floor(Date.now() / (1000 * 60 * 60 * 24))); // day-granularity
+
+function softBust(url: string | undefined | null): string {
+  if (!url) return '';
+  // Already cache-busted server-side — leave it alone.
+  if (url.includes('?v=') || url.includes('&v=')) return url;
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}v=${LEGACY_BUST}`;
+}
+
 const RARITY_ORDER = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden', 'mythical'] as const;
 
 const CARDS_PER_PAGE = 9;
@@ -104,11 +119,17 @@ export default function CardBook({
     const merged: MergedCard[] = catalogCards.map((cat) => {
       const owned = ownedNames.has(cat.name);
       const ownedCard = ownedMap.get(cat.name);
+      // Always prefer catalog.imageUrl over the owned-card snapshot. The
+      // user_cards row stores whatever URL was current the moment the card
+      // was acquired and is never updated when art is re-uploaded — using
+      // it caused the book to mix old and new art for the same card.
+      // The catalog row is the single source of truth and already carries
+      // the server-stamped ?v=<ts> cache-bust on every re-upload.
       return {
         id: cat.id,
         name: cat.name,
         rarity: cat.rarity,
-        imageUrl: owned && ownedCard?.imageUrl ? ownedCard.imageUrl : cat.imageUrl,
+        imageUrl: cat.imageUrl || ownedCard?.imageUrl || '',
         attack: cat.attack || ownedCard?.attack || 0,
         owned,
         weight: cat.weight ?? ownedCard?.weight,
@@ -537,7 +558,7 @@ function BookCard({
           </div>
         ) : (
           <img
-            src={card.imageUrl}
+            src={softBust(card.imageUrl)}
             alt={card.name}
             onError={() => onImageError(card.id)}
           />
