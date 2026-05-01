@@ -190,9 +190,13 @@ const bookElements: CanvasElementDef[] = [
 // reads the background URL via getBackgroundUrl('tome_image', ...) so a
 // dashboard re-upload swaps the page art without a bot restart.
 
+// Match the bot's hardcoded defaults exactly — the bot reads
+// (x, y, width, height) from this layout when present and falls back to
+// these constants when no override is saved. Keeping the dashboard
+// defaults in sync avoids "the editor reset my layout" surprises.
 const tomeLayout: Record<string, any> = {
-  leftArea:  { x: 82, y: 98, width: 930, height: 1327 },
-  rightArea: { x: 1305, y: 98, width: 893, height: 1327 },
+  leftArea:  { x: 125,  y: 180, width: 875, height: 1230 },
+  rightArea: { x: 1313, y: 180, width: 872, height: 1230 },
 };
 
 const tomeElements: CanvasElementDef[] = [
