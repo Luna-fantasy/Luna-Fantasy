@@ -51,7 +51,7 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
           <EImg
             editId="luna-fantasy-hero-bg"
             source="r2"
-            src="https://assets.lunarian.app/backgrounds/LunaFantasyHero.png"
+            src={`https://assets.lunarian.app/backgrounds/LunaFantasyHero.png?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? process.env.NEXT_PUBLIC_RAILWAY_DEPLOYMENT_ID ?? '1'}`}
             alt="Luna Fantasy Card Game"
             fill
             priority

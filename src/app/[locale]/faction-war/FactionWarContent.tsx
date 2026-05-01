@@ -34,7 +34,13 @@ function getFactionWarImageUrl(image: string) {
   const sep = baseUrl.includes('?') ? '&' : '?';
   return `${baseUrl}${sep}v=${FALLBACK_BUST}`;
 }
-function getFactionWarBgUrl() { return 'https://assets.lunarian.app/backgrounds/FactionWarHero.png'; }
+function getFactionWarBgUrl() {
+  // Append the deploy bust as a `?v=` token so a re-uploaded PNG actually
+  // refetches in browsers. The asset is served with a 1-year `immutable`
+  // Cache-Control header (intentional · keeps repeat-visit costs down)
+  // so without a query change the browser would never re-request.
+  return `https://assets.lunarian.app/backgrounds/FactionWarHero.png?v=${FALLBACK_BUST}`;
+}
 
 interface FactionWarContentProps {
   factions: FactionWarFaction[];
