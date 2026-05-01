@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import PageHeader from '../_components/PageHeader';
@@ -7,14 +7,33 @@ import type { ChallengeConfig, ChannelOption, ChallengeTemplate, ListResponse } 
 
 export const dynamic = 'force-dynamic';
 
-async function fetchJson<T>(path: string, cookieHeader: string): Promise<T | null> {
-  const base = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
-  const res = await fetch(`${base}${path}`, {
-    headers: { cookie: cookieHeader },
-    cache: 'no-store',
-  });
-  if (!res.ok) return null;
-  return res.json();
+// Derive the absolute base URL from the incoming request's host header so
+// SSR fetches always hit the same origin, regardless of NEXTAUTH_URL config.
+// Falls back to NEXTAUTH_URL → localhost only when no Host is present (rare).
+function buildBase(): string {
+  try {
+    const h = headers();
+    const host = h.get('x-forwarded-host') ?? h.get('host');
+    const proto = h.get('x-forwarded-proto') ?? 'https';
+    if (host) return `${proto}://${host}`;
+  } catch { /* not in a request scope */ }
+  return process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
+}
+
+// Network or parse errors should never crash the Server Component — return
+// null so the page falls back to the hard-coded defaults below.
+async function fetchJson<T>(base: string, path: string, cookieHeader: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${base}${path}`, {
+      headers: { cookie: cookieHeader },
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error(`[ChallengesPage] fetch ${path} failed:`, (err as Error).message);
+    return null;
+  }
 }
 
 export default async function ChallengesPage() {
@@ -23,12 +42,13 @@ export default async function ChallengesPage() {
 
   const cookieStore = cookies();
   const cookieHeader = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join('; ');
+  const base = buildBase();
 
   const [list, configWrap, channelsWrap, templatesWrap] = await Promise.all([
-    fetchJson<ListResponse>('/api/admin/challenges?page=1&limit=20', cookieHeader),
-    fetchJson<{ config: ChallengeConfig }>('/api/admin/challenges/config', cookieHeader),
-    fetchJson<{ channels: ChannelOption[] }>('/api/admin/challenges/channels', cookieHeader),
-    fetchJson<{ templates: ChallengeTemplate[] }>('/api/admin/challenges/templates', cookieHeader),
+    fetchJson<ListResponse>(base, '/api/admin/challenges?page=1&limit=20', cookieHeader),
+    fetchJson<{ config: ChallengeConfig }>(base, '/api/admin/challenges/config', cookieHeader),
+    fetchJson<{ channels: ChannelOption[] }>(base, '/api/admin/challenges/channels', cookieHeader),
+    fetchJson<{ templates: ChallengeTemplate[] }>(base, '/api/admin/challenges/templates', cookieHeader),
   ]);
 
   const fallbackList: ListResponse = {
