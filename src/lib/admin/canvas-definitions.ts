@@ -366,9 +366,12 @@ const lunafantasyShowdownLayout: Record<string, any> = {
 const lunafantasyShowdownElements: CanvasElementDef[] = [
   rectArea('card1', 'Player 1 Card', 'Cards'),
   rectArea('card2', 'Player 2 Card', 'Cards'),
-  textPos('header', 'Winner / Lost Banner', 'Text'),
-  textPos('name',   'Player Names', 'Text'),
-  textPos('vs',     'VS Centerpiece', 'Text'),
+  // Header + name banners auto-center over each card → only y / fontSize
+  // are honored at render time. Locking the dashboard to those props avoids
+  // the "I dragged the X but nothing moved" surprise.
+  { id: 'header', label: 'Winner / Lost Banner', type: 'text', props: ['y', 'fontSize'], group: 'Text' },
+  { id: 'name',   label: 'Player Names',         type: 'text', props: ['y', 'fontSize'], group: 'Text' },
+  textPos('vs',   'VS Centerpiece', 'Text'),
 ];
 
 // LF verdict (2 player areas, each holding 5 cards in 3+2)
