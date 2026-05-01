@@ -139,7 +139,30 @@ export default function MelunaEditor({ tone }: { tone: string }) {
           image={image}
           imageVersion={imageVersion}
           tone={tone}
-          onChange={(url, version) => { setImage(url); setImageVersion(version); setDirty(true); }}
+          onChange={async (url, version) => {
+            setImage(url);
+            setImageVersion(version);
+            try {
+              const token = await fetchCsrf();
+              const res = await fetch('/api/admin/shops/meluna', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
+                credentials: 'include',
+                body: JSON.stringify({
+                  price, refund_amount: refundAmount, refund_chance: refundChance,
+                  stones, image: url, imageVersion: version,
+                }),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error ?? `HTTP ${res.status}`);
+              }
+              toast.show({ tone: 'success', title: 'Portrait saved', message: 'Bot picks up within ~60s.' });
+              await load();
+            } catch (e) {
+              toast.show({ tone: 'error', title: 'Save failed', message: (e as Error).message });
+            }
+          }}
         />
 
         {loadError ? (
