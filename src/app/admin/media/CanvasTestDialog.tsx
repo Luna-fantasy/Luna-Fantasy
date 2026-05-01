@@ -10,6 +10,9 @@ interface Props {
   canvasType: string;
   canvasLabel: string;
   trialBackgroundUrl?: string | null;
+  /** The current draft layout from the editor — sent to the bot so the test
+      render reflects unsaved x/y/width/height/colors edits without saving. */
+  layoutOverride?: Record<string, any> | null;
   onClose: () => void;
 }
 
@@ -25,7 +28,7 @@ async function fetchCsrf(): Promise<string> {
   return (await res.json()).token;
 }
 
-export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBackgroundUrl, onClose }: Props) {
+export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBackgroundUrl, layoutOverride, onClose }: Props) {
   const toast = useToast();
   const [channelId, setChannelId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -95,6 +98,7 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
           canvasType,
           channelId: channelId.trim(),
           ...(trialBackgroundUrl ? { trialBackgroundUrl } : {}),
+          ...(layoutOverride ? { layoutOverride } : {}),
         }),
       });
       const body = await res.json().catch(() => ({}));

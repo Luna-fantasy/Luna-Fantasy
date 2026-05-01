@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { canvasType, channelId, bot, trialBackgroundUrl } = await req.json();
+    const { canvasType, channelId, bot, trialBackgroundUrl, layoutOverride } = await req.json();
 
     if (!canvasType || typeof canvasType !== 'string') {
       return NextResponse.json({ error: 'canvasType is required' }, { status: 400 });
@@ -53,6 +53,22 @@ export async function POST(req: NextRequest) {
       trialUrl = trialBackgroundUrl;
     }
 
+    // Optional layout override — sent verbatim to the bot so an unsaved draft
+    // (x/y/width/height/colors edited in the editor) can be previewed without
+    // committing to MongoDB. Capped at 32 KB to keep request docs small.
+    let layoutOverrideClean: Record<string, any> | null = null;
+    if (layoutOverride && typeof layoutOverride === 'object' && !Array.isArray(layoutOverride)) {
+      const json = JSON.stringify(layoutOverride);
+      if (json.length > 32 * 1024) {
+        return NextResponse.json({ error: 'layoutOverride too large (max 32 KB)' }, { status: 413 });
+      }
+      try {
+        layoutOverrideClean = JSON.parse(json);
+      } catch {
+        return NextResponse.json({ error: 'layoutOverride is not serialisable' }, { status: 400 });
+      }
+    }
+
     const client = await clientPromise;
     const db = client.db(DB_NAME);
     const col = db.collection('canvas_test_requests');
@@ -73,6 +89,7 @@ export async function POST(req: NextRequest) {
       requestedBy: adminId,
       createdAt: new Date(),
       ...(trialUrl ? { trialBackgroundUrl: trialUrl } : {}),
+      ...(layoutOverrideClean ? { layoutOverride: layoutOverrideClean } : {}),
     });
 
     const requestId = result.insertedId;

@@ -477,6 +477,7 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
           canvasType={canvas.id}
           canvasLabel={canvas.label}
           trialBackgroundUrl={trial?.url ?? null}
+          layoutOverride={currentLayout}
           onClose={() => setTestOpen(false)}
         />
       )}
