@@ -58,13 +58,21 @@ export default function InfoClient({ partners, lunaMap, footer }: Props) {
   const lunaCommitted = useRef<LunaMapDoc>(lunaMap);
   const footerCommitted = useRef<FooterConfig>(footer);
 
+  // Refs that always hold the LATEST draft. The auto-save runs 4.5s after the
+  // patch, by which time React state has updated — but the queue's `run`
+  // closure was captured at patch time and used to read STALE state. Refs are
+  // mutated synchronously inside the patch fn so the deferred run sees the
+  // newest doc, not the one from the render that scheduled the save.
+  const lunaMapDraftRef = useRef<LunaMapDoc>(lunaMap);
+  const footerDraftRef  = useRef<FooterConfig>(footer);
+
   const queueLunaMapSave = () => {
     pending.queue({
       label: 'Save Luna Map',
-      detail: `${lunaMapDraft.buttons?.length ?? 0} buttons`,
+      detail: `${lunaMapDraftRef.current.buttons?.length ?? 0} buttons`,
       delayMs: 4500,
       run: async () => {
-        const snapshot = lunaMapDraft;
+        const snapshot = lunaMapDraftRef.current;
         const before = lunaCommitted.current;
         if (JSON.stringify(snapshot) === JSON.stringify(before)) return;
         try {
@@ -77,6 +85,7 @@ export default function InfoClient({ partners, lunaMap, footer }: Props) {
             revert: async () => {
               await saveLunaMap(before);
               lunaCommitted.current = before;
+              lunaMapDraftRef.current = before;
               setLunaMapDraft(before);
               toast.show({ tone: 'success', title: 'Reverted', message: 'Luna Map' });
             },
@@ -91,10 +100,10 @@ export default function InfoClient({ partners, lunaMap, footer }: Props) {
   const queueFooterSave = () => {
     pending.queue({
       label: 'Save Footer',
-      detail: `${footerDraft.columns.length} columns · ${footerDraft.socialLinks.length} socials`,
+      detail: `${footerDraftRef.current.columns.length} columns · ${footerDraftRef.current.socialLinks.length} socials`,
       delayMs: 4500,
       run: async () => {
-        const snapshot = footerDraft;
+        const snapshot = footerDraftRef.current;
         const before = footerCommitted.current;
         if (JSON.stringify(snapshot) === JSON.stringify(before)) return;
         try {
@@ -107,6 +116,7 @@ export default function InfoClient({ partners, lunaMap, footer }: Props) {
             revert: async () => {
               await saveFooter(before);
               footerCommitted.current = before;
+              footerDraftRef.current = before;
               setFooterDraft(before);
               toast.show({ tone: 'success', title: 'Reverted', message: 'Footer' });
             },
@@ -119,11 +129,16 @@ export default function InfoClient({ partners, lunaMap, footer }: Props) {
   };
 
   const patchLunaMap = (next: LunaMapDoc) => {
+    // Sync-update the ref FIRST so the queued save (4.5s later) reads the
+    // freshest doc — setLunaMapDraft is async and would leave the closure
+    // capturing the previous state.
+    lunaMapDraftRef.current = next;
     setLunaMapDraft(next);
     queueLunaMapSave();
   };
 
   const patchFooter = (next: FooterConfig) => {
+    footerDraftRef.current = next;
     setFooterDraft(next);
     queueFooterSave();
   };
