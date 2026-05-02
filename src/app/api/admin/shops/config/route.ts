@@ -30,6 +30,19 @@ function sanitizeString(s: string, maxLen: number): string {
   return String(s).replace(/<[^>]*>/g, '').trim().slice(0, maxLen);
 }
 
+// Discord-bound content sanitizer. Unlike sanitizeString above, this DOES NOT
+// strip angle-bracket pairs — Discord content uses `<#channel>`, `<@&role>`,
+// `<:emoji:id>`, and lore lists like `<Osamh, Rengoku, ...>` that must survive
+// the round-trip. The data is destined for a Discord embed, never rendered as
+// HTML, so XSS via < > is not the threat model. Only strips C0/C1 control
+// chars (so the doc can't carry NULs / DEL etc) and enforces length.
+function sanitizeContent(s: string, maxLen: number): string {
+  return String(s)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    .trim()
+    .slice(0, maxLen);
+}
+
 function validateLuckboxTiers(tiers: unknown): { valid: boolean; error?: string; data?: LuckboxBoxConfig[] } {
   if (!Array.isArray(tiers)) return { valid: false, error: 'tiers must be an array' };
   if (tiers.length === 0) return { valid: false, error: 'At least one tier is required' };
@@ -417,7 +430,9 @@ export async function PUT(request: NextRequest) {
         const sanitizedButtons: LunaMapButton[] = [];
         for (let i = 0; i < buttons.length; i++) {
           const b = buttons[i];
-          const name = sanitizeString(String(b.name ?? ''), 80);
+          // sanitizeContent preserves <Osamh, ...>, <#channel>, <@&role>, <:emoji:id>
+          // — all critical Discord syntax that sanitizeString would silently delete.
+          const name = sanitizeContent(String(b.name ?? ''), 80);
           if (!name) return NextResponse.json({ error: `Button ${i}: name required` }, { status: 400 });
 
           const btnStyle = Number(b.btnStyle);
@@ -425,7 +440,7 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: `Button ${i}: btnStyle must be 1-4` }, { status: 400 });
           }
 
-          const emojiId = sanitizeString(String(b.emojiId ?? ''), 25);
+          const emojiId = sanitizeContent(String(b.emojiId ?? ''), 25);
           if (emojiId && !/^\d*$/.test(emojiId)) {
             return NextResponse.json({ error: `Button ${i}: emojiId must be digits only` }, { status: 400 });
           }
@@ -433,7 +448,7 @@ export async function PUT(request: NextRequest) {
           const btn: LunaMapButton = { name, btnStyle, emojiId };
 
           // Optional English name
-          if (b.name_en) btn.name_en = sanitizeString(String(b.name_en), 80);
+          if (b.name_en) btn.name_en = sanitizeContent(String(b.name_en), 80);
 
           if (b.menu && Array.isArray(b.menu)) {
             if (b.menu.length === 0 || b.menu.length > 25) {
@@ -442,10 +457,11 @@ export async function PUT(request: NextRequest) {
             const menuItems = [];
             for (let j = 0; j < b.menu.length; j++) {
               const m = b.menu[j];
-              const label = sanitizeString(String(m.label ?? ''), 80);
+              const label = sanitizeContent(String(m.label ?? ''), 80);
               if (!label) return NextResponse.json({ error: `Button ${i} menu ${j}: label required` }, { status: 400 });
-              const content = sanitizeString(String(m.content ?? ''), 4000);
-              let image = sanitizeString(String(m.image ?? ''), 500);
+              const content = sanitizeContent(String(m.content ?? ''), 4000);
+              // Image URLs never contain < >, so plain length-cap + URL parse is fine.
+              let image = sanitizeContent(String(m.image ?? ''), 500);
               if (image) {
                 try {
                   const parsed = new URL(image);
@@ -453,16 +469,16 @@ export async function PUT(request: NextRequest) {
                 } catch { image = ''; }
               }
               // Optional English fields
-              const label_en = m.label_en ? sanitizeString(String(m.label_en), 80) : undefined;
-              const content_en = m.content_en ? sanitizeString(String(m.content_en), 4000) : undefined;
+              const label_en = m.label_en ? sanitizeContent(String(m.label_en), 80) : undefined;
+              const content_en = m.content_en ? sanitizeContent(String(m.content_en), 4000) : undefined;
               menuItems.push({ label, content, image, ...(label_en ? { label_en } : {}), ...(content_en ? { content_en } : {}) });
             }
             btn.menu = menuItems;
           } else {
-            if (b.content) btn.content = sanitizeString(String(b.content), 4000);
-            if (b.content_en) btn.content_en = sanitizeString(String(b.content_en), 4000);
+            if (b.content) btn.content = sanitizeContent(String(b.content), 4000);
+            if (b.content_en) btn.content_en = sanitizeContent(String(b.content_en), 4000);
             if (b.image) {
-              let image = sanitizeString(String(b.image), 500);
+              let image = sanitizeContent(String(b.image), 500);
               try {
                 const parsed = new URL(image);
                 if (!['http:', 'https:'].includes(parsed.protocol)) image = '';
@@ -475,11 +491,11 @@ export async function PUT(request: NextRequest) {
         }
 
         const sanitizedMap: LunaMapConfig = {
-          title: sanitizeString(String(mapConfig.title ?? ''), 200),
-          ...(mapConfig.title_en ? { title_en: sanitizeString(String(mapConfig.title_en), 200) } : {}),
-          description: sanitizeString(String(mapConfig.description ?? ''), 4000),
-          ...(mapConfig.description_en ? { description_en: sanitizeString(String(mapConfig.description_en), 4000) } : {}),
-          image: sanitizeString(String(mapConfig.image ?? ''), 500),
+          title: sanitizeContent(String(mapConfig.title ?? ''), 200),
+          ...(mapConfig.title_en ? { title_en: sanitizeContent(String(mapConfig.title_en), 200) } : {}),
+          description: sanitizeContent(String(mapConfig.description ?? ''), 4000),
+          ...(mapConfig.description_en ? { description_en: sanitizeContent(String(mapConfig.description_en), 4000) } : {}),
+          image: sanitizeContent(String(mapConfig.image ?? ''), 500),
           buttons: sanitizedButtons,
         };
 
