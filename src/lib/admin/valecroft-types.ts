@@ -8,10 +8,15 @@ export const PROPERTY_TIERS: PropertyTier[] = ['shack', 'cottage', 'villa', 'man
 /** Tiers the public Cassian shop is allowed to list. `special` is excluded. */
 export const PUBLIC_PROPERTY_TIERS: PropertyTier[] = ['shack', 'cottage', 'villa', 'manor', 'palace'];
 
-// `forbidden` is a above-legendary item rarity. Applies to artifact / horse /
+// `forbidden` is an above-legendary item rarity. Applies to artifact / horse /
 // sword (all 3 item categories), NOT to property tiers.
-export type Rarity = 'common' | 'rare' | 'epic' | 'unique' | 'legendary' | 'forbidden';
-export const RARITIES: Rarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'forbidden'];
+// `special` is a Mastermind-only tier — star emoji, never listed in the
+// Antiques / Blacksmith / Stable storefront, can only be granted via this
+// dashboard or /admin-item. Sits above forbidden in the canonical ladder.
+export type Rarity = 'common' | 'rare' | 'epic' | 'unique' | 'legendary' | 'forbidden' | 'special';
+export const RARITIES: Rarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'forbidden', 'special'];
+/** Rarities the public Valecroft storefront is allowed to list. Excludes `special`. */
+export const PUBLIC_RARITIES: Rarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'forbidden'];
 
 export type ItemCategory = 'artifact' | 'horse' | 'sword';
 export const ITEM_CATEGORIES: ItemCategory[] = ['artifact', 'horse', 'sword'];

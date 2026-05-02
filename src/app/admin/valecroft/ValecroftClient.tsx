@@ -1114,6 +1114,7 @@ function rarityColor(r: Rarity): string {
     case 'unique':    return '#FF3366';
     case 'legendary': return '#FFD54F';
     case 'forbidden': return '#B71C1C'; // deep crimson — above-legendary
+    case 'special':   return '#FFD700'; // gold — Mastermind-only ⭐
   }
 }
 function stateColor(s: string): string {
