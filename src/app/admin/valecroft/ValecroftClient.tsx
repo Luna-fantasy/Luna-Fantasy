@@ -5,8 +5,8 @@ import { onButtonKey } from '../_components/a11y';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useToast } from '../_components/Toast';
 import {
-  PROPERTY_TIERS, RARITIES, ITEM_CATEGORIES,
-  type ItemCatalogEntry, type PropertyCatalogEntry,
+  PROPERTY_TIERS, RARITIES, ITEM_CATEGORIES, DEFAULT_TIER_SLOT_RULES,
+  type ItemCatalogEntry, type PropertyCatalogEntry, type SlotRule,
   type UserPropertyRow, type PropertyTier, type Rarity, type ItemCategory,
 } from '@/lib/admin/valecroft-types';
 import FamilyHomePanel from './FamilyHomePanel';
@@ -349,6 +349,32 @@ function PropertyForm({ initial, onClose, onSaved }: {
   const [active, setActive] = useState(initial?.active !== false);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [ownerCount, setOwnerCount] = useState<number | null>(null);
+
+  // Slot rule override · null/undefined = inherit tier defaults (with the
+  // bot's price-rank scaling); a SlotRule = freeze this exact allocation.
+  // The bot's resolveScaledSlotRule treats any non-null override as
+  // authoritative — no scaling, no merging.
+  const [overrideEnabled, setOverrideEnabled] = useState<boolean>(!!initial?.slot_rules_override);
+  const [overrideTotal, setOverrideTotal] = useState<string>(
+    String(initial?.slot_rules_override?.total ?? DEFAULT_TIER_SLOT_RULES[initial?.tier ?? 'shack'].total),
+  );
+  const [overrideByRarity, setOverrideByRarity] = useState<Partial<Record<Rarity, string>>>(() => {
+    const seed = initial?.slot_rules_override?.by_rarity ?? DEFAULT_TIER_SLOT_RULES[initial?.tier ?? 'shack'].by_rarity;
+    const out: Partial<Record<Rarity, string>> = {};
+    for (const r of RARITIES) out[r] = String(seed[r] ?? 0);
+    return out;
+  });
+
+  // Pull the live owner count once so the admin sees how many users will be
+  // affected by a shrink. Read-only — doesn't block save.
+  useEffect(() => {
+    if (!isEdit || !initial?.key) return;
+    fetch(`/api/admin/v2/valecroft/properties/${encodeURIComponent(initial.key)}/owners`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && Array.isArray(d.rows)) setOwnerCount(d.rows.length); })
+      .catch(() => { /* non-fatal · just hides the warning */ });
+  }, [isEdit, initial?.key]);
 
   // Resolved key for the R2 upload path. In edit mode the key is locked
   // to the existing one; in create mode we use the user-typed key, or
@@ -356,8 +382,47 @@ function PropertyForm({ initial, onClose, onSaved }: {
   const resolvedKey = isEdit ? initial!.key : (key.trim() ? slugify(key) : slugify(name));
   const uploadDisabledHint = !resolvedKey ? 'Type a name first — it becomes the upload filename.' : null;
 
+  // Build the override SlotRule from form state, omitting empty buckets
+  // (matches what sanitizeSlotRule would produce server-side). Returns null
+  // when override is disabled — server reads null as "clear, inherit tier
+  // defaults". Mirror of server logic so the live preview stays honest.
+  function buildOverrideRule(): SlotRule | null {
+    if (!overrideEnabled) return null;
+    const total = Math.floor(Number(overrideTotal) || 0);
+    if (!Number.isFinite(total) || total <= 0) return null;
+    const by_rarity: Partial<Record<Rarity, number>> = {};
+    for (const r of RARITIES) {
+      const n = Math.floor(Number(overrideByRarity[r]) || 0);
+      if (n > 0) by_rarity[r] = n;
+    }
+    return { total, by_rarity };
+  }
+
+  // Live preview of what the form is about to submit. Derived per-render so
+  // the warnings stay in sync with every keystroke.
+  const previewRule = buildOverrideRule();
+  const tierDefault = DEFAULT_TIER_SLOT_RULES[tier];
+  const nonWildcardSum = previewRule
+    ? RARITIES
+        .filter(r => r !== 'forbidden' && r !== 'special')
+        .reduce((acc, r) => acc + (previewRule.by_rarity[r] ?? 0), 0)
+    : 0;
+  const overflow = previewRule ? nonWildcardSum - previewRule.total : 0;
+  const wildcardSlots = previewRule ? Math.max(0, previewRule.total - nonWildcardSum) : 0;
+  // Block save if the override is enabled but invalid — mirrors the
+  // server's null-return so we never POST garbage.
+  const overrideInvalid = overrideEnabled && (
+    !previewRule || previewRule.total < 1 || previewRule.total > 50 || overflow > 0
+  );
+
   async function save() {
     setErr(null);
+    if (overrideInvalid) {
+      setErr(overflow > 0
+        ? `Slot rule invalid: per-rarity allocations sum to ${nonWildcardSum} but total is ${previewRule!.total}. Reduce a bucket or raise the total.`
+        : 'Slot rule invalid: total must be 1–50.');
+      return;
+    }
     setSaving(true);
     try {
       const token = await fetchCsrf();
@@ -366,6 +431,11 @@ function PropertyForm({ initial, onClose, onSaved }: {
         price: Number(price) || 0,
         base_income: Number(base_income) || 0,
         image_url, description, active,
+        // Pass null to CLEAR the override (revert to tier defaults + price
+        // scaling), or a SlotRule to freeze a custom allocation. The server
+        // re-validates with sanitizeSlotRule and will null-out anything
+        // malformed.
+        slot_rules_override: previewRule,
       };
       const url = isEdit
         ? `/api/admin/v2/valecroft/properties/${encodeURIComponent(initial!.key)}`
@@ -415,9 +485,126 @@ function PropertyForm({ initial, onClose, onSaved }: {
           </label>
         </div>
       </div>
+
+      {/* ── Slot rules override ───────────────────────────────────────────── */}
+      <div style={{
+        marginTop: 18,
+        padding: '14px 16px',
+        borderRadius: 10,
+        background: 'rgba(91,108,255,0.06)',
+        border: '1px solid rgba(91,108,255,0.18)',
+      }}>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 500, marginBottom: 8 }}>
+          <input
+            type="checkbox"
+            checked={overrideEnabled}
+            onChange={e => setOverrideEnabled(e.target.checked)}
+          />
+          Custom slot rules (override tier defaults)
+        </label>
+        <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 12 }}>
+          Off = the bot uses the <strong>{tier}</strong> tier defaults
+          ({tierDefault.total} slots, scaled +1 per price-rank within tier).
+          On = freeze the exact total + per-rarity allocation below. Forbidden
+          and special items always slot anywhere — only the total cap applies
+          to them. The bot picks up changes within ~60s of save.
+        </div>
+
+        {overrideEnabled && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, alignItems: 'end' }}>
+              <Label>Total slots (1–50)
+                <input
+                  style={inp}
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={overrideTotal}
+                  onChange={e => setOverrideTotal(e.target.value)}
+                />
+              </Label>
+              <div style={{ fontSize: 12, opacity: 0.7 }}>
+                Tier default: <strong>{tierDefault.total}</strong> · Players who
+                already own this property keep any items they’ve placed even if
+                you shrink slots, but new placements past the new cap will fail.
+                {ownerCount !== null && ownerCount > 0 && (
+                  <div style={{ marginTop: 6, color: '#FFB347' }}>
+                    ⚠️ <strong>{ownerCount}</strong> user{ownerCount === 1 ? '' : 's'} currently own this property — review their item placements before shrinking.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 6 }}>
+                Per-rarity allocation (0 = none allowed)
+              </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                gap: 8,
+              }}>
+                {RARITIES.map(r => {
+                  const isWildcard = r === 'forbidden' || r === 'special';
+                  return (
+                    <label
+                      key={r}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                        padding: '6px 8px',
+                        borderRadius: 6,
+                        background: 'rgba(0,0,0,0.18)',
+                        border: `1px solid ${rarityColor(r)}33`,
+                        opacity: isWildcard ? 0.55 : 1,
+                      }}
+                      title={isWildcard ? `${r} items slot anywhere — this number is informational only.` : undefined}
+                    >
+                      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.05em', color: rarityColor(r), textTransform: 'uppercase' }}>
+                        {r}
+                      </span>
+                      <input
+                        style={{ ...inp, padding: '4px 6px', fontSize: 13 }}
+                        type="number"
+                        min={0}
+                        max={50}
+                        value={overrideByRarity[r] ?? '0'}
+                        onChange={e => setOverrideByRarity(prev => ({ ...prev, [r]: e.target.value }))}
+                        disabled={isWildcard}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Live validation feedback */}
+            <div style={{ marginTop: 12, fontSize: 12 }}>
+              {overflow > 0 ? (
+                <div style={{ color: '#ff6b6b' }}>
+                  ❌ Per-rarity allocations sum to <strong>{nonWildcardSum}</strong>, but the total cap is <strong>{previewRule!.total}</strong>. Reduce a bucket or raise the total.
+                </div>
+              ) : previewRule ? (
+                <div style={{ color: '#8be39b' }}>
+                  ✓ {previewRule.total} total slot{previewRule.total === 1 ? '' : 's'} ·
+                  {' '}{nonWildcardSum} reserved for specific rarities ·
+                  {' '}{wildcardSlots} open slot{wildcardSlots === 1 ? '' : 's'} (any rarity, including forbidden/special)
+                </div>
+              ) : null}
+            </div>
+          </>
+        )}
+      </div>
+
       <div style={{ display: 'flex', gap: 10, marginTop: 18, justifyContent: 'flex-end' }}>
         <button style={btnSecondary} onClick={onClose}>Cancel</button>
-        <button style={btnPrimary} onClick={save} disabled={saving || !name}>{saving ? 'Saving...' : (isEdit ? 'Save' : 'Create')}</button>
+        <button
+          style={btnPrimary}
+          onClick={save}
+          disabled={saving || !name || overrideInvalid}
+          title={overrideInvalid ? 'Slot rule invalid — fix the highlighted issue first.' : undefined}
+        >{saving ? 'Saving...' : (isEdit ? 'Save' : 'Create')}</button>
       </div>
     </div>
   );

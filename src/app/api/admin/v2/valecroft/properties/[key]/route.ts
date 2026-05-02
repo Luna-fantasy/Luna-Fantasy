@@ -79,6 +79,15 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
   }
 }
 
+// MUST stay in sync with the sister sanitizer in ../route.ts. Accepts ALL
+// item rarities (forbidden/secret/special are valid), enforces sum of
+// non-wildcard buckets ≤ total. Returning null tells the PATCH caller to
+// CLEAR the override (revert to tier defaults). Returning a valid SlotRule
+// tells the bot's resolveScaledSlotRule to skip price scaling and use this
+// allocation verbatim.
+const ALL_RARITIES = ['common', 'rare', 'epic', 'unique', 'legendary', 'secret', 'forbidden', 'special'] as const;
+const WILDCARD_RARITIES: ReadonlySet<string> = new Set(['forbidden', 'special']);
+
 function sanitizeSlotRule(raw: unknown): SlotRule | null {
   if (raw === null) return null;
   if (!raw || typeof raw !== 'object') return null;
@@ -86,10 +95,16 @@ function sanitizeSlotRule(raw: unknown): SlotRule | null {
   const total = Number(obj.total);
   if (!Number.isFinite(total) || total <= 0 || total > 50) return null;
   const by_rarity: Partial<Record<string, number>> = {};
+  let nonWildcardSum = 0;
   for (const [k, v] of Object.entries(obj.by_rarity ?? {})) {
-    if (!['common', 'rare', 'epic', 'unique', 'legendary'].includes(k)) continue;
+    if (!(ALL_RARITIES as readonly string[]).includes(k)) continue;
     const n = Number(v);
-    if (Number.isFinite(n) && n >= 0 && n <= 50) by_rarity[k] = Math.floor(n);
+    if (!Number.isFinite(n) || n < 0 || n > 50) continue;
+    const floored = Math.floor(n);
+    if (floored === 0) continue;
+    by_rarity[k] = floored;
+    if (!WILDCARD_RARITIES.has(k)) nonWildcardSum += floored;
   }
+  if (nonWildcardSum > Math.floor(total)) return null;
   return { total: Math.floor(total), by_rarity: by_rarity as any };
 }
