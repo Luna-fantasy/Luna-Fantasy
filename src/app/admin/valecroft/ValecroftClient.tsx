@@ -499,13 +499,34 @@ function ItemsTab({ category }: { category: ItemCategory }) {
                       : <div style={{ width: 90, height: 90, borderRadius: 8, background: 'rgba(255,255,255,0.04)', flexShrink: 0 }} />
                     }
                     <div>
-                      <div style={{ fontWeight: 500, fontSize: 15 }}>{r.name}</div>
+                      <div style={{ fontWeight: 500, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {r.name}
+                        {r.rarity === 'special' && (
+                          <span
+                            title="Special-tier items are admin-grant-only. They are hidden from the Valecroft storefront and players cannot buy them."
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              letterSpacing: '0.06em',
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              background: 'rgba(255, 215, 0, 0.18)',
+                              color: '#FFD700',
+                              border: '1px solid rgba(255, 215, 0, 0.35)',
+                            }}
+                          >⭐ ADMIN-ONLY</span>
+                        )}
+                      </div>
                       <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>{r.key}</div>
                     </div>
                   </div>
                 </td>
                 <td style={{ ...td, color: rarityColor(r.rarity), fontWeight: 500 }}>{r.rarity}</td>
-                <td style={td}>{r.price.toLocaleString()}</td>
+                <td style={td}>
+                  {r.rarity === 'special'
+                    ? <span style={{ opacity: 0.5, fontStyle: 'italic' }}>—</span>
+                    : r.price.toLocaleString()}
+                </td>
                 <td style={td}>+{r.income_bonus.toLocaleString()}</td>
                 <td style={td}>{r.active ? '✓' : '—'}</td>
                 <td style={td}>
