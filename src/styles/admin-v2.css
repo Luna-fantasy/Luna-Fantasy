@@ -117,6 +117,19 @@ body:has(.admin-v2-shell) .admin-particles-container {
   --av-shell-gap: 16px;
   --av-hourly-h: 64px;
 
+  /* ── Phone-extension tokens (Phase 0, 2026-05) ──
+     Touch target floor (Apple HIG = 44px), iPhone safe-area insets, modal
+     width clamp, mobile type floor. Used inside the @media (max-width: 720px)
+     block at the bottom of this file — desktop never references them. */
+  --av-touch: 44px;
+  --av-touch-sm: 40px;
+  --av-text-mobile-floor: 12px;
+  --av-modal-w: min(720px, calc(100vw - 24px));
+  --av-safe-top: env(safe-area-inset-top, 0px);
+  --av-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --av-safe-left: env(safe-area-inset-left, 0px);
+  --av-safe-right: env(safe-area-inset-right, 0px);
+
   /* Muted gold accent — used on theme card markers and metal-tone chips */
   --av-ingot: #c9a961;
 
@@ -192,7 +205,7 @@ body:has(.admin-v2-shell) .admin-particles-container {
   font-size: var(--av-text-md);
   color: var(--text-primary);
   background: var(--bg-void);
-  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   isolation: isolate;
 }
@@ -353,7 +366,7 @@ body:has(.admin-v2-shell) .admin-particles-container {
      the screen. `min-height: 0` lets flex children collapse so the overflow
      container actually clips. Previously this was a fixed height + overflow:
      hidden which cut off the footer on short viewports. */
-  max-height: calc(100vh - var(--av-shell-gap) * 2);
+  max-height: calc(100dvh - var(--av-shell-gap) * 2);
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
@@ -10257,7 +10270,10 @@ details[open] .av-chaltext-vars-summary::before {
 }
 
 /* Create dialog */
-.av-challenges-create-dialog { max-width: 760px; }
+/* Phone-safe: width clamped to viewport so the dialog never clips off-screen
+   on iPhone (375–430 px). Desktop sizing unchanged because min() picks 760 on
+   anything ≥ 784 px wide. */
+.av-challenges-create-dialog { width: min(760px, calc(100vw - 24px)); max-width: 760px; }
 .av-challenges-preview {
   padding: 14px 16px;
   border-radius: 12px;
@@ -10821,7 +10837,7 @@ details[open] .av-chaltext-vars-summary::before {
 .av-info-preview strong { display: block; font-size: 14px; color: var(--text); }
 .av-info-preview-type { font-size: 12px; color: var(--text-muted); }
 
-.av-info-partner-dialog { max-width: 780px; }
+.av-info-partner-dialog { width: min(780px, calc(100vw - 24px)); max-width: 780px; }
 .av-info-partner-fields {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px 14px;
@@ -11023,7 +11039,7 @@ details[open] .av-chaltext-vars-summary::before {
   justify-content: flex-end;
 }
 
-.av-info-button-dialog { max-width: 880px; }
+.av-info-button-dialog { width: min(880px, calc(100vw - 24px)); max-width: 880px; }
 .av-info-button-preview {
   display: flex;
   align-items: center;
@@ -11442,7 +11458,7 @@ details[open] .av-chaltext-vars-summary::before {
   -webkit-backdrop-filter: blur(10px);
   position: sticky;
   top: var(--av-shell-gap);
-  max-height: calc(100vh - var(--av-shell-gap) * 2 - var(--av-topbar-h));
+  max-height: calc(100dvh - var(--av-shell-gap) * 2 - var(--av-topbar-h));
   overflow-y: auto;
 }
 .av-canvas-picker-botrow {
@@ -11820,6 +11836,7 @@ details[open] .av-chaltext-vars-summary::before {
 .av-canvas-element-type[data-type="rect"]   { background: color-mix(in srgb, #f97316 30%, transparent); }
 
 .av-media-test-dialog {
+  width: min(520px, calc(100vw - 24px));
   max-width: 520px;
   background: linear-gradient(180deg, #161a2e 0%, #0c0f1f 100%);
   border: 1px solid rgba(140, 200, 255, 0.16);
@@ -17973,7 +17990,7 @@ body > div[role="dialog"] select option:hover {
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
   width: min(560px, calc(100vw - 40px));
-  max-height: calc(100vh - 80px);
+  max-height: calc(100dvh - 80px);
   display: flex;
   flex-direction: column;
   animation: avPopIn 0.2s var(--av-bounce);
@@ -19011,13 +19028,20 @@ body > div[role="dialog"] select option:hover {
     top: 0;
     left: 0;
     width: min(88vw, 320px);
-    height: 100vh;
-    max-height: 100vh;
+    /* `100dvh` follows the dynamic viewport, so the drawer doesn't get
+       chopped when iOS Safari's URL bar collapses/expands. Old `100vh`
+       was the static viewport — fine on Android/desktop, glitchy on iOS. */
+    height: 100dvh;
+    max-height: 100dvh;
     border-radius: 0;
     z-index: 200;
     transform: translateX(-100%);
     transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
     box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.85);
+    /* Respect iPhone notch + home indicator so logo and bottom controls
+       don't sit underneath the system chrome. */
+    padding-top: var(--av-safe-top);
+    padding-bottom: var(--av-safe-bottom);
   }
   .admin-v2-shell .av-sidebar[data-mobile-open="true"] { transform: translateX(0); }
 
@@ -19172,14 +19196,15 @@ body > div[role="dialog"] select option:hover {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 
-  /* Bump touch-target sizes for buttons */
+  /* Bump touch-target sizes to match Apple HIG (44 px). The previous floor of
+     40 px sits inside the 30-50 % tap-miss range that iOS measures. */
   .av-btn,
   .av-btn-sm {
-    min-height: 40px;
+    min-height: var(--av-touch);
     padding-inline: 14px;
     font-size: 14px;
   }
-  .av-btn-sm { min-height: 36px; }
+  .av-btn-sm { min-height: var(--av-touch-sm); }
 
   /* Inputs: readable + no iOS zoom (font-size ≥16px) */
   .av-audit-input,
@@ -19293,3 +19318,168 @@ body > div[role="dialog"] select option:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
+
+/* ============================================================
+   PHONE EXTENSION (Phase 0, 2026-05)
+   ============================================================
+   Phone-only refinements layered on top of the existing 900 px mobile shell.
+   The 900 px block already converts the sidebar into a drawer, makes most
+   dialogs into bottom sheets, and collapses grids to 1fr — that pass works
+   well on tablet portrait but leaves several iOS-specific issues:
+     - tap-highlight gray flash from Safari double-painting press states
+     - no `:active` feedback because the design only used `:hover`
+     - 8/9/10/11 px font sizes scattered through dense components are
+       unreadable at 375–430 px viewports
+     - bottom-sheet dialogs at 92 vh swallow the whole screen — no thumb room
+     - notch / home indicator content overlap on iPhone X+
+   This block fixes all of the above. Everything inside is additive — desktop
+   and tablet are not touched. ============================================ */
+
+@media (max-width: 720px) {
+  /* Kill iOS Safari's default gray tap-highlight; we provide our own
+     :active feedback below so users still see something happen on tap. */
+  .admin-v2-shell {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Safe-area padding on the sticky topbar — without this, content slides
+     under the notch on iPhone X and newer in landscape. The 900 px block
+     already moves the sidebar drawer into safe area; topbar was missed. */
+  .av-topbar {
+    padding-top: max(8px, var(--av-safe-top));
+    padding-left: max(8px, var(--av-safe-left));
+    padding-right: max(8px, var(--av-safe-right));
+  }
+
+  /* Press feedback for every tappable admin element. The existing styling
+     used `:hover` to surface row/button highlights — on touch, `:hover` is
+     simulated and only fires AFTER the tap completes, so the user sees
+     nothing during the tap. Adding `:active` parity gives an instant cue
+     that the press registered. The `transform: scale` keeps the tap-target
+     position exactly where the user pressed. */
+  .av-btn:active,
+  .av-btn-sm:active,
+  .av-icon-btn:active,
+  .av-list-item:active,
+  .av-list-row:active,
+  .av-row:active,
+  .av-table-row:active,
+  .av-audit-row:active,
+  .av-audit-row-trigger:active,
+  .av-nav-item:active,
+  .av-tab:active,
+  .av-cmdk-btn:active,
+  .av-topbar-pill:active,
+  .av-mobile-nav-toggle:active,
+  .av-sidebar-mobile-close:active,
+  [role="button"]:active {
+    opacity: 0.72;
+    transform: scale(0.985);
+    transition: opacity 80ms ease-out, transform 80ms ease-out;
+  }
+
+  /* Type-floor: every selector below was hardcoded to 8/9/10/11 px in this
+     file. At 12 px on a 375 px viewport at arm's length, this is the
+     readability floor — anything smaller is squinting. !important is scoped
+     to this block so desktop sizes are untouched. List grew from a grep of
+     `font-size: (?:8|9|10|11)px` — extend it whenever a new tight component
+     ships, or upgrade a screen-tier later. */
+  .admin-v2-shell .av-text-cap,
+  .admin-v2-shell .av-text-xs,
+  .admin-v2-shell .av-stat-trend,
+  .admin-v2-shell .av-stat-cap,
+  .admin-v2-shell .av-theme-toggle-meta span,
+  .admin-v2-shell .av-audit-cell-ts,
+  .admin-v2-shell .av-audit-cell-target,
+  .admin-v2-shell .av-audit-cell-admin small,
+  .admin-v2-shell .av-pulse-actor,
+  .admin-v2-shell .av-pulse-target,
+  .admin-v2-shell .av-pulse-amount,
+  .admin-v2-shell .av-pulse-time,
+  .admin-v2-shell .av-flows-net span,
+  .admin-v2-shell .av-jd-head,
+  .admin-v2-shell .av-jd-empty > span,
+  .admin-v2-shell .av-deploy-target,
+  .admin-v2-shell .av-health-error small,
+  .admin-v2-shell .av-card-meta,
+  .admin-v2-shell .av-stone-meta,
+  .admin-v2-shell .av-user-meta,
+  .admin-v2-shell .av-row-meta,
+  .admin-v2-shell .av-chip-cap,
+  .admin-v2-shell .av-tag,
+  .admin-v2-shell small {
+    font-size: var(--av-text-mobile-floor) !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Bottom-sheet dialog tuning — the 900 px block forces every dialog to
+     `width: 100vw; max-height: 92vh`, which on iPhone leaves only ~8 vh
+     (≈70 px) of background visible above the sheet. That feels oppressive
+     and there's no thumb room above the sheet to dismiss-by-tap. Cap at
+     85 dvh and add safe-area padding so action buttons clear the home bar. */
+  .av-itemdialog,
+  .av-moddialog,
+  .av-cardedit,
+  .av-carddet,
+  .av-peek,
+  .av-cmdk,
+  .av-undo,
+  .av-log-drawer,
+  .av-shortcuts-panel,
+  .av-theme-picker-panel {
+    max-height: min(85dvh, 700px) !important;
+    padding-bottom: max(16px, var(--av-safe-bottom)) !important;
+  }
+
+  /* Page header tighter still on phone — the 900 px block already shrinks
+     the title; this just trims top padding so above-the-fold density is
+     better and the first stat card is in view on initial paint. */
+  .av-page-header {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  /* Audit / pulse / flows dense rows: bump tap-target height and gap so
+     a fingertip can hit a row without nudging the next one. The 900 px
+     block ensures these stack vertically; this just makes each row easier
+     to tap. */
+  .av-audit-row,
+  .av-audit-row-trigger,
+  .av-pulse-row,
+  .av-flows-row,
+  .av-jd-item,
+  .av-row,
+  .av-list-row {
+    min-height: var(--av-touch);
+    padding-block: 10px;
+  }
+
+  /* Peek panel head: keep the close button reachable above the iPhone notch
+     in landscape. The 900 px block already converts peek to a bottom sheet,
+     so the close button is at TOP of the sheet — but landscape iPhone has
+     a notch on the LEFT, which the head must clear. */
+  .av-peek-head {
+    padding-left: max(20px, var(--av-safe-left));
+    padding-right: max(20px, var(--av-safe-right));
+  }
+  .av-peek-close {
+    /* Promote the close button to a 44 px hit area without resizing the
+       visible 28×28 chip — touch-action: manipulation kills the iOS
+       300 ms tap delay so close feels instant. */
+    width: var(--av-touch);
+    height: var(--av-touch);
+    font-size: 22px;
+    touch-action: manipulation;
+  }
+
+  /* Anywhere inside the admin shell that uses a tooltip/help-icon — make
+     sure it's tappable, not just hoverable. Phase 1 will replace hover
+     tooltips with tap-to-toggle; until then, expand the hit area so users
+     don't accidentally tap the parent row. */
+  .admin-v2-shell .av-tooltip-trigger,
+  .admin-v2-shell [data-tooltip] {
+    min-width: 28px;
+    min-height: 28px;
+  }
+}
+
