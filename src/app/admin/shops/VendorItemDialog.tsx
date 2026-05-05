@@ -15,6 +15,15 @@ export interface VendorItem {
   roleId?: string;
   type?: string;
   gradientColors?: string[];
+  // Seluna mirror fields — set when this row is a locked mirror of a Seluna
+  // background. The Mells UI must render these read-only and the API must
+  // never let them be removed via the standard vendor PUT path.
+  seluna_locked?: boolean;
+  seluna_origin_id?: string;
+  seluna_archived?: boolean;
+  seluna_background_type?: 'profile' | 'rank' | 'both';
+  backgroundUrl?: string;
+  rankBackgroundUrl?: string;
 }
 
 interface Props {

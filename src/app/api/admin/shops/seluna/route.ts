@@ -5,6 +5,8 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import clientPromise from '@/lib/mongodb';
+import { reconcileSelunaMirrors, type SelunaMirrorSourceItem } from '@/lib/admin/seluna-mells-mirror';
+import { mirrorMellsToButler } from '@/lib/admin/mells-butler-mirror';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +24,14 @@ interface SelunaItem {
   roleId?: string;
   imageUrl?: string;
   description?: string;
+  // Background-only fields. `backgroundType` decides which URL(s) are required
+  // and how Jester/Butler resolve the purchase. `archived` replaces hard-delete
+  // for backgrounds — IDs are permanent and never reused.
+  backgroundType?: 'profile' | 'rank' | 'both';
+  backgroundUrl?: string;
+  rankBackgroundUrl?: string;
+  archived?: boolean;
+  archivedAt?: number;
 }
 
 interface EnrichedSelunaItem extends SelunaItem {
@@ -50,7 +60,19 @@ function validateItems(items: unknown): string | null {
     if (typeof it.stock !== 'number' || it.stock < -1 || it.stock > 100_000) return `items[${i}].stock must be -1 (unlimited) or 0-100,000`;
     if (it.type === 'role' && (!it.roleId || typeof it.roleId !== 'string')) return `items[${i}].roleId required for role items`;
     if (it.type === 'tickets' && (typeof it.amount !== 'number' || it.amount < 1)) return `items[${i}].amount required for ticket items`;
-    if (it.type === 'background' && (!it.imageUrl || typeof it.imageUrl !== 'string')) return `items[${i}].imageUrl required for background items`;
+    if (it.type === 'background') {
+      const bgType = (it.backgroundType ?? 'profile') as string;
+      if (!['profile', 'rank', 'both'].includes(bgType)) {
+        return `items[${i}].backgroundType must be profile|rank|both`;
+      }
+      const hasProfileUrl = typeof it.backgroundUrl === 'string' && it.backgroundUrl.length > 0;
+      const hasRankUrl = typeof it.rankBackgroundUrl === 'string' && it.rankBackgroundUrl.length > 0;
+      if (bgType === 'profile' && !hasProfileUrl) return `items[${i}].backgroundUrl required for profile background`;
+      if (bgType === 'rank' && !hasRankUrl) return `items[${i}].rankBackgroundUrl required for rank background`;
+      if (bgType === 'both' && (!hasProfileUrl || !hasRankUrl)) {
+        return `items[${i}] requires both backgroundUrl and rankBackgroundUrl when backgroundType is "both"`;
+      }
+    }
   }
   return null;
 }
@@ -98,7 +120,10 @@ async function buildThumbnailResolver(db: any) {
       return stoneImages.get(item.name.toLowerCase()) ?? null;
     }
     if (t === 'background') {
-      return item.imageUrl ?? null;
+      // Prefer the explicit profile bg, fall back to rank, then legacy imageUrl
+      // for backwards compatibility with items added before backgroundType was
+      // introduced.
+      return item.backgroundUrl ?? item.rankBackgroundUrl ?? item.imageUrl ?? null;
     }
     if (t === 'tickets') {
       return 'https://assets.lunarian.app/jester/shops/zoldar_mooncarver.png';
@@ -218,13 +243,14 @@ export async function POST(req: NextRequest) {
   if (!allowed) return rateLimitResponse(retryAfterMs);
 
   let body: {
-    action: 'set_items' | 'set_schedule' | 'force_open' | 'force_close' | 'set_channels' | 'set_settings';
+    action: 'set_items' | 'set_schedule' | 'force_open' | 'force_close' | 'set_channels' | 'set_settings' | 'archive_item' | 'unarchive_item';
     items?: SelunaItem[];
     schedule?: { duration_hours: number; reappear_days: number };
     duration_hours?: number;
     channels?: string[];
     guildId?: string;
     settings?: { title?: string; description?: string; image?: string; imageVersion?: number };
+    itemId?: string;
   };
   try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
 
@@ -425,28 +451,72 @@ export async function POST(req: NextRequest) {
     if (body.action === 'set_items') {
       const items = body.items;
       if (!items) return NextResponse.json({ error: 'items required' }, { status: 400 });
-      const cleaned = items.map((it) => ({
-        id: sanitizeString(it.id, 60).replace(/[^a-z0-9_-]/gi, ''),
-        type: it.type,
-        name: sanitizeString(it.name, 100),
-        price: Math.floor(Number(it.price ?? 0)),
-        stock: Math.floor(Number(it.stock ?? 0)),
-        rarity: it.rarity ? sanitizeString(it.rarity, 20) : undefined,
-        attack: typeof it.attack === 'number' ? Math.floor(it.attack) : undefined,
-        amount: typeof it.amount === 'number' ? Math.floor(it.amount) : undefined,
-        roleId: it.roleId ? sanitizeString(it.roleId, 25) : undefined,
-        imageUrl: it.imageUrl ? sanitizeString(it.imageUrl, 500) : undefined,
-        description: it.description ? sanitizeString(it.description, 300) : undefined,
-      }));
+      const cleaned = items.map((it) => {
+        const bgType = it.type === 'background'
+          ? ((it.backgroundType ?? 'profile') as 'profile' | 'rank' | 'both')
+          : undefined;
+        return {
+          id: sanitizeString(it.id, 60).replace(/[^a-z0-9_-]/gi, ''),
+          type: it.type,
+          name: sanitizeString(it.name, 100),
+          price: Math.floor(Number(it.price ?? 0)),
+          stock: Math.floor(Number(it.stock ?? 0)),
+          rarity: it.rarity ? sanitizeString(it.rarity, 20) : undefined,
+          attack: typeof it.attack === 'number' ? Math.floor(it.attack) : undefined,
+          amount: typeof it.amount === 'number' ? Math.floor(it.amount) : undefined,
+          roleId: it.roleId ? sanitizeString(it.roleId, 25) : undefined,
+          imageUrl: it.imageUrl ? sanitizeString(it.imageUrl, 500) : undefined,
+          description: it.description ? sanitizeString(it.description, 300) : undefined,
+          backgroundType: bgType,
+          backgroundUrl: it.type === 'background' && it.backgroundUrl
+            ? sanitizeString(it.backgroundUrl, 500) : undefined,
+          rankBackgroundUrl: it.type === 'background' && it.rankBackgroundUrl
+            ? sanitizeString(it.rankBackgroundUrl, 500) : undefined,
+          archived: it.archived === true ? true : undefined,
+          archivedAt: typeof it.archivedAt === 'number' && Number.isFinite(it.archivedAt)
+            ? Math.floor(it.archivedAt) : undefined,
+        };
+      });
       const err = validateItems(cleaned);
       if (err) return NextResponse.json({ error: err }, { status: 400 });
 
+      // Background-id permanence: any background ID present in the previous
+      // state must still appear in the new state (active or archived). If the
+      // frontend tries to drop a background entry entirely we reject — IDs
+      // are append-only and can only be archived, never freed for reuse.
       const before = await col.findOne({ id: 'inventory_items' });
+      const prevItems: SelunaItem[] = Array.isArray(before?.value) ? before!.value : [];
+      const newIds = new Set(cleaned.map((it) => it.id));
+      for (const prev of prevItems) {
+        if (prev.type === 'background' && !newIds.has(prev.id)) {
+          return NextResponse.json({
+            error: `Cannot remove background "${prev.id}" — IDs are permanent. Archive it instead.`,
+          }, { status: 400 });
+        }
+      }
+
       await col.updateOne(
         { id: 'inventory_items' },
         { $set: { value: cleaned, updatedAt: new Date(), updatedBy: adminId } },
         { upsert: true },
       );
+
+      // Reconcile Mells mirrors so any new/edited Seluna background lands in
+      // vendor_config.mells_selvair as a seluna_locked entry. Mirror writes
+      // are best-effort — if they fail we still keep the canonical Seluna
+      // write that already landed and surface the error in the audit log.
+      let mirrorResult: { added: number; updated: number; preservedOrphans: number } | null = null;
+      let mirrorError: string | null = null;
+      try {
+        mirrorResult = await reconcileSelunaMirrors(db, cleaned as SelunaMirrorSourceItem[]);
+        // After Mells gets the new/updated mirror, propagate to butler_shop
+        // so Butler immediately resolves and excludes the locked rows.
+        const mellsDoc = await db.collection('vendor_config').findOne({ _id: 'mells_selvair' as any });
+        if (mellsDoc?.data) await mirrorMellsToButler(db, mellsDoc.data);
+      } catch (mirrorErr) {
+        mirrorError = (mirrorErr as Error)?.message ?? 'unknown mirror error';
+        console.error('[seluna set_items] mirror reconciliation failed:', mirrorErr);
+      }
 
       await logAdminAction({
         adminDiscordId: adminId,
@@ -454,7 +524,57 @@ export async function POST(req: NextRequest) {
         action: 'seluna_items_update',
         before: { items: before?.value ?? [] },
         after: { items: cleaned },
-        metadata: { count: cleaned.length },
+        metadata: { count: cleaned.length, mirrorResult, mirrorError },
+        ip: getClientIp(req),
+      });
+
+      return NextResponse.json({ success: true, mirror: mirrorResult, mirrorError });
+    }
+
+    if (body.action === 'archive_item' || body.action === 'unarchive_item') {
+      const itemId = typeof body.itemId === 'string' ? body.itemId : '';
+      if (!itemId) return NextResponse.json({ error: 'itemId required' }, { status: 400 });
+
+      const before = await col.findOne({ id: 'inventory_items' });
+      const prevItems: SelunaItem[] = Array.isArray(before?.value) ? before!.value : [];
+      const target = prevItems.find((it) => it.id === itemId);
+      if (!target) return NextResponse.json({ error: 'item not found' }, { status: 404 });
+      if (target.type !== 'background') {
+        return NextResponse.json({ error: 'archive only supported for background items' }, { status: 400 });
+      }
+
+      const archived = body.action === 'archive_item';
+      const next = prevItems.map((it) => it.id === itemId ? {
+        ...it,
+        archived: archived ? true : undefined,
+        archivedAt: archived ? Date.now() : undefined,
+      } : it);
+
+      await col.updateOne(
+        { id: 'inventory_items' },
+        { $set: { value: next, updatedAt: new Date(), updatedBy: adminId } },
+        { upsert: true },
+      );
+
+      // Re-run mirror reconciliation so seluna_archived flag flips on the
+      // Mells mirror too — keeps the dashboard view consistent.
+      let mirrorError: string | null = null;
+      try {
+        await reconcileSelunaMirrors(db, next as SelunaMirrorSourceItem[]);
+        const mellsDoc = await db.collection('vendor_config').findOne({ _id: 'mells_selvair' as any });
+        if (mellsDoc?.data) await mirrorMellsToButler(db, mellsDoc.data);
+      } catch (mirrorErr) {
+        mirrorError = (mirrorErr as Error)?.message ?? 'unknown mirror error';
+        console.error('[seluna archive_item] mirror reconciliation failed:', mirrorErr);
+      }
+
+      await logAdminAction({
+        adminDiscordId: adminId,
+        adminUsername: auth.session.user?.globalName ?? 'Unknown',
+        action: archived ? 'seluna_item_archive' : 'seluna_item_unarchive',
+        before: { item: target },
+        after: { itemId, archived },
+        metadata: { itemId, type: target.type, mirrorError },
         ip: getClientIp(req),
       });
 

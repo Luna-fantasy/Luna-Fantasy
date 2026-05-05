@@ -7,6 +7,7 @@ import RolePicker from '../_components/RolePicker';
 import ChannelPicker from '../_components/ChannelPicker';
 
 type SelunaKind = 'card' | 'stone' | 'role' | 'tickets' | 'background';
+type SelunaBackgroundType = 'profile' | 'rank' | 'both';
 
 interface SelunaItem {
   id: string;
@@ -20,6 +21,14 @@ interface SelunaItem {
   roleId?: string;
   imageUrl?: string;
   description?: string;
+  // Background-only — `backgroundType` decides which URL fields are required.
+  // `archived` is the soft-delete flag (background IDs are permanent so we
+  // archive instead of removing from the items[] array).
+  backgroundType?: SelunaBackgroundType;
+  backgroundUrl?: string;
+  rankBackgroundUrl?: string;
+  archived?: boolean;
+  archivedAt?: number;
   thumbnail?: string; // resolved by API
 }
 
@@ -121,6 +130,7 @@ export default function SelunaEditor({ tone }: { tone: string }) {
   const [dirtyPortrait, setDirtyPortrait] = useState(false);
   const [portraitUploading, setPortraitUploading] = useState(false);
   const portraitFileRef = useRef<HTMLInputElement | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -215,6 +225,47 @@ export default function SelunaEditor({ tone }: { tone: string }) {
     setDirtyItems(true);
   };
 
+  // Background IDs are permanent — archive flips a flag in MongoDB rather than
+  // dropping the item from the array. Goes through its own endpoint so the
+  // server can run mirror reconciliation immediately and audit-log it cleanly.
+  const archiveItem = async (item: SelunaItem, archive: boolean) => {
+    if (item.type !== 'background') return;
+    await pending.queue({
+      label: archive ? `Archive background: ${item.name}` : `Restore background: ${item.name}`,
+      detail: archive
+        ? 'Existing owners keep their copy. The Mells mirror stays so the image always resolves.'
+        : 'Background returns to the active grid and can be sold again.',
+      delayMs: 4500,
+      tone: archive ? 'danger' : undefined,
+      run: async () => {
+        try {
+          const token = await fetchCsrf();
+          const res = await fetch('/api/admin/shops/seluna', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
+            credentials: 'include',
+            body: JSON.stringify({
+              action: archive ? 'archive_item' : 'unarchive_item',
+              itemId: item.id,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error ?? `HTTP ${res.status}`);
+          }
+          toast.show({
+            tone: 'success',
+            title: archive ? 'Archived' : 'Restored',
+            message: item.name,
+          });
+          await load();
+        } catch (e) {
+          toast.show({ tone: 'error', title: 'Action failed', message: (e as Error).message });
+        }
+      },
+    });
+  };
+
   const handleItemSave = (draft: SelunaItem, index: number | 'new') => {
     setItems((its) => {
       if (index === 'new') return [...its, draft];
@@ -243,6 +294,14 @@ export default function SelunaEditor({ tone }: { tone: string }) {
     stock: -1,
     rarity: 'RARE',
   });
+
+  // Active vs archived split. Archived backgrounds sit out of the active grid
+  // (they no longer rotate into shop stock) but stay in the editor's data so
+  // the user can unarchive them later. The Mells mirror exists regardless.
+  const visibleItems = showArchived
+    ? items
+    : items.filter((it) => !it.archived);
+  const archivedCount = items.filter((it) => it.archived).length;
 
   return (
     <div className="av-seluna" style={{ ['--vendor-tone' as any]: tone }}>
@@ -364,10 +423,20 @@ export default function SelunaEditor({ tone }: { tone: string }) {
       <article className="av-surface av-seluna-card">
         <header className="av-flows-head">
           <div>
-            <h3>Inventory · {items.length}</h3>
-            <p>Seluna rotates rare cards, stones, roles, ticket bundles, and passport backgrounds. Stock <code>-1</code> means unlimited.</p>
+            <h3>Inventory · {visibleItems.length}{archivedCount > 0 && !showArchived && <small style={{ opacity: 0.6, marginLeft: 8 }}>· {archivedCount} archived</small>}</h3>
+            <p>Seluna rotates rare cards, stones, roles, ticket bundles, and passport backgrounds. Stock <code>-1</code> means unlimited. Backgrounds can&apos;t be deleted — archive them so existing owners keep working profiles.</p>
           </div>
           <div className="av-seluna-actions">
+            {archivedCount > 0 && (
+              <button
+                type="button"
+                className="av-btn av-btn-ghost av-btn-sm"
+                onClick={() => setShowArchived((v) => !v)}
+                title="Toggle archived backgrounds"
+              >
+                {showArchived ? 'Hide archived' : `Show archived (${archivedCount})`}
+              </button>
+            )}
             {dirtyItems && <button type="button" className="av-btn av-btn-primary av-btn-sm" onClick={saveItems}>Save inventory</button>}
             <button
               type="button"
@@ -379,51 +448,103 @@ export default function SelunaEditor({ tone }: { tone: string }) {
           </div>
         </header>
 
-        {items.length === 0 ? (
+        {visibleItems.length === 0 ? (
           <div className="av-flows-empty av-seluna-empty">
-            No inventory items yet —
-            <button
-              type="button"
-              className="av-shop-empty-add"
-              onClick={() => setEditing({ index: 'new', draft: newItemDraft() })}
-            >add the first one</button>.
+            {items.length === 0 ? (
+              <>
+                No inventory items yet —
+                <button
+                  type="button"
+                  className="av-shop-empty-add"
+                  onClick={() => setEditing({ index: 'new', draft: newItemDraft() })}
+                >add the first one</button>.
+              </>
+            ) : (
+              <>All current items are archived. Toggle &quot;Show archived&quot; to view them.</>
+            )}
           </div>
         ) : (
           <div className="av-seluna-inventory-grid">
-            {items.map((it, i) => (
-              <div key={`${it.id}-${i}`} className="av-seluna-item-card" data-kind={it.type}>
-                <div className="av-seluna-item-thumb" data-kind={it.type}>
-                  {it.thumbnail ? (
-                    <img
-                      src={it.thumbnail}
-                      alt={it.name}
-                      loading="lazy"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
-                  ) : (
-                    <span className="av-seluna-item-thumb-glyph">{thumbGlyph(it.type)}</span>
-                  )}
-                  <span className="av-seluna-item-kind" data-kind={it.type}>{KIND_LABEL[it.type]}</span>
-                </div>
-                <div className="av-seluna-item-body">
-                  <div className="av-seluna-item-name">{it.name || <em>Unnamed</em>}</div>
-                  {it.description && <div className="av-seluna-item-desc">{it.description}</div>}
-                  <div className="av-seluna-item-meta">
-                    <strong>{it.price.toLocaleString()} Lunari</strong>
-                    <span className="av-seluna-tag av-seluna-tag--stock">
-                      {it.stock === -1 ? '∞ stock' : `${it.stock.toLocaleString()} stock`}
-                    </span>
-                    {it.type === 'card' && it.rarity && <span className="av-seluna-tag">{it.rarity}</span>}
-                    {it.type === 'card' && typeof it.attack === 'number' && it.attack > 0 && <span className="av-seluna-tag">⚔ {it.attack}</span>}
-                    {it.type === 'tickets' && typeof it.amount === 'number' && <span className="av-seluna-tag">{it.amount}×</span>}
+            {visibleItems.map((it) => {
+              const i = items.indexOf(it);
+              const isBackground = it.type === 'background';
+              const isArchived = it.archived === true;
+              return (
+                <div
+                  key={`${it.id}-${i}`}
+                  className="av-seluna-item-card"
+                  data-kind={it.type}
+                  style={isArchived ? { opacity: 0.55, filter: 'grayscale(0.4)' } : undefined}
+                >
+                  <div className="av-seluna-item-thumb" data-kind={it.type}>
+                    {it.thumbnail ? (
+                      <img
+                        src={it.thumbnail}
+                        alt={it.name}
+                        loading="lazy"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <span className="av-seluna-item-thumb-glyph">{thumbGlyph(it.type)}</span>
+                    )}
+                    <span className="av-seluna-item-kind" data-kind={it.type}>{KIND_LABEL[it.type]}</span>
+                    {isArchived && (
+                      <span
+                        className="av-seluna-tag"
+                        style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(244,114,182,0.18)', color: '#fbcfe8', borderColor: '#f472b6' }}
+                      >
+                        Archived
+                      </span>
+                    )}
                   </div>
-                  <div className="av-seluna-item-actions">
-                    <button type="button" className="av-btn av-btn-ghost av-btn-sm" onClick={() => setEditing({ index: i, draft: { ...it } })}>Edit</button>
-                    <button type="button" className="av-btn av-btn-ghost av-btn-sm" onClick={() => removeItem(i)}>Remove</button>
+                  <div className="av-seluna-item-body">
+                    <div className="av-seluna-item-name">{it.name || <em>Unnamed</em>}</div>
+                    {it.description && <div className="av-seluna-item-desc">{it.description}</div>}
+                    <div className="av-seluna-item-meta">
+                      <strong>{it.price.toLocaleString()} Lunari</strong>
+                      <span className="av-seluna-tag av-seluna-tag--stock">
+                        {it.stock === -1 ? '∞ stock' : `${it.stock.toLocaleString()} stock`}
+                      </span>
+                      {it.type === 'card' && it.rarity && <span className="av-seluna-tag">{it.rarity}</span>}
+                      {it.type === 'card' && typeof it.attack === 'number' && it.attack > 0 && <span className="av-seluna-tag">⚔ {it.attack}</span>}
+                      {it.type === 'tickets' && typeof it.amount === 'number' && <span className="av-seluna-tag">{it.amount}×</span>}
+                      {isBackground && it.backgroundType && (
+                        <span className="av-seluna-tag" style={{ textTransform: 'capitalize' }}>
+                          {it.backgroundType === 'both' ? 'Profile + Rank' : it.backgroundType}
+                        </span>
+                      )}
+                    </div>
+                    <div className="av-seluna-item-actions">
+                      <button
+                        type="button"
+                        className="av-btn av-btn-ghost av-btn-sm"
+                        onClick={() => setEditing({ index: i, draft: { ...it } })}
+                        disabled={isArchived}
+                        title={isArchived ? 'Restore the background to edit it' : 'Edit'}
+                      >Edit</button>
+                      {isBackground ? (
+                        <button
+                          type="button"
+                          className="av-btn av-btn-ghost av-btn-sm"
+                          onClick={() => archiveItem(it, !isArchived)}
+                          title={isArchived
+                            ? 'Bring this background back into the active grid'
+                            : 'Stop selling this background. Owners keep it forever; the Mells mirror persists.'}
+                        >
+                          {isArchived ? 'Restore' : 'Archive'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="av-btn av-btn-ghost av-btn-sm"
+                          onClick={() => removeItem(i)}
+                        >Remove</button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </article>
@@ -546,25 +667,58 @@ function SelunaItemDialog({ draft: initial, isNew, onClose, onSave }: {
 }) {
   const toast = useToast();
   const [d, setD] = useState<SelunaItem>(initial);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+  const [uploadingRank, setUploadingRank] = useState(false);
 
-  const handleBackgroundUpload = async (file: File) => {
+  // Whenever the user switches to background type, give it a stable random ID
+  // (and a default backgroundType) so we never collide with archived IDs and
+  // never reuse one. Existing items keep their saved IDs.
+  const handleTypeChange = (next: SelunaKind) => {
+    setD((x) => {
+      const switchingToBg = next === 'background' && x.type !== 'background';
+      const isStaleId = !x.id || /^item_\d+$/.test(x.id);
+      const newId = switchingToBg && isStaleId
+        ? `seluna_bg_${Math.random().toString(36).slice(2, 8)}_${Date.now().toString(36)}`
+        : x.id;
+      return {
+        ...x,
+        type: next,
+        id: newId,
+        backgroundType: next === 'background' ? (x.backgroundType ?? 'profile') : x.backgroundType,
+      };
+    });
+  };
+
+  const handleBackgroundUpload = async (file: File, slot: 'profile' | 'rank') => {
     if (file.size > 4 * 1024 * 1024) {
       toast.show({ tone: 'error', title: 'Too large', message: 'Background must be under 4MB.' });
       return;
     }
+    const setUploading = slot === 'profile' ? setUploadingProfile : setUploadingRank;
     setUploading(true);
     try {
       const url = await uploadSelunaImage(file);
-      setD((x) => ({ ...x, imageUrl: url }));
-      toast.show({ tone: 'success', title: 'Uploaded', message: 'Background saved to R2.' });
+      setD((x) => slot === 'profile'
+        ? { ...x, backgroundUrl: url }
+        : { ...x, rankBackgroundUrl: url });
+      toast.show({ tone: 'success', title: 'Uploaded', message: `${slot === 'profile' ? 'Profile' : 'Rank'} background saved to R2.` });
     } catch (e) {
       toast.show({ tone: 'error', title: 'Upload failed', message: (e as Error).message });
     } finally {
       setUploading(false);
     }
   };
+
+  const bgType: SelunaBackgroundType = d.backgroundType ?? 'profile';
+  const showProfileSlot = d.type === 'background' && (bgType === 'profile' || bgType === 'both');
+  const showRankSlot = d.type === 'background' && (bgType === 'rank' || bgType === 'both');
+  const profileUrl = (d.backgroundUrl ?? '').trim();
+  const rankUrl = (d.rankBackgroundUrl ?? '').trim();
+  const backgroundValid =
+    d.type !== 'background' ||
+    (bgType === 'profile' && !!profileUrl) ||
+    (bgType === 'rank' && !!rankUrl) ||
+    (bgType === 'both' && !!profileUrl && !!rankUrl);
 
   return (
     <>
@@ -588,7 +742,9 @@ function SelunaItemDialog({ draft: initial, isNew, onClose, onSave }: {
               <select
                 className="av-audit-input"
                 value={d.type}
-                onChange={(e) => setD((x) => ({ ...x, type: e.target.value as SelunaKind }))}
+                onChange={(e) => handleTypeChange(e.target.value as SelunaKind)}
+                disabled={!isNew && d.type === 'background'}
+                title={!isNew && d.type === 'background' ? 'Background IDs are permanent — change blocked.' : undefined}
               >
                 <option value="card">Card</option>
                 <option value="stone">Stone</option>
@@ -645,28 +801,71 @@ function SelunaItemDialog({ draft: initial, isNew, onClose, onSave }: {
             </label>
           )}
           {d.type === 'background' && (
-            <div className="av-moddialog-field">
-              <span>Background image</span>
-              <div className="av-cardedit-uploader">
-                <label className="av-cardedit-upload">
-                  <input type="file" accept="image/*" disabled={uploading}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleBackgroundUpload(f); e.target.value = ''; }} />
-                  <span>{uploading ? 'Uploading…' : '⬆ Upload'}</span>
-                </label>
-                <input
+            <>
+              <label className="av-moddialog-field">
+                <span>Background type</span>
+                <select
                   className="av-audit-input"
-                  placeholder="…or paste an image URL"
-                  value={d.imageUrl ?? ''}
-                  onChange={(e) => setD((x) => ({ ...x, imageUrl: e.target.value }))}
-                />
-              </div>
-              {d.imageUrl && (
-                <div className="av-seluna-bg-preview">
-                  <img src={d.imageUrl} alt="Preview" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  value={bgType}
+                  onChange={(e) => setD((x) => ({ ...x, backgroundType: e.target.value as SelunaBackgroundType }))}
+                >
+                  <option value="profile">Profile only</option>
+                  <option value="rank">Rank only</option>
+                  <option value="both">Both — profile + rank (one purchase)</option>
+                </select>
+                <small>Determines which slot(s) this background fills when a player buys it.</small>
+              </label>
+              {showProfileSlot && (
+                <div className="av-moddialog-field">
+                  <span>Profile background image{bgType === 'both' && ' · used for /profile cards'}</span>
+                  <div className="av-cardedit-uploader">
+                    <label className="av-cardedit-upload">
+                      <input type="file" accept="image/*" disabled={uploadingProfile}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleBackgroundUpload(f, 'profile'); e.target.value = ''; }} />
+                      <span>{uploadingProfile ? 'Uploading…' : '⬆ Upload profile bg'}</span>
+                    </label>
+                    <input
+                      className="av-audit-input"
+                      placeholder="…or paste an image URL"
+                      value={d.backgroundUrl ?? ''}
+                      onChange={(e) => setD((x) => ({ ...x, backgroundUrl: e.target.value }))}
+                    />
+                  </div>
+                  {d.backgroundUrl && (
+                    <div className="av-seluna-bg-preview">
+                      <img src={d.backgroundUrl} alt="Profile preview" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    </div>
+                  )}
                 </div>
               )}
-              <small>Stored on R2. Players who buy this can apply it as a passport background.</small>
-            </div>
+              {showRankSlot && (
+                <div className="av-moddialog-field">
+                  <span>Rank background image{bgType === 'both' && ' · used for /rank cards'}</span>
+                  <div className="av-cardedit-uploader">
+                    <label className="av-cardedit-upload">
+                      <input type="file" accept="image/*" disabled={uploadingRank}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleBackgroundUpload(f, 'rank'); e.target.value = ''; }} />
+                      <span>{uploadingRank ? 'Uploading…' : '⬆ Upload rank bg'}</span>
+                    </label>
+                    <input
+                      className="av-audit-input"
+                      placeholder="…or paste an image URL"
+                      value={d.rankBackgroundUrl ?? ''}
+                      onChange={(e) => setD((x) => ({ ...x, rankBackgroundUrl: e.target.value }))}
+                    />
+                  </div>
+                  {d.rankBackgroundUrl && (
+                    <div className="av-seluna-bg-preview">
+                      <img src={d.rankBackgroundUrl} alt="Rank preview" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    </div>
+                  )}
+                </div>
+              )}
+              <small style={{ opacity: 0.75 }}>
+                Stored on R2. Buying this background also locks a mirror entry in Mells&apos; Gallery so the image
+                always resolves for owners — even if you archive this Seluna entry later. Background IDs are permanent.
+              </small>
+            </>
           )}
           <label className="av-moddialog-field">
             <span>Description (optional)</span>
@@ -683,7 +882,7 @@ function SelunaItemDialog({ draft: initial, isNew, onClose, onSave }: {
               !d.id.trim() ||
               !d.name.trim() ||
               d.price < 1 ||
-              (d.type === 'background' && !(d.imageUrl ?? '').trim()) ||
+              (d.type === 'background' && !backgroundValid) ||
               (d.type === 'role' && !(d.roleId ?? '').trim())
             }
           >

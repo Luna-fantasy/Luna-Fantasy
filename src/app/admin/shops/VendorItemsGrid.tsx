@@ -28,17 +28,23 @@ export default function VendorItemsGrid({ tone, items, onAdd, onEdit, onDelete, 
   const [sort, setSort] = useState<SortMode>('order');
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [category, setCategory] = useState<CategoryTab>('items');
+  const [showMirrors, setShowMirrors] = useState(false);
 
   const isAbility = (it: VendorItem) => (it.type ?? '').toLowerCase() === 'game_ability';
-  const abilityCount = items.filter(isAbility).length;
-  const regularCount = items.length - abilityCount;
+  const isMirror = (it: VendorItem) => it.seluna_locked === true;
+  const mirrorCount = items.filter(isMirror).length;
+  const abilityCount = items.filter((it) => isAbility(it) && !isMirror(it)).length;
+  const regularCount = items.filter((it) => !isAbility(it) && !isMirror(it)).length;
 
-  // Scope items to the active category
+  // Scope items to the active category. Seluna mirrors are hidden by default
+  // — they're admin-side only metadata and shouldn't clutter the buy-from-Mells
+  // grid. The mirror toggle shows them mixed in, styled distinctly.
   const scoped = useMemo(() => {
     return items
       .map((it, i) => ({ ...it, _index: i }))
-      .filter((it) => (category === 'abilities' ? isAbility(it) : !isAbility(it)));
-  }, [items, category]);
+      .filter((it) => (category === 'abilities' ? isAbility(it) : !isAbility(it)))
+      .filter((it) => showMirrors || !isMirror(it));
+  }, [items, category, showMirrors]);
 
   // Detect distinct item types in the current scope (for the inner type filter)
   const types = useMemo(() => {
@@ -139,6 +145,16 @@ export default function VendorItemsGrid({ tone, items, onAdd, onEdit, onDelete, 
           <option value="price-desc">Sort: Price ↓</option>
           <option value="name">Sort: Name (A→Z)</option>
         </select>
+        {mirrorCount > 0 && (
+          <button
+            type="button"
+            className="av-btn av-btn-ghost av-btn-sm"
+            onClick={() => setShowMirrors((v) => !v)}
+            title="Seluna-locked mirrors are pinned here so backgrounds stay resolvable for owners forever. They cannot be edited or sold from Mells."
+          >
+            {showMirrors ? `Hide Seluna mirrors (${mirrorCount})` : `Show Seluna mirrors (${mirrorCount})`}
+          </button>
+        )}
       </div>
 
       {types.length > 0 && (
@@ -179,55 +195,101 @@ export default function VendorItemsGrid({ tone, items, onAdd, onEdit, onDelete, 
         </div>
       ) : (
         <div className="av-shop-grid">
-          {visible.map((it) => (
-            <ContextMenu
-              key={it._index}
-              items={[
-                { label: 'Edit', icon: '✎', run: () => onEdit(it, it._index) },
-                { label: 'Move up', icon: '↑', disabled: it._index === 0, run: () => onReorder(it._index, it._index - 1) },
-                { label: 'Move down', icon: '↓', disabled: it._index === items.length - 1, run: () => onReorder(it._index, it._index + 1) },
-                'separator' as const,
-                { label: 'Copy item ID', icon: '⧉', run: () => navigator.clipboard?.writeText(it.id) },
-                { label: 'Delete', icon: '×', tone: 'danger' as const, run: () => onDelete(it._index) },
-              ]}
-            >
-              <article
-                className="av-shop-item"
-                style={it.gradientColors && it.gradientColors.length === 2 ? {
-                  ['--item-grad-a' as any]: it.gradientColors[0],
-                  ['--item-grad-b' as any]: it.gradientColors[1],
-                } : undefined}
-                onClick={() => onEdit(it, it._index)}
+          {visible.map((it) => {
+            const locked = isMirror(it);
+            const lockedTitle = locked
+              ? `Locked mirror — owned by Seluna's lifecycle.${it.seluna_origin_id ? ` Source: ${it.seluna_origin_id}` : ''} Edit from the Seluna tab.`
+              : undefined;
+            return (
+              <ContextMenu
+                key={it._index}
+                items={locked ? [
+                  { label: 'Copy item ID', icon: '⧉', run: () => navigator.clipboard?.writeText(it.id) },
+                  ...(it.seluna_origin_id ? [{ label: 'Copy Seluna source ID', icon: '⧉', run: () => navigator.clipboard?.writeText(it.seluna_origin_id!) }] : []),
+                ] : [
+                  { label: 'Edit', icon: '✎', run: () => onEdit(it, it._index) },
+                  { label: 'Move up', icon: '↑', disabled: it._index === 0, run: () => onReorder(it._index, it._index - 1) },
+                  { label: 'Move down', icon: '↓', disabled: it._index === items.length - 1, run: () => onReorder(it._index, it._index + 1) },
+                  'separator' as const,
+                  { label: 'Copy item ID', icon: '⧉', run: () => navigator.clipboard?.writeText(it.id) },
+                  { label: 'Delete', icon: '×', tone: 'danger' as const, run: () => onDelete(it._index) },
+                ]}
               >
-                <div className="av-shop-item-img">
-                  <ItemImage item={it} />
-                  {it.type && <span className="av-shop-item-type">{it.type}</span>}
-                </div>
-                <div className="av-shop-item-body">
-                  <div className="av-shop-item-name">{it.name}</div>
-                  {it.description && <div className="av-shop-item-desc">{it.description}</div>}
-                  <div className="av-shop-item-foot">
-                    <span className="av-shop-item-price">{fmt(it.price ?? 0)} <small>Lunari</small></span>
-                    {it.roleId && <span className="av-shop-item-role" title={`Role ${it.roleId}`}>↗ role</span>}
+                <article
+                  className={`av-shop-item${locked ? ' av-shop-item--locked' : ''}`}
+                  data-seluna-locked={locked ? 'true' : undefined}
+                  style={{
+                    ...(it.gradientColors && it.gradientColors.length === 2 ? {
+                      ['--item-grad-a' as any]: it.gradientColors[0],
+                      ['--item-grad-b' as any]: it.gradientColors[1],
+                    } : null),
+                    ...(locked ? {
+                      borderColor: 'rgba(192, 132, 252, 0.55)',
+                      boxShadow: '0 0 0 1px rgba(192, 132, 252, 0.25) inset',
+                      cursor: 'default',
+                      ...(it.seluna_archived ? { opacity: 0.7 } : null),
+                    } : null),
+                  }}
+                  onClick={() => { if (!locked) onEdit(it, it._index); }}
+                  title={lockedTitle}
+                >
+                  <div className="av-shop-item-img">
+                    <ItemImage item={it} />
+                    {it.type && <span className="av-shop-item-type">{it.type}</span>}
+                    {locked && (
+                      <span
+                        className="av-shop-item-type"
+                        style={{ background: 'rgba(192,132,252,0.22)', color: '#e9d5ff', borderColor: 'rgba(192,132,252,0.6)', top: 8, right: 8, left: 'auto' }}
+                      >
+                        {it.seluna_archived ? '🌙 Seluna · Archived' : '🌙 Seluna locked'}
+                      </span>
+                    )}
                   </div>
-                </div>
-                <div className="av-shop-item-actions">
-                  <button
-                    type="button"
-                    className="av-shop-item-action"
-                    onClick={(e) => { e.stopPropagation(); onEdit(it, it._index); }}
-                    title="Edit"
-                  >✎</button>
-                  <button
-                    type="button"
-                    className="av-shop-item-action av-shop-item-action--danger"
-                    onClick={(e) => { e.stopPropagation(); onDelete(it._index); }}
-                    title="Delete"
-                  >×</button>
-                </div>
-              </article>
-            </ContextMenu>
-          ))}
+                  <div className="av-shop-item-body">
+                    <div className="av-shop-item-name">{it.name}</div>
+                    {it.description && <div className="av-shop-item-desc">{it.description}</div>}
+                    <div className="av-shop-item-foot">
+                      <span className="av-shop-item-price">{fmt(it.price ?? 0)} <small>Lunari</small></span>
+                      {it.roleId && <span className="av-shop-item-role" title={`Role ${it.roleId}`}>↗ role</span>}
+                      {locked && it.seluna_background_type === 'both' && (
+                        <span className="av-shop-item-role" title="Profile + Rank background">P+R</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="av-shop-item-actions">
+                    {locked ? (
+                      <button
+                        type="button"
+                        className="av-shop-item-action"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.alert(
+                            `This is a Seluna mirror. Edit it from the Seluna tab.\n\nSource ID: ${it.seluna_origin_id ?? '—'}\n\nThe mirror keeps the image resolvable for everyone who already owns this background.`
+                          );
+                        }}
+                        title="View source info"
+                      >ⓘ</button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="av-shop-item-action"
+                          onClick={(e) => { e.stopPropagation(); onEdit(it, it._index); }}
+                          title="Edit"
+                        >✎</button>
+                        <button
+                          type="button"
+                          className="av-shop-item-action av-shop-item-action--danger"
+                          onClick={(e) => { e.stopPropagation(); onDelete(it._index); }}
+                          title="Delete"
+                        >×</button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              </ContextMenu>
+            );
+          })}
         </div>
       )}
     </section>

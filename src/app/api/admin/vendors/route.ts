@@ -5,6 +5,8 @@ import { getClientIp } from '@/lib/admin/sanitize';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
+import { preserveMirrorsInPayload } from '@/lib/admin/seluna-mells-mirror';
+import { mirrorMellsToButler } from '@/lib/admin/mells-butler-mirror';
 
 const DB_NAME = 'Database';
 
@@ -103,7 +105,33 @@ export async function PUT(request: NextRequest) {
     const col = db.collection('vendor_config');
 
     const before = await col.findOne({ _id: vendorId as any });
-    await col.updateOne({ _id: vendorId as any }, { $set: { data: sanitizedData } }, { upsert: true });
+
+    // Defensive mirror preservation — for mells_selvair, splice any existing
+    // seluna_locked items back into the incoming items[] if the frontend
+    // somehow stripped them. Mirrors are append-only and survive forever.
+    let finalData: any = sanitizedData;
+    if (vendorId === 'mells_selvair') {
+      const beforeItems: any[] = Array.isArray(before?.data?.items) ? before!.data.items : [];
+      const incomingItems: any[] = Array.isArray((sanitizedData as any)?.items) ? (sanitizedData as any).items : [];
+      const merged = preserveMirrorsInPayload(beforeItems, incomingItems);
+      // Also reject any attempt to mutate an existing mirror's flags via this
+      // generic PUT — mirrors are owned by the Seluna lifecycle. We do this by
+      // replacing each existing mirror's row in the merged payload with the
+      // current row in the database (the mirror is read-only here).
+      const lockedById = new Map<string, any>();
+      for (const it of beforeItems) {
+        if (it && it.seluna_locked && typeof it.id === 'string') lockedById.set(it.id, it);
+      }
+      const enforced = merged.map((it: any) => {
+        if (it && typeof it.id === 'string' && lockedById.has(it.id)) {
+          return lockedById.get(it.id);
+        }
+        return it;
+      });
+      finalData = { ...(sanitizedData as Record<string, unknown>), items: enforced };
+    }
+
+    await col.updateOne({ _id: vendorId as any }, { $set: { data: finalData } }, { upsert: true });
 
     // Mells Selvair lives in TWO collections — vendor_config holds the typed
     // schema (`imageUrl` + `type: 'profile'|'rank'`) used by the admin UI and
@@ -115,7 +143,7 @@ export async function PUT(request: NextRequest) {
     // here, translating the schema, so both sides stay aligned.
     if (vendorId === 'mells_selvair') {
       try {
-        await mirrorMellsToButler(db, sanitizedData);
+        await mirrorMellsToButler(db, finalData);
       } catch (mirrorErr) {
         // Don't fail the admin save just because the mirror write hiccuped —
         // the canonical write to vendor_config already landed. Log loudly so
@@ -129,7 +157,7 @@ export async function PUT(request: NextRequest) {
       adminUsername: authResult.session.user?.globalName ?? 'Unknown',
       action: 'vendor_config_update',
       before: { vendorId, data: before?.data },
-      after: { vendorId, data: sanitizedData },
+      after: { vendorId, data: finalData },
       metadata: { vendorId, mirroredTo: vendorId === 'mells_selvair' ? 'bot_config.butler_shop' : undefined },
       ip: getClientIp(request),
     });
@@ -139,53 +167,4 @@ export async function PUT(request: NextRequest) {
     console.error('Vendor config update error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
-
-// Translate vendor_config.mells_selvair items (typed schema) → butler_shop
-// items (legacy schema) and write to bot_config.butler_shop.
-//
-// Per-item translation:
-//   { imageUrl: X, type: 'profile' } → { backgroundUrl: X }
-//   { imageUrl: X, type: 'rank' }    → { rankBackgroundUrl: X }
-//   no imageUrl                      → passed through (role-only items, etc.)
-//
-// Top-level fields (title/description/image) are forwarded verbatim. Anything
-// not on the known list is preserved by spreading the source item, so legacy
-// fields like `roleId`, `exclusive`, etc. survive the round trip.
-async function mirrorMellsToButler(db: import('mongodb').Db, vendorData: any): Promise<void> {
-  if (!vendorData || typeof vendorData !== 'object') return;
-  const items = Array.isArray(vendorData.items) ? vendorData.items : [];
-  const butlerItems = items.map((it: any) => {
-    const base: Record<string, unknown> = {
-      id: it.id,
-      name: it.name,
-      description: it.description ?? '',
-      price: it.price,
-      roleId: it.roleId ?? '',
-    };
-    if (it.exclusive) base.exclusive = it.exclusive;
-    if (it.imageUrl) {
-      if (it.type === 'rank') base.rankBackgroundUrl = it.imageUrl;
-      else base.backgroundUrl = it.imageUrl;
-    } else {
-      // Pre-translation items (already legacy shape) — pass through unchanged.
-      if (it.backgroundUrl) base.backgroundUrl = it.backgroundUrl;
-      if (it.rankBackgroundUrl) base.rankBackgroundUrl = it.rankBackgroundUrl;
-    }
-    return base;
-  });
-
-  await db.collection('bot_config').updateOne(
-    { _id: 'butler_shop' as any },
-    {
-      $set: {
-        'data.items': butlerItems,
-        'data.title': vendorData.title ?? "Mells Selvair's Gallery",
-        'data.description': vendorData.description ?? '',
-        'data.image': vendorData.image ?? '',
-        'data.updatedAt': new Date(),
-      },
-    },
-    { upsert: true }
-  );
 }
