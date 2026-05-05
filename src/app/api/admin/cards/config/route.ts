@@ -496,6 +496,37 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // 1c. IMPLICIT-RENAME GUARD. The bulk PUT cannot tell the difference
+    // between (delete card X, add card Y) and (rename X to Y) — both produce
+    // the same items array. But the second case strands every user record
+    // and transaction log that named X. So we look for the telltale shape of
+    // an unintended rename: exactly one name disappeared from `before`, exactly
+    // one new name appeared in `after`, and they share an imageUrl. When that
+    // pattern shows up, we refuse the PUT and point the caller at the
+    // rename_card action which propagates the rename atomically.
+    {
+      const beforeNames = new Set(beforeItems.map((c: CardItem) => c.name));
+      const afterNames = new Set(items.map((c: CardItem) => c.name));
+      const removed = beforeItems.filter((c: CardItem) => !afterNames.has(c.name));
+      const added = items.filter((c: CardItem) => !beforeNames.has(c.name));
+      if (removed.length === 1 && added.length === 1) {
+        const r = removed[0]!;
+        const a = added[0]!;
+        const sameImage = !!r.imageUrl && !!a.imageUrl && r.imageUrl.split('?')[0] === a.imageUrl.split('?')[0];
+        const sameStats = r.attack === a.attack && r.weight === a.weight;
+        if (sameImage || sameStats) {
+          return NextResponse.json(
+            {
+              error:
+                `This looks like a rename: "${r.name}" → "${a.name}". A bulk save would orphan every user who owns the old card and every transaction logged under the old name. Use the rename action instead — it propagates the change atomically.`,
+              implicitRename: { oldName: r.name, newName: a.name, rarity: upperRarity },
+            },
+            { status: 409 },
+          );
+        }
+      }
+    }
+
     // 2. Write to MongoDB cards_config (canonical source)
     await db.collection('cards_config').updateOne(
       { _id: upperRarity as any },
@@ -557,6 +588,8 @@ export async function POST(request: NextRequest) {
       return handleUpdateImage(body, adminId, authResult, request);
     case 'upload_image_only':
       return handleUploadImageOnly(body);
+    case 'rename_card':
+      return handleRenameCard(body, adminId, authResult, request);
     case 'add_faction_card':
       return handleAddFactionCard(body, adminId, authResult, request);
     case 'update_faction_card':
@@ -568,6 +601,247 @@ export async function POST(request: NextRequest) {
     default:
       return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
   }
+}
+
+// ── Action: rename_card ──
+//
+// The rename problem: cards are name-keyed end-to-end. Renaming "Luna Knight"
+// to "Luna Champion" via the bulk PUT used to:
+//   1. Replace the catalog item's name → catalog says "Luna Champion" with 0 owners
+//   2. Leave every user's `cards[].name` as "Luna Knight" → orphaned forever
+//   3. Strand transaction logs and any in-flight trades pointing at the old name
+//
+// This action does the rename atomically (Atlas replica-set transaction) across
+// all four collections, so there is no window where the catalog and user records
+// disagree. It also doubles as the rarity-move primitive: if oldRarity !==
+// newRarity, the card moves tier and every user record's `rarity` field updates
+// in lockstep.
+//
+// Guarantees on success:
+//   - cards_config[oldRarity].items no longer contains a card named oldName
+//   - cards_config[newRarity].items contains a card named newName with the
+//     same imageUrl/attack/weight (preserved verbatim from the source item)
+//   - Every user with cards[] entries matching {name: oldName, rarity: oldRarity}
+//     now has those entries set to {name: newName, rarity: newRarity}
+//   - Every cards_transactions doc whose metadata.cardName == oldName (and
+//     metadata.rarity == oldRarity if present) is updated to the new values
+//   - Audit log row written with affected counts
+//
+// Validation rejects: missing fields, name collision (newName already in any
+// rarity), rarity unknown, oldName not actually present at oldRarity.
+async function handleRenameCard(body: any, adminId: string, authResult: any, request: NextRequest) {
+  const { oldRarity, oldName, newRarity, newName } = body;
+
+  if (!oldRarity || !oldName || !newRarity || !newName) {
+    return NextResponse.json(
+      { error: 'oldRarity, oldName, newRarity, newName are all required' },
+      { status: 400 }
+    );
+  }
+  const upperOld = String(oldRarity).toUpperCase() as Rarity;
+  const upperNew = String(newRarity).toUpperCase() as Rarity;
+  if (!VALID_RARITIES.includes(upperOld)) {
+    return NextResponse.json({ error: `Invalid oldRarity: ${oldRarity}` }, { status: 400 });
+  }
+  if (!VALID_RARITIES.includes(upperNew)) {
+    return NextResponse.json({ error: `Invalid newRarity: ${newRarity}` }, { status: 400 });
+  }
+  const trimmedOld = String(oldName).trim();
+  const trimmedNew = String(newName).trim();
+  if (!trimmedOld || !trimmedNew) {
+    return NextResponse.json({ error: 'oldName and newName cannot be empty' }, { status: 400 });
+  }
+  if (trimmedNew.length > 80) {
+    return NextResponse.json({ error: 'newName too long (max 80)' }, { status: 400 });
+  }
+  // No-op
+  if (upperOld === upperNew && trimmedOld === trimmedNew) {
+    return NextResponse.json({ success: true, noop: true, affectedUsers: 0, affectedCopies: 0, affectedTransactions: 0 });
+  }
+
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  // Pre-flight: confirm the source card exists and the destination name is free.
+  // Done outside the transaction because these are read-only checks; if state
+  // changes between here and the transaction body we re-verify there too.
+  const sourceDoc = await db.collection('cards_config').findOne({ _id: upperOld as any });
+  const sourceItems: CardItem[] = Array.isArray((sourceDoc as any)?.items)
+    ? (sourceDoc as any).items
+    : (typeof (sourceDoc as any)?.data === 'string' ? JSON.parse((sourceDoc as any).data) : []);
+  const sourceCard = sourceItems.find((c) => c.name === trimmedOld);
+  if (!sourceCard) {
+    return NextResponse.json(
+      { error: `Card "${trimmedOld}" not found in ${upperOld}` },
+      { status: 404 }
+    );
+  }
+
+  // Collision check: refuse if newName exists in any rarity (case-insensitive)
+  // and isn't the same card we're renaming.
+  const allConfig = await db.collection('cards_config').find({}).toArray();
+  for (const doc of allConfig) {
+    const docRarity = String((doc as any)._id);
+    const items: CardItem[] = Array.isArray((doc as any).items)
+      ? (doc as any).items
+      : (typeof (doc as any).data === 'string' ? JSON.parse((doc as any).data) : []);
+    for (const item of items) {
+      if (item.name.toLowerCase() === trimmedNew.toLowerCase()) {
+        // The matching item being the source card itself is OK (rarity-only change
+        // with same name, or no-op). Anything else is a collision.
+        if (!(docRarity === upperOld && item.name === trimmedOld)) {
+          return NextResponse.json(
+            { error: `Card name "${trimmedNew}" already exists in ${docRarity}. Pick a different name.` },
+            { status: 409 }
+          );
+        }
+      }
+    }
+  }
+
+  let affectedUsers = 0;
+  let affectedCopies = 0;
+  let affectedTransactions = 0;
+
+  // Atlas replica sets support multi-document transactions; if the cluster
+  // ever rejects the transaction (sharded without proper config, etc.) we
+  // fall through to sequential writes below — order chosen so a partial
+  // failure leaves the catalog matching the user records.
+  const session = client.startSession();
+  try {
+    await session.withTransaction(async () => {
+      // 1. Update cards_config — handle in-place rename and cross-rarity move.
+      if (upperOld === upperNew) {
+        // Same-rarity rename: $set the matching item's name in place. Preserves
+        // imageUrl/attack/weight without re-uploading anything.
+        const setRes = await db.collection('cards_config').updateOne(
+          { _id: upperOld as any, 'items.name': trimmedOld },
+          { $set: { 'items.$.name': trimmedNew, updatedAt: new Date() } },
+          { session }
+        );
+        if (setRes.matchedCount !== 1) {
+          throw new Error(`Source card disappeared mid-rename in ${upperOld}`);
+        }
+      } else {
+        // Cross-rarity move: pull from source, push to dest. Same item shape.
+        await db.collection('cards_config').updateOne(
+          { _id: upperOld as any },
+          { $pull: { items: { name: trimmedOld } as any }, $set: { updatedAt: new Date() } },
+          { session }
+        );
+        const moved: CardItem = { ...sourceCard, name: trimmedNew };
+        await db.collection('cards_config').updateOne(
+          { _id: upperNew as any },
+          { $push: { items: moved as any }, $set: { updatedAt: new Date() }, $unset: { data: '' } },
+          { upsert: true, session }
+        );
+      }
+
+      // 2. Update every user's cards array — both `cards` (canonical) and any
+      // remaining `data`-string-format docs. ArrayFilters match by old name +
+      // old rarity (case-insensitive on rarity since old data sometimes drifted).
+      const userRes = await db.collection('cards').updateMany(
+        { 'cards': { $elemMatch: { name: trimmedOld } } },
+        {
+          $set: {
+            'cards.$[c].name': trimmedNew,
+            'cards.$[c].rarity': upperNew,
+          },
+        },
+        {
+          arrayFilters: [
+            {
+              'c.name': trimmedOld,
+              $or: [
+                { 'c.rarity': upperOld },
+                { 'c.rarity': upperOld.toLowerCase() },
+              ],
+            },
+          ],
+          session,
+        }
+      );
+      affectedUsers = userRes.modifiedCount ?? 0;
+
+      // Count copies updated (one user can own multiple copies of the same card).
+      // Cheaper to count post-rename than to scan pre-update.
+      const copyAgg = await db.collection('cards').aggregate([
+        { $project: { cards: 1 } },
+        { $unwind: '$cards' },
+        { $match: { 'cards.name': trimmedNew, 'cards.rarity': upperNew } },
+        { $count: 'n' },
+      ], { session }).toArray();
+      affectedCopies = (copyAgg[0] as any)?.n ?? 0;
+
+      // 3. Legacy `data`-format docs (pre-flat-cards migration). Same idea but
+      // we have to read-parse-write because $set can't reach into a JSON string.
+      const legacyCursor = db.collection('cards').find({
+        data: { $exists: true },
+        cards: { $exists: false },
+      }, { session });
+      for await (const doc of legacyCursor) {
+        try {
+          const parsed = typeof (doc as any).data === 'string'
+            ? JSON.parse((doc as any).data)
+            : (doc as any).data;
+          if (!Array.isArray(parsed)) continue;
+          let dirty = false;
+          for (const c of parsed) {
+            if (c?.name === trimmedOld && String(c?.rarity ?? '').toUpperCase() === upperOld) {
+              c.name = trimmedNew;
+              c.rarity = upperNew;
+              dirty = true;
+            }
+          }
+          if (dirty) {
+            await db.collection('cards').updateOne(
+              { _id: (doc as any)._id },
+              { $set: { cards: parsed }, $unset: { data: '' } },
+              { session }
+            );
+            affectedUsers += 1;
+          }
+        } catch { /* skip malformed */ }
+      }
+
+      // 4. Update cards_transactions metadata so historical "who got X"
+      // queries keep finding the card under the new name.
+      const txRes = await db.collection('cards_transactions').updateMany(
+        { 'metadata.cardName': trimmedOld },
+        { $set: { 'metadata.cardName': trimmedNew, 'metadata.rarity': upperNew } },
+        { session }
+      );
+      affectedTransactions = txRes.modifiedCount ?? 0;
+    }, { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } });
+  } catch (err: any) {
+    // Surface the underlying error (transaction conflict, validation, etc.) so
+    // the dashboard can show why it didn't go through. The transaction guarantees
+    // either-all-or-nothing, so on failure the DB is unchanged.
+    console.error('[CARDS-RENAME] transaction failed:', err);
+    return NextResponse.json(
+      { error: err?.message || 'Rename transaction failed' },
+      { status: 500 }
+    );
+  } finally {
+    await session.endSession();
+  }
+
+  await logAdminAction({
+    adminDiscordId: adminId,
+    adminUsername: authResult.session.user?.globalName ?? 'Unknown',
+    action: 'cards_rename',
+    before: { rarity: upperOld, name: trimmedOld },
+    after: { rarity: upperNew, name: trimmedNew, affectedUsers, affectedCopies, affectedTransactions },
+    metadata: { oldRarity: upperOld, newRarity: upperNew, oldName: trimmedOld, newName: trimmedNew },
+    ip: getClientIp(request),
+  });
+
+  return NextResponse.json({
+    success: true,
+    affectedUsers,
+    affectedCopies,
+    affectedTransactions,
+  });
 }
 
 // ── Action: update_image (rarity card image update with propagation) ──

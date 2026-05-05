@@ -84,6 +84,39 @@ async function putRarityItems(rarity: Rarity, items: any[]): Promise<void> {
   }
 }
 
+/**
+ * Atomic rename across catalog + every user's cards array + transaction logs.
+ * Returns the count of user records and transaction docs that were updated, so
+ * the UI can show the operator exactly how big a change just landed.
+ *
+ * Use whenever name or rarity changes on an existing card. The plain PUT path
+ * will refuse implicit renames (HTTP 409) precisely because it cannot do this
+ * propagation safely.
+ */
+async function renameCard(args: {
+  oldRarity: Rarity;
+  oldName: string;
+  newRarity: Rarity;
+  newName: string;
+}): Promise<{ affectedUsers: number; affectedCopies: number; affectedTransactions: number }> {
+  const token = await fetchCsrf();
+  const res = await fetch('/api/admin/cards/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
+    credentials: 'include',
+    body: JSON.stringify({ action: 'rename_card', ...args }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as any).error || `HTTP ${res.status}`);
+  }
+  return {
+    affectedUsers: (data as any).affectedUsers ?? 0,
+    affectedCopies: (data as any).affectedCopies ?? 0,
+    affectedTransactions: (data as any).affectedTransactions ?? 0,
+  };
+}
+
 export default function CardEditDialog({ mode, initialRarity, card, onClose, onSaved }: Props) {
   const toast = useToast();
   const undo = useUndo();
@@ -255,25 +288,60 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
       delayMs: 0,
       run: async () => {
         try {
-          // If rarity changed on edit, need to remove from old AND add to new
-          const oldRarity = card?.rarity;
-          if (mode === 'edit' && oldRarity && oldRarity !== rarity) {
-            const oldItems = await getRarityItems(oldRarity);
-            const filtered = oldItems.filter((c: any) => c.name !== card!.name);
-            await putRarityItems(oldRarity, filtered);
+          // EDIT FLOW with possible rename: when name or rarity changes on an
+          // existing card, route through the atomic rename_card action FIRST.
+          // That endpoint also propagates the new identity to every user record
+          // and transaction log — without it the catalog would silently fork
+          // away from user inventories (the old "owners drop to 0" bug).
+          const oldRarity = card?.rarity as Rarity | undefined;
+          const identityChanged =
+            mode === 'edit' &&
+            !!card &&
+            !!oldRarity &&
+            (oldRarity !== rarity || card.name !== newItem.name);
+
+          if (identityChanged) {
+            const counts = await renameCard({
+              oldRarity,
+              oldName: card!.name,
+              newRarity: rarity,
+              newName: newItem.name,
+            });
+            // After rename: the catalog row has the new identity but old
+            // attack/weight/imageUrl. The PUT below carries the new stats and
+            // — because we already renamed — won't trigger the implicit-rename
+            // 409 guard.
+            const propagation = counts.affectedUsers === 0 && counts.affectedCopies === 0
+              ? 'No live owners to update.'
+              : `${counts.affectedUsers.toLocaleString()} owner${counts.affectedUsers === 1 ? '' : 's'} · ${counts.affectedCopies.toLocaleString()} cop${counts.affectedCopies === 1 ? 'y' : 'ies'} updated.`;
+            const txNote = counts.affectedTransactions > 0
+              ? ` ${counts.affectedTransactions.toLocaleString()} transaction log${counts.affectedTransactions === 1 ? '' : 's'} relinked.`
+              : '';
+            toast.show({
+              tone: 'success',
+              title: 'Renamed',
+              message: `${card!.name} → ${newItem.name}. ${propagation}${txNote}`,
+            });
           }
 
-          const currentItems = await getRarityItems(rarity);
-          const filtered = currentItems.filter((c: any) => c.name !== (card?.name ?? newItem.name));
-          const next = mode === 'create' || (oldRarity && oldRarity !== rarity)
+          // Now do the bulk PUT for the rest of the edit (attack/weight/image).
+          // For cross-rarity moves, the rename action already moved the card
+          // into the new rarity's items array, so we read THAT rarity's list.
+          const targetRarity = rarity;
+          const currentItems = await getRarityItems(targetRarity);
+          const matchName = identityChanged ? newItem.name : (card?.name ?? newItem.name);
+          const filtered = currentItems.filter((c: any) => c.name !== matchName);
+          const next = mode === 'create'
             ? [...filtered, newItem]
-            : filtered.map((c: any) => c.name === card?.name ? { ...c, ...newItem } : c).concat(
-              filtered.some((c: any) => c.name === card?.name) ? [] : [newItem]
-            );
+            : currentItems.some((c: any) => c.name === matchName)
+              ? currentItems.map((c: any) => c.name === matchName ? { ...c, ...newItem } : c)
+              : [...filtered, newItem];
 
-          await putRarityItems(rarity, next);
+          await putRarityItems(targetRarity, next);
           await onSaved();
-          toast.show({ tone: 'success', title: mode === 'create' ? 'Card added' : 'Card saved', message: newItem.name });
+          if (!identityChanged) {
+            toast.show({ tone: 'success', title: mode === 'create' ? 'Card added' : 'Card saved', message: newItem.name });
+          }
 
           // Register undo for create (removes the card)
           if (mode === 'create') {
