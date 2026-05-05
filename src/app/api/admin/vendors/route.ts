@@ -105,13 +105,32 @@ export async function PUT(request: NextRequest) {
     const before = await col.findOne({ _id: vendorId as any });
     await col.updateOne({ _id: vendorId as any }, { $set: { data: sanitizedData } }, { upsert: true });
 
+    // Mells Selvair lives in TWO collections — vendor_config holds the typed
+    // schema (`imageUrl` + `type: 'profile'|'rank'`) used by the admin UI and
+    // the public bazaar, while bot_config.butler_shop holds the legacy schema
+    // (`backgroundUrl`/`rankBackgroundUrl`) that LunaButler reads at runtime.
+    // The admin save endpoint used to update only vendor_config, which meant
+    // every Mells edit silently failed to reach the Discord shop and items
+    // added on the bot side never appeared on the dashboard. Mirror writes
+    // here, translating the schema, so both sides stay aligned.
+    if (vendorId === 'mells_selvair') {
+      try {
+        await mirrorMellsToButler(db, sanitizedData);
+      } catch (mirrorErr) {
+        // Don't fail the admin save just because the mirror write hiccuped —
+        // the canonical write to vendor_config already landed. Log loudly so
+        // it gets noticed; a manual resync is cheap.
+        console.error('[vendors PUT] mells mirror to bot_config.butler_shop failed:', mirrorErr);
+      }
+    }
+
     await logAdminAction({
       adminDiscordId: adminId,
       adminUsername: authResult.session.user?.globalName ?? 'Unknown',
       action: 'vendor_config_update',
       before: { vendorId, data: before?.data },
       after: { vendorId, data: sanitizedData },
-      metadata: { vendorId },
+      metadata: { vendorId, mirroredTo: vendorId === 'mells_selvair' ? 'bot_config.butler_shop' : undefined },
       ip: getClientIp(request),
     });
 
@@ -120,4 +139,53 @@ export async function PUT(request: NextRequest) {
     console.error('Vendor config update error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+// Translate vendor_config.mells_selvair items (typed schema) → butler_shop
+// items (legacy schema) and write to bot_config.butler_shop.
+//
+// Per-item translation:
+//   { imageUrl: X, type: 'profile' } → { backgroundUrl: X }
+//   { imageUrl: X, type: 'rank' }    → { rankBackgroundUrl: X }
+//   no imageUrl                      → passed through (role-only items, etc.)
+//
+// Top-level fields (title/description/image) are forwarded verbatim. Anything
+// not on the known list is preserved by spreading the source item, so legacy
+// fields like `roleId`, `exclusive`, etc. survive the round trip.
+async function mirrorMellsToButler(db: import('mongodb').Db, vendorData: any): Promise<void> {
+  if (!vendorData || typeof vendorData !== 'object') return;
+  const items = Array.isArray(vendorData.items) ? vendorData.items : [];
+  const butlerItems = items.map((it: any) => {
+    const base: Record<string, unknown> = {
+      id: it.id,
+      name: it.name,
+      description: it.description ?? '',
+      price: it.price,
+      roleId: it.roleId ?? '',
+    };
+    if (it.exclusive) base.exclusive = it.exclusive;
+    if (it.imageUrl) {
+      if (it.type === 'rank') base.rankBackgroundUrl = it.imageUrl;
+      else base.backgroundUrl = it.imageUrl;
+    } else {
+      // Pre-translation items (already legacy shape) — pass through unchanged.
+      if (it.backgroundUrl) base.backgroundUrl = it.backgroundUrl;
+      if (it.rankBackgroundUrl) base.rankBackgroundUrl = it.rankBackgroundUrl;
+    }
+    return base;
+  });
+
+  await db.collection('bot_config').updateOne(
+    { _id: 'butler_shop' as any },
+    {
+      $set: {
+        'data.items': butlerItems,
+        'data.title': vendorData.title ?? "Mells Selvair's Gallery",
+        'data.description': vendorData.description ?? '',
+        'data.image': vendorData.image ?? '',
+        'data.updatedAt': new Date(),
+      },
+    },
+    { upsert: true }
+  );
 }
