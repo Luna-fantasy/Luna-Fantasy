@@ -117,10 +117,15 @@ export async function reconcileSelunaMirrors(db: Db, selunaItems: SelunaMirrorSo
     // just note the count for telemetry.
     const preservedOrphans = items.filter((it) => it && it.seluna_locked && !seenMirrorIds.has(it.id)).length;
 
-    data.items = items;
+    // Surgical dot-path update: only touch data.items, not the whole `data`.
+    // A blanket `$set: { data }` would race with the admin vendor PUT
+    // (src/app/api/admin/vendors/route.ts) — that endpoint reads `data`,
+    // mutates it, and writes it back. If the admin saved a new title/image
+    // between our findOne above and this updateOne, replacing the entire
+    // data object would silently discard their write.
     await col.updateOne(
         { _id: 'mells_selvair' as any },
-        { $set: { data } },
+        { $set: { 'data.items': items } },
         { upsert: true },
     );
 

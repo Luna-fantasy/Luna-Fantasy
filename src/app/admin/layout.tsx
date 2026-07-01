@@ -74,6 +74,14 @@ export default async function AdminV2Layout({ children }: { children: React.Reac
                 <UndoDrawer />
                 <PendingActionPill />
                 <MobileNavOverlay />
+                {/*
+                  Portal target — kept inside `.admin-v2-shell` so portalled
+                  modals (CmdK, PlayerPeek, PendingActionPill) inherit the
+                  shell's theme, font, and CSS custom properties. Rendered as
+                  the last child so it sits above all sibling stacking
+                  contexts without needing hand-tuned z-index.
+                */}
+                <div id="admin-portal-root" />
               </div>
               </MobileNavProvider>
             </GuildDataProvider>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePendingAction } from './PendingActionProvider';
+import { getAdminPortalTarget } from './portal-root';
 
 export default function PendingActionPill() {
   const { action, cancel } = usePendingAction();
@@ -41,5 +42,7 @@ export default function PendingActionPill() {
     </div>
   );
 
-  return createPortal(pill, document.body);
+  const target = getAdminPortalTarget();
+  if (!target) return null;
+  return createPortal(pill, target);
 }

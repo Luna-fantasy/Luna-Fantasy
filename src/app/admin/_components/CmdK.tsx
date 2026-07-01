@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCmdK } from './CmdKProvider';
 import { usePeek } from './PeekProvider';
 import { CLUSTERS } from './nav-config';
+import { getAdminPortalTarget } from './portal-root';
 
 interface SearchHit {
   kind: 'user' | 'passport' | 'action' | 'audit' | 'nav';
@@ -183,5 +184,7 @@ export default function CmdK() {
     </>
   );
 
-  return createPortal(portal, document.body);
+  const target = getAdminPortalTarget();
+  if (!target) return null;
+  return createPortal(portal, target);
 }

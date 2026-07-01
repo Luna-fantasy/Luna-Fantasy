@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePeek } from './PeekProvider';
 import { trackRecent } from './RecentlyViewed';
 import { useTimezone } from './TimezoneProvider';
+import { getAdminPortalTarget } from './portal-root';
 
 interface PeekData {
   discordId: string;
@@ -215,5 +216,7 @@ export default function PlayerPeek() {
     </>
   );
 
-  return createPortal(portal, document.body);
+  const target = getAdminPortalTarget();
+  if (!target) return null;
+  return createPortal(portal, target);
 }

@@ -9,11 +9,13 @@ import {
   type ItemCatalogEntry, type PropertyCatalogEntry, type SlotRule,
   type UserPropertyRow, type PropertyTier, type Rarity, type ItemCategory,
 } from '@/lib/admin/valecroft-types';
+import { adminGet } from '@/lib/admin/http';
 import FamilyHomePanel from './FamilyHomePanel';
 
 async function fetchCsrf(): Promise<string> {
   const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
+  if (!res.ok) return '';
+  return (await res.json().catch(() => ({}))).token ?? '';
 }
 
 type Tab = 'family' | 'properties' | ItemCategory | 'ownership' | 'grant';
@@ -77,19 +79,21 @@ function PropertiesTab() {
   const [creating, setCreating] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [ownersOf, setOwnersOf] = useState<OwnersTarget | null>(null);
+  const pending = usePendingAction();
+  const toast = useToast();
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/v2/valecroft/properties', { cache: 'no-store' });
-      const data = await res.json();
-      setRows(data.rows ?? []);
+      const data = await adminGet<{ rows?: PropertyCatalogEntry[] }>('/api/admin/v2/valecroft/properties');
+      setRows(data?.rows ?? []);
+    } catch (e) {
+      // Surface the real reason — the previous version silently rendered
+      // an empty table when the API 500'd (parse-before-ok pattern).
+      toast.show({ tone: 'error', title: 'Properties failed to load', message: (e as Error).message });
     } finally { setLoading(false); }
-  }, []);
+  }, [toast]);
   useEffect(() => { refresh(); }, [refresh]);
-
-  const pending = usePendingAction();
-  const toast = useToast();
 
   function doDelete(key: string) {
     pending.queue({
@@ -619,19 +623,21 @@ function ItemsTab({ category }: { category: ItemCategory }) {
   const [creating, setCreating] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [ownersOf, setOwnersOf] = useState<OwnersTarget | null>(null);
+  const itemPending = usePendingAction();
+  const itemToast = useToast();
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/v2/valecroft/items?category=${category}`, { cache: 'no-store' });
-      const data = await res.json();
-      setRows(data.rows ?? []);
+      const data = await adminGet<{ rows?: ItemCatalogEntry[] }>(
+        `/api/admin/v2/valecroft/items?category=${encodeURIComponent(category)}`,
+      );
+      setRows(data?.rows ?? []);
+    } catch (e) {
+      itemToast.show({ tone: 'error', title: `${category} failed to load`, message: (e as Error).message });
     } finally { setLoading(false); }
-  }, [category]);
+  }, [category, itemToast]);
   useEffect(() => { refresh(); }, [refresh]);
-
-  const itemPending = usePendingAction();
-  const itemToast = useToast();
 
   function doDelete(key: string) {
     itemPending.queue({
@@ -847,11 +853,12 @@ function GrantSpecialTab() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/v2/valecroft/grant-special', { cache: 'no-store' });
-      const data = await res.json();
-      setSpecials(data.rows ?? []);
+      const data = await adminGet<{ rows?: SpecialPropertyRow[] }>('/api/admin/v2/valecroft/grant-special');
+      setSpecials(data?.rows ?? []);
+    } catch (e) {
+      toast.show({ tone: 'error', title: 'Special list failed to load', message: (e as Error).message });
     } finally { setLoading(false); }
-  }, []);
+  }, [toast]);
   useEffect(() => { refresh(); }, [refresh]);
 
   function doGrant() {
@@ -992,21 +999,23 @@ function OwnershipTab() {
   const [loading, setLoading] = useState(false);
   const [filterState, setFilterState] = useState<'' | 'owned' | 'damaged' | 'foreclosed'>('');
   const [msg, setMsg] = useState<string | null>(null);
+  const forecPending = usePendingAction();
+  const forecToast = useToast();
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filterState) params.set('state', filterState);
-      const res = await fetch(`/api/admin/v2/valecroft/ownership?${params.toString()}`, { cache: 'no-store' });
-      const data = await res.json();
-      setRows(data.rows ?? []);
+      const data = await adminGet<{ rows?: UserPropertyRow[] }>(
+        `/api/admin/v2/valecroft/ownership?${params.toString()}`,
+      );
+      setRows(data?.rows ?? []);
+    } catch (e) {
+      forecToast.show({ tone: 'error', title: 'Ownership failed to load', message: (e as Error).message });
     } finally { setLoading(false); }
-  }, [filterState]);
+  }, [filterState, forecToast]);
   useEffect(() => { refresh(); }, [refresh]);
-
-  const forecPending = usePendingAction();
-  const forecToast = useToast();
 
   function doForceForeclose(discordId: string) {
     forecPending.queue({
@@ -1117,11 +1126,10 @@ function OwnersDialog({ kind, targetKey, targetName, onClose }: {
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(baseUrl, { cache: 'no-store' });
-            const data = await res.json();
+            const data = await adminGet<{ rows?: OwnerEntry[] }>(baseUrl);
             setOwners(Array.isArray(data?.rows) ? data.rows : []);
-        } catch (e: any) {
-            toast.show({ tone: 'error', title: 'Load failed', message: e?.message || 'Network error' });
+        } catch (e) {
+            toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });
         } finally {
             setLoading(false);
         }
