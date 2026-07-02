@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useToast } from '../_components/Toast';
 import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
+import { adminPost, adminPatch, adminDelete } from '@/lib/admin/http';
 
 interface FactionLite {
     id: string;
@@ -23,13 +24,6 @@ interface AdminCharacter {
 interface Props {
     initialCharacters: AdminCharacter[];
     factions: FactionLite[];
-}
-
-async function fetchCsrf(): Promise<string> {
-    const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-    if (!res.ok) return '';
-    const data = await res.json().catch(() => ({}));
-    return data?.token ?? '';
 }
 
 function emptyChar(): AdminCharacter {
@@ -78,48 +72,38 @@ export default function CharactersAdminClient({ initialCharacters, factions }: P
     const save = useCallback(async (char: AdminCharacter, mode: 'create' | 'edit') => {
         setBusy(true);
         try {
-            const res = await fetch('/api/admin/characters', {
-                method: mode === 'create' ? 'POST' : 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'x-csrf-token': await fetchCsrf() },
-                body: JSON.stringify(char),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                if (res.status === 429) {
-                    const wait = Math.ceil((data?.retryAfterMs ?? 1000) / 1000);
-                    throw new Error(`Rate limited — wait ${wait}s before saving again`);
-                }
-                throw new Error(data?.error ?? `HTTP ${res.status}`);
-            }
+            // adminPost/adminPatch check res.ok before parsing, so a 5xx with an
+            // HTML body no longer surfaces as "Unexpected token < in JSON" — the
+            // toast now shows the server's error string (or the HTTP status).
+            const data = mode === 'create'
+                ? await adminPost<{ _id?: string; retryAfterMs?: number }>('/api/admin/characters', char)
+                : await adminPatch<{ _id?: string; retryAfterMs?: number }>('/api/admin/characters', char);
             setCharacters(prev => {
-                if (mode === 'create') return [...prev, { ...char, _id: data._id ?? null }];
+                if (mode === 'create') return [...prev, { ...char, _id: data?._id ?? null }];
                 return prev.map(c => c.id === char.id ? char : c);
             });
             bump();
             toast.show({ tone: 'success', title: mode === 'create' ? 'Character added' : 'Character updated', message: char.name.en });
             setEditor(null);
-        } catch (err: any) {
-            toast.show({ tone: 'error', title: 'Save failed', message: err?.message ?? 'Unknown error' });
+        } catch (err) {
+            const e = err as Error & { status?: number };
+            const msg = e.status === 429 ? 'Rate limited — wait a moment before saving again' : e.message;
+            toast.show({ tone: 'error', title: 'Save failed', message: msg });
         } finally {
             setBusy(false);
         }
-    }, [toast]);
+    }, [toast, bump]);
 
     const remove = useCallback(async (char: AdminCharacter) => {
         if (!confirm(`Delete "${char.name.en}"? This cannot be undone.`)) return;
         setBusy(true);
         try {
-            const res = await fetch(`/api/admin/characters?id=${encodeURIComponent(char.id)}`, {
-                method: 'DELETE',
-                headers: { 'x-csrf-token': await fetchCsrf() },
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+            await adminDelete(`/api/admin/characters?id=${encodeURIComponent(char.id)}`);
             setCharacters(prev => prev.filter(c => c.id !== char.id));
             toast.show({ tone: 'success', title: 'Character deleted', message: char.name.en });
             setEditor(null);
-        } catch (err: any) {
-            toast.show({ tone: 'error', title: 'Delete failed', message: err?.message ?? 'Unknown error' });
+        } catch (err) {
+            toast.show({ tone: 'error', title: 'Delete failed', message: (err as Error).message });
         } finally {
             setBusy(false);
         }
@@ -379,18 +363,19 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
         try {
             const ext = (file.name.split('.').pop() ?? 'png').toLowerCase();
             const key = `characters/${c.id}.${ext}`;
-            const presignRes = await fetch('/api/admin/assets/presign', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-csrf-token': await fetchCsrf() },
-                body: JSON.stringify({ key, contentType: file.type || 'image/png', size: file.size }),
-            });
-            const presignData = await presignRes.json();
-            if (!presignRes.ok) {
-                if (presignRes.status === 429) {
-                    const wait = Math.ceil((presignData?.retryAfterMs ?? 1000) / 1000);
-                    throw new Error(`Rate limited — wait ${wait}s before next upload`);
-                }
-                throw new Error(presignData?.error ?? `Presign failed (${presignRes.status})`);
+            let presignData: { presignedUrl?: string; publicUrl?: string; retryAfterMs?: number };
+            try {
+                presignData = await adminPost<{ presignedUrl?: string; publicUrl?: string; retryAfterMs?: number }>(
+                    '/api/admin/assets/presign',
+                    { key, contentType: file.type || 'image/png', size: file.size },
+                );
+            } catch (err) {
+                const e = err as Error & { status?: number };
+                if (e.status === 429) throw new Error('Rate limited — wait a few seconds before next upload');
+                throw new Error(`Presign failed: ${e.message}`);
+            }
+            if (!presignData?.presignedUrl || !presignData?.publicUrl) {
+                throw new Error('Presign response missing URLs');
             }
             const putRes = await fetch(presignData.presignedUrl, {
                 method: 'PUT',
