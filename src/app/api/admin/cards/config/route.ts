@@ -8,6 +8,7 @@ import { readJesterConfig } from '@/lib/admin/config-writer';
 import { uploadObject, deleteObject, isR2Configured } from '@/lib/admin/r2';
 import clientPromise from '@/lib/mongodb';
 import { invalidateFactionWarCache } from '@/lib/faction-war';
+import { invalidateCardCatalogCache } from '@/lib/cards';
 import { assertNoWipe } from '@/lib/admin/wipe-guard';
 
 const DB_NAME = 'Database';
@@ -533,6 +534,7 @@ export async function PUT(request: NextRequest) {
       { $set: { items, updatedAt: new Date() }, $unset: { data: '' } },
       { upsert: true }
     );
+    invalidateCardCatalogCache(); // public catalog pages pick up the change immediately
 
     // 3. Clean up R2 images for deleted cards (fire-and-forget)
     const deletedCards = beforeItems.filter(old => !items.some(newCard => newCard.name === old.name));
@@ -826,6 +828,8 @@ async function handleRenameCard(body: any, adminId: string, authResult: any, req
     await session.endSession();
   }
 
+  invalidateCardCatalogCache();
+
   await logAdminAction({
     adminDiscordId: adminId,
     adminUsername: authResult.session.user?.globalName ?? 'Unknown',
@@ -940,6 +944,7 @@ async function handleUpdateImage(body: any, adminId: string, authResult: any, re
       { _id: upperRarity as any },
       { $set: { items: configCards, updatedAt: new Date() }, $unset: { data: '' } }
     );
+    invalidateCardCatalogCache();
 
     // Step 3: Propagate to ALL user cards in the cards collection
     // Use updateMany with arrayFilters for documents using the `cards` array format

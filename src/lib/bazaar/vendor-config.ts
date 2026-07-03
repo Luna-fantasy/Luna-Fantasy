@@ -32,6 +32,12 @@ export interface VendorConfig {
 const cache = new Map<string, { config: VendorConfig; expiresAt: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+/** Call after an admin write so the bazaar reflects the change immediately. */
+export function invalidateVendorConfigCache(shopId?: string): void {
+  if (shopId) cache.delete(shopId);
+  else cache.clear();
+}
+
 /**
  * Fetch a vendor's config from the `vendor_config` collection.
  * Returns null if the vendor doesn't exist in the DB.

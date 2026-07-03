@@ -6,13 +6,14 @@ import { validateJesterConfig } from '@/lib/admin/config-validation';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
+import { invalidateVendorConfigCache } from '@/lib/bazaar/vendor-config';
 
 const DB_NAME = 'Database';
 
 const ALLOWED_SECTIONS = new Set([
   'status', 'all_of_games', 'roulette', 'mafia', 'rps', 'guessthecountry',
   'bombroulette', 'mines', 'LunaFantasy', 'LunaFantasyEvent',
-  'GrandFantasy', 'FactionWar', 'points_settings', 'ticket_shop_settings',
+  'GrandFantasy', 'FactionWar', 'points_settings',
   'votegame', 'collection_rewards', 'trade_config', 'channel_config',
   'shop_brimor', 'shop_broker', 'level_rewards',
   'commands', 'trade', 'seluna_schedule',
@@ -33,7 +34,8 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   GrandFantasy:         { docId: 'jester_game_settings', field: 'GrandFantasy' },
   FactionWar:           { docId: 'jester_game_settings', field: 'FactionWar' },
   points_settings:      { docId: 'jester_points_settings', field: '_root' },
-  ticket_shop_settings: { docId: 'jester_game_settings', field: 'ticket_shop_settings' },
+  // ticket_shop_settings removed 2026-07-03 — no frontend caller; the bot
+  // reads ticket packages from vendor_config.tickets, not this doc
   votegame:             { docId: 'jester_game_settings', field: 'votegame' },
   collection_rewards:   { docId: 'jester_collection_rewards', field: '_root' },
   trade_config:         { docId: 'jester_trade', field: '_root' },
@@ -83,7 +85,7 @@ export async function GET() {
       for (const key of [
         'all_of_games', 'votegame', 'roulette', 'mafia', 'rps', 'guessthecountry',
         'bombroulette', 'mines', 'LunaFantasy', 'LunaFantasyEvent',
-        'GrandFantasy', 'FactionWar', 'ticket_shop_settings',
+        'GrandFantasy', 'FactionWar',
       ]) {
         if (gs[key]) {
           const val = { ...gs[key] };
@@ -231,6 +233,7 @@ export async function PUT(req: NextRequest) {
         { $set: { data: value, updatedAt: new Date(), updatedBy: adminId } },
         { upsert: true }
       );
+      invalidateVendorConfigCache(targetDocId); // public bazaar picks up the change immediately
     } else if (mapping.field === '_root') {
       // For points_settings etc., replace the entire data object
       await col.updateOne(

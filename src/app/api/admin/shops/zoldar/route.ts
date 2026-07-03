@@ -5,6 +5,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import clientPromise from '@/lib/mongodb';
+import { invalidateShopConfigCache } from '@/lib/bazaar/shop-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,6 +117,7 @@ export async function POST(req: NextRequest) {
       { $set: { data: nextData, updatedAt: new Date(), updatedBy: adminId } },
       { upsert: true },
     );
+    invalidateShopConfigCache(); // public bazaar picks up the change immediately
 
     await logAdminAction({
       adminDiscordId: adminId,

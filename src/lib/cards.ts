@@ -11,9 +11,16 @@ function detectGame(nameEn: string): CardGame {
 }
 
 let cache: Card[] | null = null;
+let cacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // backstop for bot-side writes; admin writes invalidate explicitly
+
+export function invalidateCardCatalogCache(): void {
+  cache = null;
+  cacheTime = 0;
+}
 
 export async function getCardCatalog(game?: CardGame): Promise<Card[]> {
-  if (!cache) {
+  if (!cache || Date.now() - cacheTime > CACHE_TTL) {
     const client = await clientPromise;
     const db = client.db("Database");
 
@@ -87,6 +94,7 @@ export async function getCardCatalog(game?: CardGame): Promise<Card[]> {
     }
 
     cache = cards;
+    cacheTime = Date.now();
   }
 
   if (game) {

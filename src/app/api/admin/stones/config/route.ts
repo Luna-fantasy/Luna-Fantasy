@@ -6,6 +6,7 @@ import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { uploadObject, deleteObject, isR2Configured } from '@/lib/admin/r2';
 import clientPromise from '@/lib/mongodb';
+import { invalidateShopConfigCache } from '@/lib/bazaar/shop-config';
 
 const DB_NAME = 'Database';
 
@@ -177,25 +178,27 @@ export async function POST(request: NextRequest) {
         { upsert: true }
       );
 
-      // 3. vendor_config — bot reads via vendor_config_db.ts for shop settings
+      // 3. vendor_config — bot reads via vendor_config_db.ts for shop settings.
+      // Dot-path $set so the Meluna editor's sibling keys (title, description,
+      // image, imageVersion) survive a save from this page.
       await db.collection('vendor_config').updateOne(
         { _id: 'stonebox' as any },
         {
           $set: {
-            data: {
-              price: moonStones.box?.price ?? 2000,
-              refund_chance: moonStones.box?.refund_chance ?? 0.5,
-              refund_amount: moonStones.box?.refund_amount ?? 1000,
-              stones: moonStones.stones.map(s => ({
-                name: s.name,
-                weight: s.weight,
-                sell_price: s.sell_price,
-              })),
-            },
+            'data.price': moonStones.box?.price ?? 2000,
+            'data.refund_chance': moonStones.box?.refund_chance ?? 0.5,
+            'data.refund_amount': moonStones.box?.refund_amount ?? 1000,
+            'data.stones': moonStones.stones.map(s => ({
+              name: s.name,
+              weight: s.weight,
+              sell_price: s.sell_price,
+            })),
           },
         },
         { upsert: true }
       );
+
+      invalidateShopConfigCache(); // public bazaar picks up the change immediately
     };
 
     if (action === 'update_stone') {

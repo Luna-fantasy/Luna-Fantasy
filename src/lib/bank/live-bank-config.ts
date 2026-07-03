@@ -42,6 +42,11 @@ interface CacheEntry {
 
 const cache = new Map<string, CacheEntry>();
 
+/** Call after an admin write so bank pages reflect the change immediately. */
+export function invalidateLiveBankConfigCache(): void {
+  cache.clear();
+}
+
 async function readBotConfig(docId: string): Promise<any | null> {
   const cached = cache.get(docId);
   if (cached && cached.expiresAt > Date.now()) {

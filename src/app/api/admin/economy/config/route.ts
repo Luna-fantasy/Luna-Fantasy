@@ -5,6 +5,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import clientPromise from '@/lib/mongodb';
+import { invalidateLiveBankConfigCache } from '@/lib/bank/live-bank-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -269,6 +270,7 @@ export async function PUT(req: NextRequest) {
       { $set: { ...update, updatedAt: new Date(), updatedBy: adminId } },
       { upsert: true },
     );
+    invalidateLiveBankConfigCache(); // bank/economy pages pick up the change immediately
 
     if (imageKeysToVersion.length > 0) {
       const now = Date.now();

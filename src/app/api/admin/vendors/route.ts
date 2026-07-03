@@ -7,6 +7,8 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 import { preserveMirrorsInPayload } from '@/lib/admin/seluna-mells-mirror';
 import { mirrorMellsToButler } from '@/lib/admin/mells-butler-mirror';
+import { invalidateVendorConfigCache } from '@/lib/bazaar/vendor-config';
+import { invalidateShopConfigCache } from '@/lib/bazaar/shop-config';
 
 const DB_NAME = 'Database';
 
@@ -131,7 +133,23 @@ export async function PUT(request: NextRequest) {
       finalData = { ...(sanitizedData as Record<string, unknown>), items: enforced };
     }
 
-    await col.updateOne({ _id: vendorId as any }, { $set: { data: finalData } }, { upsert: true });
+    // Dot-path $set per field so concurrent writers to the same doc (e.g. the
+    // Seluna mirror reconciler touching mells_selvair) never lose sibling keys
+    // to a whole-doc replace.
+    const setDoc: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(finalData as Record<string, unknown>)) {
+      setDoc[`data.${k}`] = v;
+    }
+    if (Object.keys(setDoc).length === 0) {
+      return NextResponse.json({ error: 'data must have at least one field' }, { status: 400 });
+    }
+    await col.updateOne({ _id: vendorId as any }, { $set: setDoc }, { upsert: true });
+
+    // Bust the bazaar read caches so the public site reflects this save
+    // immediately (vendorId can be any vendor_config doc, including the
+    // shop-config-cached luckbox/stonebox/tickets/mells docs).
+    invalidateVendorConfigCache(vendorId);
+    invalidateShopConfigCache();
 
     // Mells Selvair lives in TWO collections — vendor_config holds the typed
     // schema (`imageUrl` + `type: 'profile'|'rank'`) used by the admin UI and

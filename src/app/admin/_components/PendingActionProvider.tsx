@@ -23,23 +23,43 @@ const C = createContext<Ctx | null>(null);
 
 export function PendingActionProvider({ children }: { children: ReactNode }) {
   const [action, setAction] = useState<PendingAction | null>(null);
+  const actionRef = useRef<PendingAction | null>(null);
   const timerRef = useRef<number | null>(null);
   const resolveRef = useRef<((ok: boolean) => void) | null>(null);
 
   const cancel = useCallback(() => {
     if (timerRef.current) { window.clearTimeout(timerRef.current); timerRef.current = null; }
-    if (action) {
-      action.onCancel?.();
+    if (actionRef.current) {
+      actionRef.current.onCancel?.();
       resolveRef.current?.(false);
       resolveRef.current = null;
     }
+    actionRef.current = null;
     setAction(null);
-  }, [action]);
+  }, []);
 
   const queue = useCallback<Ctx['queue']>(async (input) => {
-    // If one's already queued, cancel the old (most recent wins)
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-    resolveRef.current?.(false);
+    // If an action is already queued, commit it NOW instead of dropping it.
+    // The old most-recent-wins behavior silently cancelled the earlier save
+    // whenever two saves landed inside one undo window — the admin saw both
+    // succeed but only the second one ever ran.
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+      const prev = actionRef.current;
+      const prevResolve = resolveRef.current;
+      actionRef.current = null;
+      resolveRef.current = null;
+      if (prev) {
+        try {
+          await prev.run();
+          prevResolve?.(true);
+        } catch (e) {
+          console.error('Pending action failed:', e);
+          prevResolve?.(false);
+        }
+      }
+    }
 
     return new Promise<boolean>((resolve) => {
       const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
@@ -50,6 +70,7 @@ export function PendingActionProvider({ children }: { children: ReactNode }) {
         delayMs: Math.max(1000, input.delayMs),
       };
       resolveRef.current = resolve;
+      actionRef.current = pending;
       setAction(pending);
 
       timerRef.current = window.setTimeout(async () => {
@@ -62,6 +83,7 @@ export function PendingActionProvider({ children }: { children: ReactNode }) {
           resolve(false);
         } finally {
           resolveRef.current = null;
+          actionRef.current = null;
           setAction(null);
         }
       }, pending.delayMs);

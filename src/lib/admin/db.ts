@@ -59,10 +59,18 @@ async function resolveTransactionUsernames(db: any, transactions: any[]): Promis
   }) as RecentTransaction[];
 }
 
+let overviewCache: EconomyOverview | null = null;
+let overviewCacheTime = 0;
+const OVERVIEW_TTL_MS = 20_000; // dashboard home hits this on every visit — 6 aggregations
+
 /**
  * Aggregate economy overview stats from multiple collections.
  */
 export async function getEconomyOverview(): Promise<EconomyOverview> {
+  if (overviewCache && Date.now() - overviewCacheTime < OVERVIEW_TTL_MS) {
+    return overviewCache;
+  }
+
   const db = await getDb();
 
   const [
@@ -136,7 +144,7 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
       ? parseFloat(bankReserveRaw) || 0
       : 0;
 
-  return {
+  overviewCache = {
     totalUsers: serverMembers,
     totalLunariCirculation: Math.round(totalLunari),
     activeHolders,
@@ -146,6 +154,8 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
     totalDebt: Math.round(debtResult[0]?.total ?? 0),
     recentTransactions: await resolveTransactionUsernames(db, recentTransactions),
   };
+  overviewCacheTime = Date.now();
+  return overviewCache;
 }
 
 /**

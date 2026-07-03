@@ -6,6 +6,8 @@ import { validateButlerConfig } from '@/lib/admin/config-validation';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
+import { invalidateLiveBankConfigCache } from '@/lib/bank/live-bank-config';
+import { invalidateShopConfigCache } from '@/lib/bazaar/shop-config';
 
 const DB_NAME = 'Database';
 
@@ -301,6 +303,14 @@ export async function PUT(req: NextRequest) {
         },
         { upsert: true }
       );
+    }
+
+    // Bust website read caches so public pages reflect the save immediately
+    if (['butler_banking', 'butler_economy', 'butler_games'].includes(mapping.docId)) {
+      invalidateLiveBankConfigCache();
+    }
+    if (mapping.docId === 'butler_shop') {
+      invalidateShopConfigCache();
     }
 
     await logAdminAction({

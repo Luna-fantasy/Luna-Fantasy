@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       error: `${BOT_LABELS[botId]} token not configured (set ${botId.toUpperCase()}_BOT_TOKEN in env)`,
       bots: listAvailableBots(),
-    }, { status: 500 });
+    }, { status: 503 });
   }
 
   try {
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
   if (!token) {
     return NextResponse.json({
       error: `${BOT_LABELS[botId]} token not configured (set ${botId.toUpperCase()}_BOT_TOKEN in env)`,
-    }, { status: 500 });
+    }, { status: 503 });
   }
 
   if (!channelId || typeof channelId !== 'string') {
