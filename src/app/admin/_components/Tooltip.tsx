@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { getAdminPortalTarget } from './portal-root';
 
 interface TooltipProps {
   content: ReactNode;
@@ -52,6 +53,8 @@ export default function Tooltip({ content, delay = 250, side = 'top', children }
     };
   }, [open]);
 
+  const portalTarget = getAdminPortalTarget();
+
   return (
     <>
       <span
@@ -65,7 +68,7 @@ export default function Tooltip({ content, delay = 250, side = 'top', children }
       >
         {children}
       </span>
-      {open && pos && typeof document !== 'undefined' && createPortal(
+      {open && pos && typeof document !== 'undefined' && portalTarget && createPortal(
         <div
           id={id}
           role="tooltip"
@@ -74,7 +77,7 @@ export default function Tooltip({ content, delay = 250, side = 'top', children }
         >
           {content}
         </div>,
-        document.body
+        portalTarget
       )}
     </>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useUndo } from './UndoProvider';
+import { getAdminPortalTarget } from './portal-root';
 
 function fmtRel(ts: number): string {
   const delta = Date.now() - ts;
@@ -35,6 +36,9 @@ export default function UndoDrawer() {
 
   if (!mounted) return null;
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
+
   const pending = items.filter((i) => i.status === 'pending').length;
 
   const trigger = (
@@ -50,7 +54,7 @@ export default function UndoDrawer() {
     </button>
   );
 
-  if (!open) return createPortal(trigger, document.body);
+  if (!open) return createPortal(trigger, portalTarget);
 
   const drawer = (
     <>
@@ -105,5 +109,5 @@ export default function UndoDrawer() {
     </>
   );
 
-  return createPortal(drawer, document.body);
+  return createPortal(drawer, portalTarget);
 }

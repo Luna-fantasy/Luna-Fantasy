@@ -6,6 +6,7 @@ import {
   encodeTheme, THEME_COOKIE, effectiveTheme,
   type ThemeId, type DensityId, type ThemeState,
 } from './theme-cookie';
+import { getAdminPortalTarget } from './portal-root';
 
 const STORAGE_KEY = 'av-theme';
 
@@ -262,6 +263,8 @@ export default function ThemePicker({ initialState }: ThemePickerProps) {
     </div>
   );
 
+  const portalTarget = getAdminPortalTarget();
+
   return (
     <div className="av-theme-picker" ref={wrapRef}>
       <button
@@ -277,7 +280,7 @@ export default function ThemePicker({ initialState }: ThemePickerProps) {
         <span>{current.label}</span>
       </button>
 
-      {open && mounted && createPortal(panelContent, document.body)}
+      {open && mounted && portalTarget && createPortal(panelContent, portalTarget)}
     </div>
   );
 }

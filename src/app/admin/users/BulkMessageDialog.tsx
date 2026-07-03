@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 
 interface Props {
   count: number;
@@ -28,6 +29,8 @@ export default function BulkMessageDialog({ count, onSend, onClose }: Props) {
     }
   };
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={busy ? undefined : onClose} />
@@ -62,6 +65,6 @@ export default function BulkMessageDialog({ count, onSend, onClose }: Props) {
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }

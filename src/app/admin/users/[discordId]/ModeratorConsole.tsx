@@ -7,6 +7,7 @@ import { useUndo } from '../../_components/UndoProvider';
 import { usePendingAction } from '../../_components/PendingActionProvider';
 import Icon from '../../_components/Icon';
 import { useFocusTrap } from '../../_components/a11y';
+import { getAdminPortalTarget } from '../../_components/portal-root';
 import type { IconName } from '../../_components/nav-config';
 
 interface Props {
@@ -214,6 +215,8 @@ function ActionDialog({
     if (ok !== false) onClose();
   };
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={onClose} />
@@ -294,7 +297,7 @@ function ActionDialog({
         </footer>
       </div>
     </>,
-    document.body
+    portalTarget
   );
 }
 

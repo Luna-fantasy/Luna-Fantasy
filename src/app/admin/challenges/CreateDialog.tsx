@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useToast } from '../_components/Toast';
 import { useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 import type { ChallengeTemplate, ChannelOption, CreateBody, ChallengeType } from './types';
 
 interface Props {
@@ -183,6 +184,8 @@ export default function CreateDialog({ templates, channels, onCreated, onClose, 
     reward3rd > 0 ? `🥉 ${reward3rd.toLocaleString()}` : null,
   ].filter(Boolean).join(' · ') || 'No Lunari rewards';
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={busy ? undefined : onClose} />
@@ -355,6 +358,6 @@ export default function CreateDialog({ templates, channels, onCreated, onClose, 
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }

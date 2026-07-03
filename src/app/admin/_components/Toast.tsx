@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { getAdminPortalTarget } from './portal-root';
 
 export type ToastTone = 'info' | 'success' | 'warn' | 'err' | 'error';
 
@@ -98,10 +99,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   // Normalize 'error' → 'err' for CSS data-tone match
   const normTone = (t?: ToastTone): string => t === 'error' ? 'err' : (t ?? 'info');
 
+  const portalTarget = getAdminPortalTarget();
+
   return (
     <ToastCtx.Provider value={{ show, push }}>
       {children}
-      {mounted && createPortal(
+      {mounted && portalTarget && createPortal(
         <div className="av-toast-stack" aria-live="polite" aria-atomic="true">
           {items.map((t) => (
             <div key={t.id} className="av-toast" data-tone={normTone(t.tone)}>
@@ -114,7 +117,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             </div>
           ))}
         </div>,
-        document.body
+        portalTarget
       )}
     </ToastCtx.Provider>
   );

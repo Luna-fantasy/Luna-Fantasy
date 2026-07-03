@@ -6,6 +6,7 @@ import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 import { RARITY_ORDER, RARITY_TONES, type CardDef, type Rarity } from '@/lib/admin/cards-v2-types';
 import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
 
@@ -379,6 +380,8 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
     if (file) handleFileUpload(file);
   };
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={busy ? undefined : onClose} />
@@ -538,7 +541,7 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useToast } from '../_components/Toast';
 import { useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 
 interface Props {
   bot: 'butler' | 'jester';
@@ -114,6 +115,8 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
     }
   };
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim av-peek-scrim--strong" onClick={busy ? undefined : onClose} />
@@ -182,6 +185,6 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }

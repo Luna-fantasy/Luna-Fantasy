@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 import type { R2Object } from './types';
 
 interface Props {
@@ -75,6 +76,8 @@ export default function AssetPreviewDialog({ object, onDeleted, onClose }: Props
   const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
   const isImage = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext);
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={onClose} />
@@ -118,6 +121,6 @@ export default function AssetPreviewDialog({ object, onDeleted, onClose }: Props
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }

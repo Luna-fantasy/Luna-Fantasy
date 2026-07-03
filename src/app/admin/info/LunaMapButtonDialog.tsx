@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { getAdminPortalTarget } from '../_components/portal-root';
 import ImageUrlInput from '../games/fields/ImageUrlInput';
 import { BTN_STYLE_COLOR, BTN_STYLE_LABEL, type LunaMapButton, type LunaMapMenuItem } from './types';
 
@@ -96,6 +97,8 @@ export default function LunaMapButtonDialog({ initial, onSave, onClose, filename
     onSave(buildPayload({ mode: 'menu', name, nameEn, emojiId, btnStyle, content, contentEn, image, menu: nextMenu }));
   };
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={onClose} />
@@ -248,6 +251,6 @@ export default function LunaMapButtonDialog({ initial, onSave, onClose, filename
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { getAdminPortalTarget } from './portal-root';
 
 export interface ContextMenuItem {
   label: string;
@@ -80,10 +81,12 @@ export default function ContextMenu({ items, children, className }: ContextMenuP
 
   const realItems = resolved.filter((x): x is ContextMenuItem => x !== 'separator');
 
+  const portalTarget = getAdminPortalTarget();
+
   return (
     <>
       <div className={className} onContextMenu={open}>{children}</div>
-      {pos && typeof document !== 'undefined' && createPortal(
+      {pos && typeof document !== 'undefined' && portalTarget && createPortal(
         <div
           ref={menuRef}
           className="av-ctxmenu"
@@ -110,7 +113,7 @@ export default function ContextMenu({ items, children, className }: ContextMenuP
             );
           })}
         </div>,
-        document.body
+        portalTarget
       )}
     </>
   );

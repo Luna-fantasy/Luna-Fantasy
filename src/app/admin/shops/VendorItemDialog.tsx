@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useToast } from '../_components/Toast';
 import RolePicker from '../_components/RolePicker';
 import { useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 
 export interface VendorItem {
   id: string;
@@ -150,6 +151,8 @@ export default function VendorItemDialog({ tone, mode, vendorId, initial, onSave
     ? { background: `linear-gradient(135deg, ${gradA}, ${gradB})` }
     : {};
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={busy ? undefined : onClose} />
@@ -275,6 +278,6 @@ export default function VendorItemDialog({ tone, mode, vendorId, initial, onSave
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }

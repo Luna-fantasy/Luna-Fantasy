@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGuild, type GuildRole } from './GuildDataProvider';
+import { getAdminPortalTarget } from './portal-root';
 
 function roleHex(color: number): string {
   if (!color) return '#99aab5';
@@ -79,6 +80,8 @@ export default function RolePicker({ value, onChange, showManaged = false, place
     setManualMode(false);
   };
 
+  const portalTarget = getAdminPortalTarget();
+
   return (
     <div className="av-picker-wrap">
       <button
@@ -94,7 +97,7 @@ export default function RolePicker({ value, onChange, showManaged = false, place
         <span className="av-picker-trigger-caret" aria-hidden="true">{open ? '\u25B4' : '\u25BE'}</span>
       </button>
 
-      {open && createPortal(
+      {open && portalTarget && createPortal(
         <div
           ref={dropRef}
           className="av-picker-dropdown"
@@ -133,7 +136,7 @@ export default function RolePicker({ value, onChange, showManaged = false, place
             )}
           </div>
         </div>,
-        document.body,
+        portalTarget,
       )}
 
       {!hideFallback && <div className="av-picker-fallback-row">

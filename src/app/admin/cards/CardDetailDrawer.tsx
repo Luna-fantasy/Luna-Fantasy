@@ -8,6 +8,7 @@ import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { onButtonKey, useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 import { RARITY_TONES, type CardDef } from '@/lib/admin/cards-v2-types';
 import { deleteCard, reAddCard } from './CardEditDialog';
 
@@ -84,6 +85,8 @@ export default function CardDetailDrawer({ card, onClose, onEdit, onDeleted }: P
 
   const tone = RARITY_TONES[card.rarity];
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={onClose} />
@@ -164,6 +167,6 @@ export default function CardDetailDrawer({ card, onClose, onEdit, onDeleted }: P
         </footer>
       </aside>
     </>,
-    document.body,
+    portalTarget,
   );
 }

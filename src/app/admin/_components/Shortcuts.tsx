@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { useToast } from './Toast';
+import { getAdminPortalTarget } from './portal-root';
 
 interface Shortcut {
   keys: string;
@@ -123,13 +124,16 @@ export default function Shortcuts() {
 
   if (!mounted) return null;
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
+
   return (
     <>
       {chord && createPortal(
         <div className="av-chord-indicator">
           <kbd>{chord}</kbd> <span className="av-chord-hint">+ d, o, a, u…</span>
         </div>,
-        document.body
+        portalTarget
       )}
 
       {/* Floating "?" trigger button */}
@@ -142,7 +146,7 @@ export default function Shortcuts() {
         >
           ?
         </button>,
-        document.body
+        portalTarget
       )}
 
       {/* Shortcuts legend overlay */}
@@ -168,7 +172,7 @@ export default function Shortcuts() {
             </div>
           </div>
         </div>,
-        document.body
+        portalTarget
       )}
     </>
   );

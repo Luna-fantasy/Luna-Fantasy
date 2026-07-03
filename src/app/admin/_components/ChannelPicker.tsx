@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGuild, type GuildChannel } from './GuildDataProvider';
+import { getAdminPortalTarget } from './portal-root';
 
 const TYPE_ICON: Record<number, string> = {
   0: '#',
@@ -100,6 +101,8 @@ export default function ChannelPicker({ value, onChange, filter = 'all', placeho
       ? `# ${value}`
       : (placeholder ?? 'Select channel');
 
+  const portalTarget = getAdminPortalTarget();
+
   return (
     <div className="av-picker-wrap">
       <button
@@ -112,7 +115,7 @@ export default function ChannelPicker({ value, onChange, filter = 'all', placeho
         <span className="av-picker-trigger-caret" aria-hidden="true">{open ? '\u25B4' : '\u25BE'}</span>
       </button>
 
-      {open && createPortal(
+      {open && portalTarget && createPortal(
         <div
           ref={dropRef}
           className="av-picker-dropdown"
@@ -155,7 +158,7 @@ export default function ChannelPicker({ value, onChange, filter = 'all', placeho
             )}
           </div>
         </div>,
-        document.body,
+        portalTarget,
       )}
 
       {!hideFallback && <div className="av-picker-fallback-row">

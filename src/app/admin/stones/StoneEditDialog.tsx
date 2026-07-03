@@ -6,6 +6,7 @@ import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 import {
   STONE_TIERS, TIER_TONES,
   type StoneDef, type StoneTier,
@@ -171,6 +172,8 @@ export default function StoneEditDialog({ mode, initialTier, stone, onClose, onS
     if (ok !== false) onClose();
   };
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={busy ? undefined : onClose} />
@@ -289,6 +292,6 @@ export default function StoneEditDialog({ mode, initialTier, stone, onClose, onS
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }

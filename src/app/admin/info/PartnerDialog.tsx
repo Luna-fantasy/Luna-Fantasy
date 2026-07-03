@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useToast } from '../_components/Toast';
 import { useFocusTrap } from '../_components/a11y';
+import { getAdminPortalTarget } from '../_components/portal-root';
 import ImageUrlInput from '../games/fields/ImageUrlInput';
 import type { Partner } from './types';
 
@@ -74,6 +75,8 @@ export default function PartnerDialog({ mode, initial, onSave, onClose }: Props)
     }
   };
 
+  const portalTarget = getAdminPortalTarget();
+  if (!portalTarget) return null;
   return createPortal(
     <>
       <div className="av-peek-scrim" onClick={busy ? undefined : onClose} />
@@ -180,6 +183,6 @@ export default function PartnerDialog({ mode, initial, onSave, onClose }: Props)
         </footer>
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }
