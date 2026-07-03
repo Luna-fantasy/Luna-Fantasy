@@ -265,6 +265,16 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'shop and config required' }, { status: 400 });
   }
 
+  // Deprecated 2026-07-03 — no client calls these branches anymore; the
+  // dedicated routes (shops/meluna, stones/config, shops/tickets editors) are
+  // canonical. These writers used camelCase refundAmount and 0-100 weight
+  // bounds that conflict with what the live writers and the Jester bot use.
+  // Only lunamap still has a real caller (InfoClient).
+  const DISABLED_SHOPS = new Set(['luckbox', 'stonebox', 'tickets', 'mells']);
+  if (DISABLED_SHOPS.has(shop) && process.env.ENABLE_LEGACY_SHOP_CONFIG_WRITES !== '1') {
+    return NextResponse.json({ error: `Shop config writer for "${shop}" is deprecated` }, { status: 410 });
+  }
+
   const ip = getClientIp(request);
   const adminName = authResult.session.user?.globalName ?? 'Unknown';
 

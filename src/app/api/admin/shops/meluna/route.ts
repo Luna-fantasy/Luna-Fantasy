@@ -139,6 +139,9 @@ export async function POST(req: NextRequest) {
       ...(typeof body.title === 'string' ? { title: body.title.slice(0, 120) } : {}),
       ...(typeof body.description === 'string' ? { description: body.description.slice(0, 600) } : {}),
     };
+    // Jester reads refundAmount BEFORE refund_amount — a stale camelCase key
+    // carried over via ...beforeData would silently shadow every save here.
+    delete (nextData as any).refundAmount;
 
     await col.updateOne(
       { _id: DOC_ID as any },

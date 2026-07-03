@@ -37,7 +37,11 @@ export interface LuckboxShopConfig {
 
 export interface StoneShopConfig {
   price: number;
-  refundAmount: number;
+  /** Legacy camelCase key — read-fallback only, live writers use refund_amount */
+  refundAmount?: number;
+  /** Canonical keys, matching what the meluna/stones admin routes write */
+  refund_amount?: number;
+  refund_chance?: number;
   stones: StoneConfig[];
 }
 

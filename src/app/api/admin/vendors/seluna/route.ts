@@ -9,6 +9,16 @@ import clientPromise from '@/lib/mongodb';
 
 const DB_NAME = 'Database';
 
+// Deprecated 2026-07-03 — this route wrote capitalized item types ("Card",
+// "Stone") that the current editor's validator rejects, poisoning the doc.
+// The Seluna editor now lives on /api/admin/shops/seluna. No client callers
+// remain; kept behind an env flag per the deprecate policy.
+const LEGACY_ENABLED = process.env.ENABLE_LEGACY_SELUNA_ADMIN === '1';
+const legacyGone = () => NextResponse.json(
+  { error: 'Deprecated — use /api/admin/shops/seluna' },
+  { status: 410 },
+);
+
 const PNG_MAGIC  = Buffer.from([0x89, 0x50, 0x4E, 0x47]);
 const JPEG_MAGIC = Buffer.from([0xFF, 0xD8, 0xFF]);
 const WEBP_RIFF  = Buffer.from('RIFF');
@@ -23,6 +33,8 @@ function verifyImageMagicBytes(buf: Buffer, claimedType: string): boolean {
 }
 
 export async function GET() {
+  if (!LEGACY_ENABLED) return legacyGone();
+
   const authResult = await requireMastermindApi();
   if (!authResult.authorized) return authResult.response;
 
@@ -71,6 +83,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  if (!LEGACY_ENABLED) return legacyGone();
+
   const authResult = await requireMastermindApi();
   if (!authResult.authorized) return authResult.response;
 

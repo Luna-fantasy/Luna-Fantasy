@@ -222,7 +222,12 @@ export async function POST(request: NextRequest) {
       const targetArr = isForbidden ? moonStones.forbidden_stones : moonStones.stones;
       const before = { ...targetArr[stoneIdx] };
 
-      if (weight !== undefined) targetArr[stoneIdx].weight = Number(weight);
+      if (weight !== undefined) {
+        if (isNaN(Number(weight)) || Number(weight) < 0 || Number(weight) > 1000) {
+          return NextResponse.json({ error: 'Weight must be a number 0-1000' }, { status: 400 });
+        }
+        targetArr[stoneIdx].weight = Number(weight);
+      }
       if (sell_price !== undefined) targetArr[stoneIdx].sell_price = Number(sell_price);
       if (emoji_id !== undefined) targetArr[stoneIdx].emoji_id = String(emoji_id);
 
@@ -346,8 +351,8 @@ export async function POST(request: NextRequest) {
       if (!name || typeof name !== 'string' || !name.trim()) {
         return NextResponse.json({ error: 'Stone name is required' }, { status: 400 });
       }
-      if (weight === undefined || typeof Number(weight) !== 'number' || isNaN(Number(weight)) || Number(weight) < 0) {
-        return NextResponse.json({ error: 'Weight must be a non-negative number' }, { status: 400 });
+      if (weight === undefined || isNaN(Number(weight)) || Number(weight) < 0 || Number(weight) > 1000) {
+        return NextResponse.json({ error: 'Weight must be a number 0-1000' }, { status: 400 });
       }
       if (sell_price === undefined || typeof Number(sell_price) !== 'number' || isNaN(Number(sell_price)) || Number(sell_price) < 0) {
         return NextResponse.json({ error: 'Sell price must be a non-negative number' }, { status: 400 });

@@ -153,7 +153,9 @@ export async function getStoneBoxConfig(): Promise<StoneBoxResult> {
       if (config.stones && Array.isArray(config.stones) && config.stones.length > 0) {
         const result: StoneBoxResult = {
           price: config.price ?? STONE_BOX_PRICE,
-          refundAmount: config.refundAmount ?? STONE_REFUND_AMOUNT,
+          // snake_case is what the meluna/stones admin routes actually write;
+          // camelCase kept as a legacy-doc fallback
+          refundAmount: config.refund_amount ?? config.refundAmount ?? STONE_REFUND_AMOUNT,
           stones: config.stones,
         };
         setCache('stonebox', result);

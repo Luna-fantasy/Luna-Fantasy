@@ -54,13 +54,15 @@ function validateItems(items: unknown): string | null {
     if (typeof it.id !== 'string' || !it.id) return `items[${i}].id required`;
     if (seen.has(it.id)) return `duplicate item id: ${it.id}`;
     seen.add(it.id);
-    if (!validTypes.has(it.type)) return `items[${i}].type must be card|stone|role|tickets|background`;
+    // Defensive lowercase — the save path normalizes, but keep both layers agreeing
+    const t = typeof it.type === 'string' ? it.type.toLowerCase() : '';
+    if (!validTypes.has(t)) return `items[${i}].type must be card|stone|role|tickets|background`;
     if (typeof it.name !== 'string' || !it.name) return `items[${i}].name required`;
     if (typeof it.price !== 'number' || it.price < 1 || it.price > 100_000_000) return `items[${i}].price must be 1-100,000,000`;
     if (typeof it.stock !== 'number' || it.stock < -1 || it.stock > 100_000) return `items[${i}].stock must be -1 (unlimited) or 0-100,000`;
-    if (it.type === 'role' && (!it.roleId || typeof it.roleId !== 'string')) return `items[${i}].roleId required for role items`;
-    if (it.type === 'tickets' && (typeof it.amount !== 'number' || it.amount < 1)) return `items[${i}].amount required for ticket items`;
-    if (it.type === 'background') {
+    if (t === 'role' && (!it.roleId || typeof it.roleId !== 'string')) return `items[${i}].roleId required for role items`;
+    if (t === 'tickets' && (typeof it.amount !== 'number' || it.amount < 1)) return `items[${i}].amount required for ticket items`;
+    if (t === 'background') {
       const bgType = (it.backgroundType ?? 'profile') as string;
       if (!['profile', 'rank', 'both'].includes(bgType)) {
         return `items[${i}].backgroundType must be profile|rank|both`;
@@ -452,12 +454,16 @@ export async function POST(req: NextRequest) {
       const items = body.items;
       if (!items) return NextResponse.json({ error: 'items required' }, { status: 400 });
       const cleaned = items.map((it) => {
-        const bgType = it.type === 'background'
+        // Legacy items were stored with capitalized types ("Card", "Stone", …)
+        // by the old vendors/seluna route. Normalize on save so a poisoned doc
+        // can't fail validation forever — the bot reads case-insensitively.
+        const type = (typeof it.type === 'string' ? it.type.toLowerCase() : it.type) as SelunaItem['type'];
+        const bgType = type === 'background'
           ? ((it.backgroundType ?? 'profile') as 'profile' | 'rank' | 'both')
           : undefined;
         return {
           id: sanitizeString(it.id, 60).replace(/[^a-z0-9_-]/gi, ''),
-          type: it.type,
+          type,
           name: sanitizeString(it.name, 100),
           price: Math.floor(Number(it.price ?? 0)),
           stock: Math.floor(Number(it.stock ?? 0)),
@@ -468,9 +474,9 @@ export async function POST(req: NextRequest) {
           imageUrl: it.imageUrl ? sanitizeString(it.imageUrl, 500) : undefined,
           description: it.description ? sanitizeString(it.description, 300) : undefined,
           backgroundType: bgType,
-          backgroundUrl: it.type === 'background' && it.backgroundUrl
+          backgroundUrl: type === 'background' && it.backgroundUrl
             ? sanitizeString(it.backgroundUrl, 500) : undefined,
-          rankBackgroundUrl: it.type === 'background' && it.rankBackgroundUrl
+          rankBackgroundUrl: type === 'background' && it.rankBackgroundUrl
             ? sanitizeString(it.rankBackgroundUrl, 500) : undefined,
           archived: it.archived === true ? true : undefined,
           archivedAt: typeof it.archivedAt === 'number' && Number.isFinite(it.archivedAt)
@@ -487,8 +493,12 @@ export async function POST(req: NextRequest) {
       const before = await col.findOne({ id: 'inventory_items' });
       const prevItems: SelunaItem[] = Array.isArray(before?.value) ? before!.value : [];
       const newIds = new Set(cleaned.map((it) => it.id));
+      // Sanitize prev ids the same way as cleaned ids and lowercase the type —
+      // otherwise a legacy id/type that the cleaner rewrites would look "removed"
+      // and block every save.
+      const sanitizeId = (s: unknown) => String(s ?? '').slice(0, 60).replace(/[^a-z0-9_-]/gi, '');
       for (const prev of prevItems) {
-        if (prev.type === 'background' && !newIds.has(prev.id)) {
+        if (String(prev.type ?? '').toLowerCase() === 'background' && !newIds.has(sanitizeId(prev.id))) {
           return NextResponse.json({
             error: `Cannot remove background "${prev.id}" — IDs are permanent. Archive it instead.`,
           }, { status: 400 });
