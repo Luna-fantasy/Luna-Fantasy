@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { adminPost } from '@/lib/admin/http';
 import Icon from '../_components/Icon';
 import ContextMenu from '../_components/ContextMenu';
 import { useToast } from '../_components/Toast';
@@ -18,24 +19,8 @@ function fmt(n: number): string {
   return n.toLocaleString();
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  const data = await res.json();
-  return data.token;
-}
-
 async function postStoneAction(body: Record<string, unknown>): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/stones/config', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    body: JSON.stringify(body),
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
+  await adminPost('/api/admin/stones/config', body);
 }
 
 type Sort = 'owned' | 'name' | 'weight' | 'price';

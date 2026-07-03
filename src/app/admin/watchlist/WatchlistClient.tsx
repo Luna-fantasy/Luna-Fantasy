@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { adminDelete, adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { usePeek } from '../_components/PeekProvider';
@@ -34,11 +35,6 @@ const FLAG_LABELS: Record<string, { label: string; tone: string; glyph: string }
   chargeback_risk:    { label: 'Chargeback risk',   tone: '#ED4245', glyph: '⚠️' },
 };
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 function fmt(n?: number): string { return (n ?? 0).toLocaleString(); }
 function relativeTime(iso: string): string {
   const d = new Date(iso).getTime();
@@ -70,11 +66,9 @@ export default function WatchlistClient() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/watchlist', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      setUsers(body.watchlist ?? []);
-      setStats(body.stats ?? {});
+      const body = await adminGet<{ watchlist?: WatchedUser[]; stats?: Record<string, number> }>('/api/admin/watchlist');
+      setUsers(body?.watchlist ?? []);
+      setStats(body?.stats ?? {});
     } catch (e) {
       toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });
     } finally {
@@ -91,15 +85,7 @@ export default function WatchlistClient() {
     }
     setAdding(true);
     try {
-      const token = await fetchCsrf();
-      const res = await fetch('/api/admin/watchlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-        credentials: 'include',
-        body: JSON.stringify({ userId: newUserId, type: newType, reason: newReason }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      await adminPost('/api/admin/watchlist', { userId: newUserId, type: newType, reason: newReason });
       toast.show({ tone: 'success', title: 'Flagged', message: `${newUserId} added to watchlist` });
       setNewUserId(''); setNewReason(''); setNewType('manual');
       void load();
@@ -117,14 +103,7 @@ export default function WatchlistClient() {
       delayMs: 4500,
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/watchlist', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({ userId, flagIndex }),
-          });
-          if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b?.error || `HTTP ${res.status}`); }
+          await adminDelete('/api/admin/watchlist', { body: { userId, flagIndex } });
           toast.show({ tone: 'success', title: 'Removed', message: label });
           void load();
         } catch (e) {
@@ -142,14 +121,7 @@ export default function WatchlistClient() {
       tone: 'danger',
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/watchlist', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({ userId, clearAll: true }),
-          });
-          if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b?.error || `HTTP ${res.status}`); }
+          await adminDelete('/api/admin/watchlist', { body: { userId, clearAll: true } });
           toast.show({ tone: 'success', title: 'Cleared', message: userId });
           void load();
         } catch (e) {

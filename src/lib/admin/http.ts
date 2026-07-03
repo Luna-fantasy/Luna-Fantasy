@@ -41,6 +41,19 @@ async function fetchCsrfToken(): Promise<string> {
   return csrfInFlight;
 }
 
+// Force-refresh: skips the cookie read entirely. Used when a mutation comes
+// back 403 (stale/rotated token) — the endpoint re-sets the cookie too.
+async function refreshCsrfToken(): Promise<string> {
+  try {
+    const res = await fetch('/api/admin/csrf', { cache: 'no-store', credentials: 'include' });
+    if (!res.ok) return '';
+    const body = (await res.json().catch(() => null)) as { token?: unknown } | null;
+    return typeof body?.token === 'string' ? body.token : '';
+  } catch {
+    return '';
+  }
+}
+
 async function readErrorMessage(res: Response): Promise<string> {
   // Try JSON first; fall back to text; finally fall back to status.
   const ctype = res.headers.get('content-type') ?? '';
@@ -84,7 +97,7 @@ export async function adminFetch<T = unknown>(
   if (isMutating && !skipCsrf && !finalHeaders['x-csrf-token']) {
     finalHeaders['x-csrf-token'] = await fetchCsrfToken();
   }
-  const res = await fetch(url, {
+  const init: RequestInit = {
     ...rest,
     method: verb,
     headers: finalHeaders,
@@ -94,7 +107,20 @@ export async function adminFetch<T = unknown>(
       body === undefined ? undefined
       : typeof body === 'string' ? body
       : JSON.stringify(body),
-  });
+  };
+  let res = await fetch(url, init);
+  let retriedCsrf = false;
+  if (res.status === 403 && isMutating && !skipCsrf && !retriedCsrf) {
+    // Likely a stale/rotated CSRF token (e.g. cookie outlived the server
+    // secret). Fetch a fresh token — this also re-sets the cookie — and
+    // re-issue the request exactly once.
+    retriedCsrf = true;
+    const fresh = await refreshCsrfToken();
+    if (fresh) {
+      finalHeaders['x-csrf-token'] = fresh;
+      res = await fetch(url, { ...init, headers: finalHeaders });
+    }
+  }
   if (!res.ok) {
     const message = await readErrorMessage(res);
     const err = new Error(message) as Error & { status?: number };

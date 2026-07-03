@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { adminDelete, adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import ToggleCard from '../games/fields/ToggleCard';
@@ -18,11 +19,6 @@ interface R2Track {
   title: string;
   sizeBytes: number;
   lastModified: string;
-}
-
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
 }
 
 function formatSize(n?: number): string {
@@ -73,10 +69,8 @@ export default function MusicPanel({ data, onChange }: Props) {
   const scanR2 = useCallback(async () => {
     setR2Loading(true);
     try {
-      const res = await fetch('/api/admin/oracle/music/scan', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      setR2Tracks(body.tracks ?? []);
+      const body = await adminGet<{ tracks?: R2Track[] }>('/api/admin/oracle/music/scan');
+      setR2Tracks(body?.tracks ?? []);
       setR2Scanned(true);
     } catch (e) {
       toast.show({ tone: 'error', title: 'R2 scan failed', message: (e as Error).message });
@@ -138,21 +132,16 @@ export default function MusicPanel({ data, onChange }: Props) {
           reader.readAsDataURL(file);
         });
 
-        const token = await fetchCsrf();
-        const res = await fetch('/api/admin/oracle/music/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-          credentials: 'include',
-          body: JSON.stringify({
+        let body: any;
+        try {
+          body = await adminPost<any>('/api/admin/oracle/music/upload', {
             title: file.name.replace(/\.[^.]+$/, ''),
             filename: file.name,
             contentType: file.type || 'audio/mpeg',
             data: base64,
-          }),
-        });
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          toast.show({ tone: 'error', title: 'Upload failed', message: `${file.name}: ${body?.error || res.status}` });
+          });
+        } catch (e) {
+          toast.show({ tone: 'error', title: 'Upload failed', message: `${file.name}: ${(e as Error).message}` });
           continue;
         }
         uploadedTracks.push({
@@ -234,24 +223,17 @@ export default function MusicPanel({ data, onChange }: Props) {
             reader.readAsDataURL(file);
           });
 
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/oracle/music/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({
+          let body: any;
+          try {
+            body = await adminPost<any>('/api/admin/oracle/music/upload', {
               title,
               filename: file.name,
               contentType: file.type || 'audio/mpeg',
               data: base64,
-            }),
-          });
-          lastUploadAt = Date.now();
-          const body = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            setMigrationRows((prev) => [...prev, { name: title, status: 'failed', reason: body?.error || `HTTP ${res.status}` }]);
-            nextFailedFiles.push(file);
-            continue;
+            });
+          } finally {
+            // Mark the attempt even on failure so throttling still applies
+            lastUploadAt = Date.now();
           }
 
           uploadedTracks.push({
@@ -321,18 +303,7 @@ export default function MusicPanel({ data, onChange }: Props) {
       tone: 'danger',
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/oracle/music/upload', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({ key: track.key }),
-          });
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            toast.show({ tone: 'error', title: 'Delete failed', message: body?.error || `HTTP ${res.status}` });
-            return;
-          }
+          await adminDelete('/api/admin/oracle/music/upload', { body: { key: track.key } });
           onChange({ ...data, tracks: tracks.filter((t) => t.key !== track.key) });
           toast.show({ tone: 'success', title: 'Removed', message: track.title });
         } catch (e) {

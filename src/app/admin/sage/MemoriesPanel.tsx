@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { adminDelete, adminGet } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useTimezone } from '../_components/TimezoneProvider';
@@ -15,20 +16,8 @@ interface MemoryRecord {
   expiresAt?: string;
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function deleteMemory(userId: string, factIndex: number): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/sage-live-chat/memories', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ userId, factIndex }),
-  });
-  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `HTTP ${res.status}`); }
+  await adminDelete('/api/admin/sage-live-chat/memories', { body: { userId, factIndex } });
 }
 
 export default function MemoriesPanel() {
@@ -44,9 +33,7 @@ export default function MemoriesPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/sage-live-chat/memories', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      const body = await adminGet<any>('/api/admin/sage-live-chat/memories');
       const arr: any[] = Array.isArray(body) ? body : [];
       const flat: MemoryRecord[] = arr.flatMap((d) =>
         Array.isArray(d?.facts)

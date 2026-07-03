@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { adminGet, adminPost, adminPut } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
@@ -54,23 +55,8 @@ const DEFAULTS: BadgeThresholds = {
   roulette_wins: 100,
 };
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function saveSection(section: string, value: any): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/config/butler', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ section, value }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
+  await adminPut('/api/admin/config/butler', { section, value });
 }
 
 async function uploadBadgeImage(badgeId: string, file: File): Promise<string> {
@@ -80,25 +66,14 @@ async function uploadBadgeImage(badgeId: string, file: File): Promise<string> {
     r.onerror = () => reject(new Error('Read failed'));
     r.readAsDataURL(file);
   });
-  const token = await fetchCsrf();
   const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-  const res = await fetch('/api/admin/v2/r2/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({
-      folder: 'badges',
-      filename: `${badgeId}.${ext}`,
-      imageData: base64,
-      contentType: file.type || 'image/png',
-    }),
+  const data = await adminPost<{ url: string }>('/api/admin/v2/r2/upload', {
+    folder: 'badges',
+    filename: `${badgeId}.${ext}`,
+    imageData: base64,
+    contentType: file.type || 'image/png',
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  const data = await res.json();
-  return data.url as string;
+  return data.url;
 }
 
 function formatValue(key: keyof BadgeThresholds, v: number): string {
@@ -123,13 +98,11 @@ export default function BadgesClient() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/config/butler', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      const thresholds: BadgeThresholds = { ...DEFAULTS, ...(body.sections?.badge_thresholds ?? {}) };
+      const body = await adminGet<any>('/api/admin/config/butler');
+      const thresholds: BadgeThresholds = { ...DEFAULTS, ...(body?.sections?.badge_thresholds ?? {}) };
       setSaved(thresholds);
       setDraft(thresholds);
-      setVisuals((body.sections?.badges_visuals as BadgesVisuals) ?? {});
+      setVisuals((body?.sections?.badges_visuals as BadgesVisuals) ?? {});
     } catch (e) {
       toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });
     } finally {

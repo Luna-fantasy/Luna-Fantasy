@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { adminGet, adminPost } from '@/lib/admin/http';
 import ContextMenu from '../_components/ContextMenu';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
@@ -85,24 +86,8 @@ function fileToBase64(file: File): Promise<{ data: string; contentType: string }
   });
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function postAction(body: Record<string, unknown>): Promise<any> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/cards/config', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  return res.json();
+  return adminPost<any>('/api/admin/cards/config', body);
 }
 
 // Deterministic accent color per faction — so each faction tab/tile has its
@@ -142,10 +127,8 @@ export default function FactionWarView() {
   const load = useCallback(async (opts?: { keepFaction?: boolean }) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/cards/config', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      setFactionWar(body.factionWar ?? null);
+      const body = await adminGet<any>('/api/admin/cards/config');
+      setFactionWar(body?.factionWar ?? null);
       bump();
       if (body.factionWar && !opts?.keepFaction) {
         const first = FACTION_NAMES.find((n) => (body.factionWar?.[n]?.cards?.length ?? 0) > 0);
@@ -165,11 +148,9 @@ export default function FactionWarView() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/admin/cards/config', { cache: 'no-store' });
-        const body = await res.json();
+        const body = await adminGet<any>('/api/admin/cards/config');
         if (cancelled) return;
-        if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-        setFactionWar(body.factionWar ?? null);
+        setFactionWar(body?.factionWar ?? null);
         if (body.factionWar) {
           const first = FACTION_NAMES.find((n) => (body.factionWar?.[n]?.cards?.length ?? 0) > 0);
           if (first) setActiveFaction(first);

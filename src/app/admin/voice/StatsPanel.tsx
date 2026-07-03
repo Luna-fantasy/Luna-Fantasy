@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useTimezone } from '../_components/TimezoneProvider';
@@ -19,20 +20,8 @@ function formatSize(n: number): string {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function manageRoom(channelId: string, action: Action, newName?: string): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/voice/manage', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ roomId: channelId, action, value: newName }),
-  });
-  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `HTTP ${res.status}`); }
+  await adminPost('/api/admin/voice/manage', { roomId: channelId, action, value: newName });
 }
 
 export default function StatsPanel({ music }: Props) {
@@ -52,10 +41,8 @@ export default function StatsPanel({ music }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/voice/stats', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      setData(body as StatsBundle);
+      const body = await adminGet<StatsBundle>('/api/admin/voice/stats');
+      setData(body);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -88,9 +75,7 @@ export default function StatsPanel({ music }: Props) {
     if (!id) return;
     setLookupBusy(true);
     try {
-      const res = await fetch(`/api/admin/voice/user?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      const body = await adminGet<any>(`/api/admin/voice/user?id=${encodeURIComponent(id)}`);
       setLookupResult(body);
     } catch (e) {
       toast.show({ tone: 'error', title: 'Lookup failed', message: (e as Error).message });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import VendorPortraitUploader from './VendorPortraitUploader';
@@ -11,11 +12,6 @@ interface Stone {
   sell_price: number;
   imageUrl?: string;
   emoji_id?: string;
-}
-
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
 }
 
 function fmtPct(chance: number): string {
@@ -40,9 +36,7 @@ export default function MelunaEditor({ tone }: { tone: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/shops/meluna', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+      const body = await adminGet<any>('/api/admin/shops/meluna');
       setPrice(body.price ?? 2000);
       setRefundAmount(body.refund_amount ?? 1000);
       setRefundChance(body.refund_chance ?? 0.5);
@@ -70,24 +64,14 @@ export default function MelunaEditor({ tone }: { tone: string }) {
       delayMs: 4500,
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/shops/meluna', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({
-              price,
-              refund_amount: refundAmount,
-              refund_chance: refundChance,
-              stones,
-              image,
-              imageVersion,
-            }),
+          await adminPost('/api/admin/shops/meluna', {
+            price,
+            refund_amount: refundAmount,
+            refund_chance: refundChance,
+            stones,
+            image,
+            imageVersion,
           });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.error ?? `HTTP ${res.status}`);
-          }
           toast.show({ tone: 'success', title: 'Saved', message: 'Meluna stone box updated.' });
           await load();
         } catch (e) {
@@ -143,20 +127,10 @@ export default function MelunaEditor({ tone }: { tone: string }) {
             setImage(url);
             setImageVersion(version);
             try {
-              const token = await fetchCsrf();
-              const res = await fetch('/api/admin/shops/meluna', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-                credentials: 'include',
-                body: JSON.stringify({
-                  price, refund_amount: refundAmount, refund_chance: refundChance,
-                  stones, image: url, imageVersion: version,
-                }),
+              await adminPost('/api/admin/shops/meluna', {
+                price, refund_amount: refundAmount, refund_chance: refundChance,
+                stones, image: url, imageVersion: version,
               });
-              if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error ?? `HTTP ${res.status}`);
-              }
               toast.show({ tone: 'success', title: 'Portrait saved', message: 'Bot picks up within ~60s.' });
               await load();
             } catch (e) {

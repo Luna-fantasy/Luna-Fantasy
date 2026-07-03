@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminGet, adminPut } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
@@ -16,23 +17,8 @@ const PRESETS = [
 
 const DEFAULT_DURATION = 86_400_000;
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function saveSection(section: string, value: any): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/config/jester', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ section, value }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
+  await adminPut('/api/admin/config/jester', { section, value });
 }
 
 function formatDuration(ms: number): string {
@@ -57,10 +43,8 @@ export default function TradingConfigPanel() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/config/jester', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      const tc = body.sections?.trade_config ?? {};
+      const body = await adminGet<any>('/api/admin/config/jester');
+      const tc = body?.sections?.trade_config ?? {};
       const dur = typeof tc.auction_duration_ms === 'number' ? tc.auction_duration_ms : DEFAULT_DURATION;
       setSaved(dur);
       setDuration(dur);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { adminGet } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import AssetPreviewDialog from './AssetPreviewDialog';
 import type { BrowseResult, R2Object } from './types';
@@ -9,8 +10,11 @@ interface Props {
   initial: BrowseResult;
 }
 
+// Kept local: the upload below sends FormData, which adminFetch (JSON-only)
+// doesn't support.
 async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
+  const res = await fetch('/api/admin/csrf', { cache: 'no-store', credentials: 'include' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return (await res.json()).token;
 }
 
@@ -63,10 +67,8 @@ export default function AssetsPanel({ initial }: Props) {
     setLoading(true);
     try {
       const url = `/api/admin/assets?mode=browse${p ? `&prefix=${encodeURIComponent(p)}` : ''}`;
-      const res = await fetch(url, { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || 'Fetch failed');
-      setResult(body as BrowseResult);
+      const body = await adminGet<BrowseResult>(url);
+      setResult(body);
     } catch (e) {
       toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });
     } finally {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { usePeek } from '../_components/PeekProvider';
@@ -30,11 +31,6 @@ interface QueuedDm {
   status: 'pending' | 'processing' | 'sent' | 'failed';
   sentAt?: string;
   error?: string;
-}
-
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
 }
 
 function relativeTime(iso: string): string {
@@ -72,11 +68,9 @@ export default function DmClient() {
   const load = useCallback(async () => {
     try {
       const qs = filter !== 'all' ? `?status=${filter}` : '';
-      const res = await fetch(`/api/admin/dm${qs}`, { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      setDms(body.dms ?? []);
-      setStats(body.stats ?? {});
+      const body = await adminGet<{ dms?: QueuedDm[]; stats?: Record<string, number> }>(`/api/admin/dm${qs}`);
+      setDms(body?.dms ?? []);
+      setStats(body?.stats ?? {});
     } catch (e) {
       toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });
     }
@@ -123,15 +117,7 @@ export default function DmClient() {
       run: async () => {
         setSending(true);
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/dm', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify(body),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+          await adminPost('/api/admin/dm', body);
           toast.show({ tone: 'success', title: 'Queued', message: `${botLabel} will deliver shortly` });
           clear();
           void load();

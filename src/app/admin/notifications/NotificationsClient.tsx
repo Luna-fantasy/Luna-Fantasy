@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminGet, adminPut } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
@@ -94,23 +95,8 @@ const TEMPLATES: TemplateInfo[] = [
   },
 ];
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function saveNotifications(value: NotificationsData): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/config/butler', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ section: 'notifications', value }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
+  await adminPut('/api/admin/config/butler', { section: 'notifications', value });
 }
 
 export default function NotificationsClient() {
@@ -126,9 +112,7 @@ export default function NotificationsClient() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/config/butler', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      const body = await adminGet<any>('/api/admin/config/butler');
       const loaded: NotificationsData = {
         application_accepted: { ...DEFAULTS.application_accepted, ...(body.sections?.notifications?.application_accepted ?? {}) },
         application_accepted_passport: { ...DEFAULTS.application_accepted_passport, ...(body.sections?.notifications?.application_accepted_passport ?? {}) },

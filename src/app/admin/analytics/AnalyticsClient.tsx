@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminGet } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePeek } from '../_components/PeekProvider';
 
@@ -59,9 +60,7 @@ export default function AnalyticsClient() {
     if (data[section] || loading[section]) return;
     setLoading((p) => ({ ...p, [section]: true }));
     try {
-      const res = await fetch(`/api/admin/analytics/${section}`, { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      const body = await adminGet<any>(`/api/admin/analytics/${section}`);
       setData((p) => ({ ...p, [section]: body }));
     } catch (e) {
       toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });

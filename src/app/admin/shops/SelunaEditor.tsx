@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import RolePicker from '../_components/RolePicker';
@@ -49,11 +50,6 @@ interface SelunaData {
   settings: { title: string; description: string; image: string; imageVersion: number };
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 function formatTime(ms: number | null): string {
   if (!ms) return '—';
   return new Date(ms).toLocaleString();
@@ -84,25 +80,14 @@ async function uploadSelunaImage(file: File): Promise<string> {
     r.onerror = () => reject(new Error('Read failed'));
     r.readAsDataURL(file);
   });
-  const token = await fetchCsrf();
   const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-  const res = await fetch('/api/admin/v2/r2/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({
-      folder: 'profiles',
-      filename: `bg_${Date.now()}.${ext}`,
-      imageData: base64,
-      contentType: file.type || 'image/png',
-    }),
+  const data = await adminPost<{ url: string }>('/api/admin/v2/r2/upload', {
+    folder: 'profiles',
+    filename: `bg_${Date.now()}.${ext}`,
+    imageData: base64,
+    contentType: file.type || 'image/png',
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  const data = await res.json();
-  return data.url as string;
+  return data.url;
 }
 
 export default function SelunaEditor({ tone }: { tone: string }) {
@@ -135,9 +120,7 @@ export default function SelunaEditor({ tone }: { tone: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/shops/seluna', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+      const body = await adminGet<any>('/api/admin/shops/seluna');
       setData(body as SelunaData);
       setItems(body.items ?? []);
       setSchedule(body.schedule ?? { duration_hours: 24, reappear_days: 30 });
@@ -168,17 +151,7 @@ export default function SelunaEditor({ tone }: { tone: string }) {
       delayMs: 4500,
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/shops/seluna', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({ action, ...payload }),
-          });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.error ?? `HTTP ${res.status}`);
-          }
+          await adminPost('/api/admin/shops/seluna', { action, ...payload });
           toast.show({ tone: 'success', title: 'Saved', message: label });
           await load();
         } catch (e) {
@@ -239,20 +212,10 @@ export default function SelunaEditor({ tone }: { tone: string }) {
       tone: archive ? 'danger' : undefined,
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/shops/seluna', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({
-              action: archive ? 'archive_item' : 'unarchive_item',
-              itemId: item.id,
-            }),
+          await adminPost('/api/admin/shops/seluna', {
+            action: archive ? 'archive_item' : 'unarchive_item',
+            itemId: item.id,
           });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.error ?? `HTTP ${res.status}`);
-          }
           toast.show({
             tone: 'success',
             title: archive ? 'Archived' : 'Restored',

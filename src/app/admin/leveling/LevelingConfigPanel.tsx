@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminGet, adminPut } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
@@ -33,23 +34,8 @@ const DEFAULTS: LevelingConfig = {
   level_up_mode: 'same_channel',
 };
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function saveSection(section: string, value: any): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/config/butler', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ section, value }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
+  await adminPut('/api/admin/config/butler', { section, value });
 }
 
 export default function LevelingConfigPanel() {
@@ -65,10 +51,8 @@ export default function LevelingConfigPanel() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/config/butler', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      const s = body.sections ?? {};
+      const body = await adminGet<any>('/api/admin/config/butler');
+      const s = body?.sections ?? {};
       const loaded: LevelingConfig = {
         enabled: s.level_enabled ?? DEFAULTS.enabled,
         text_xp: s.text_xp ?? DEFAULTS.text_xp,

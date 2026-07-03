@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminDelete, adminGet } from '@/lib/admin/http';
 import { useToast } from '../../_components/Toast';
 import { usePendingAction } from '../../_components/PendingActionProvider';
 
@@ -13,11 +14,6 @@ interface Cooldown {
   remainingMs: number;
   durationMs: number;
   active: boolean;
-}
-
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
 }
 
 function formatRemaining(ms: number): string {
@@ -43,10 +39,8 @@ export default function UserCooldowns({ discordId }: { discordId: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/users/${discordId}/cooldowns`, { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      setCooldowns(body.cooldowns ?? []);
+      const body = await adminGet<{ cooldowns?: Cooldown[] }>(`/api/admin/users/${discordId}/cooldowns`);
+      setCooldowns(body?.cooldowns ?? []);
     } catch (e) {
       toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });
     } finally {
@@ -64,17 +58,7 @@ export default function UserCooldowns({ discordId }: { discordId: string }) {
       tone: 'danger',
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch(`/api/admin/users/${discordId}/cooldowns`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({ key: cd.key }),
-          });
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body?.error || `HTTP ${res.status}`);
-          }
+          await adminDelete(`/api/admin/users/${discordId}/cooldowns`, { body: { key: cd.key } });
           toast.show({ tone: 'success', title: 'Cleared', message: cd.label });
           void load();
         } catch (e) {
@@ -97,19 +81,9 @@ export default function UserCooldowns({ discordId }: { discordId: string }) {
       tone: 'danger',
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch(`/api/admin/users/${discordId}/cooldowns`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({}),
-          });
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body?.error || `HTTP ${res.status}`);
-          }
-          const body = await res.json();
-          toast.show({ tone: 'success', title: 'All cleared', message: `${body.deletedCount} cooldown${body.deletedCount === 1 ? '' : 's'}` });
+          const body = await adminDelete<{ deletedCount?: number }>(`/api/admin/users/${discordId}/cooldowns`, { body: {} });
+          const deleted = body?.deletedCount ?? 0;
+          toast.show({ tone: 'success', title: 'All cleared', message: `${deleted} cooldown${deleted === 1 ? '' : 's'}` });
           void load();
         } catch (e) {
           toast.show({ tone: 'error', title: 'Clear failed', message: (e as Error).message });

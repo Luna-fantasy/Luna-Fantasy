@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { adminGet } from '@/lib/admin/http';
 import { useTimezone } from '../_components/TimezoneProvider';
 
 interface ActivityEntry {
@@ -26,9 +27,7 @@ export default function ActivityPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/admin/sage-live-chat/activity-log?limit=50', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      const body = await adminGet<any>('/api/admin/sage-live-chat/activity-log?limit=50');
       setEntries(Array.isArray(body?.entries) ? body.entries : Array.isArray(body) ? body : []);
     } catch (e) {
       setError((e as Error).message);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { adminGet } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 
 interface ScheduledEvent {
@@ -50,10 +51,8 @@ export default function ScheduleClient() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/schedule', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      setEvents(body.events ?? []);
+      const body = await adminGet<{ events?: ScheduledEvent[] }>('/api/admin/schedule');
+      setEvents(body?.events ?? []);
     } catch (e) {
       toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });
     } finally {

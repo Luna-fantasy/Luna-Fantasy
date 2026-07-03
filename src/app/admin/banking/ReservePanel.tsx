@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 
@@ -14,11 +15,6 @@ interface Withdrawal {
   reserveBefore?: number;
   reserveAfter?: number;
   timestamp: string;
-}
-
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
 }
 
 function fmt(n: number): string {
@@ -39,11 +35,9 @@ export default function ReservePanel({ initialReserve }: { initialReserve: numbe
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/banking/reserve', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
-      setBalance(body.balance ?? 0);
-      setWithdrawals(body.recentWithdrawals ?? []);
+      const body = await adminGet<{ balance?: number; recentWithdrawals?: Withdrawal[] }>('/api/admin/banking/reserve');
+      setBalance(body?.balance ?? 0);
+      setWithdrawals(body?.recentWithdrawals ?? []);
     } catch (e) {
       toast.show({ tone: 'error', title: 'Load failed', message: (e as Error).message });
     } finally {
@@ -83,15 +77,7 @@ export default function ReservePanel({ initialReserve }: { initialReserve: numbe
       tone: 'danger',
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/banking/reserve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({ discordId: recipientId.trim(), amount: amt, reason: reason.trim() }),
-          });
-          const body = await res.json();
-          if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+          await adminPost('/api/admin/banking/reserve', { discordId: recipientId.trim(), amount: amt, reason: reason.trim() });
           toast.show({ tone: 'success', title: 'Withdrawn', message: `${fmt(amt)} → ${recipientId}` });
           setRecipientId('');
           setAmount(0);

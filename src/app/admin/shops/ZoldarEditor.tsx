@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import VendorPortraitUploader from './VendorPortraitUploader';
@@ -11,11 +12,6 @@ interface TicketPackage {
   price: number;
   imageUrl?: string;
   description?: string;
-}
-
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
 }
 
 export default function ZoldarEditor({ tone }: { tone: string }) {
@@ -32,9 +28,7 @@ export default function ZoldarEditor({ tone }: { tone: string }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/shops/zoldar', { cache: 'no-store' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? `HTTP ${res.status}`);
+      const body = await adminGet<any>('/api/admin/shops/zoldar');
       setPackages(body.packages ?? []);
       setImage(body.image ?? '');
       setImageVersion(body.imageVersion);
@@ -59,17 +53,7 @@ export default function ZoldarEditor({ tone }: { tone: string }) {
       delayMs: 4500,
       run: async () => {
         try {
-          const token = await fetchCsrf();
-          const res = await fetch('/api/admin/shops/zoldar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-            credentials: 'include',
-            body: JSON.stringify({ packages, image, imageVersion }),
-          });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.error ?? `HTTP ${res.status}`);
-          }
+          await adminPost('/api/admin/shops/zoldar', { packages, image, imageVersion });
           toast.show({ tone: 'success', title: 'Saved', message: 'Zoldar packages updated.' });
           await load();
         } catch (e) {
@@ -127,17 +111,7 @@ export default function ZoldarEditor({ tone }: { tone: string }) {
             setImage(url);
             setImageVersion(version);
             try {
-              const token = await fetchCsrf();
-              const res = await fetch('/api/admin/shops/zoldar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-                credentials: 'include',
-                body: JSON.stringify({ packages, image: url, imageVersion: version }),
-              });
-              if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error ?? `HTTP ${res.status}`);
-              }
+              await adminPost('/api/admin/shops/zoldar', { packages, image: url, imageVersion: version });
               toast.show({ tone: 'success', title: 'Portrait saved', message: 'Bot picks up within ~60s.' });
               await load();
             } catch (e) {
