@@ -188,11 +188,10 @@ export async function PUT(
     const before = extractPassport(existingDoc);
 
     // Dotted path is the primary write — atomic, no race with the bot's
-    // concurrent field-path writes. Legacy st.db v7 docs where `data` is a
-    // JSON STRING would make the dotted $set throw, so those get parsed and
-    // whole-written instead (Butler's own setProfile whole-writes these docs,
-    // so the race window is no worse than the bot's). Zero string docs exist
-    // in the collection today — this branch is defensive armor.
+    // concurrent field-path writes. Legacy st.db v7 docs store `data` as a
+    // JSON string, where a dotted $set throws; those get parsed and
+    // whole-written instead (Butler's own setProfile whole-writes such docs,
+    // so the race window is no worse than the bot's).
     if (typeof existingDoc?.data === 'string') {
       let parsed: any = {};
       try { parsed = JSON.parse(existingDoc.data) ?? {}; } catch { parsed = {}; }

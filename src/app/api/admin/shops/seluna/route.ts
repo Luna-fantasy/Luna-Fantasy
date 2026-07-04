@@ -7,6 +7,8 @@ import { getClientIp } from '@/lib/admin/sanitize';
 import clientPromise from '@/lib/mongodb';
 import { reconcileSelunaMirrors, type SelunaMirrorSourceItem } from '@/lib/admin/seluna-mells-mirror';
 import { mirrorMellsToButler } from '@/lib/admin/mells-butler-mirror';
+import { invalidateShopConfigCache } from '@/lib/bazaar/shop-config';
+import { invalidateVendorConfigCache } from '@/lib/bazaar/vendor-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -523,6 +525,10 @@ export async function POST(req: NextRequest) {
         // so Butler immediately resolves and excludes the locked rows.
         const mellsDoc = await db.collection('vendor_config').findOne({ _id: 'mells_selvair' as any });
         if (mellsDoc?.data) await mirrorMellsToButler(db, mellsDoc.data);
+        // The mirrors write vendor_config.mells_selvair + bot_config.butler_shop,
+        // both behind read caches — bust them so the public bazaar updates now
+        invalidateShopConfigCache();
+        invalidateVendorConfigCache('mells_selvair');
       } catch (mirrorErr) {
         mirrorError = (mirrorErr as Error)?.message ?? 'unknown mirror error';
         console.error('[seluna set_items] mirror reconciliation failed:', mirrorErr);
@@ -573,6 +579,8 @@ export async function POST(req: NextRequest) {
         await reconcileSelunaMirrors(db, next as SelunaMirrorSourceItem[]);
         const mellsDoc = await db.collection('vendor_config').findOne({ _id: 'mells_selvair' as any });
         if (mellsDoc?.data) await mirrorMellsToButler(db, mellsDoc.data);
+        invalidateShopConfigCache();
+        invalidateVendorConfigCache('mells_selvair');
       } catch (mirrorErr) {
         mirrorError = (mirrorErr as Error)?.message ?? 'unknown mirror error';
         console.error('[seluna archive_item] mirror reconciliation failed:', mirrorErr);

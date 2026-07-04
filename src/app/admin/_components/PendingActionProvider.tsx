@@ -39,10 +39,14 @@ export function PendingActionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const queue = useCallback<Ctx['queue']>(async (input) => {
-    // If an action is already queued, commit it NOW instead of dropping it.
-    // The old most-recent-wins behavior silently cancelled the earlier save
-    // whenever two saves landed inside one undo window — the admin saw both
-    // succeed but only the second one ever ran.
+    // An action still waiting on its timer gets resolved before the new one
+    // is queued. Dangerous actions are CANCELLED — superseding is how an admin
+    // aborts a mistaken destructive action, so its undo window must hold.
+    // Everything else COMMITS immediately, so no config save is ever silently
+    // dropped by a second save landing inside the undo window.
+    // (An action whose run() is already in flight — timer fired — is left
+    // alone; the identity check in the timer callback below keeps its cleanup
+    // from clobbering whatever we queue here.)
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -51,12 +55,17 @@ export function PendingActionProvider({ children }: { children: ReactNode }) {
       actionRef.current = null;
       resolveRef.current = null;
       if (prev) {
-        try {
-          await prev.run();
-          prevResolve?.(true);
-        } catch (e) {
-          console.error('Pending action failed:', e);
+        if (prev.tone === 'danger') {
+          prev.onCancel?.();
           prevResolve?.(false);
+        } else {
+          try {
+            await prev.run();
+            prevResolve?.(true);
+          } catch (e) {
+            console.error('Pending action failed:', e);
+            prevResolve?.(false);
+          }
         }
       }
     }
@@ -82,9 +91,15 @@ export function PendingActionProvider({ children }: { children: ReactNode }) {
           console.error('Pending action failed:', e);
           resolve(false);
         } finally {
-          resolveRef.current = null;
-          actionRef.current = null;
-          setAction(null);
+          // Only clear state that still belongs to THIS action — a newer
+          // action may have been queued while run() was in flight, and
+          // wiping its refs would orphan its timer (invisible execution)
+          // or drop it entirely on the next queue().
+          if (actionRef.current === pending) {
+            resolveRef.current = null;
+            actionRef.current = null;
+            setAction(null);
+          }
         }
       }, pending.delayMs);
     });

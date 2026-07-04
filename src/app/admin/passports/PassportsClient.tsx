@@ -6,6 +6,7 @@ import Icon from '../_components/Icon';
 import ContextMenu from '../_components/ContextMenu';
 import { usePeek } from '../_components/PeekProvider';
 import { onButtonKey } from '../_components/a11y';
+import { factionGlyph, PASSPORT_FACTIONS } from '../_components/factions';
 
 interface PassportRow {
   discordId: string;
@@ -18,14 +19,6 @@ interface PassportRow {
   staffRole: string | null;
   issuedAt: number | null;
 }
-
-// Keys are the canonical passport factions (lowercased) — must match the
-// VALID_FACTIONS list in api/admin/users/[discordId]/passport/route.ts
-const FACTION_GLYPH: Record<string, string> = {
-  beasts: '🐾', colossals: '⛰', dragons: '🜲', knights: '⚔', lunarians: '☾',
-  'moon creatures': '◐', 'mythical creatures': '✧', 'strange beings': '❖',
-  supernatural: '✦', underworld: '♆', warriors: '🛡',
-};
 
 function fmtDate(ms: number): string {
   const d = new Date(ms);
@@ -114,17 +107,7 @@ export default function PassportsClient() {
             value={faction} onChange={(e) => setFaction(e.target.value)}
             style={{ width: 180 }}>
             <option value="">All factions</option>
-            <option value="Beasts">Beasts</option>
-            <option value="Colossals">Colossals</option>
-            <option value="Dragons">Dragons</option>
-            <option value="Knights">Knights</option>
-            <option value="Lunarians">Lunarians</option>
-            <option value="Moon Creatures">Moon Creatures</option>
-            <option value="Mythical Creatures">Mythical Creatures</option>
-            <option value="Strange Beings">Strange Beings</option>
-            <option value="Supernatural">Supernatural</option>
-            <option value="Underworld">Underworld</option>
-            <option value="Warriors">Warriors</option>
+            {PASSPORT_FACTIONS.map((f) => <option key={f} value={f}>{f}</option>)}
           </select>
 
           <label className="av-users-toggle">
@@ -165,7 +148,7 @@ export default function PassportsClient() {
           >
             <div className="av-passport-header">
               <span className="av-passport-glyph">
-                {FACTION_GLYPH[(p.faction ?? '').toLowerCase()] ?? '◯'}
+                {factionGlyph(p.faction)}
               </span>
               <span className="av-passport-number">{p.number ?? 'PENDING'}</span>
             </div>

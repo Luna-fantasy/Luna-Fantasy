@@ -194,6 +194,9 @@ export async function POST(request: NextRequest) {
               sell_price: s.sell_price,
             })),
           },
+          // Jester reads refundAmount BEFORE refund_amount — a stale camelCase
+          // key would shadow every save here (same guard as the meluna route)
+          $unset: { 'data.refundAmount': '' },
         },
         { upsert: true }
       );

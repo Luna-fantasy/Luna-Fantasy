@@ -7,6 +7,7 @@ import { usePeek } from './PeekProvider';
 import { trackRecent } from './RecentlyViewed';
 import { useTimezone } from './TimezoneProvider';
 import { getAdminPortalTarget } from './portal-root';
+import { factionGlyph } from './factions';
 
 interface PeekData {
   discordId: string;
@@ -88,14 +89,6 @@ export default function PlayerPeek() {
 
   if (!mounted || !userId) return null;
 
-  const factionGlyph = (faction?: string): string => {
-    const map: Record<string, string> = {
-      beasts: '🐾', colossals: '⛰', dragons: '🜲', knights: '⚔', lunarians: '☾',
-      'moon creatures': '◐', 'mythical creatures': '✧', 'strange beings': '❖',
-      supernatural: '✦', underworld: '♆', warriors: '🛡',
-    };
-    return map[(faction ?? '').toLowerCase()] ?? '◯';
-  };
 
   const portal = (
     <>

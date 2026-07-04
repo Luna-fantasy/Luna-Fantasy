@@ -16,6 +16,7 @@ import Icon from '../../_components/Icon';
 import ModeratorConsole from './ModeratorConsole';
 import UserCooldowns from './UserCooldowns';
 import PassportDialog from './PassportDialog';
+import { factionGlyph } from '../../_components/factions';
 
 interface Rank {
   id: string;
@@ -165,15 +166,6 @@ export default function UserDetailClient({ discordId }: { discordId: string }) {
   if (loading) return <Skeleton variant="card" height={300} />;
   if (error) return <div className="av-health-error"><span className="av-health-dot av-health-dot--err" /><div><strong>Failed to load</strong><small>{error}</small></div></div>;
   if (!data) return null;
-
-  const factionGlyph = (f?: string): string => {
-    const map: Record<string, string> = {
-      beasts: '🐾', colossals: '⛰', dragons: '🜲', knights: '⚔', lunarians: '☾',
-      'moon creatures': '◐', 'mythical creatures': '✧', 'strange beings': '❖',
-      supernatural: '✦', underworld: '♆', warriors: '🛡',
-    };
-    return map[(f ?? '').toLowerCase()] ?? '◯';
-  };
 
   const rank = data.rank;
   const rankStyle = {
