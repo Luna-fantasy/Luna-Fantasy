@@ -19,10 +19,12 @@ interface PassportRow {
   issuedAt: number | null;
 }
 
+// Keys are the canonical passport factions (lowercased) — must match the
+// VALID_FACTIONS list in api/admin/users/[discordId]/passport/route.ts
 const FACTION_GLYPH: Record<string, string> = {
-  lunarians: '☾', sentinel: '⚔', mastermind: '◈',
-  underworld: '✦', siren: '◐', seer: '✧',
-  wizard: '◇', thief: '▼', knight: '▲', guardian: '■',
+  beasts: '🐾', colossals: '⛰', dragons: '🜲', knights: '⚔', lunarians: '☾',
+  'moon creatures': '◐', 'mythical creatures': '✧', 'strange beings': '❖',
+  supernatural: '✦', underworld: '♆', warriors: '🛡',
 };
 
 function fmtDate(ms: number): string {
@@ -112,13 +114,17 @@ export default function PassportsClient() {
             value={faction} onChange={(e) => setFaction(e.target.value)}
             style={{ width: 180 }}>
             <option value="">All factions</option>
-            <option value="lunarians">Lunarians</option>
-            <option value="sentinel">Sentinel</option>
-            <option value="mastermind">Mastermind</option>
-            <option value="underworld">Underworld</option>
-            <option value="siren">Siren</option>
-            <option value="seer">Seer</option>
-            <option value="guardian">Guardian</option>
+            <option value="Beasts">Beasts</option>
+            <option value="Colossals">Colossals</option>
+            <option value="Dragons">Dragons</option>
+            <option value="Knights">Knights</option>
+            <option value="Lunarians">Lunarians</option>
+            <option value="Moon Creatures">Moon Creatures</option>
+            <option value="Mythical Creatures">Mythical Creatures</option>
+            <option value="Strange Beings">Strange Beings</option>
+            <option value="Supernatural">Supernatural</option>
+            <option value="Underworld">Underworld</option>
+            <option value="Warriors">Warriors</option>
           </select>
 
           <label className="av-users-toggle">
@@ -144,6 +150,7 @@ export default function PassportsClient() {
             items={[
               { label: 'Peek holder', icon: '◇', run: () => openPeek(p.discordId) },
               { label: 'Open profile', icon: '›', run: () => { window.location.href = `/admin/users/${p.discordId}`; } },
+              { label: 'Edit passport', icon: '✎', run: () => { window.location.href = `/admin/users/${p.discordId}?passport=edit`; } },
               'separator' as const,
               { label: 'Copy passport number', icon: '⧉', run: () => p.number && navigator.clipboard?.writeText(p.number) },
               { label: 'Copy Discord ID', icon: '⧉', run: () => navigator.clipboard?.writeText(p.discordId) },

@@ -42,7 +42,7 @@ interface PassportPayload {
 
 function validatePassport(body: any): { valid: PassportPayload } | { error: string } {
   if (!body || typeof body !== 'object') return { error: 'Body required' };
-  const number = String(body.number ?? '').trim();
+  const number = String(body.number ?? '').trim().toUpperCase();
   const fullName = String(body.fullName ?? '').trim();
   const dateOfBirth = String(body.dateOfBirth ?? '').trim();
   const faction = String(body.faction ?? '').trim();
@@ -122,7 +122,13 @@ export async function GET(
     const db = client.db('Database');
     const doc = await db.collection('profiles').findOne({ _id: discordId as any });
     const passport = extractPassport(doc);
-    return NextResponse.json({ passport });
+    // factions + numberPattern let the edit dialog build its options from the
+    // validator itself, so client and server can never drift
+    return NextResponse.json({
+      passport,
+      factions: VALID_FACTIONS,
+      numberPattern: PASSPORT_NUMBER_RE.source,
+    });
   } catch (error) {
     console.error('[admin passport GET] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -181,19 +187,24 @@ export async function PUT(
     const existingDoc = await col.findOne({ _id: discordId as any });
     const before = extractPassport(existingDoc);
 
-    // Always use the dotted path — this is atomic and doesn't race with the
-    // bot's concurrent field-path writes. Previously the legacy st.db v7
-    // string-format path parsed + rewrote the WHOLE `data` object which could
-    // clobber sibling fields (money_earned, game stats, etc.) if the bot
-    // wrote to them between our read and write. If a user still has the
-    // legacy string format, the dotted path on a string field will fail
-    // with a MongoDB error; that's fine — a separate migration script
-    // can convert string→object at rest. We don't block the hot path on it.
-    await col.updateOne(
-      { _id: discordId as any },
-      { $set: { 'data.passport': passport } },
-      { upsert: true }
-    );
+    // Dotted path is the primary write — atomic, no race with the bot's
+    // concurrent field-path writes. Legacy st.db v7 docs where `data` is a
+    // JSON STRING would make the dotted $set throw, so those get parsed and
+    // whole-written instead (Butler's own setProfile whole-writes these docs,
+    // so the race window is no worse than the bot's). Zero string docs exist
+    // in the collection today — this branch is defensive armor.
+    if (typeof existingDoc?.data === 'string') {
+      let parsed: any = {};
+      try { parsed = JSON.parse(existingDoc.data) ?? {}; } catch { parsed = {}; }
+      parsed.passport = passport;
+      await col.updateOne({ _id: discordId as any }, { $set: { data: parsed } });
+    } else {
+      await col.updateOne(
+        { _id: discordId as any },
+        { $set: { 'data.passport': passport } },
+        { upsert: true }
+      );
+    }
 
     // Grant the Luna Passport Discord role so the user immediately unlocks the
     // 10% shop discount across both bots. Failure here does NOT roll back the
@@ -260,13 +271,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'User does not have a passport' }, { status: 404 });
     }
 
-    // Atomic dotted-path write — same rationale as the PUT handler:
-    // the whole-`data`-replacement path would clobber sibling profile
-    // fields (money stats, game records) on a race with the bot.
-    await col.updateOne(
-      { _id: discordId as any },
-      { $set: { 'data.passport': null } }
-    );
+    // Atomic dotted-path write — same rationale + legacy string-data guard
+    // as the PUT handler.
+    if (typeof existingDoc?.data === 'string') {
+      let parsed: any = {};
+      try { parsed = JSON.parse(existingDoc.data) ?? {}; } catch { parsed = {}; }
+      parsed.passport = null;
+      await col.updateOne({ _id: discordId as any }, { $set: { data: parsed } });
+    } else {
+      await col.updateOne(
+        { _id: discordId as any },
+        { $set: { 'data.passport': null } }
+      );
+    }
 
     // Revoke the Luna Passport Discord role so the 10% shop discount is removed
     // across both bots. Same failure semantics as the PUT path — profile write

@@ -128,5 +128,7 @@ export interface GameDataResponse {
   hasVipPassport: boolean;
   staffPassportRole: string | null;
   staffPassportLayout: PassportLayout | null;
+  // Per-badge image overrides uploaded via the admin dashboard (butler_badges_visuals)
+  badgeVisuals: Record<string, { imageUrl: string; updatedAt: number }> | null;
   publicUser?: PublicUserInfo;
 }

@@ -68,7 +68,11 @@ export async function GET(
   const image = websiteUser?.image
     ?? (avatarHash ? `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128` : null);
 
-  const profileData = (profile as any)?.data ?? profile ?? {};
+  let profileData: any = (profile as any)?.data ?? profile ?? {};
+  if (typeof profileData === 'string') {
+    // Legacy st.db v7 docs store data as a JSON string
+    try { profileData = JSON.parse(profileData) ?? {}; } catch { profileData = {}; }
+  }
   const passport = profileData.passport ?? null;
 
   const levelsData = (levels as any)?.data ?? levels ?? {};

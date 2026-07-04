@@ -668,7 +668,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
         </div>
 
         {/* ── Achievements ── */}
-        <AchievementsSection badges={gameData?.badges ?? null} isLoading={isLoading} />
+        <AchievementsSection badges={gameData?.badges ?? null} badgeVisuals={gameData?.badgeVisuals ?? null} isLoading={isLoading} />
 
         {/* ── PvP Arena ── */}
         <div className="profile-card stats-pvp-card">
@@ -986,14 +986,26 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
 /* ── Achievements Section ── */
 function AchievementsSection({
   badges,
+  badgeVisuals,
   isLoading,
 }: {
   badges: BadgeData | null;
+  badgeVisuals: Record<string, { imageUrl: string; updatedAt: number }> | null;
   isLoading: boolean;
 }) {
   const t = useTranslations('profilePage');
   const [viewingBadge, setViewingBadge] = useState<typeof BADGE_DEFS[number] | null>(null);
   const [viewingDate, setViewingDate] = useState<string | null>(null);
+
+  // Dashboard-uploaded override wins; fall back to the original R2 asset
+  const badgeSrc = (badge: { id: string; image: string }) => {
+    const vis = badgeVisuals?.[badge.id];
+    if (vis?.imageUrl) {
+      const sep = vis.imageUrl.includes('?') ? '&' : '?';
+      return `${vis.imageUrl}${sep}v=${vis.updatedAt}`;
+    }
+    return `https://assets.lunarian.app/badges/${badge.image}`;
+  };
 
   const earnedCount = useMemo(() => {
     if (!badges) return 0;
@@ -1034,7 +1046,7 @@ function AchievementsSection({
             >
               <div className="achievement-image-wrap">
                 <Image
-                  src={`https://assets.lunarian.app/badges/${badge.image}`}
+                  src={badgeSrc(badge)}
                   alt={badge.name}
                   width={80}
                   height={80}
@@ -1069,7 +1081,7 @@ function AchievementsSection({
               </svg>
             </button>
             <Image
-              src={`https://assets.lunarian.app/badges/${viewingBadge.image}`}
+              src={badgeSrc(viewingBadge)}
               alt={viewingBadge.name}
               width={280}
               height={280}

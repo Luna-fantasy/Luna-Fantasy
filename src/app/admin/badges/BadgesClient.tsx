@@ -12,7 +12,6 @@ interface BadgeThresholds {
   voice_seconds: number;
   game_wins: number;
   la_luna_level: number;
-  roulette_wins: number;
 }
 
 interface BadgeVisual {
@@ -38,7 +37,6 @@ const BADGES: BadgeInfo[] = [
   { id: 'voice', name: 'Voice Veteran', glyph: '🎙️', tone: '#0077FF', threshold: 'voice_seconds', condition: 'Voice time (seconds)', kind: 'auto' },
   { id: 'games_500', name: 'Gamer', glyph: '🎮', tone: '#B066FF', threshold: 'game_wins', condition: 'Game wins', kind: 'auto' },
   { id: 'la_luna', name: 'La Luna', glyph: '🌙', tone: '#FFD27F', threshold: 'la_luna_level', condition: 'Level reached', kind: 'auto' },
-  { id: 'roulette_king', name: 'Roulette King', glyph: '🎯', tone: '#FF3366', threshold: 'roulette_wins', condition: 'Roulette wins', kind: 'auto' },
   { id: 'all_cards', name: 'Card Master', glyph: '🃏', tone: '#FF3366', threshold: null, condition: 'Owns every card in the catalog', kind: 'collection' },
   { id: 'all_stones', name: 'Stone Master', glyph: '💎', tone: '#0077FF', threshold: null, condition: 'Owns every stone in the catalog', kind: 'collection' },
   { id: 'one_year', name: 'Veteran', glyph: '📅', tone: '#FFD54F', threshold: null, condition: 'Account age ≥ 1 year', kind: 'time' },
@@ -52,7 +50,6 @@ const DEFAULTS: BadgeThresholds = {
   voice_seconds: 360_000,
   game_wins: 500,
   la_luna_level: 100,
-  roulette_wins: 100,
 };
 
 async function saveSection(section: string, value: any): Promise<void> {
@@ -220,7 +217,7 @@ export default function BadgesClient() {
         </header>
 
         <div className="av-badges-threshold-grid">
-          {(['million', 'text_messages', 'voice_seconds', 'game_wins', 'la_luna_level', 'roulette_wins'] as const).map((key) => {
+          {(['million', 'text_messages', 'voice_seconds', 'game_wins', 'la_luna_level'] as const).map((key) => {
             const b = BADGES.find((x) => x.threshold === key)!;
             return (
               <div key={key} className="av-badges-threshold-card" style={{ borderColor: `${b.tone}33` }}>

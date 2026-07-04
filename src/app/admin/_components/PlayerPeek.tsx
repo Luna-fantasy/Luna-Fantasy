@@ -90,9 +90,9 @@ export default function PlayerPeek() {
 
   const factionGlyph = (faction?: string): string => {
     const map: Record<string, string> = {
-      lunarians: '☾', sentinel: '⚔', mastermind: '◈',
-      underworld: '✦', siren: '◐', seer: '✧',
-      wizard: '◇', thief: '▼', knight: '▲', guardian: '■',
+      beasts: '🐾', colossals: '⛰', dragons: '🜲', knights: '⚔', lunarians: '☾',
+      'moon creatures': '◐', 'mythical creatures': '✧', 'strange beings': '❖',
+      supernatural: '✦', underworld: '♆', warriors: '🛡',
     };
     return map[(faction ?? '').toLowerCase()] ?? '◯';
   };

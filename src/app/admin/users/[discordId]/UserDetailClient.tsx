@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useToast } from '../../_components/Toast';
 import { useUndo } from '../../_components/UndoProvider';
 import { usePendingAction } from '../../_components/PendingActionProvider';
@@ -14,6 +15,7 @@ import Skeleton from '../../_components/Skeleton';
 import Icon from '../../_components/Icon';
 import ModeratorConsole from './ModeratorConsole';
 import UserCooldowns from './UserCooldowns';
+import PassportDialog from './PassportDialog';
 
 interface Rank {
   id: string;
@@ -71,11 +73,18 @@ export default function UserDetailClient({ discordId }: { discordId: string }) {
   const [data, setData] = useState<PeekData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [passportOpen, setPassportOpen] = useState(false);
 
   const toast = useToast();
   const undo = useUndo();
   const pending = usePendingAction();
   const { fmtRel, absolute } = useTimezone();
+  const searchParams = useSearchParams();
+
+  // Registry "Edit passport" context-menu item lands here with ?passport=edit
+  useEffect(() => {
+    if (searchParams.get('passport') === 'edit') setPassportOpen(true);
+  }, [searchParams]);
 
   const refresh = useCallback(async () => {
     try {
@@ -158,7 +167,11 @@ export default function UserDetailClient({ discordId }: { discordId: string }) {
   if (!data) return null;
 
   const factionGlyph = (f?: string): string => {
-    const map: Record<string, string> = { lunarians: '☾', sentinel: '⚔', mastermind: '◈', underworld: '✦', siren: '◐', seer: '✧' };
+    const map: Record<string, string> = {
+      beasts: '🐾', colossals: '⛰', dragons: '🜲', knights: '⚔', lunarians: '☾',
+      'moon creatures': '◐', 'mythical creatures': '✧', 'strange beings': '❖',
+      supernatural: '✦', underworld: '♆', warriors: '🛡',
+    };
     return map[(f ?? '').toLowerCase()] ?? '◯';
   };
 
@@ -253,7 +266,7 @@ export default function UserDetailClient({ discordId }: { discordId: string }) {
           </div>
         </div>
 
-        {data.passport && (
+        {data.passport ? (
           <div className="av-peek-passport" style={{ marginTop: 14 }}>
             <span className="av-peek-passport-glyph">{factionGlyph(data.passport.faction)}</span>
             <div style={{ flex: 1 }}>
@@ -261,9 +274,31 @@ export default function UserDetailClient({ discordId }: { discordId: string }) {
               {data.passport.fullName && <div className="av-peek-passport-name">{data.passport.fullName}</div>}
               {data.passport.faction && <div className="av-peek-passport-faction">{data.passport.faction}</div>}
             </div>
+            <button type="button" className="av-btn av-btn-ghost" onClick={() => setPassportOpen(true)}>
+              <Icon name="passport" size={12} /> Edit
+            </button>
+          </div>
+        ) : (
+          <div className="av-peek-passport" style={{ marginTop: 14 }}>
+            <span className="av-peek-passport-glyph">◯</span>
+            <div style={{ flex: 1 }}>
+              <div className="av-peek-passport-name">No passport issued</div>
+            </div>
+            <button type="button" className="av-btn av-btn-ghost" onClick={() => setPassportOpen(true)}>
+              <Icon name="passport" size={12} /> Issue Passport
+            </button>
           </div>
         )}
       </section>
+
+      {passportOpen && (
+        <PassportDialog
+          discordId={discordId}
+          displayName={data.globalName ?? data.username ?? data.discordId}
+          onClose={() => setPassportOpen(false)}
+          onSaved={refresh}
+        />
+      )}
 
       <ModeratorConsole
         discordId={discordId}

@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     const now = new Date();
     const todayKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-${String(now.getUTCDate()).padStart(2, "0")}`;
 
-    const [cardsDoc, stonesDoc, pointsDoc, levelsDoc, magicWinsDoc, nemesisDocs, inventoryDoc, ticketsDoc, chatMsgDoc, chatVoiceDoc, catalogDocs, badgesDoc, profileDoc, canvasLayoutsDoc, applicationsDoc] =
+    const [cardsDoc, stonesDoc, pointsDoc, levelsDoc, magicWinsDoc, nemesisDocs, inventoryDoc, ticketsDoc, chatMsgDoc, chatVoiceDoc, catalogDocs, badgesDoc, profileDoc, canvasLayoutsDoc, applicationsDoc, badgeVisualsDoc] =
       await Promise.all([
         db.collection("cards").findOne({ _id: discordId as any }),
         db.collection("stones").findOne({ _id: discordId as any }),
@@ -81,6 +81,9 @@ export async function GET(request: Request) {
         // Applications config — needed for passport_vip_roles list so the website
         // can match Butler's live VIP check at render time.
         db.collection("bot_config").findOne({ _id: "butler_applications" as any }),
+        // Badge image overrides uploaded via /admin/badges — same doc Butler's
+        // profile card reads.
+        db.collection("bot_config").findOne({ _id: "butler_badges_visuals" as any }),
       ]);
 
     // Cards — stored as native array in `cards` field
@@ -339,6 +342,19 @@ export async function GET(request: Request) {
       }
     }
 
+    // Badge image overrides — expose only {imageUrl, updatedAt} per badge and
+    // only asset-CDN URLs. Never the raw bot_config document (public endpoint).
+    let badgeVisuals: Record<string, { imageUrl: string; updatedAt: number }> | null = null;
+    if (badgeVisualsDoc?.data && typeof badgeVisualsDoc.data === 'object') {
+      const out: Record<string, { imageUrl: string; updatedAt: number }> = {};
+      for (const [id, v] of Object.entries(badgeVisualsDoc.data as Record<string, any>)) {
+        if (v && typeof v.imageUrl === 'string' && v.imageUrl.startsWith('https://assets.lunarian.app/')) {
+          out[id] = { imageUrl: v.imageUrl, updatedAt: Number(v.updatedAt) || 0 };
+        }
+      }
+      if (Object.keys(out).length > 0) badgeVisuals = out;
+    }
+
     const response: GameDataResponse = {
       cardsByGame,
       totalCards: allCards.length,
@@ -359,6 +375,7 @@ export async function GET(request: Request) {
       hasVipPassport,
       staffPassportRole,
       staffPassportLayout,
+      badgeVisuals,
       ...(publicUser ? { publicUser } : {}),
     };
 
