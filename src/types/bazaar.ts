@@ -186,7 +186,10 @@ export type TransactionType =
   | 'admin_refund'
   | 'admin_credit'
   | 'admin_debit'
-  | 'reserve_withdrawal';
+  | 'reserve_withdrawal'
+  // A refund/restore that could not be applied — needs admin attention
+  | 'refund_failed'
+  | 'card_restore_failed';
 
 export interface TransactionRecord {
   _id?: string;

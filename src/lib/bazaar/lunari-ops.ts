@@ -128,6 +128,37 @@ export async function creditLunari(
 }
 
 /**
+ * Refund that can't silently vanish. If the credit fails, the failure is
+ * written as a `refund_failed` transaction so it appears in the admin feed
+ * instead of only in server logs — the routes that call this show the user
+ * "Lunari refunded", which must never be a lie without a trace.
+ * Returns true when the refund actually landed.
+ */
+export async function refundLunariOrRecord(
+  discordId: string,
+  amount: number,
+  context: string,
+): Promise<boolean> {
+  try {
+    await creditLunari(discordId, amount);
+    return true;
+  } catch (err) {
+    console.error(`[refund] FAILED to refund ${amount} Lunari to ${discordId} (${context}):`, err);
+    await logTransaction({
+      discordId,
+      type: 'refund_failed',
+      amount,
+      balanceBefore: 0,
+      balanceAfter: 0,
+      metadata: { context, error: (err as Error)?.message?.slice(0, 200) ?? 'unknown' },
+      createdAt: new Date(),
+      source: 'web',
+    }).catch((logErr) => console.error('[refund] Failed to record refund_failed tx:', logErr));
+    return false;
+  }
+}
+
+/**
  * Get user's current Lunari balance.
  */
 export async function getBalance(discordId: string): Promise<number> {

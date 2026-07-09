@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { validateCsrf, refreshCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
-import { checkDebt } from '@/lib/bazaar/lunari-ops';
+import { checkDebt, logTransaction } from '@/lib/bazaar/lunari-ops';
 import { getUserCards, removeCardFromUser, addCardToUser } from '@/lib/bazaar/card-ops';
 import { counterSwap, getSwapById, createSwap, generateSwapId, getSwapExpiryDate } from '@/lib/bazaar/swap-ops';
 import { createNotification, generateNotificationId } from '@/lib/bazaar/marketplace-ops';
@@ -138,13 +138,31 @@ export async function POST(request: Request) {
     const res = NextResponse.json({ swap: newSwap });
     return refreshCsrf(res);
   } catch (error) {
-    // Restore card
+    // Restore card — a failed restore means the user LOST the card, so it
+    // must land in the transactions feed, never a silent catch
     try {
       await addCardToUser(discordId, {
         name: removed.name, rarity: removed.rarity,
         attack: removed.attack, imageUrl: removed.imageUrl, weight: removed.weight,
       }, removed.source);
-    } catch {}
+    } catch (restoreErr) {
+      console.error(`[swaps/counter] FAILED to restore card "${removed.name}" (${removed.rarity}) to ${discordId}:`, restoreErr);
+      await logTransaction({
+        discordId,
+        type: 'card_restore_failed',
+        amount: 0,
+        balanceBefore: 0,
+        balanceAfter: 0,
+        metadata: {
+          context: 'counter-offer failed after card removal',
+          cardName: removed.name,
+          itemRarity: removed.rarity,
+          error: (restoreErr as Error)?.message?.slice(0, 200) ?? 'unknown',
+        },
+        createdAt: new Date(),
+        source: 'web',
+      }).catch((logErr) => console.error('[swaps/counter] Failed to record card_restore_failed tx:', logErr));
+    }
     console.error('[swaps/counter] Error:', error);
     return NextResponse.json({ error: 'Failed to create counter-offer' }, { status: 500 });
   }

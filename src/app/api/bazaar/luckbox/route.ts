@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { generateCardStats } from '@/lib/bazaar/luckbox-config';
 import { getLuckboxShopConfig } from '@/lib/bazaar/shop-config';
-import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
+import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance, refundLunariOrRecord } from '@/lib/bazaar/lunari-ops';
 import { getPassportDiscount } from '@/lib/bazaar/passport-discount';
 import { weightedRandomDraw } from '@/lib/bazaar/weighted-random';
 import { userOwnsCard, addCardToUser } from '@/lib/bazaar/card-ops';
@@ -166,7 +166,7 @@ export async function POST(request: Request) {
       return refreshCsrf(res);
     } catch (error) {
       // REFUND on failure after deduction
-      await creditLunari(discordId, finalPrice).catch(() => {});
+      await refundLunariOrRecord(discordId, finalPrice, 'luckbox purchase failed after deduction');
       console.error('Luckbox grant error:', error);
       return NextResponse.json({ error: 'Purchase failed. Lunari refunded.' }, { status: 500 });
     }

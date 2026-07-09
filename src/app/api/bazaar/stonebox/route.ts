@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getStoneBoxConfig } from '@/lib/bazaar/shop-config';
-import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance } from '@/lib/bazaar/lunari-ops';
+import { deductLunari, creditLunari, addToBankReserve, checkDebt, logTransaction, getBalance, refundLunariOrRecord } from '@/lib/bazaar/lunari-ops';
 import { getPassportDiscount } from '@/lib/bazaar/passport-discount';
 import { weightedRandomDraw } from '@/lib/bazaar/weighted-random';
 import { userOwnsStone, addStoneToUser } from '@/lib/bazaar/stone-ops';
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
       return refreshCsrf(res);
     } catch (error) {
       // REFUND on failure — discounted price back
-      await creditLunari(discordId, finalPrice).catch(() => {});
+      await refundLunariOrRecord(discordId, finalPrice, 'stonebox purchase failed after deduction');
       console.error('Stonebox grant error:', error);
       return NextResponse.json({ error: 'Purchase failed. Lunari refunded.' }, { status: 500 });
     }
