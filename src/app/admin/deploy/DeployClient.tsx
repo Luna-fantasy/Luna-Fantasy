@@ -8,6 +8,7 @@ import { onButtonKey } from '../_components/a11y';
 import Icon from '../_components/Icon';
 import Skeleton from '../_components/Skeleton';
 import DeployStepper from './DeployStepper';
+import { adminPost } from '@/lib/admin/http';
 
 interface DeployRecord {
   _id: string;
@@ -34,11 +35,6 @@ const PROJECTS = [
   { id: 'oracle', name: 'Luna Oracle', desc: 'Staff announcements + voice',  tone: 'oracle' },
   { id: 'sage',   name: 'Luna Sage',   desc: 'AI assistant',                 tone: 'sage'   },
 ];
-
-function readCsrfCookie(): string {
-  const m = document.cookie.match(/(?:^|;\s*)bazaar_csrf=([^;]*)/);
-  return m ? decodeURIComponent(m[1]) : '';
-}
 
 function formatDuration(startIso: string, endIso?: string): string {
   const ms = (endIso ? new Date(endIso).getTime() : Date.now()) - new Date(startIso).getTime();
@@ -147,18 +143,10 @@ export default function DeployClient() {
           startedAt: new Date().toISOString(),
         });
         try {
-          const res = await fetch('/api/admin/deploy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-csrf-token': readCsrfCookie() },
-            credentials: 'include',
-            body: JSON.stringify({ project: projectId }),
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            toast.show({ tone: 'error', title: 'Trigger failed', message: data.error ?? `HTTP ${res.status}` });
-            setDeploying(false);
-            setCurrent(null);
-          }
+          // adminPost mints the CSRF cookie when missing and retries once on
+          // 403 — the old direct cookie read sent an empty token for anyone
+          // whose cookie had expired
+          await adminPost('/api/admin/deploy', { project: projectId });
         } catch (e) {
           toast.show({ tone: 'error', title: 'Trigger failed', message: (e as Error).message });
           setDeploying(false);
