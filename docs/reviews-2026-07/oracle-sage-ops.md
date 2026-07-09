@@ -1,0 +1,41 @@
+TOP OPPORTUNITIES — Oracle, Sage, Operations (ranked)
+
+1. VPS deploy agent runs plaintext HTTP on the public internet with a static Bearer key — SECURITY (Effort: M)
+Evidence: `C:\Users\Admin\Desktop\Luna Bot\Luna-Fantasy-Main\src\lib\admin\vps-agent.ts` sends `Authorization: Bearer ${VPS_AGENT_KEY}` to `http://2.56.165.113:3100` (no TLS). Agent source `C:\Users\Admin\Desktop\Luna Bot\luna-agent\index.js:65` compares the key with `auth !== \`Bearer ${API_KEY}\`` (non-timing-safe, unlike the website's webhook which was fixed with `timingSafeEqual`). Anyone who sniffs one Railway→VPS request captures a key that grants restart/stop/start of all bots, log tailing (`/pm2/logs/:name` can leak tokens printed to logs), and deploys. Also: `luna-agent` is not a git repo — the one piece of infra that deploys everything has no version control or deploy path itself.
+Recommendation: Put the agent behind TLS (Caddy/nginx + Let's Encrypt on a subdomain, or a Cloudflare Tunnel), switch to `crypto.timingSafeEqual`, and git-init luna-agent. This is the single biggest gap for a security-first owner.
+
+2. TEST copies are months behind prod — the "TEST first, promote to main" workflow is inverted (Effort: S-M)
+Evidence: none of `TEST/ButlerTEST|JesterTEST|OracleTEST|SageTEST` is a git repo (verified via `git log`), so drift is invisible. ButlerTEST contains `.sync_backup_20260418` (last sync ~2026-04-18) and is missing the entire July escrow hardening — `commands/coinflip_commands.ts`, `roulette_commands.ts`, `luna21_commands.ts`, `util/managers/points.ts` all differ from prod HEAD (2026-07-04). JesterTEST differs in ~45 source files vs prod HEAD (2026-07-02), including all games, trading, and seluna files. Anything now tested in TEST validates stale code; a "promote to main" from TEST would silently revert the escrow work.
+Recommendation: Convert TEST dirs to git clones of the same remotes (test-only `.env` + config diffs kept out of tracked files), or add a one-command sync script. Do this before the next TEST-first feature.
+
+3. Deploy history records "ok" when the deploy has only started — failures show as successes (Effort: S)
+Evidence: `src/app/api/admin/deploy/route.ts:48` calls the agent, which replies `{status:'started'}` immediately (agent `index.js:244` responds before running steps in background). The route then writes the Mongo `admin_deploys` record as `status:'ok'` with steps `[{name:'VPS Deploy', status:'ok'}]` (route.ts:78-86). A build failure or "process not online after restart" (agent's Verify step) is only visible in the live stepper if the admin keeps the tab open; the permanent history (`GET /api/admin/deploy`, Deploy page history list) shows 'ok'. This directly undercuts the "does anything verify restart success?" requirement — the agent verifies (index.js:296-304 checks pm2 status after 5s), but the result never reaches the record.
+Recommendation: When DeployClient's poll sees terminal status, PATCH the record; or better, have `/api/admin/deploy/status` upsert the agent's final status/steps into `admin_deploys` server-side.
+
+4. Oracle dashboard pendingActions: race can drop admin actions + failures are silently discarded (Effort: S)
+Evidence: dashboard `src/app/api/admin/voice/manage/route.ts:86` does `$push: {pendingActions}`; Oracle `index.ts:255-275` polls every 30s, processes a snapshot with per-action `catch {}`, then unconditionally `$set: {pendingActions: []}`. An action pushed between the `find()` and the clear is wiped without ever executing (same defect class as the known seluna admin_queue issue). A failed lock/delete/rename is also cleared with zero feedback — the admin sees nothing happen and no error.
+Recommendation: `$pull` only the processed action objects (give each an id), and write a `lastActionResult` field the dashboard can display.
+
+5. Sage has no AI provider fallback and swallows provider errors into a generic apology (Effort: M)
+Evidence: `Luna Sage/ai/handler.js:86-197` — provider comes from `sage_settings`; on any Google failure (429 quota, 5xx, timeout) it logs and returns the canned Arabic "technical problem" text. The configured second provider (OpenRouter) is never used as fallback. Errors also don't reach `sage_activity_log`, so the dashboard Activity tab can't show the owner why Sage went quiet. Secondary: the OpenRouter path silently drops PDF/excel/office parts (handler.js:207-227) and never returns images.
+Recommendation: On retryable Google errors, retry once then fall back to OpenRouter (and log the failover via `logActivity`). Keep the current generic message only as last resort.
+
+6. Oracle's 256M PM2 memory cap is undersized for a music + canvas bot (Effort: S)
+Evidence: `LunaOracle/ecosystem.config.cjs` sets `max_memory_restart: '256M'` while Oracle runs `@discordjs/voice` (+ffmpeg pipelines), `@napi-rs/canvas`, `@skyra/gifenc`, and streams from a 114MB local `Music/` library; Sage (a lighter bot) gets 512M. A memory spike during playback kills the process mid-song; music state restores on boot (`musicManager.restore()`) but the VC drops. This is a plausible contributor to unnoticed Oracle restarts (matches memory note "deploy agent may fail to restart Oracle / verify uptime").
+Recommendation: Raise to 512-768M and watch Oracle's restart count on the ops page for a week.
+
+7. Butler's 354 restarts are mostly by design — but the ops page can't tell the owner that (Effort: S)
+Evidence: `LunaButlerMain/ecosystem.config.cjs` has `cron_restart: '0 4 * * *'` — one scheduled restart per day, so ~350 restarts ≈ ~11 months of uptime plus deploys, not crashing. All four bots log-and-continue on `uncaughtException`/`unhandledRejection` (Butler index.ts:143-163, Jester index.ts:1787-1791, Sage index.js:449-450, Oracle index.ts:742-748), so crash-loop risk is low. But `OpsClient.tsx:302` renders the raw `restarts` counter with no context — a zero-dev-knowledge owner reads 354 as "buggy".
+Recommendation: Surface PM2's `unstable_restarts` instead of (or beside) total restarts in the agent's `/pm2/list` (luna-agent index.js:129-138) and label Butler's daily cron restart on the card.
+
+8. Sage downloads user images up to 25MB into base64 in-process under a 512M cap (Effort: S)
+Evidence: `Luna Sage/ai/mentionHandler.js:217-223` accepts attachments up to `25 * 1024 * 1024`, axios-downloads to a Buffer, converts to base64 (~33MB string per image, further copied into the messages array); `handler.js:258-268` re-downloads remote URLs per call. Several concurrent large images can approach the 512M PM2 limit and cause an abrupt restart mid-conversation.
+Recommendation: Drop the limit to ~8MB, reject larger with a friendly Arabic message, and skip re-download for already-inlined data URIs.
+
+HEALTHY (verified, no action needed)
+- MongoDB growth: total DB is only ~23MB / 18k docs. `lunari_transactions` 6,117, `cards_transactions` 497, `stones_transactions` 433, `admin_audit_log` 1,562, `chat_stats` 323, `vc_stats` 208 — years of headroom before TTL indexes matter. `sage_activity_log` (9 docs) self-cleans at 30 days (`userMemory.js:72-80`). `chats` (85 docs) is legacy thread data, frozen since threads were removed; `conversationManager.js`/`threadManager.js` are dead-code candidates (only reference each other).
+- Env hygiene: all four bots + agent read tokens/URIs exclusively from `process.env`; no hardcoded secrets found (grep for key patterns clean); `.env` gitignored everywhere; Sage `config.js` tracked but secret-free.
+- Sage config pipeline: `live_config.js` does field-level `??` fallbacks per key against `sage_settings`/`sage_system_prompt`/`sage_lore`/`sage_privileges`/`sage_live_chat` with 30s TTL — dashboard saves reach the bot within 30s, and a missing doc/field degrades gracefully to config.js defaults.
+- Sage abuse filter is pure regex (`abuseFilter.js`) — zero AI cost, runs before any API call.
+- Oracle stability: unhandled-rejection/exception handlers, graceful SIGTERM shutdown with interval cleanup, hub-rescue retry budget (3 strikes/60s), orphan-channel sweep, and `botInitialized` guard against reconnect re-init are all in place.
+- Deploy agent does verify restart: 5s wait then pm2 status check (`luna-agent/index.js:296-304`), with per-step timeouts and per-project deploy locks + 5-min cooldown.
