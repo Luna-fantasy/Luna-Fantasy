@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useToast } from '../_components/Toast';
 import { useTimezone } from '../_components/TimezoneProvider';
 import CopyValue from '../_components/CopyValue';
+import { uploadFileViaPresign } from '@/lib/admin/upload';
 
 interface Props {
   id: string;
@@ -16,11 +17,6 @@ interface Props {
   onSave: (patch: { title?: string; description?: string; image?: string; imageVersion?: number }) => Promise<void>;
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 function versioned(url: string, version: number | undefined, updatedAt: string | null): string {
   if (!url) return url;
   // Strip any existing ?v=... query so we can apply the canonical version cleanly
@@ -30,33 +26,11 @@ function versioned(url: string, version: number | undefined, updatedAt: string |
 }
 
 async function uploadVendorImage(vendorId: string, file: File): Promise<string> {
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve((r.result as string).split(',')[1] ?? '');
-    r.onerror = () => reject(new Error('Read failed'));
-    r.readAsDataURL(file);
-  });
-  const token = await fetchCsrf();
   const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-  const res = await fetch('/api/admin/v2/r2/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({
-      folder: 'shops',
-      filename: `${vendorId}.${ext}`,
-      imageData: base64,
-      contentType: file.type || 'image/png',
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  const data = await res.json();
+  const { publicUrl } = await uploadFileViaPresign(file, `shops/${vendorId}.${ext}`);
   // Return the CLEAN base URL (no cache-buster). Caller writes imageVersion separately
   // so the Discord bot + website bazaar can bust the cache consistently.
-  return String(data.url).split('?')[0];
+  return publicUrl.split('?')[0];
 }
 
 export default function VendorHero({ id, tone, title, description, image, imageVersion, updatedAt, onSave }: Props) {
@@ -75,10 +49,6 @@ export default function VendorHero({ id, tone, title, description, image, imageV
   useEffect(() => setDescDraft(description), [description]);
 
   const handleFile = async (file: File) => {
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Image must be under 4MB.' });
-      return;
-    }
     setUploading(true);
     try {
       const url = await uploadVendorImage(id, file);

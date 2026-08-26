@@ -435,8 +435,8 @@ function FactionCardEditDialog({
       toast.show({ tone: 'error', title: 'Not an image', message: 'Please pick a PNG, JPG, or WEBP.' });
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Max file size is 4 MB.' });
+    if (file.size > 15 * 1024 * 1024) {
+      toast.show({ tone: 'error', title: 'Too large', message: 'Max file size is 15 MB.' });
       return;
     }
     setUploading(true);

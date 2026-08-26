@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { adminGet, adminPost } from '@/lib/admin/http';
+import { uploadFileViaPresign } from '@/lib/admin/upload';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import RolePicker from '../_components/RolePicker';
@@ -74,20 +75,9 @@ const KIND_LABEL: Record<SelunaKind, string> = {
 };
 
 async function uploadSelunaImage(file: File): Promise<string> {
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve((r.result as string).split(',')[1] ?? '');
-    r.onerror = () => reject(new Error('Read failed'));
-    r.readAsDataURL(file);
-  });
   const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-  const data = await adminPost<{ url: string }>('/api/admin/v2/r2/upload', {
-    folder: 'profiles',
-    filename: `bg_${Date.now()}.${ext}`,
-    imageData: base64,
-    contentType: file.type || 'image/png',
-  });
-  return data.url;
+  const { publicUrl } = await uploadFileViaPresign(file, `profiles/bg_${Date.now()}.${ext}`);
+  return publicUrl;
 }
 
 export default function SelunaEditor({ tone }: { tone: string }) {
@@ -167,10 +157,6 @@ export default function SelunaEditor({ tone }: { tone: string }) {
   const savePortrait = () => post('set_settings', { settings: portrait }, 'Save Seluna portrait', 'Bot refreshes open Discord messages live');
 
   const handlePortraitUpload = async (file: File) => {
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Portrait must be under 4MB.' });
-      return;
-    }
     setPortraitUploading(true);
     try {
       const url = await uploadSelunaImage(file);
@@ -653,10 +639,6 @@ function SelunaItemDialog({ draft: initial, isNew, onClose, onSave }: {
   };
 
   const handleBackgroundUpload = async (file: File, slot: 'profile' | 'rank') => {
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Background must be under 4MB.' });
-      return;
-    }
     const setUploading = slot === 'profile' ? setUploadingProfile : setUploadingRank;
     setUploading(true);
     try {

@@ -11,7 +11,8 @@ import CanvasPicker from './CanvasPicker';
 import { useCanvasHistory } from './useCanvasHistory';
 import type { CanvasLayouts, CanvasTypeDef } from './types';
 import { getAtPath, setAtPath } from './layoutPath';
-import { adminFetch, adminPost, adminPut } from '@/lib/admin/http';
+import { adminFetch, adminPut } from '@/lib/admin/http';
+import { uploadFileViaPresign } from '@/lib/admin/upload';
 
 interface Props {
   butlerLayouts: CanvasLayouts;
@@ -109,32 +110,16 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
 
   const uploadTrial = async (file: File) => {
     if (!file || !canvas) return;
-    if (file.size > 8 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Max 8MB.' });
-      return;
-    }
     setUploading(true);
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = String(reader.result ?? '');
-          const comma = result.indexOf(',');
-          resolve(comma >= 0 ? result.slice(comma + 1) : result);
-        };
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsDataURL(file);
-      });
-
       const dims = await measureImageFile(file);
 
-      const body = await adminPost<{ url: string; key: string }>('/api/admin/canvas/upload-trial', {
-        bot,
-        canvasType: canvas.id,
-        imageData: base64,
-        contentType: file.type || 'image/png',
-        filename: file.name,
-      });
+      // Direct-to-R2 presign (was 8MB base64 through the server — full-size
+      // canvas backgrounds are far bigger). Key mirrors the old route's shape
+      // so the trial DELETE endpoint's canvas-trials/ guard keeps working.
+      const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+      const key = `canvas-trials/${bot}/${canvas.id}/${Date.now()}-${safeName}`;
+      const body = await uploadFileViaPresign(file, key);
 
       // If there was a previous trial, delete it first (best-effort)
       if (trial) {
@@ -144,7 +129,7 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
         }).catch(() => { /* best-effort */ });
       }
 
-      setTrial({ url: body.url, key: body.key, filename: file.name, width: dims?.width, height: dims?.height });
+      setTrial({ url: body.publicUrl, key: body.key, filename: file.name, width: dims?.width, height: dims?.height });
       toast.show({ tone: 'success', title: 'Trial uploaded', message: 'Click Save to make it official, or Test render to preview in Discord.' });
     } catch (e) {
       toast.show({ tone: 'error', title: 'Upload failed', message: (e as Error).message });

@@ -154,7 +154,7 @@ export default function BazaarContent() {
                 className="merchant-card"
               >
                 <img
-                  src={merchant.image}
+                  src={catalog?.merchants?.[merchant.slug] ?? merchant.image}
                   alt={t(merchant.nameKey)}
                   className="merchant-card-img"
                   loading="lazy"

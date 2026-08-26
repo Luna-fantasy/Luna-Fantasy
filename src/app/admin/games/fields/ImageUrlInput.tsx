@@ -2,17 +2,13 @@
 
 import { useRef, useState } from 'react';
 import { useToast } from '../../_components/Toast';
+import { uploadFileViaPresign } from '@/lib/admin/upload';
 
 interface Props {
   value: string;
   onChange: (next: string) => void;
   folder: 'butler' | 'jester' | 'oracle' | 'sage' | 'valecroft';
   filenameHint: string;
-}
-
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
 }
 
 // Append (or replace) a `?v=<timestamp>` cache-buster on every URL change.
@@ -29,31 +25,9 @@ function withCacheBust(url: string, ts: number = Date.now()): string {
 }
 
 async function uploadImage(folder: Props['folder'], filename: string, file: File): Promise<string> {
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve((r.result as string).split(',')[1] ?? '');
-    r.onerror = () => reject(new Error('Read failed'));
-    r.readAsDataURL(file);
-  });
-  const token = await fetchCsrf();
   const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-  const res = await fetch('/api/admin/v2/r2/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({
-      folder,
-      filename: `${filename}.${ext}`,
-      imageData: base64,
-      contentType: file.type || 'image/png',
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  const data = await res.json();
-  return withCacheBust(String(data.url));
+  const { publicUrl } = await uploadFileViaPresign(file, `${folder}/${filename}.${ext}`);
+  return withCacheBust(publicUrl);
 }
 
 export default function ImageUrlInput({ value, onChange, folder, filenameHint }: Props) {
@@ -65,10 +39,6 @@ export default function ImageUrlInput({ value, onChange, folder, filenameHint }:
   const handle = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast.show({ tone: 'error', title: 'Not an image', message: 'Only image files are accepted.' });
-      return;
-    }
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Image must be under 4 MB.' });
       return;
     }
     setUploading(true);

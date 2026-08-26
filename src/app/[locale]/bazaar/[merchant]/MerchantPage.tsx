@@ -142,7 +142,7 @@ export default function MerchantPage({ merchant }: { merchant: MerchantSlug }) {
           <EImg
             editId={`merchant-portrait-${merchant}`}
             source="r2"
-            src={config.image}
+            src={catalog?.merchants?.[merchant] ?? config.image}
             alt={t(config.nameKey)}
             width={320}
             height={320}

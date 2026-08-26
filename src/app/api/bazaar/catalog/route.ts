@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getLuckboxShopConfig, boxToLegacyTier, getStoneBoxConfig, getTicketShopConfig } from '@/lib/bazaar/shop-config';
+import { getMerchantThumbs } from '@/lib/bazaar/vendor-config';
 import { LUNARI_PACKAGES } from '@/lib/stripe';
 import { getBalance, checkDebt } from '@/lib/bazaar/lunari-ops';
 import { hasPassport as checkPassport } from '@/lib/bazaar/passport-discount';
@@ -75,6 +76,10 @@ export async function GET() {
     // Ticket packages from DB (falls back to hardcoded)
     const ticketPackages = await getTicketShopConfig();
 
+    // Merchant portraits as uploaded in the admin Shops tab (null entries
+    // keep the client's built-in fallback images)
+    const merchants = await getMerchantThumbs().catch(() => undefined);
+
     // Optional auth for user data
     let user: { balance: number; tickets: number; hasDebt: boolean; hasPassport: boolean } | undefined;
     try {
@@ -107,6 +112,7 @@ export async function GET() {
       stoneBox,
       ticketPackages,
       lunariPackages,
+      merchants,
       user,
     });
 

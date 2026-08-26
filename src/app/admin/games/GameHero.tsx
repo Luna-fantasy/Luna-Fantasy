@@ -6,6 +6,7 @@ import { useTimezone } from '../_components/TimezoneProvider';
 import TriggerPills from './TriggerPills';
 import PermissionSummary from './PermissionSummary';
 import type { GameSpec } from './game-schema';
+import { uploadFileViaPresign } from '@/lib/admin/upload';
 
 interface Props {
   game: GameSpec;
@@ -22,37 +23,10 @@ interface Props {
   onPatch: (patch: { title?: string; description?: string; image?: string; enabled?: boolean; flavorPool?: string; flavorPinned?: string }) => Promise<void>;
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function uploadPortrait(gameId: string, folder: 'butler' | 'jester', file: File): Promise<string> {
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve((r.result as string).split(',')[1] ?? '');
-    r.onerror = () => reject(new Error('Read failed'));
-    r.readAsDataURL(file);
-  });
-  const token = await fetchCsrf();
   const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-  const res = await fetch('/api/admin/v2/r2/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({
-      folder,
-      filename: `games_${gameId}.${ext}`,
-      imageData: base64,
-      contentType: file.type || 'image/png',
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
-  const data = await res.json();
-  return `${data.url}?v=${Date.now()}`;
+  const { publicUrl, version } = await uploadFileViaPresign(file, `${folder}/games_${gameId}.${ext}`);
+  return `${publicUrl.split('?')[0]}?v=${version}`;
 }
 
 export default function GameHero({ game, title, description, image, enabled, flavorPool, flavorPinned, triggers, allowedRoles, allowedChannels, updatedAt, onPatch }: Props) {
@@ -87,10 +61,6 @@ export default function GameHero({ game, title, description, image, enabled, fla
   const flavorMode    = pinnedDraft.trim() ? 'pinned' : poolLineCount > 0 ? 'rotating' : 'default';
 
   const handleFile = async (file: File) => {
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Image must be under 4 MB.' });
-      return;
-    }
     setUploading(true);
     try {
       const url = await uploadPortrait(game.id, game.bot, file);

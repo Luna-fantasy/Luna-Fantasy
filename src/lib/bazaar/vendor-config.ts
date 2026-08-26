@@ -62,6 +62,63 @@ export async function getVendorConfig(shopId: string): Promise<VendorConfig | nu
   return config;
 }
 
+// ── Public bazaar merchant portraits ──
+
+export type MerchantSlug = 'kael' | 'meluna' | 'zoldar' | 'seluna' | 'brimor' | 'mells';
+
+// Public slug → the vendor_config doc the admin Shops tab writes portraits to.
+// Seluna is special-cased below (its settings live in the seluna_vendor collection).
+const MERCHANT_VENDOR_DOC = {
+  kael: 'luckbox',
+  meluna: 'stonebox',
+  zoldar: 'tickets',
+  brimor: 'brimor',
+  mells: 'mells_selvair',
+} as const;
+
+// Version-stamped server-side from the STORED imageVersion — client-side ?v=
+// synthesis is banned here (see lib/admin/cache-bust.ts for the cached-404
+// story). The stamp is what defeats the 1-year immutable header on R2 keys
+// that get overwritten in place.
+function stampVersion(image: unknown, version: unknown): string | null {
+  if (typeof image !== 'string' || !image.trim()) return null;
+  if (typeof version !== 'number' || !version) return image;
+  const sep = image.includes('?') ? '&' : '?';
+  return `${image}${sep}v=${version}`;
+}
+
+/**
+ * Final portrait URL per public bazaar merchant, read from the same fields
+ * the admin Shops tab writes. Null when a vendor has no uploaded portrait
+ * yet — callers keep their hardcoded fallback for those.
+ */
+export async function getMerchantThumbs(): Promise<Record<MerchantSlug, string | null>> {
+  const vendorEntries = await Promise.all(
+    (Object.keys(MERCHANT_VENDOR_DOC) as Array<keyof typeof MERCHANT_VENDOR_DOC>).map(async (slug) => {
+      try {
+        const cfg = await getVendorConfig(MERCHANT_VENDOR_DOC[slug]);
+        return [slug, stampVersion(cfg?.image, cfg?.imageVersion)] as const;
+      } catch {
+        return [slug, null] as const;
+      }
+    })
+  );
+
+  let seluna: string | null = null;
+  try {
+    const client = await clientPromise;
+    const db = client.db('Database');
+    const doc = await db.collection('seluna_vendor').findOne({ id: 'settings' } as any);
+    const raw = (doc as any)?.value ?? (doc as any)?.data ?? {};
+    const settings = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    seluna = stampVersion(settings?.image, settings?.imageVersion);
+  } catch {
+    // fall through — hardcoded fallback covers it
+  }
+
+  return { ...(Object.fromEntries(vendorEntries) as Record<keyof typeof MERCHANT_VENDOR_DOC, string | null>), seluna };
+}
+
 /**
  * Get just the items array for a vendor. Convenience wrapper.
  */

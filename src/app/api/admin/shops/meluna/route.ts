@@ -6,6 +6,8 @@ import { logAdminAction } from '@/lib/admin/audit';
 import { getClientIp } from '@/lib/admin/sanitize';
 import clientPromise from '@/lib/mongodb';
 import { invalidateShopConfigCache } from '@/lib/bazaar/shop-config';
+import { invalidateVendorConfigCache } from '@/lib/bazaar/vendor-config';
+import { requestPanelRefresh } from '@/lib/admin/panel-refresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,6 +152,8 @@ export async function POST(req: NextRequest) {
       { upsert: true },
     );
     invalidateShopConfigCache(); // public bazaar picks up the change immediately
+    invalidateVendorConfigCache(DOC_ID);
+    requestPanelRefresh('jester', 'shop_meluna', adminId);
 
     await logAdminAction({
       adminDiscordId: adminId,

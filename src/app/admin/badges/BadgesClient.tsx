@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { adminGet, adminPost, adminPut } from '@/lib/admin/http';
+import { uploadFileViaPresign } from '@/lib/admin/upload';
 import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
@@ -57,20 +58,9 @@ async function saveSection(section: string, value: any): Promise<void> {
 }
 
 async function uploadBadgeImage(badgeId: string, file: File): Promise<string> {
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve((r.result as string).split(',')[1] ?? '');
-    r.onerror = () => reject(new Error('Read failed'));
-    r.readAsDataURL(file);
-  });
   const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-  const data = await adminPost<{ url: string }>('/api/admin/v2/r2/upload', {
-    folder: 'badges',
-    filename: `${badgeId}.${ext}`,
-    imageData: base64,
-    contentType: file.type || 'image/png',
-  });
-  return data.url;
+  const { publicUrl } = await uploadFileViaPresign(file, `badges/${badgeId}.${ext}`);
+  return publicUrl;
 }
 
 function formatValue(key: keyof BadgeThresholds, v: number): string {
@@ -148,10 +138,6 @@ export default function BadgesClient() {
   };
 
   const handleFile = async (badgeId: string, file: File) => {
-    if (file.size > 2 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Badge images must be under 2MB.' });
-      return;
-    }
     setUploadingId(badgeId);
     try {
       const url = await uploadBadgeImage(badgeId, file);

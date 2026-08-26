@@ -6,6 +6,7 @@ import { useToast } from '../_components/Toast';
 import RolePicker from '../_components/RolePicker';
 import { useFocusTrap } from '../_components/a11y';
 import { getAdminPortalTarget } from '../_components/portal-root';
+import { uploadFileViaPresign } from '@/lib/admin/upload';
 
 export interface VendorItem {
   id: string;
@@ -36,37 +37,13 @@ interface Props {
   onClose: () => void;
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 async function uploadItemImage(vendorId: string, itemId: string, file: File): Promise<string> {
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve((r.result as string).split(',')[1] ?? '');
-    r.onerror = () => reject(new Error('Read failed'));
-    r.readAsDataURL(file);
-  });
-  const token = await fetchCsrf();
   const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
   const safeId = itemId.replace(/[^a-z0-9_-]/gi, '_');
   // Mells = profiles folder; Brimor/Broker = shops folder; default to shops
   const folder = vendorId === 'mells_selvair' ? 'profiles' : 'shops';
-  const res = await fetch('/api/admin/v2/r2/upload', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({
-      folder,
-      filename: `${vendorId}_${safeId}.${ext}`,
-      imageData: base64,
-      contentType: file.type || 'image/png',
-    }),
-  });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
-  const data = await res.json();
-  return `${data.url}?v=${Date.now()}`;
+  const { publicUrl, version } = await uploadFileViaPresign(file, `${folder}/${vendorId}_${safeId}.${ext}`);
+  return `${publicUrl.split('?')[0]}?v=${version}`;
 }
 
 function slugify(s: string): string {
@@ -105,10 +82,6 @@ export default function VendorItemDialog({ tone, mode, vendorId, initial, onSave
 
   const handleFile = async (file: File) => {
     const useId = id || slugify(name) || `item_${Date.now()}`;
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Image must be under 4MB.' });
-      return;
-    }
     setUploading(true);
     try {
       const url = await uploadItemImage(vendorId, useId, file);

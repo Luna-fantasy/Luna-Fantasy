@@ -17,6 +17,7 @@ import {
   saveLunaMapConfig,
 } from '@/lib/bazaar/shop-config';
 import type { MellsShopItem, LunaMapConfig, LunaMapButton } from '@/lib/bazaar/shop-config';
+import { requestPanelRefresh } from '@/lib/admin/panel-refresh';
 import type { LuckboxBoxConfig, StoneConfig, TicketPackage } from '@/types/bazaar';
 
 // ── Validation helpers ──
@@ -286,6 +287,7 @@ export async function PUT(request: NextRequest) {
 
         const before = await getLuckboxShopConfigAll();
         await saveLuckboxConfig(validation.data!);
+        requestPanelRefresh('jester', 'shop_luckbox', adminId);
 
         await logAdminAction({
           adminDiscordId: adminId,
@@ -306,6 +308,7 @@ export async function PUT(request: NextRequest) {
 
         const before = await getStoneBoxConfig();
         await saveStoneBoxConfig(validation.data!);
+        requestPanelRefresh('jester', 'shop_meluna', adminId);
 
         await logAdminAction({
           adminDiscordId: adminId,
@@ -326,6 +329,7 @@ export async function PUT(request: NextRequest) {
 
         const before = await getTicketShopConfig();
         await saveTicketConfig(validation.data!);
+        requestPanelRefresh('jester', 'shop_tickets', adminId);
 
         await logAdminAction({
           adminDiscordId: adminId,
@@ -412,6 +416,7 @@ export async function PUT(request: NextRequest) {
 
         const before = await getMellsShopConfig();
         await saveMellsConfig(sanitizedMells);
+        requestPanelRefresh('butler', 'shop_mells', adminId);
 
         await logAdminAction({
           adminDiscordId: adminId,
@@ -511,6 +516,7 @@ export async function PUT(request: NextRequest) {
 
         const before = await getLunaMapConfig();
         await saveLunaMapConfig(sanitizedMap);
+        requestPanelRefresh('jester', 'luna_map', adminId);
 
         await logAdminAction({
           adminDiscordId: adminId,

@@ -7,6 +7,7 @@
  */
 
 import clientPromise from '@/lib/mongodb';
+import { invalidateVendorConfigCache } from './vendor-config';
 import { LUCKBOX_TIERS } from './luckbox-config';
 import { STONES, STONE_BOX_PRICE, STONE_REFUND_AMOUNT, TICKET_PACKAGES } from './stone-config';
 import type {
@@ -205,16 +206,22 @@ export async function getTicketShopConfig(): Promise<TicketPackage[]> {
   return TICKET_PACKAGES;
 }
 
+// Dot-path $set in the three savers below — these vendor_config docs also
+// carry the vendor's portrait (data.image / data.imageVersion) and title
+// fields written by the Shops tab; replacing the whole `data` object wiped
+// them on every items/packages/settings save.
+
 /** Save luckbox config to DB */
 export async function saveLuckboxConfig(tiers: LuckboxBoxConfig[]): Promise<void> {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   await db.collection('vendor_config').updateOne(
     { _id: 'luckbox' as any },
-    { $set: { data: { tiers } } },
+    { $set: { 'data.tiers': tiers } },
     { upsert: true }
   );
   invalidateShopConfigCache();
+  invalidateVendorConfigCache('luckbox');
 }
 
 /** Save stonebox config to DB */
@@ -223,10 +230,18 @@ export async function saveStoneBoxConfig(config: StoneShopConfig): Promise<void>
   const db = client.db(DB_NAME);
   await db.collection('vendor_config').updateOne(
     { _id: 'stonebox' as any },
-    { $set: { data: config } },
+    {
+      $set: {
+        'data.price': config.price,
+        'data.refund_amount': config.refund_amount ?? config.refundAmount,
+        ...(config.refund_chance !== undefined ? { 'data.refund_chance': config.refund_chance } : {}),
+        'data.stones': config.stones,
+      },
+    },
     { upsert: true }
   );
   invalidateShopConfigCache();
+  invalidateVendorConfigCache('stonebox');
 }
 
 /** Save ticket config to DB */
@@ -235,10 +250,11 @@ export async function saveTicketConfig(packages: TicketPackage[]): Promise<void>
   const db = client.db(DB_NAME);
   await db.collection('vendor_config').updateOne(
     { _id: 'tickets' as any },
-    { $set: { data: { packages } } },
+    { $set: { 'data.packages': packages } },
     { upsert: true }
   );
   invalidateShopConfigCache();
+  invalidateVendorConfigCache('tickets');
 }
 
 // ── Mells Selvair (Butler Background Shop) ──
@@ -296,9 +312,12 @@ export async function getMellsShopConfig(): Promise<MellsShopItem[]> {
 export async function saveMellsConfig(items: MellsShopItem[]): Promise<void> {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
+  // Dot-path $set — replacing the whole `data` object wiped the sibling
+  // title/description/image fields the shops mirror writes, which blanked
+  // Butler's shop panel after every items save.
   await db.collection('bot_config').updateOne(
     { _id: 'butler_shop' as any },
-    { $set: { data: { items }, updatedAt: new Date() } },
+    { $set: { 'data.items': items, updatedAt: new Date() } },
     { upsert: true }
   );
   invalidateShopConfigCache();
@@ -367,9 +386,24 @@ export async function getLunaMapConfig(): Promise<LunaMapConfig | null> {
 export async function saveLunaMapConfig(config: LunaMapConfig): Promise<void> {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
+  // Dot-path $set so sibling fields survive, and stamp imageVersion on every
+  // save: map image re-uploads overwrite the same R2 key (URL unchanged), so
+  // the version is the only signal Jester has to re-proxy the image — and it
+  // lets title/description edits propagate to the posted map message too.
   await db.collection('bot_config').updateOne(
     { _id: 'jester_luna_map' as any },
-    { $set: { data: config, updatedAt: new Date() } },
+    {
+      $set: {
+        'data.title': config.title,
+        'data.title_en': config.title_en ?? '',
+        'data.description': config.description,
+        'data.description_en': config.description_en ?? '',
+        'data.image': config.image,
+        'data.buttons': config.buttons,
+        'data.imageVersion': Date.now(),
+        updatedAt: new Date(),
+      },
+    },
     { upsert: true }
   );
   invalidateShopConfigCache();

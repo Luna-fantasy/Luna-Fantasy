@@ -37,12 +37,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'key and contentType required' }, { status: 400 });
   }
 
-  if (!/^[a-zA-Z0-9_\-/.]+$/.test(key) || key.includes('..')) {
+  if (!/^[a-zA-Z0-9_\-/.]+$/.test(key) || key.includes('..') || key.length > 512) {
     return NextResponse.json({ error: 'Invalid key format' }, { status: 400 });
   }
 
-  // 100MB max
-  if (size > 100 * 1024 * 1024) {
+  // Direct-to-R2 uploads skip the old routes' server-side content sniffing,
+  // so the extension is the gate here. Mastermind-only + CSRF already bound
+  // who can call this; the list bounds what lands in the public bucket.
+  const ext = key.split('.').pop()?.toLowerCase() ?? '';
+  const ALLOWED_EXTENSIONS = new Set([
+    'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg',
+    'mp3', 'wav', 'ogg', 'opus', 'm4a',
+    'mp4', 'webm',
+  ]);
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
+    return NextResponse.json({ error: `File type ".${ext}" is not allowed` }, { status: 400 });
+  }
+
+  // 100MB max (a missing/garbage size must not slip past the comparison)
+  if (!Number.isFinite(size) || size <= 0 || size > 100 * 1024 * 1024) {
     return NextResponse.json({ error: 'File too large (max 100MB)' }, { status: 400 });
   }
 

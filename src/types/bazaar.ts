@@ -118,6 +118,8 @@ export interface CatalogResponse {
   };
   ticketPackages: TicketPackage[];
   lunariPackages: LunariPackage[];
+  /** Version-stamped portrait URL per merchant slug; null = no uploaded portrait, use the built-in fallback. */
+  merchants?: Partial<Record<'kael' | 'meluna' | 'zoldar' | 'seluna' | 'brimor' | 'mells', string | null>>;
   user?: {
     balance: number;
     tickets: number;

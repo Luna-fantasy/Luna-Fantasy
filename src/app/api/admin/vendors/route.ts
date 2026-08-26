@@ -8,6 +8,7 @@ import clientPromise from '@/lib/mongodb';
 import { preserveMirrorsInPayload } from '@/lib/admin/seluna-mells-mirror';
 import { mirrorMellsToButler } from '@/lib/admin/mells-butler-mirror';
 import { invalidateVendorConfigCache } from '@/lib/bazaar/vendor-config';
+import { requestPanelRefresh, type PanelBot, type PanelTarget } from '@/lib/admin/panel-refresh';
 import { invalidateShopConfigCache } from '@/lib/bazaar/shop-config';
 
 const DB_NAME = 'Database';
@@ -150,6 +151,19 @@ export async function PUT(request: NextRequest) {
     // shop-config-cached luckbox/stonebox/tickets/mells docs).
     invalidateVendorConfigCache(vendorId);
     invalidateShopConfigCache();
+
+    // Nudge the owning bot to re-edit its posted shop panel now instead of
+    // waiting for the hourly refresh (fire-and-forget).
+    const PANEL_BY_VENDOR: Record<string, { bot: PanelBot; target: PanelTarget }> = {
+      luckbox: { bot: 'jester', target: 'shop_luckbox' },
+      brimor: { bot: 'jester', target: 'shop_brimor' },
+      broker: { bot: 'jester', target: 'shop_broker' },
+      stonebox: { bot: 'jester', target: 'shop_meluna' },
+      tickets: { bot: 'jester', target: 'shop_tickets' },
+      mells_selvair: { bot: 'butler', target: 'shop_mells' },
+    };
+    const panel = PANEL_BY_VENDOR[vendorId];
+    if (panel) requestPanelRefresh(panel.bot, panel.target, adminId);
 
     // Mells Selvair lives in TWO collections — vendor_config holds the typed
     // schema (`imageUrl` + `type: 'profile'|'rank'`) used by the admin UI and

@@ -175,8 +175,8 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
       toast.show({ tone: 'error', title: 'Name first', message: 'Set a card name before uploading an image — it determines the R2 filename.' });
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Image must be under 4MB.' });
+    if (file.size > 15 * 1024 * 1024) {
+      toast.show({ tone: 'error', title: 'Too large', message: 'Card images go through the config service — max 15MB.' });
       return;
     }
     if (!file.type.startsWith('image/')) {
@@ -439,7 +439,7 @@ export default function CardEditDialog({ mode, initialRarity, card, onClose, onS
                     <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
                   </svg>
                   <strong>{dragActive ? 'Drop image to upload' : 'Drag image here'}</strong>
-                  <span>PNG / JPG / WEBP, up to 4MB</span>
+                  <span>PNG / JPG / WEBP, up to 15MB</span>
                 </div>
               )}
             </div>

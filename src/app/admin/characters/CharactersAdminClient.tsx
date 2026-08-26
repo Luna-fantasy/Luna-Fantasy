@@ -5,6 +5,7 @@ import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
 import { adminPost, adminPatch, adminDelete } from '@/lib/admin/http';
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from '@/lib/admin/upload';
 
 interface FactionLite {
     id: string;
@@ -202,18 +203,29 @@ export default function CharactersAdminClient({ initialCharacters, factions }: P
     );
 }
 
-function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, onClear }: {
+function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, idMissing, onClear, onBrowse }: {
     imageUrl: string;
     bustVersion: number;
     uploading: boolean;
     dragActive: boolean;
+    idMissing: boolean;
     onClear: () => void;
+    onBrowse: () => void;
 }) {
-    // Drag handlers moved to the modal root (see CharacterEditor) so a drop
-    // anywhere inside the dialog uploads. The dropzone itself is now
-    // visual-only — `dragActive` is owned by the parent.
+    // Drag handlers live on the modal root (see CharacterEditor) so a drop
+    // anywhere inside the dialog uploads. Clicking the zone opens the file
+    // picker — it used to be visual-only, which read as "no way to upload
+    // without dragging".
     return (
-        <div className={`chr-dropzone${dragActive ? ' chr-dropzone-drag' : ''}${uploading ? ' chr-dropzone-busy' : ''}`}>
+        <div
+            className={`chr-dropzone${dragActive ? ' chr-dropzone-drag' : ''}${uploading ? ' chr-dropzone-busy' : ''}`}
+            role="button"
+            tabIndex={0}
+            style={{ cursor: uploading ? 'wait' : 'pointer' }}
+            onClick={() => { if (!uploading) onBrowse(); }}
+            onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !uploading) { e.preventDefault(); onBrowse(); } }}
+            aria-label="Choose a character image"
+        >
             {imageUrl ? (
                 <div className="chr-dropzone-preview">
                     <img
@@ -222,10 +234,10 @@ function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, onClear }
                         onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
                     />
                     <div className="chr-dropzone-overlay">
-                        <strong>{dragActive ? 'Drop to replace' : 'Drag a new image to replace'}</strong>
+                        <strong>{dragActive ? 'Drop to replace' : 'Click or drag a new image to replace'}</strong>
                         <span>or use the buttons below</span>
                     </div>
-                    <button type="button" className="chr-dropzone-clear" onClick={onClear} disabled={uploading} aria-label="Clear image">✕</button>
+                    <button type="button" className="chr-dropzone-clear" onClick={(e) => { e.stopPropagation(); onClear(); }} disabled={uploading} aria-label="Clear image">✕</button>
                 </div>
             ) : (
                 <div className="chr-dropzone-empty">
@@ -234,8 +246,8 @@ function ImageDropZone({ imageUrl, bustVersion, uploading, dragActive, onClear }
                         <circle cx="9" cy="9" r="2" />
                         <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
                     </svg>
-                    <strong>{dragActive ? 'Drop image to upload' : 'Drag image here'}</strong>
-                    <span>PNG / JPG / WEBP, up to 4MB</span>
+                    <strong>{dragActive ? 'Drop image to upload' : 'Click to choose an image — or drag it here'}</strong>
+                    <span>{idMissing ? 'Set an ID first — it names the stored file' : 'PNG / JPG / WEBP, up to 100MB'}</span>
                 </div>
             )}
         </div>
@@ -290,6 +302,10 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
     const handleUpload = async (file: File) => {
         if (!c.id.trim()) {
             toast.show({ tone: 'error', title: 'Set an ID first', message: 'Character ID is part of the upload key.' });
+            return;
+        }
+        if (file.size > MAX_UPLOAD_BYTES) {
+            toast.show({ tone: 'error', title: 'Too large', message: `Image must be under ${MAX_UPLOAD_LABEL}.` });
             return;
         }
         const myId = ++uploadIdRef.current;
@@ -427,7 +443,9 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
                             bustVersion={bustVersion}
                             uploading={uploading}
                             dragActive={dragActive}
+                            idMissing={!c.id.trim()}
                             onClear={() => { setC(prev => ({ ...prev, imageUrl: '' })); bump(); }}
+                            onBrowse={() => fileRef.current?.click()}
                         />
                     </label>
                     <div className="chr-upload-row">

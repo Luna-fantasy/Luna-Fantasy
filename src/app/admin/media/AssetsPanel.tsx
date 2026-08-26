@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { adminGet } from '@/lib/admin/http';
+import { uploadFileViaPresign } from '@/lib/admin/upload';
 import { useToast } from '../_components/Toast';
 import AssetPreviewDialog from './AssetPreviewDialog';
 import type { BrowseResult, R2Object } from './types';
@@ -10,26 +11,13 @@ interface Props {
   initial: BrowseResult;
 }
 
-// Kept local: the upload below sends FormData, which adminFetch (JSON-only)
-// doesn't support.
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store', credentials: 'include' });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()).token;
-}
+// The browser accepts any media the presign route allows — images plus the
+// audio/video types the bucket already hosts (oracle music, map clips).
+const BROWSER_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'mp3', 'wav', 'ogg', 'opus', 'm4a', 'mp4', 'webm'];
 
 async function uploadFile(file: File, key: string): Promise<void> {
-  const token = await fetchCsrf();
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('key', key);
-  const res = await fetch('/api/admin/assets/upload', {
-    method: 'POST',
-    headers: { 'x-csrf-token': token },
-    credentials: 'include',
-    body: fd,
-  });
-  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `HTTP ${res.status}`); }
+  // Direct-to-R2 (was a 10MB FormData pass through the server) — 100MB cap.
+  await uploadFileViaPresign(file, key, { extensions: BROWSER_EXTENSIONS });
 }
 
 function formatSize(bytes: number): string {

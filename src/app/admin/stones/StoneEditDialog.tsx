@@ -84,8 +84,8 @@ export default function StoneEditDialog({ mode, initialTier, stone, onClose, onS
       toast.show({ tone: 'error', title: 'Name first', message: 'Set the stone name before uploading.' });
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      toast.show({ tone: 'error', title: 'Too large', message: 'Image must be under 4MB.' });
+    if (file.size > 15 * 1024 * 1024) {
+      toast.show({ tone: 'error', title: 'Too large', message: 'Stone images go through the config service — max 15MB.' });
       return;
     }
     setUploading(true);
