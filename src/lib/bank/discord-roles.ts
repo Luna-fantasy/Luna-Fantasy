@@ -3,6 +3,7 @@
  * Server-side only — fetches guild member roles from Discord API.
  */
 
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import {
   STAFF_ROLES,
   SPECIAL_ROLES,
@@ -85,9 +86,7 @@ export async function getGuildMemberName(discordId: string): Promise<{ name: str
     const name = member.nick || member.user?.global_name || member.user?.username || null;
     const userId = member.user?.id;
     const avatarHash = member.user?.avatar;
-    const avatar = avatarHash && userId
-      ? `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.${avatarHash.startsWith('a_') ? 'gif' : 'png'}?size=128`
-      : null;
+    const avatar = userId ? discordAvatarUrl(userId, avatarHash, 128) : null;
     return name ? { name, avatar } : null;
   } catch {
     return null;

@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
@@ -89,8 +90,7 @@ export async function GET(request: Request) {
     const discordAvatarMap = new Map<string, string>();
     for (const doc of discordUserDocs) {
       if (doc.avatar) {
-        const ext = doc.avatar.startsWith('a_') ? 'gif' : 'png';
-        discordAvatarMap.set(String(doc._id), `https://cdn.discordapp.com/avatars/${doc._id}/${doc.avatar}.${ext}?size=128`);
+        discordAvatarMap.set(String(doc._id), discordAvatarUrl(String(doc._id), doc.avatar, 128)!);
       }
     }
 

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useToast } from '../_components/Toast';
 import { useFocusTrap } from '../_components/a11y';
 import { getAdminPortalTarget } from '../_components/portal-root';
+import { adminGet, adminPost } from '@/lib/admin/http';
 
 interface Props {
   bot: 'butler' | 'jester';
@@ -22,11 +23,6 @@ interface DiscordChannel {
   name: string;
   parentName: string;
   position: number;
-}
-
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
 }
 
 export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBackgroundUrl, layoutOverride, onClose }: Props) {
@@ -47,20 +43,15 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
     let cancelled = false;
     setChannelsLoading(true);
     setChannelsError(null);
-    fetch(`/api/admin/announce?botId=${bot}`, { credentials: 'include', cache: 'no-store' })
-      .then(r => r.json().then(d => ({ ok: r.ok, status: r.status, data: d })))
-      .then(({ ok, status: s, data }) => {
+    adminGet<{ channels?: DiscordChannel[] }>(`/api/admin/announce?botId=${bot}`)
+      .then((data) => {
         if (cancelled) return;
-        if (!ok) {
-          setChannelsError(data?.error || `Failed to load channels (${s})`);
-          setChannels([]);
-          return;
-        }
         setChannels(Array.isArray(data?.channels) ? data.channels : []);
       })
-      .catch(e => {
+      .catch((e) => {
         if (cancelled) return;
-        setChannelsError(e?.message || 'Failed to load channels');
+        setChannelsError((e as Error)?.message || 'Failed to load channels');
+        setChannels([]);
       })
       .finally(() => {
         if (!cancelled) setChannelsLoading(false);
@@ -89,24 +80,13 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
     setBusy(true);
     setStatus({ tone: 'info', text: 'Asking the bot to render…' });
     try {
-      const token = await fetchCsrf();
-      const res = await fetch('/api/admin/canvas/test-deploy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-        credentials: 'include',
-        body: JSON.stringify({
-          bot,
-          canvasType,
-          channelId: channelId.trim(),
-          ...(trialBackgroundUrl ? { trialBackgroundUrl } : {}),
-          ...(layoutOverride ? { layoutOverride } : {}),
-        }),
+      const body = await adminPost<{ messageUrl?: string }>('/api/admin/canvas/test-deploy', {
+        bot,
+        canvasType,
+        channelId: channelId.trim(),
+        ...(trialBackgroundUrl ? { trialBackgroundUrl } : {}),
+        ...(layoutOverride ? { layoutOverride } : {}),
       });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setStatus({ tone: 'err', text: body?.error || `HTTP ${res.status}` });
-        return;
-      }
       setStatus({ tone: 'ok', text: 'Rendered — posted in Discord.', href: body?.messageUrl });
     } catch (e) {
       setStatus({ tone: 'err', text: (e as Error).message });
@@ -126,7 +106,7 @@ export default function CanvasTestDialog({ bot, canvasType, canvasLabel, trialBa
             <h3>Test render · {canvasLabel}</h3>
             <p>The bot renders the current layout + colours and posts the PNG to the channel you pick.</p>
           </div>
-          <button type="button" className="av-peek-close" onClick={onClose} disabled={busy}>×</button>
+          <button aria-label="Close" type="button" className="av-peek-close" onClick={onClose} disabled={busy}>×</button>
         </header>
         <div className="av-itemdialog-body">
           {trialBackgroundUrl && (

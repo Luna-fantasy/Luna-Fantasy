@@ -312,6 +312,7 @@ export default function ApplicationDetail({ item, votesRequired, adminId, onStat
                   className="av-btn av-btn-primary av-btn-danger"
                   onClick={runReject}
                   disabled={rejectReason.trim().length < 4}
+                  title={rejectReason.trim().length < 4 ? 'Write a short reason first (at least 4 characters) — the applicant sees it' : undefined}
                 >Reject</button>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useState, useEffect } from 'react';
 import Image, { type ImageProps } from 'next/image';
-import { useTranslations } from 'next-intl';
+import { useMessages, useTranslations } from 'next-intl';
 import { useEditMode } from '@/lib/edit-mode/context';
 
 interface EditableImageProps extends Omit<ImageProps, 'onClick'> {
@@ -50,14 +50,17 @@ export function EImg({
 
   // Read the live alt from the `alts` namespace; if the key doesn't exist
   // (most won't, since we only create them on first edit), fall back to the
-  // JSX prop. next-intl throws on missing keys — catch and swallow silently.
+  // JSX prop. next-intl does NOT throw on missing keys — it logs an IntlError
+  // to the console and returns the raw key — so check the messages object
+  // for the key before translating instead of relying on try/catch.
   const tAlts = useTranslations('alts');
+  const messages = useMessages() as Record<string, unknown> | undefined;
+  const altsNs = messages?.alts;
+  const hasAltOverride = !!altsNs && typeof altsNs === 'object' && resolvedAltKey in (altsNs as Record<string, unknown>);
   let liveAlt = imageProps.alt ?? '';
-  try {
+  if (hasAltOverride) {
     const candidate = tAlts(resolvedAltKey as any);
     if (candidate && candidate !== resolvedAltKey) liveAlt = candidate;
-  } catch {
-    /* key missing — fall back to JSX alt */
   }
 
   const handleReplaceClick = useCallback(() => {

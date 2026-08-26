@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import clientPromise from '@/lib/mongodb';
 
 export interface LevelStats {
@@ -105,9 +106,7 @@ export async function getTopLeveled(n = 25): Promise<TopLeveled[]> {
 
   return normalized.map((r) => {
     const d = byId.get(r.discordId) as any;
-    const image = d?.avatar
-      ? `https://cdn.discordapp.com/avatars/${r.discordId}/${d.avatar}.png?size=128`
-      : null;
+    const image = discordAvatarUrl(r.discordId, d?.avatar, 128);
     return {
       discordId: r.discordId,
       username: d?.username ?? null,
@@ -170,7 +169,7 @@ export async function getRecentLevelChanges(n = 10): Promise<RecentLevelUp[]> {
   return audit.map((a: any) => {
     const id = String(a.targetDiscordId ?? '');
     const d = byId.get(id) as any;
-    const image = d?.avatar ? `https://cdn.discordapp.com/avatars/${id}/${d.avatar}.png?size=128` : null;
+    const image = discordAvatarUrl(id, d?.avatar, 128);
     const resultLevel = Number(a.after?.level ?? a.after ?? 0);
     return {
       discordId: id,

@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
@@ -66,7 +67,7 @@ export async function GET(
   const globalName = websiteUser?.globalName ?? (discordUser as any)?.globalName ?? null;
   const avatarHash = (discordUser as any)?.avatar ?? null;
   const image = websiteUser?.image
-    ?? (avatarHash ? `https://cdn.discordapp.com/avatars/${discordId}/${avatarHash}.png?size=128` : null);
+    ?? discordAvatarUrl(discordId, avatarHash, 128);
 
   let profileData: any = (profile as any)?.data ?? profile ?? {};
   if (typeof profileData === 'string') {

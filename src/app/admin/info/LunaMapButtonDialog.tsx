@@ -108,7 +108,7 @@ export default function LunaMapButtonDialog({ initial, onSave, onClose, filename
             <h3>{initial.name ? `Edit · ${initial.name}` : 'New button'}</h3>
             <p>Lives inside the Luna Map dropdown Discord shows with <code>!map</code>.</p>
           </div>
-          <button type="button" className="av-peek-close" onClick={onClose}>×</button>
+          <button aria-label="Close" type="button" className="av-peek-close" onClick={onClose}>×</button>
         </header>
 
         <div className="av-itemdialog-body">

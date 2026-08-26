@@ -87,7 +87,7 @@ export default function AssetPreviewDialog({ object, onDeleted, onClose }: Props
             <h3>{fileName}</h3>
             <p><code>{object.key}</code></p>
           </div>
-          <button type="button" className="av-peek-close" onClick={onClose}>×</button>
+          <button aria-label="Close" type="button" className="av-peek-close" onClick={onClose}>×</button>
         </header>
 
         <div className="av-itemdialog-body">

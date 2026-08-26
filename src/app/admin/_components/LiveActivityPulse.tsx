@@ -88,6 +88,9 @@ export default function LiveActivityPulse({ pollMs = 5000 }: { pollMs?: number }
   const [mounted, setMounted] = useState(false);
   const [, setTick] = useState(0);
   const seenRef = useRef<Set<string>>(new Set());
+  // Avatar URLs that 404'd (stale Discord hashes) — fall back to initials
+  // instead of the browser's broken-image icon.
+  const [badAvatars, setBadAvatars] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setMounted(true);
@@ -169,8 +172,14 @@ export default function LiveActivityPulse({ pollMs = 5000 }: { pollMs?: number }
                   onClick={(ev) => { ev.stopPropagation(); openPeek(e.target!); }}
                   title={`Open ${displayName || e.target}`}
                 >
-                  {e.targetAvatar ? (
-                    <img className="av-pulse-avatar" src={e.targetAvatar} alt="" loading="lazy" />
+                  {e.targetAvatar && !badAvatars.has(e.targetAvatar) ? (
+                    <img
+                      className="av-pulse-avatar"
+                      src={e.targetAvatar}
+                      alt=""
+                      loading="lazy"
+                      onError={() => setBadAvatars((prev) => new Set(prev).add(e.targetAvatar!))}
+                    />
                   ) : (
                     <Initials name={e.targetName} target={e.target} />
                   )}

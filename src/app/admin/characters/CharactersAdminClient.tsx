@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useToast } from '../_components/Toast';
+import { usePendingAction } from '../_components/PendingActionProvider';
 import { withBust, useBustVersion } from '@/lib/admin/cache-bust';
 import { adminPost, adminPatch, adminDelete } from '@/lib/admin/http';
 
@@ -35,6 +36,7 @@ function emptyChar(): AdminCharacter {
 
 export default function CharactersAdminClient({ initialCharacters, factions }: Props) {
     const toast = useToast();
+    const pending = usePendingAction();
     const [characters, setCharacters] = useState<AdminCharacter[]>(initialCharacters);
     const [activeFaction, setActiveFaction] = useState<string>('all');
     const [search, setSearch] = useState('');
@@ -95,19 +97,28 @@ export default function CharactersAdminClient({ initialCharacters, factions }: P
     }, [toast, bump]);
 
     const remove = useCallback(async (char: AdminCharacter) => {
-        if (!confirm(`Delete "${char.name.en}"? This cannot be undone.`)) return;
-        setBusy(true);
-        try {
-            await adminDelete(`/api/admin/characters?id=${encodeURIComponent(char.id)}`);
-            setCharacters(prev => prev.filter(c => c.id !== char.id));
-            toast.show({ tone: 'success', title: 'Character deleted', message: char.name.en });
-            setEditor(null);
-        } catch (err) {
-            toast.show({ tone: 'error', title: 'Delete failed', message: (err as Error).message });
-        } finally {
-            setBusy(false);
-        }
-    }, [toast]);
+        // Themed 5s countdown with cancel instead of the native confirm() popup
+        // — matches every other destructive action in the dashboard.
+        setEditor(null);
+        await pending.queue({
+            label: `Delete "${char.name.en}"`,
+            detail: 'Removes the character from the public page. This cannot be undone.',
+            delayMs: 5000,
+            tone: 'danger',
+            run: async () => {
+                setBusy(true);
+                try {
+                    await adminDelete(`/api/admin/characters?id=${encodeURIComponent(char.id)}`);
+                    setCharacters(prev => prev.filter(c => c.id !== char.id));
+                    toast.show({ tone: 'success', title: 'Character deleted', message: char.name.en });
+                } catch (err) {
+                    toast.show({ tone: 'error', title: 'Delete failed', message: (err as Error).message });
+                } finally {
+                    setBusy(false);
+                }
+            },
+        });
+    }, [toast, pending]);
 
     return (
         <div className="chr-admin">
@@ -187,83 +198,6 @@ export default function CharactersAdminClient({ initialCharacters, factions }: P
                 />
             )}
 
-            <style>{`
-                .chr-admin { padding: 24px 32px 80px; max-width: 1280px; margin: 0 auto; }
-                .chr-head { display: flex; align-items: flex-start; gap: 24px; margin-bottom: 28px; }
-                .chr-head h1 { font-family: 'Cinzel', serif; font-size: 30px; margin: 0 0 6px; color: #f1f5ff; }
-                .chr-head p { color: #b9c4e0; font-size: 13px; margin: 0; max-width: 720px; line-height: 1.6; }
-                .chr-head p code { background: rgba(140, 200, 255, 0.1); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
-                .chr-btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.15s; }
-                .chr-btn-primary { background: linear-gradient(90deg, #5b8def, #7c5fff); color: #fff; margin-left: auto; }
-                .chr-btn-primary:hover { opacity: 0.92; }
-                .chr-btn-secondary { background: rgba(140, 200, 255, 0.1); color: #b9c4e0; }
-                .chr-btn-danger { background: linear-gradient(90deg, #ff5566, #c8344b); color: #fff; }
-                .chr-filters { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
-                .chr-search { padding: 10px 14px; background: rgba(20, 24, 48, 0.6); border: 1px solid rgba(140, 200, 255, 0.18); border-radius: 8px; color: #f1f5ff; font-size: 13px; max-width: 400px; }
-                .chr-search:focus { outline: none; border-color: rgba(140, 200, 255, 0.45); }
-                .chr-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
-                .chr-tab { background: rgba(20, 24, 48, 0.5); border: 1px solid rgba(140, 200, 255, 0.12); padding: 6px 12px; border-radius: 18px; color: #b9c4e0; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
-                .chr-tab:hover { border-color: rgba(140, 200, 255, 0.3); }
-                .chr-tab.active { background: rgba(120, 80, 200, 0.2); border-color: rgba(120, 80, 200, 0.5); color: #f1f5ff; }
-                .chr-tab-count { background: rgba(140, 200, 255, 0.12); padding: 1px 7px; border-radius: 10px; font-size: 10px; color: #88a0c8; }
-                .chr-tab.active .chr-tab-count { background: rgba(255, 255, 255, 0.15); color: #fff; }
-                .chr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
-                .chr-card { display: flex; flex-direction: column; padding: 0; border: 1px solid rgba(140, 200, 255, 0.12); border-radius: 12px; background: rgba(20, 24, 48, 0.5); cursor: pointer; overflow: hidden; transition: all 0.15s; text-align: left; }
-                .chr-card:hover { border-color: rgba(140, 200, 255, 0.3); transform: translateY(-2px); }
-                .chr-card-img { position: relative; aspect-ratio: 3/4; background: rgba(0, 0, 0, 0.4); overflow: hidden; }
-                .chr-card-img img { width: 100%; height: 100%; object-fit: cover; }
-                .chr-card-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: rgba(140, 200, 255, 0.3); font-family: 'Cinzel', serif; font-weight: 700; }
-                .chr-pin-main { position: absolute; top: 8px; right: 8px; padding: 2px 7px; background: rgba(120, 80, 200, 0.85); color: #fff; font-size: 10px; border-radius: 4px; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
-                .chr-card-body { padding: 10px 12px 12px; }
-                .chr-card-name { font-size: 14px; color: #f1f5ff; font-weight: 600; margin-bottom: 4px; }
-                .chr-card-meta { display: flex; justify-content: space-between; font-size: 11px; color: #88a0c8; }
-                .chr-card-id { font-family: monospace; opacity: 0.8; }
-                .chr-empty { grid-column: 1 / -1; padding: 60px 24px; text-align: center; color: #88a0c8; }
-
-                .chr-dropzone {
-                    position: relative;
-                    border: 2px dashed rgba(140, 200, 255, 0.25);
-                    border-radius: 12px;
-                    background: rgba(20, 24, 48, 0.45);
-                    min-height: 220px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
-                    transition: border-color 0.18s, background 0.18s;
-                }
-                .chr-dropzone-drag { border-color: rgba(140, 200, 255, 0.85); background: rgba(80, 180, 255, 0.12); }
-                .chr-dropzone-busy { opacity: 0.7; pointer-events: none; }
-                .chr-dropzone-empty {
-                    display: flex; flex-direction: column; align-items: center; gap: 8px;
-                    color: #88a0c8; padding: 28px;
-                }
-                .chr-dropzone-empty strong { color: #f1f5ff; font-size: 14px; font-weight: 600; }
-                .chr-dropzone-empty span { font-size: 12px; }
-                .chr-dropzone-preview { position: relative; width: 100%; height: 280px; }
-                .chr-dropzone-preview img {
-                    width: 100%; height: 100%; object-fit: contain; background: rgba(0, 0, 0, 0.4);
-                }
-                .chr-dropzone-overlay {
-                    position: absolute; inset: 0;
-                    background: linear-gradient(180deg, rgba(10,12,28,0) 30%, rgba(10,12,28,0.78) 100%);
-                    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-                    padding: 16px; gap: 4px;
-                    opacity: 0; transition: opacity 0.18s;
-                }
-                .chr-dropzone:hover .chr-dropzone-overlay,
-                .chr-dropzone-drag .chr-dropzone-overlay { opacity: 1; }
-                .chr-dropzone-overlay strong { color: #f1f5ff; font-size: 14px; font-weight: 600; }
-                .chr-dropzone-overlay span { color: #b9c4e0; font-size: 11px; }
-                .chr-dropzone-clear {
-                    position: absolute; top: 8px; right: 8px;
-                    width: 28px; height: 28px; padding: 0;
-                    border: 1px solid rgba(255,80,80,0.4); background: rgba(0,0,0,0.65);
-                    color: #ff7a7a; border-radius: 50%; cursor: pointer; font-size: 13px;
-                    transition: background 0.15s, color 0.15s;
-                }
-                .chr-dropzone-clear:hover { background: rgba(255,80,80,0.2); color: #fff; }
-            `}</style>
         </div>
     );
 }
@@ -444,7 +378,7 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
             >
                 <header className="chr-modal-head">
                     <h3>{mode === 'create' ? 'New character' : `Edit "${initial.name.en}"`}</h3>
-                    <button onClick={onCancel} className="chr-btn chr-btn-secondary chr-btn-x">×</button>
+                    <button aria-label="Close" onClick={onCancel} className="chr-btn chr-btn-secondary chr-btn-x">×</button>
                 </header>
                 <div className="chr-modal-body">
                     <div className="chr-form-row">
@@ -455,6 +389,7 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
                                 onChange={e => setC(p => ({ ...p, id: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 60) }))}
                                 placeholder="e.g. luna_thief"
                                 disabled={mode === 'edit'}
+                                title={mode === 'edit' ? "IDs can't be changed after creation — delete and recreate the character to rename its ID" : undefined}
                             />
                         </label>
                         <label>
@@ -530,26 +465,6 @@ function CharacterEditor({ initial, mode, factions, busy, onSave, onDelete, onCa
                     </button>
                 </footer>
             </div>
-            <style>{`
-                .chr-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 100; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-                .chr-modal { width: min(720px, 95vw); max-height: 92vh; background: linear-gradient(180deg, #1a1d35, #0f1226); border: 1px solid rgba(140, 200, 255, 0.18); border-radius: 14px; display: flex; flex-direction: column; }
-                .chr-modal-head { padding: 18px 22px 12px; display: flex; align-items: center; gap: 12px; }
-                .chr-modal-head h3 { margin: 0; font-family: 'Cinzel', serif; font-size: 19px; color: #f1f5ff; flex: 1; }
-                .chr-btn-x { padding: 4px 12px; font-size: 18px; line-height: 1; }
-                .chr-modal-body { padding: 4px 22px 22px; overflow: auto; display: flex; flex-direction: column; gap: 14px; }
-                .chr-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-                .chr-form-full label, .chr-form-row label, .chr-modal-body > label { display: flex; flex-direction: column; gap: 5px; }
-                .chr-modal-body label > span:not(.chr-tab-count) { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #88a0c8; font-weight: 600; }
-                .chr-modal-body input, .chr-modal-body textarea, .chr-modal-body select { padding: 8px 11px; background: rgba(0,0,0,0.3); border: 1px solid rgba(140, 200, 255, 0.18); border-radius: 7px; color: #f1f5ff; font-size: 13px; font-family: inherit; }
-                .chr-modal-body input:focus, .chr-modal-body textarea:focus, .chr-modal-body select:focus { outline: none; border-color: rgba(140, 200, 255, 0.45); }
-                .chr-modal-body input:disabled { opacity: 0.5; cursor: not-allowed; }
-                .chr-upload-row { display: flex; align-items: center; gap: 14px; }
-                .chr-preview { width: 60px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(140, 200, 255, 0.2); }
-                .chr-form-checkbox { flex-direction: row !important; align-items: center; gap: 8px !important; cursor: pointer; padding: 8px 0; }
-                .chr-form-checkbox input { width: 16px; height: 16px; }
-                .chr-form-checkbox span { font-size: 13px !important; text-transform: none !important; letter-spacing: 0 !important; color: #f1f5ff !important; font-weight: 400 !important; }
-                .chr-modal-foot { padding: 14px 22px; border-top: 1px solid rgba(140, 200, 255, 0.1); display: flex; gap: 10px; align-items: center; }
-            `}</style>
         </div>
     );
 }

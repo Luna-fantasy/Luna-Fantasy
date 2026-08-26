@@ -6,6 +6,7 @@ import { getAtPath } from './layoutPath';
 
 type ElementPatch = Partial<{
   x: number; y: number;
+  startX: number; startY: number;
   width: number; height: number;
   radiusX: number; radiusY: number;
   fontSize: number;
@@ -16,14 +17,14 @@ interface Props {
   layout: Record<string, any>;
   activeElementId: string | null;
   onSelectElement: (id: string | null) => void;
-  /** Receives any combination of { x, y, width, height, radiusX, radiusY, fontSize }. */
+  /** Receives any combination of { x, y, startX, startY, width, height, radiusX, radiusY, fontSize }. */
   onMove: (id: string, patch: ElementPatch) => void;
   backgroundOverrideUrl?: string | null;
 }
 
-const BOUNDS = { minX: -500, maxX: 4500, minY: -500, maxY: 4500 };
 const MIN_SIZE = 10;
 const MIN_RADIUS = 8;
+const MIN_FONT = 8;
 
 function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
@@ -35,6 +36,10 @@ interface DragState {
   elementId: string;
   mode: DragMode;
   elementType: CanvasElementDef['type'];
+  /** Element stores its position as startX/startY (e.g. card rows) instead of x/y. */
+  usesStartKeys: boolean;
+  /** Real rendered px-per-canvas-unit, measured at drag start. */
+  scale: number;
   startMouseX: number;
   startMouseY: number;
   startX: number;
@@ -43,19 +48,64 @@ interface DragState {
   startHeight: number;
   startRadiusX: number;
   startRadiusY: number;
+  startFontSize: number;
+  /** Shape extents relative to the position value — left/right/top/bottom offsets. */
+  offL: number;
+  offR: number;
+  offT: number;
+  offB: number;
+}
+
+/** Some elements (card rows) position via startX/startY — write back the keys the bot reads. */
+function usesStartKeys(el: CanvasElementDef): boolean {
+  return !el.props.includes('x') && el.props.includes('startX');
+}
+
+function readPos(el: CanvasElementDef, entry: Record<string, any>): { x: number; y: number } {
+  if (usesStartKeys(el)) {
+    return { x: Number(entry.startX ?? entry.x ?? 0), y: Number(entry.startY ?? entry.y ?? 0) };
+  }
+  return { x: Number(entry.x ?? entry.startX ?? 0), y: Number(entry.y ?? entry.startY ?? 0) };
 }
 
 export default function CanvasStage({ canvas, layout, activeElementId, onSelectElement, onMove, backgroundOverrideUrl }: Props) {
   const bgUrl = backgroundOverrideUrl ?? canvas.backgroundUrl;
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const [stageScale, setStageScale] = useState(1);
   const [dragging, setDragging] = useState<{ id: string; mode: DragMode } | null>(null);
   const dragState = useRef<DragState | null>(null);
+  // A click that concludes a drag (or element press) must not bubble into the
+  // wrap's deselect handler — the element would lose selection the moment you
+  // drop it.
+  const suppressClickRef = useRef(false);
+
+  // Drag bounds follow the canvas: elements may hang up to 10% (min 64px)
+  // past any edge. Small canvases get tight clamps, huge ones (the 10000px
+  // leaderboard) get proportionally roomy ones. The server enforces a
+  // superset of these, so anything draggable here is also saveable.
+  const marginX = Math.max(64, Math.round(canvas.width * 0.1));
+  const marginY = Math.max(64, Math.round(canvas.height * 0.1));
+  const boundsRef = useRef({ w: 0, h: 0, minX: 0, maxX: 0, minY: 0, maxY: 0, maxR: 0, maxW: 0, maxH: 0, maxFont: 0 });
+  boundsRef.current = {
+    w: canvas.width,
+    h: canvas.height,
+    minX: -marginX, maxX: canvas.width + marginX,
+    minY: -marginY, maxY: canvas.height + marginY,
+    maxR: Math.max(1000, Math.round(Math.max(canvas.width, canvas.height) / 2)),
+    maxW: canvas.width + marginX,
+    maxH: canvas.height + marginY,
+    maxFont: Math.max(200, Math.round(canvas.height * 0.1)),
+  };
+
+  const onMoveRef = useRef(onMove);
+  onMoveRef.current = onMove;
 
   const recomputeScale = useCallback(() => {
     if (!wrapRef.current) return;
-    const w = wrapRef.current.clientWidth;
-    const target = Math.max(200, w - 8);
+    const cs = getComputedStyle(wrapRef.current);
+    const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+    const target = Math.max(200, wrapRef.current.clientWidth - pad);
     setStageScale(Math.min(1, target / canvas.width));
   }, [canvas.width]);
 
@@ -70,82 +120,125 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
     e.preventDefault();
     e.stopPropagation();
     const entry = getAtPath(layout, el.id) ?? {};
+    const pos = readPos(el, entry);
+    // Measure the real rendered scale — CSS (max-width, padding) can shrink
+    // the svg below stageScale's estimate, which makes drags lag the cursor.
+    const rect = svgRef.current?.getBoundingClientRect();
+    const scale = rect && rect.width > 0 ? rect.width / canvas.width : stageScale;
+    suppressClickRef.current = true;
+    const width = Number(entry.width ?? 50);
+    const height = Number(entry.height ?? 20);
+    const radiusX = Number(entry.radiusX ?? 24);
+    const radiusY = Number(entry.radiusY ?? entry.radiusX ?? 24);
+    const fontSize = Number(entry.fontSize ?? 20);
+    // Shape extents relative to the position value, so the move clamp can keep
+    // part of the shape on-stage (a fully off-canvas element is ungrabbable).
+    let offL = 0, offR = 0, offT = 0, offB = 0;
+    if (el.type === 'circle') {
+      offL = -radiusX; offR = radiusX; offT = -radiusY; offB = radiusY;
+    } else if (el.type === 'rect') {
+      offL = 0; offR = width; offT = 0; offB = height;
+    } else {
+      offL = -4; offR = -4 + fontSize * 6; offT = -fontSize - 4; offB = 4;
+    }
     dragState.current = {
       elementId: el.id,
       mode,
       elementType: el.type,
+      usesStartKeys: usesStartKeys(el),
+      scale,
       startMouseX: e.clientX,
       startMouseY: e.clientY,
-      startX: Number(entry.x ?? entry.startX ?? 0),
-      startY: Number(entry.y ?? entry.startY ?? 0),
-      startWidth: Number(entry.width ?? 50),
-      startHeight: Number(entry.height ?? 20),
-      startRadiusX: Number(entry.radiusX ?? 24),
-      startRadiusY: Number(entry.radiusY ?? entry.radiusX ?? 24),
+      startX: pos.x,
+      startY: pos.y,
+      startWidth: width,
+      startHeight: height,
+      startRadiusX: radiusX,
+      startRadiusY: radiusY,
+      startFontSize: fontSize,
+      offL, offR, offT, offB,
     };
     setDragging({ id: el.id, mode });
     onSelectElement(el.id);
   };
 
+  // Registered once — everything mutable is read through refs so a mid-drag
+  // re-render can never tear the listeners down (that used to drop mouseups
+  // and leave elements glued to the cursor).
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       const st = dragState.current;
       if (!st) return;
-      const dx = (e.clientX - st.startMouseX) / stageScale;
-      const dy = (e.clientY - st.startMouseY) / stageScale;
+      const b = boundsRef.current;
+      const dx = (e.clientX - st.startMouseX) / st.scale;
+      const dy = (e.clientY - st.startMouseY) / st.scale;
 
       if (st.mode === 'move') {
-        const nextX = Math.round(clamp(st.startX + dx, BOUNDS.minX, BOUNDS.maxX));
-        const nextY = Math.round(clamp(st.startY + dy, BOUNDS.minY, BOUNDS.maxY));
-        onMove(st.elementId, { x: nextX, y: nextY });
+        // Keep at least ~24 screen px of the shape on-stage — an element that
+        // fully leaves the canvas can't be grabbed back with the mouse.
+        const minVis = 24 / st.scale;
+        const loX = Math.max(b.minX, minVis - st.offR);
+        const hiX = Math.min(b.maxX, b.w - minVis - st.offL);
+        const loY = Math.max(b.minY, minVis - st.offB);
+        const hiY = Math.min(b.maxY, b.h - minVis - st.offT);
+        const nextX = Math.round(clamp(st.startX + dx, loX, hiX));
+        const nextY = Math.round(clamp(st.startY + dy, loY, hiY));
+        onMoveRef.current(
+          st.elementId,
+          st.usesStartKeys ? { startX: nextX, startY: nextY } : { x: nextX, y: nextY }
+        );
         return;
       }
 
       // RESIZE — corner-dot dragging.
-      // For rects: top-left dot anchors the bottom-right corner; dragging the
-      // dot inward shrinks (minimizes), outward expands. Both x/y AND
-      // width/height update together.
+      // For rects the dot sits at the bottom-right corner: dragging outward
+      // (right/down) grows the rect, inward shrinks it. Position stays put.
       if (st.elementType === 'rect') {
-        const newX = st.startX + dx;
-        const newY = st.startY + dy;
-        const newW = st.startWidth - dx;
-        const newH = st.startHeight - dy;
-        // Clamp width/height to MIN_SIZE; pin x/y so the bottom-right stays fixed.
-        const finalW = Math.max(MIN_SIZE, newW);
-        const finalH = Math.max(MIN_SIZE, newH);
-        const finalX = newW < MIN_SIZE ? (st.startX + st.startWidth - MIN_SIZE) : newX;
-        const finalY = newH < MIN_SIZE ? (st.startY + st.startHeight - MIN_SIZE) : newY;
-        onMove(st.elementId, {
-          x: Math.round(clamp(finalX, BOUNDS.minX, BOUNDS.maxX)),
-          y: Math.round(clamp(finalY, BOUNDS.minY, BOUNDS.maxY)),
-          width: Math.round(finalW),
-          height: Math.round(finalH),
+        onMoveRef.current(st.elementId, {
+          width: clamp(Math.round(st.startWidth + dx), MIN_SIZE, b.maxW),
+          height: clamp(Math.round(st.startHeight + dy), MIN_SIZE, b.maxH),
         });
         return;
       }
 
       if (st.elementType === 'circle') {
-        // Dot is at the center; dx/dy expand radii. Moving away from center
-        // grows the ellipse, toward center shrinks it.
-        const nextRx = Math.max(MIN_RADIUS, Math.round(st.startRadiusX + Math.abs(dx) * Math.sign(dx || 1)));
-        const nextRy = Math.max(MIN_RADIUS, Math.round(st.startRadiusY + Math.abs(dy) * Math.sign(dy || 1)));
-        onMove(st.elementId, {
-          radiusX: Math.max(MIN_RADIUS, nextRx),
-          radiusY: Math.max(MIN_RADIUS, nextRy),
-        });
+        // Dot sits on the ellipse's bottom-right edge: dragging outward
+        // (right/down) grows it, inward shrinks it.
+        const nextRx = clamp(Math.round(st.startRadiusX + dx), MIN_RADIUS, b.maxR);
+        const nextRy = clamp(Math.round(st.startRadiusY + dy), MIN_RADIUS, b.maxR);
+        onMoveRef.current(st.elementId, { radiusX: nextRx, radiusY: nextRy });
         return;
       }
 
-      // Text — dot drag changes fontSize (vertical drag).
-      const nextFont = Math.max(8, Math.round(st.startWidth /* repurposed: fontSize */ - dy));
-      onMove(st.elementId, { fontSize: nextFont });
+      // Text — dot drag changes fontSize (drag up = bigger).
+      const nextFont = clamp(Math.round(st.startFontSize - dy), MIN_FONT, b.maxFont);
+      onMoveRef.current(st.elementId, { fontSize: nextFont });
     };
     const onMouseUp = () => {
+      // The trailing click event still needs to see the suppress flag; clear
+      // it right after so a lost click (or an Escape-cancelled drag) can't
+      // swallow a later deselect.
+      setTimeout(() => { suppressClickRef.current = false; }, 0);
+      if (!dragState.current) return;
       dragState.current = null;
       setDragging(null);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && dragState.current) {
+        const st = dragState.current;
+        // Escape cancels the drag: put the element back where it started.
+        if (st.mode === 'move') {
+          onMoveRef.current(
+            st.elementId,
+            st.usesStartKeys ? { startX: st.startX, startY: st.startY } : { x: st.startX, y: st.startY }
+          );
+        } else if (st.elementType === 'circle') {
+          onMoveRef.current(st.elementId, { radiusX: st.startRadiusX, radiusY: st.startRadiusY });
+        } else if (st.elementType === 'rect') {
+          onMoveRef.current(st.elementId, { width: st.startWidth, height: st.startHeight });
+        } else {
+          onMoveRef.current(st.elementId, { fontSize: st.startFontSize });
+        }
         dragState.current = null;
         setDragging(null);
       }
@@ -158,30 +251,94 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('keydown', onKey);
     };
-  }, [stageScale, onMove]);
+  }, []);
 
-  const renderHandle = (el: CanvasElementDef) => {
-    const entry = getAtPath(layout, el.id) ?? {};
-    const x = Number(entry.x ?? entry.startX ?? 0);
-    const y = Number(entry.y ?? entry.startY ?? 0);
+  // Handle dots keep a constant on-screen size regardless of canvas scale —
+  // in canvas units they'd be invisible on a 10000px board and huge on a small one.
+  const dotR = 7 / Math.max(0.01, stageScale);
+
+  const handleStateClass = (el: CanvasElementDef) => {
     const isActive = el.id === activeElementId;
     const isMoving = dragging?.id === el.id && dragging.mode === 'move';
     const isResizing = dragging?.id === el.id && dragging.mode === 'resize';
-    const stateClass = `${isActive ? ' av-canvas-handle--active' : ''}${isMoving || isResizing ? ' av-canvas-handle--drag' : ''}`;
+    return `${isActive ? ' av-canvas-handle--active' : ''}${isMoving || isResizing ? ' av-canvas-handle--drag' : ''}`;
+  };
+
+  const renderShape = (el: CanvasElementDef) => {
+    const entry = getAtPath(layout, el.id) ?? {};
+    const { x, y } = readPos(el, entry);
+    const stateClass = handleStateClass(el);
 
     if (el.type === 'circle') {
       const rx = Math.max(MIN_RADIUS, Number(entry.radiusX ?? 24));
       const ry = Math.max(MIN_RADIUS, Number(entry.radiusY ?? rx));
       return (
-        <g key={el.id} className={`av-canvas-handle${stateClass}`}>
+        <g key={`${el.id}-shape`} className={`av-canvas-handle${stateClass}`}>
           <ellipse
             cx={x} cy={y} rx={rx} ry={ry}
             className="av-canvas-handle-shape"
             onMouseDown={(e) => beginDrag(e, el, 'move')}
             style={{ cursor: 'move' }}
           />
+        </g>
+      );
+    }
+    if (el.type === 'rect') {
+      const w = Math.max(MIN_SIZE, Number(entry.width ?? 50));
+      const h = Math.max(MIN_SIZE, Number(entry.height ?? 20));
+      return (
+        <g key={`${el.id}-shape`} className={`av-canvas-handle${stateClass}`}>
+          <rect
+            x={x} y={y} width={w} height={h}
+            className="av-canvas-handle-shape"
+            onMouseDown={(e) => beginDrag(e, el, 'move')}
+            style={{ cursor: 'move' }}
+          />
+        </g>
+      );
+    }
+    // text
+    const fontSize = Math.max(MIN_FONT, Number(entry.fontSize ?? 20));
+    return (
+      <g key={`${el.id}-shape`} className={`av-canvas-handle${stateClass}`}>
+        <rect
+          x={x - 4} y={y - fontSize - 4} width={fontSize * 6} height={fontSize + 8}
+          className="av-canvas-handle-shape av-canvas-handle-shape--text"
+          onMouseDown={(e) => beginDrag(e, el, 'move')}
+          style={{ cursor: 'move' }}
+        />
+        <text x={x} y={y} fontSize={fontSize} className="av-canvas-handle-text" pointerEvents="none">{el.label}</text>
+      </g>
+    );
+  };
+
+  // True when the element declares a prop the resize dot can actually write —
+  // an element without one (e.g. card rows with only startX/startY/spacing)
+  // gets no dot at all instead of a dot that pollutes its layout with dead keys.
+  const canResize = (el: CanvasElementDef) => {
+    if (el.type === 'circle') return el.props.includes('radiusX') || el.props.includes('radiusY');
+    if (el.type === 'rect') return el.props.includes('width') || el.props.includes('height');
+    return el.props.includes('fontSize');
+  };
+
+  // Dots live in their own top layer so a neighbouring element's (larger)
+  // move shape can never sit on top of a resize dot and swallow its clicks.
+  // Only the selected (or mid-drag) element shows its dot — 30 permanent
+  // gold dots on a leaderboard would be pure noise.
+  const renderDot = (el: CanvasElementDef) => {
+    if (el.id !== activeElementId && dragging?.id !== el.id) return null;
+    if (!canResize(el)) return null;
+    const entry = getAtPath(layout, el.id) ?? {};
+    const { x, y } = readPos(el, entry);
+    const stateClass = handleStateClass(el);
+
+    if (el.type === 'circle') {
+      const rx = Math.max(MIN_RADIUS, Number(entry.radiusX ?? 24));
+      const ry = Math.max(MIN_RADIUS, Number(entry.radiusY ?? rx));
+      return (
+        <g key={`${el.id}-dot`} className={`av-canvas-handle${stateClass}`}>
           <circle
-            cx={x} cy={y} r={6}
+            cx={x + rx * 0.7071} cy={y + ry * 0.7071} r={dotR}
             className="av-canvas-handle-dot"
             onMouseDown={(e) => beginDrag(e, el, 'resize')}
             style={{ cursor: 'nwse-resize' }}
@@ -193,15 +350,9 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
       const w = Math.max(MIN_SIZE, Number(entry.width ?? 50));
       const h = Math.max(MIN_SIZE, Number(entry.height ?? 20));
       return (
-        <g key={el.id} className={`av-canvas-handle${stateClass}`}>
-          <rect
-            x={x} y={y} width={w} height={h}
-            className="av-canvas-handle-shape"
-            onMouseDown={(e) => beginDrag(e, el, 'move')}
-            style={{ cursor: 'move' }}
-          />
+        <g key={`${el.id}-dot`} className={`av-canvas-handle${stateClass}`}>
           <circle
-            cx={x} cy={y} r={6}
+            cx={x + w} cy={y + h} r={dotR}
             className="av-canvas-handle-dot"
             onMouseDown={(e) => beginDrag(e, el, 'resize')}
             style={{ cursor: 'nwse-resize' }}
@@ -209,28 +360,13 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
         </g>
       );
     }
-    // text
-    const fontSize = Math.max(8, Number(entry.fontSize ?? 20));
+    const fontSize = Math.max(MIN_FONT, Number(entry.fontSize ?? 20));
     return (
-      <g key={el.id} className={`av-canvas-handle${stateClass}`}>
-        <rect
-          x={x - 4} y={y - fontSize - 4} width={fontSize * 6} height={fontSize + 8}
-          className="av-canvas-handle-shape av-canvas-handle-shape--text"
-          onMouseDown={(e) => beginDrag(e, el, 'move')}
-          style={{ cursor: 'move' }}
-        />
-        <text x={x} y={y} fontSize={fontSize} className="av-canvas-handle-text" pointerEvents="none">{el.label}</text>
+      <g key={`${el.id}-dot`} className={`av-canvas-handle${stateClass}`}>
         <circle
-          cx={x} cy={y} r={6}
+          cx={x - 4} cy={y - fontSize - 4} r={dotR}
           className="av-canvas-handle-dot"
-          onMouseDown={(e) => {
-            // For text, repurpose startWidth = current fontSize so the resize
-            // math in onMouseMove can read it back. Keeps the DragState shape
-            // shared without adding text-specific fields.
-            const synthetic = { ...e, clientX: e.clientX, clientY: e.clientY } as unknown as React.MouseEvent;
-            beginDrag(synthetic, el, 'resize');
-            if (dragState.current) dragState.current.startWidth = fontSize;
-          }}
+          onMouseDown={(e) => beginDrag(e, el, 'resize')}
           style={{ cursor: 'ns-resize' }}
         />
       </g>
@@ -238,7 +374,17 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
   };
 
   return (
-    <div ref={wrapRef} className="av-canvas-stage-wrap" onClick={() => onSelectElement(null)}>
+    <div
+      ref={wrapRef}
+      className="av-canvas-stage-wrap"
+      onClick={() => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false;
+          return;
+        }
+        onSelectElement(null);
+      }}
+    >
       <div
         className="av-canvas-stage"
         style={{
@@ -247,6 +393,7 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
         }}
       >
         <svg
+          ref={svgRef}
           viewBox={`0 0 ${canvas.width} ${canvas.height}`}
           preserveAspectRatio="xMidYMid meet"
           className="av-canvas-svg"
@@ -261,11 +408,12 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
               preserveAspectRatio="xMidYMid meet"
             />
           )}
-          {canvas.elements.map(renderHandle)}
+          {canvas.elements.map(renderShape)}
+          {canvas.elements.map(renderDot)}
         </svg>
       </div>
       <div className="av-canvas-stage-foot">
-        <span>{canvas.width} × {canvas.height} · preview scale {(stageScale * 100).toFixed(0)}% · drag shape to move · drag corner dot to resize</span>
+        <span>{canvas.width} × {canvas.height} · preview scale {(stageScale * 100).toFixed(0)}% · drag shape to move · select, then drag the gold dot to resize · Esc cancels a drag</span>
       </div>
     </div>
   );

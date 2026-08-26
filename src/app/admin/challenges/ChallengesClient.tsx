@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ContextMenu from '../_components/ContextMenu';
+import { useToast } from '../_components/Toast';
 import { useTableKeys } from '../_components/useTableKeys';
 import { onButtonKey } from '../_components/a11y';
 import { useTimezone } from '../_components/TimezoneProvider';
@@ -54,6 +55,7 @@ function rewardSummary(reward: Challenge['reward']): string | null {
 export default function ChallengesClient({ initial, config, channels, templates }: Props) {
   const { fmtRel, absolute } = useTimezone();
   const { openPeek } = usePeek();
+  const toast = useToast();
 
   const [active, setActive] = useState<Challenge | null>(initial.activeChallenge);
   const [history, setHistory] = useState<Challenge[]>(initial.challenges);
@@ -83,6 +85,7 @@ export default function ChallengesClient({ initial, config, channels, templates 
     params.set('limit', String(l));
     try {
       const res = await fetch(`/api/admin/challenges?${params.toString()}`, { cache: 'no-store', signal: ctrl.signal });
+      if (!res.ok) throw new Error(`Couldn't refresh the list (HTTP ${res.status})`);
       const body = (await res.json()) as ListResponse;
       if (ctrl.signal.aborted) return;
       setActive(body.activeChallenge);
@@ -91,9 +94,12 @@ export default function ChallengesClient({ initial, config, channels, templates 
       setStats(body.stats);
       setHof(body.hallOfFame);
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') console.error(e);
+      if ((e as Error).name !== 'AbortError') {
+        // The operator needs to know the list is stale, not just the console.
+        toast.show({ tone: 'error', title: 'Challenges refresh failed', message: (e as Error).message });
+      }
     }
-  }, [filter, page, limit]);
+  }, [filter, page, limit, toast]);
 
   // Debounced refetch when filter / page / limit change (skip first mount)
   const firstRun = useRef(true);

@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
@@ -217,9 +218,7 @@ export async function GET(req: NextRequest) {
       } : null;
 
       const discord = r.discord ?? {};
-      const image = discord.avatar
-        ? `https://cdn.discordapp.com/avatars/${discordId}/${discord.avatar}.png?size=128`
-        : null;
+      const image = discordAvatarUrl(discordId, discord.avatar, 128);
 
       const levelsData = r.levels?.data ?? r.levels ?? {};
       const level = Number(levelsData.level ?? 0);

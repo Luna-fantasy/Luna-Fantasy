@@ -29,6 +29,7 @@ export const CLUSTERS: NavCluster[] = [
     items: [
       { label: 'Dashboard',  href: '/admin',           icon: 'overview' },
       { label: 'Activity',   href: '/admin/activity',  icon: 'pulse' },
+      { label: 'Audit Log',  href: '/admin/audit',     icon: 'audit' },
       { label: 'Analytics',  href: '/admin/analytics', icon: 'bar-chart' },
       { label: 'Schedule',   href: '/admin/schedule',  icon: 'calendar' },
     ],

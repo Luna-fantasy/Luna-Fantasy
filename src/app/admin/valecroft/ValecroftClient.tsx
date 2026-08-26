@@ -1116,6 +1116,7 @@ function OwnersDialog({ kind, targetKey, targetName, onClose }: {
     onClose: () => void;
 }) {
     const toast = useToast();
+    const pending = usePendingAction();
     const [owners, setOwners] = useState<OwnerEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [grantId, setGrantId] = useState('');
@@ -1162,24 +1163,34 @@ function OwnersDialog({ kind, targetKey, targetName, onClose }: {
     }
 
     async function doRevoke(discordId: string) {
-        if (!confirm(`Revoke "${targetName}" from ${discordId}? ${kind === 'property' ? 'Placed items will return to their storage.' : 'Removes one copy.'}`)) return;
-        setBusy(true);
-        try {
-            const csrf = await fetchCsrf();
-            const res = await fetch(`${baseUrl}/${encodeURIComponent(discordId)}`, {
-                method: 'DELETE',
-                headers: { 'x-csrf-token': csrf },
-                credentials: 'include',
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) {
-                toast.show({ tone: 'error', title: 'Revoke failed', message: data?.error || `HTTP ${res.status}` });
-                return;
-            }
-            const extra = data?.itemsReturned ? ` · ${data.itemsReturned} items returned` : '';
-            toast.show({ tone: 'success', title: 'Revoked', message: `${discordId}${extra}` });
-            await refresh();
-        } finally { setBusy(false); }
+        // Themed 5s countdown with cancel instead of the native confirm() popup.
+        await pending.queue({
+            label: `Revoke "${targetName}"`,
+            detail: kind === 'property'
+                ? `From ${discordId} — placed items will return to their storage.`
+                : `From ${discordId} — removes one copy.`,
+            delayMs: 5000,
+            tone: 'danger',
+            run: async () => {
+                setBusy(true);
+                try {
+                    const csrf = await fetchCsrf();
+                    const res = await fetch(`${baseUrl}/${encodeURIComponent(discordId)}`, {
+                        method: 'DELETE',
+                        headers: { 'x-csrf-token': csrf },
+                        credentials: 'include',
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        toast.show({ tone: 'error', title: 'Revoke failed', message: data?.error || `HTTP ${res.status}` });
+                        return;
+                    }
+                    const extra = data?.itemsReturned ? ` · ${data.itemsReturned} items returned` : '';
+                    toast.show({ tone: 'success', title: 'Revoked', message: `${discordId}${extra}` });
+                    await refresh();
+                } finally { setBusy(false); }
+            },
+        });
     }
 
     return (

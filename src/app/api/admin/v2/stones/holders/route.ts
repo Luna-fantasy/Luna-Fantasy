@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
         discordId: id,
         username: d?.username ?? null,
         globalName: d?.globalName ?? null,
-        image: d?.avatar ? `https://cdn.discordapp.com/avatars/${id}/${d.avatar}.png?size=128` : null,
+        image: discordAvatarUrl(id, d?.avatar, 128),
         count: Number(r.count ?? 0),
       };
     });

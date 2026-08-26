@@ -140,7 +140,7 @@ export default function ZoldarEditor({ tone }: { tone: string }) {
                     value={p.id}
                     onChange={(e) => updatePackage(i, { id: e.target.value.replace(/[^a-z0-9_-]/gi, '') })}
                   />
-                  <button type="button" className="av-btn av-btn-ghost av-btn-sm" onClick={() => removePackage(i)}>×</button>
+                  <button aria-label="Remove" type="button" className="av-btn av-btn-ghost av-btn-sm" onClick={() => removePackage(i)}>×</button>
                 </div>
                 <div className="av-zoldar-row">
                   <label>

@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import clientPromise from '@/lib/mongodb';
 
 export interface PassportRow {
@@ -122,9 +123,7 @@ export async function listPassports(options: {
     const discordId = String(r._id);
     const passport = r.passportDoc ?? {};
     const d = r.discord ?? {};
-    const image = d.avatar
-      ? `https://cdn.discordapp.com/avatars/${discordId}/${d.avatar}.png?size=128`
-      : null;
+    const image = discordAvatarUrl(discordId, d.avatar, 128);
     return {
       discordId,
       username: d.username ?? null,

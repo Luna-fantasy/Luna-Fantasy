@@ -195,7 +195,7 @@ export default function CreateDialog({ templates, channels, onCreated, onClose, 
             <h3>{scheduled ? 'Schedule challenge' : 'Launch challenge'}</h3>
             <p>The bot picks it up within ~60 s. You can still cancel inside the 5 s confirmation ring.</p>
           </div>
-          <button type="button" className="av-peek-close" onClick={onClose} disabled={busy}>×</button>
+          <button aria-label="Close" type="button" className="av-peek-close" onClick={onClose} disabled={busy}>×</button>
         </header>
 
         <div className="av-itemdialog-body">

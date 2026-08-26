@@ -72,7 +72,7 @@ export default function ChipsInput({ value, onChange, kind }: Props) {
           onBlur={() => { if (draft) add(); }}
           inputMode="numeric"
         />
-        <button type="button" className="av-games-chip-add-btn" onClick={add} disabled={!sanitize(draft)}>+ Add</button>
+        <button type="button" className="av-games-chip-add-btn" onClick={add} disabled={!sanitize(draft)} title={!sanitize(draft) ? 'Type a value first' : undefined}>+ Add</button>
       </div>
     </div>
   );

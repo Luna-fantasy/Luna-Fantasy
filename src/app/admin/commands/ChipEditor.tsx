@@ -60,6 +60,7 @@ export default function ChipEditor({ value, onChange, placeholder = 'Type and pr
           className="av-commands-free-chip-add"
           onClick={add}
           disabled={!draft.trim()}
+          title={!draft.trim() ? 'Type a value first' : undefined}
         >+ Add</button>
       </div>
     </div>

@@ -19,21 +19,33 @@ function isValidHexColor(c: string): boolean {
   return /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(c);
 }
 
-// Per-field numeric bounds. Protects the bot's @napi-rs/canvas renderer from
-// extreme values (fontSize: 99999 → multi-GB buffer, width: 1_000_000 → OOM,
-// negative radius → crash). Caps are generous enough that normal tuning isn't
-// constrained, but tight enough that any value outside them is a bug or abuse.
-const BOUNDED_FIELDS = new Map<string, { min: number; max: number }>([
-  ['fontSize', { min: 1,    max: 200 }],
-  ['size',     { min: 1,    max: 800 }],
-  ['radius',   { min: 1,    max: 1000 }],
-  ['radiusX',  { min: 1,    max: 1000 }],
-  ['radiusY',  { min: 1,    max: 1000 }],
-  ['width',    { min: 1,    max: 4000 }],
-  ['height',   { min: 1,    max: 4000 }],
-  ['x',        { min: -500, max: 4500 }],
-  ['y',        { min: -500, max: 4500 }],
-]);
+// Per-field numeric bounds, derived from the canvas the layout targets.
+// Protects the bot's @napi-rs/canvas renderer from extreme values
+// (fontSize: 99999 → multi-GB buffer, width: 1_000_000 → OOM, negative
+// radius → crash) while scaling with the canvas — the 10000×6706 levels
+// leaderboard legitimately positions elements far past the old flat 4500 cap.
+// Every bound is a strict superset of the old flat caps (max(4500, …) etc.)
+// so no layout that used to save can start failing validation.
+function getBoundedFields(def: { width: number; height: number }): Map<string, { min: number; max: number }> {
+  const mX = Math.max(500, Math.round(def.width * 0.1));
+  const mY = Math.max(500, Math.round(def.height * 0.1));
+  const rMax = Math.max(1000, Math.round(Math.max(def.width, def.height) / 2));
+  const xRange = { min: -mX, max: Math.max(4500, def.width + mX) };
+  const yRange = { min: -mY, max: Math.max(4500, def.height + mY) };
+  return new Map<string, { min: number; max: number }>([
+    ['fontSize', { min: 1, max: Math.max(200, Math.round(def.height * 0.1)) }],
+    ['size',     { min: 1, max: Math.max(800, rMax) }],
+    ['radius',   { min: 1, max: rMax }],
+    ['radiusX',  { min: 1, max: rMax }],
+    ['radiusY',  { min: 1, max: rMax }],
+    ['width',    { min: 1, max: Math.max(4000, def.width + mX) }],
+    ['height',   { min: 1, max: Math.max(4000, def.height + mY) }],
+    ['x',        xRange],
+    ['y',        yRange],
+    ['startX',   xRange],
+    ['startY',   yRange],
+  ]);
+}
 
 function validateLayout(canvasType: string, layout: any): string | null {
   const def = getCanvasDefinition(canvasType);
@@ -48,6 +60,8 @@ function validateLayout(canvasType: string, layout: any): string | null {
     }
   }
 
+  const boundedFields = getBoundedFields(def);
+
   // Validate element positions by walking the layout recursively
   function checkNumbers(obj: any, path: string): string | null {
     if (obj === null || obj === undefined) return null;
@@ -57,7 +71,7 @@ function validateLayout(canvasType: string, layout: any): string | null {
       const fullPath = `${path}.${key}`;
       if (typeof val === 'number') {
         if (!Number.isFinite(val)) return `${fullPath} must be a finite number`;
-        const bounds = BOUNDED_FIELDS.get(key);
+        const bounds = boundedFields.get(key);
         if (bounds) {
           if (val < bounds.min || val > bounds.max) {
             return `${fullPath}=${val} out of range [${bounds.min}, ${bounds.max}]`;

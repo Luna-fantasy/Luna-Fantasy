@@ -86,7 +86,7 @@ export default function PartnerDialog({ mode, initial, onSave, onClose }: Props)
             <h3>{mode === 'create' ? 'New partner' : `Edit · ${initial?.name}`}</h3>
             <p>Shown on the public <code>/partners</code> page.</p>
           </div>
-          <button type="button" className="av-peek-close" onClick={onClose} disabled={busy}>×</button>
+          <button aria-label="Close" type="button" className="av-peek-close" onClick={onClose} disabled={busy}>×</button>
         </header>
 
         <div className="av-itemdialog-body">

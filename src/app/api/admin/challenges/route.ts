@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
@@ -13,8 +14,7 @@ const HOF_COL = 'tournament_hall_of_fame';
 const DISCORD_EPOCH = 1420070400000;
 
 function avatarUrl(userId: string, hash: string | null): string | null {
-  if (!hash) return null;
-  return `https://cdn.discordapp.com/avatars/${userId}/${hash}.png?size=64`;
+  return discordAvatarUrl(userId, hash, 64);
 }
 
 function accountAgeDays(userId: string): number {

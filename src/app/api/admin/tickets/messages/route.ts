@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
       id: m.id,
       author: m.author?.username || 'Unknown',
       authorId: m.author?.id,
-      avatar: m.author?.avatar ? `https://cdn.discordapp.com/avatars/${m.author.id}/${m.author.avatar}.png?size=64` : null,
+      avatar: discordAvatarUrl(m.author?.id ?? '', m.author?.avatar, 64),
       isBot: m.author?.bot || false,
       content: m.content || '',
       timestamp: m.timestamp,

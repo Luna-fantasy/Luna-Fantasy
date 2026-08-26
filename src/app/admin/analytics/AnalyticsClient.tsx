@@ -1,5 +1,6 @@
 'use client';
 
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { useCallback, useEffect, useState } from 'react';
 import { adminGet } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
@@ -40,7 +41,7 @@ const SHOP_LABELS: Record<string, string> = {
 };
 
 function UserChip({ userId, username, avatar, onClick }: { userId: string; username?: string; avatar?: string; onClick: () => void }) {
-  const avatarUrl = avatar ? `https://cdn.discordapp.com/avatars/${userId}/${avatar}.png?size=32` : null;
+  const avatarUrl = discordAvatarUrl(userId, avatar, 32);
   return (
     <button type="button" className="av-inbox-userlink" onClick={onClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
       {avatarUrl && <img src={avatarUrl} alt="" width={20} height={20} style={{ borderRadius: '50%' }} />}

@@ -1,5 +1,6 @@
 'use client';
 
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { adminDelete, adminGet, adminPost } from '@/lib/admin/http';
@@ -175,7 +176,13 @@ export default function WatchlistClient() {
             value={newReason}
             onChange={(e) => setNewReason(e.target.value.slice(0, 500))}
           />
-          <button type="button" className="av-btn av-btn-primary" onClick={addFlag} disabled={adding || !newUserId}>
+          <button
+            type="button"
+            className="av-btn av-btn-primary"
+            onClick={addFlag}
+            disabled={adding || !newUserId}
+            title={!newUserId ? 'Enter a Discord ID above first' : undefined}
+          >
             {adding ? 'Adding…' : 'Flag user'}
           </button>
         </div>
@@ -201,7 +208,7 @@ export default function WatchlistClient() {
           <article key={u.userId} className="av-watchlist-card">
             <header className="av-watchlist-card-head">
               <button type="button" className="av-inbox-userlink av-watchlist-user" onClick={() => openPeek(u.userId)}>
-                {u.avatar && <img src={`https://cdn.discordapp.com/avatars/${u.userId}/${u.avatar}.png?size=64`} alt="" width={36} height={36} style={{ borderRadius: '50%' }} />}
+                {u.avatar && <img src={discordAvatarUrl(u.userId, u.avatar, 64)!} alt="" width={36} height={36} style={{ borderRadius: '50%' }} />}
                 <div style={{ textAlign: 'left' }}>
                   <strong>{u.username || u.userId}</strong>
                   <div className="av-text-muted" style={{ fontSize: 'var(--av-text-xs)' }}>{u.userId} · {fmt(u.balance)} Lunari</div>
@@ -233,7 +240,7 @@ export default function WatchlistClient() {
                       <span className="av-text-muted" style={{ fontSize: 'var(--av-text-xs)' }}>
                         {relativeTime(f.addedAt)} · by {f.addedByUsername || f.addedBy.slice(0, 6)}
                       </span>
-                      <button type="button" className="av-btn av-btn-ghost av-btn-sm" onClick={() => removeFlag(u.userId, i, info.label)}>×</button>
+                      <button aria-label="Remove" type="button" className="av-btn av-btn-ghost av-btn-sm" onClick={() => removeFlag(u.userId, i, info.label)}>×</button>
                     </div>
                     {f.reason && <div className="av-watchlist-reason">{f.reason}</div>}
                   </div>

@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import clientPromise from '@/lib/mongodb';
 import { getBotConfigDoc } from '@/lib/admin/bot-configs';
 
@@ -75,9 +76,7 @@ async function resolveUsers(db: any, userIds: string[]): Promise<Map<string, { n
   const map = new Map<string, { name: string | null; avatar: string | null }>();
   for (const u of users) {
     const id = String((u as any)._id);
-    const avatar = (u as any).avatar
-      ? `https://cdn.discordapp.com/avatars/${id}/${(u as any).avatar}.png?size=64`
-      : null;
+    const avatar = discordAvatarUrl(id, (u as any).avatar, 64);
     map.set(id, {
       name: (u as any).globalName ?? (u as any).username ?? null,
       avatar,

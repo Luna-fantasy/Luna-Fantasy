@@ -96,7 +96,7 @@ export default function SiteTabsClient({ initialTabs }: Props) {
             {error && (
                 <div className="site-tabs-error" role="alert">
                     {error}
-                    <button onClick={() => setError(null)} className="site-tabs-error-close">×</button>
+                    <button aria-label="Close" onClick={() => setError(null)} className="site-tabs-error-close">×</button>
                 </div>
             )}
 
@@ -177,50 +177,7 @@ export default function SiteTabsClient({ initialTabs }: Props) {
                     </div>
                 </div>
             )}
-
-            <style>{`
-                .site-tabs-page { padding: 24px 32px 80px; max-width: 980px; margin: 0 auto; }
-                .av-page-header h1 { font-family: 'Cinzel', serif; font-size: 30px; margin: 0 0 8px; color: #f1f5ff; }
-                .av-page-header p { color: #b9c4e0; font-size: 14px; line-height: 1.6; margin: 0 0 24px; max-width: 720px; }
-                .site-tabs-summary { display: flex; gap: 18px; margin-bottom: 32px; }
-                .site-tabs-stat { display: flex; flex-direction: column; gap: 2px; padding: 12px 18px; background: rgba(20, 24, 48, 0.5); border: 1px solid rgba(140, 200, 255, 0.12); border-radius: 10px; }
-                .site-tabs-stat-num { font-size: 22px; font-weight: 700; color: #f1f5ff; }
-                .site-tabs-stat-lbl { font-size: 11px; color: #88a0c8; text-transform: uppercase; letter-spacing: 0.08em; }
-                .site-tabs-error { background: rgba(220, 50, 70, 0.12); border: 1px solid rgba(220, 50, 70, 0.4); padding: 12px 16px; border-radius: 10px; color: #ffb0b8; margin-bottom: 24px; display: flex; align-items: center; }
-                .site-tabs-error-close { margin-left: auto; background: none; border: none; color: #ffb0b8; font-size: 22px; cursor: pointer; padding: 0 8px; }
-                .site-tabs-group { margin-bottom: 32px; }
-                .site-tabs-group-title { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: #88a0c8; margin: 0 0 12px; font-family: inherit; }
-                .site-tabs-list { display: flex; flex-direction: column; gap: 8px; }
-                .site-tabs-row { display: flex; align-items: center; gap: 16px; padding: 14px 18px; background: rgba(20, 24, 48, 0.5); border: 1px solid rgba(140, 200, 255, 0.12); border-radius: 10px; transition: border-color 0.15s, background 0.15s; }
-                .site-tabs-row.is-parent { background: rgba(120, 80, 200, 0.08); border-color: rgba(120, 80, 200, 0.22); }
-                .site-tabs-row.is-closed { border-color: rgba(220, 80, 100, 0.45); background: rgba(220, 80, 100, 0.07); }
-                .site-tabs-row-main { flex: 1; min-width: 0; }
-                .site-tabs-row-name { font-size: 15px; color: #f1f5ff; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-                .site-tabs-parent-pill { font-size: 10px; padding: 2px 7px; background: rgba(120, 80, 200, 0.3); border-radius: 4px; color: #d8c0ff; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; }
-                .site-tabs-row-meta { font-size: 12px; color: #88a0c8; margin-top: 4px; }
-                .site-tabs-row-reason { font-size: 12px; color: #a0b4d8; margin-top: 6px; font-style: italic; }
-                .site-tabs-status { font-size: 11px; padding: 2px 7px; border-radius: 4px; font-weight: 700; letter-spacing: 0.05em; }
-                .site-tabs-status.open { background: rgba(80, 200, 120, 0.15); color: #7fdf9c; }
-                .site-tabs-status.closed { background: rgba(220, 80, 100, 0.18); color: #ff97a8; }
-                .site-tabs-toggle { width: 52px; height: 28px; border-radius: 14px; border: none; cursor: pointer; padding: 2px; background: rgba(80, 100, 130, 0.4); transition: background 0.18s; flex-shrink: 0; }
-                .site-tabs-toggle.on { background: linear-gradient(90deg, #ff5566, #c8344b); }
-                .site-tabs-toggle-thumb { display: block; width: 24px; height: 24px; border-radius: 50%; background: #fff; transform: translateX(0); transition: transform 0.2s ease; }
-                .site-tabs-toggle.on .site-tabs-toggle-thumb { transform: translateX(24px); }
-                .site-tabs-toggle:disabled { opacity: 0.5; cursor: wait; }
-                .site-tabs-modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
-                .site-tabs-modal { background: linear-gradient(180deg, #1a1d35, #0f1226); border: 1px solid rgba(140, 200, 255, 0.18); border-radius: 14px; padding: 28px; max-width: 480px; width: 90%; }
-                .site-tabs-modal h3 { margin: 0 0 8px; font-family: 'Cinzel', serif; font-size: 20px; color: #f1f5ff; }
-                .site-tabs-modal p { color: #b9c4e0; font-size: 13px; margin: 0 0 16px; line-height: 1.5; }
-                .site-tabs-modal textarea { width: 100%; padding: 12px 14px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(140, 200, 255, 0.18); border-radius: 8px; color: #f1f5ff; font-family: inherit; font-size: 13px; line-height: 1.5; resize: vertical; box-sizing: border-box; }
-                .site-tabs-modal textarea:focus { outline: none; border-color: rgba(140, 200, 255, 0.4); }
-                .site-tabs-modal-meta { text-align: right; font-size: 11px; color: #88a0c8; margin-top: 4px; }
-                .site-tabs-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
-                .site-tabs-btn-secondary, .site-tabs-btn-danger { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-                .site-tabs-btn-secondary { background: rgba(140, 200, 255, 0.1); color: #b9c4e0; }
-                .site-tabs-btn-secondary:hover { background: rgba(140, 200, 255, 0.18); }
-                .site-tabs-btn-danger { background: linear-gradient(90deg, #ff5566, #c8344b); color: #fff; }
-                .site-tabs-btn-danger:hover { opacity: 0.92; }
-            `}</style>
+
         </div>
     );
 }

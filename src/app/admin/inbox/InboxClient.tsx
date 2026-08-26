@@ -74,6 +74,28 @@ export default function InboxClient({ initial, categories, adminId, guildId, vot
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [viewsOpen, setViewsOpen] = useState(false);
+  // Avatar URLs that 404'd (stale Discord hashes) — swap to the letter
+  // fallback instead of showing the browser's broken-image icon.
+  const [badAvatars, setBadAvatars] = useState<Set<string>>(new Set());
+
+  // SSR-rendered avatars can 404 before hydration attaches onError handlers,
+  // so the event never fires for them — sweep for already-failed images too.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      const failed: string[] = [];
+      document.querySelectorAll<HTMLImageElement>('img.av-inbox-cell-avatar').forEach((img) => {
+        if (img.complete && img.naturalWidth === 0 && img.src) failed.push(img.src);
+      });
+      if (failed.length) {
+        setBadAvatars((prev) => {
+          const next = new Set(prev);
+          for (const f of failed) next.add(f);
+          return next;
+        });
+      }
+    }, 1200);
+    return () => window.clearTimeout(t);
+  }, [items]);
 
   const abortRef = useRef<AbortController | null>(null);
   const firstRun = useRef(true);
@@ -316,12 +338,12 @@ export default function InboxClient({ initial, categories, adminId, guildId, vot
         <table className="av-audit-table av-inbox-table">
           <thead>
             <tr>
-              <th style={{ width: 36 }} />
-              <th style={{ width: 56 }}>Kind</th>
-              <th style={{ width: 220 }}>User</th>
-              <th>Category</th>
-              <th style={{ width: 120 }}>Status</th>
-              <th style={{ width: 180 }}>Opened</th>
+              <th style={{ width: 28 }} />
+              <th style={{ width: 44 }}>Kind</th>
+              <th>User</th>
+              <th style={{ width: 200 }}>Category</th>
+              <th style={{ width: 130 }}>Status</th>
+              <th style={{ width: 110 }}>Opened</th>
             </tr>
           </thead>
           <tbody>
@@ -361,8 +383,13 @@ export default function InboxClient({ initial, categories, adminId, guildId, vot
                       </span>
 
                       <span className="av-inbox-cell-user">
-                        {row.userAvatar
-                          ? <img className="av-inbox-cell-avatar" src={row.userAvatar} alt="" />
+                        {row.userAvatar && !badAvatars.has(row.userAvatar)
+                          ? <img
+                              className="av-inbox-cell-avatar"
+                              src={row.userAvatar}
+                              alt=""
+                              onError={() => setBadAvatars((prev) => new Set(prev).add(row.userAvatar!))}
+                            />
                           : <span className="av-inbox-cell-avatar av-inbox-cell-avatar--fallback">{(row.userName ?? row.userId).slice(0, 1).toUpperCase()}</span>}
                         <span className="av-inbox-cell-name">{row.userName ?? row.userId}</span>
                       </span>

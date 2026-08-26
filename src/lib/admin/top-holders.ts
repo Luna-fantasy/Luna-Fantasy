@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import clientPromise from '@/lib/mongodb';
 
 export interface TopHolder {
@@ -52,9 +53,7 @@ export async function getTopHolders(n = 25): Promise<TopHolder[]> {
   return top.map((r: any) => {
     const discordId = String(r._id);
     const d = discordById.get(discordId) as any;
-    const image = d?.avatar
-      ? `https://cdn.discordapp.com/avatars/${discordId}/${d.avatar}.png?size=128`
-      : null;
+    const image = discordAvatarUrl(discordId, d?.avatar, 128);
     const balance = Number(r.balance ?? 0);
     const txs = txByUser.get(discordId) ?? [];
     const sparkline: number[] = new Array(14).fill(balance);

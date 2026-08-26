@@ -214,7 +214,7 @@ export default function LuckboxEditor({ tone, tiers, onSave }: {
                       className="av-luckbox-slider"
                       style={{ accentColor: RARITY_TONES[r.rarity] }}
                     />
-                    <button type="button" className="av-shop-item-action av-shop-item-action--danger" onClick={() => removeRarity(i, ri)}>×</button>
+                    <button aria-label="Remove" type="button" className="av-shop-item-action av-shop-item-action--danger" onClick={() => removeRarity(i, ri)}>×</button>
                   </div>
                 ))}
                 <button type="button" className="av-se-add" onClick={() => addRarity(i)}>+ Rarity</button>

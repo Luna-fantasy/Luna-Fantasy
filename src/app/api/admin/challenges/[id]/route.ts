@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
@@ -9,8 +10,7 @@ const COL = 'community_challenges';
 const DISCORD_EPOCH = 1420070400000;
 
 function avatarUrl(userId: string, hash: string | null): string | null {
-  if (!hash) return null;
-  return `https://cdn.discordapp.com/avatars/${userId}/${hash}.png?size=64`;
+  return discordAvatarUrl(userId, hash, 64);
 }
 
 function accountAgeDays(userId: string): number {

@@ -692,7 +692,7 @@ function SelunaItemDialog({ draft: initial, isNew, onClose, onSave }: {
             <h3>{isNew ? 'Add Seluna item' : 'Edit Seluna item'}</h3>
             <p>{KIND_LABEL[d.type]} · rotating lunar merchant</p>
           </div>
-          <button type="button" className="av-peek-close" onClick={onClose}>×</button>
+          <button aria-label="Close" type="button" className="av-peek-close" onClick={onClose}>×</button>
         </header>
         <div className="av-moddialog-body" style={{ gap: 10 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

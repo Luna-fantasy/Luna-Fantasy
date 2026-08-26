@@ -1,5 +1,6 @@
 'use client';
 
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { useCallback, useEffect, useState } from 'react';
 import { adminGet, adminPost } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
@@ -240,7 +241,13 @@ export default function DmClient() {
 
             <div className="av-dm-actions">
               <button type="button" className="av-btn av-btn-ghost" onClick={clear} disabled={sending}>Clear</button>
-              <button type="button" className="av-btn av-btn-primary" onClick={send} disabled={!canSend || sending}>
+              <button
+                type="button"
+                className="av-btn av-btn-primary"
+                onClick={send}
+                disabled={!canSend || sending}
+                title={!canSend ? 'Needs a valid Discord ID and a message before it can send' : undefined}
+              >
                 {sending ? 'Queuing…' : 'Send DM'}
               </button>
             </div>
@@ -300,7 +307,7 @@ export default function DmClient() {
               </div>
               <div className="av-dm-row-target">
                 <button type="button" className="av-inbox-userlink" onClick={() => openPeek(dm.targetUserId)}>
-                  {dm.targetAvatar && <img src={`https://cdn.discordapp.com/avatars/${dm.targetUserId}/${dm.targetAvatar}.png?size=32`} alt="" width={20} height={20} style={{ borderRadius: '50%', marginRight: 6 }} />}
+                  {dm.targetAvatar && <img src={discordAvatarUrl(dm.targetUserId, dm.targetAvatar, 32)!} alt="" width={20} height={20} style={{ borderRadius: '50%', marginRight: 6 }} />}
                   {dm.targetUsername || dm.targetUserId}
                 </button>
                 <span className="av-text-muted" style={{ fontSize: 'var(--av-text-xs)' }}>

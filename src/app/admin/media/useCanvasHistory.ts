@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 /**
  * Ring-buffer history for a single canvas layout draft. Stores up to
@@ -80,7 +80,9 @@ export function useCanvasHistory<T>(initial: T): CanvasHistory<T> {
     setIndex(0);
   }, []);
 
-  return {
+  // Memoised so consumers can safely list the history object in dependency
+  // arrays — a fresh object literal every render defeated their memoisation.
+  return useMemo(() => ({
     value,
     canUndo: index > 0,
     canRedo: index < stack.length - 1,
@@ -89,5 +91,5 @@ export function useCanvasHistory<T>(initial: T): CanvasHistory<T> {
     undo,
     redo,
     reset,
-  };
+  }), [value, index, stack, push, replaceTop, undo, redo, reset]);
 }

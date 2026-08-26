@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireMastermindApi } from '@/lib/admin/auth';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
@@ -191,7 +192,7 @@ export async function GET(request: NextRequest) {
     const userMap = new Map<string, { name: string; avatar: string | null }>();
     for (const u of discordUsers as any[]) {
       const id = String(u._id);
-      const avatar = u.avatar ? `https://cdn.discordapp.com/avatars/${id}/${u.avatar}.png?size=64` : null;
+      const avatar = discordAvatarUrl(id, u.avatar, 64);
       userMap.set(id, { name: u.globalName ?? u.username ?? '', avatar });
     }
     for (const u of webUsers as any[]) {

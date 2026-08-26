@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@/lib/admin/avatar';
 import clientPromise from '@/lib/mongodb';
 import type { EconomyOverview, RecentTransaction, AdminUserProfile, AdminUserSearchResult } from '@/types/admin';
 
@@ -222,9 +223,7 @@ export async function searchUsers(query: string): Promise<AdminUserSearchResult[
           discordId: id,
           username: u.username,
           globalName: u.globalName,
-          image: u.avatar
-            ? `https://cdn.discordapp.com/avatars/${id}/${u.avatar}.png?size=128`
-            : undefined,
+          image: discordAvatarUrl(id, u.avatar, 128) ?? undefined,
         });
       }
     }
@@ -243,9 +242,7 @@ export async function searchUsers(query: string): Promise<AdminUserSearchResult[
         discordId: query,
         username: discordUserDoc?.username,
         globalName: discordUserDoc?.globalName,
-        image: discordUserDoc?.avatar
-          ? `https://cdn.discordapp.com/avatars/${query}/${discordUserDoc.avatar}.png?size=128`
-          : undefined,
+        image: discordAvatarUrl(query, discordUserDoc?.avatar, 128) ?? undefined,
       }];
     }
   }
@@ -392,9 +389,7 @@ export async function getUserProfile(discordId: string): Promise<AdminUserProfil
   // Resolve username/avatar: prefer website users, fall back to bot's discord_users cache
   const resolvedUsername = userDoc?.username ?? discordUserDoc?.username;
   const resolvedGlobalName = userDoc?.globalName ?? userDoc?.name ?? discordUserDoc?.globalName;
-  const resolvedImage = userDoc?.image ?? (discordUserDoc?.avatar
-    ? `https://cdn.discordapp.com/avatars/${discordId}/${discordUserDoc.avatar}.png?size=128`
-    : undefined);
+  const resolvedImage = userDoc?.image ?? discordAvatarUrl(discordId, discordUserDoc?.avatar, 128) ?? undefined;
 
   return {
     discordId,

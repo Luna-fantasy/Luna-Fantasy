@@ -280,7 +280,7 @@ export default function FactionWarView() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-            {q && <button type="button" className="av-audit-clear" onClick={() => setQ('')}>×</button>}
+            {q && <button aria-label="Clear search" type="button" className="av-audit-clear" onClick={() => setQ('')}>×</button>}
           </div>
           <span className="av-text-muted" style={{ fontSize: 'var(--av-text-xs)' }}>
             {totalCards} cards total · 11 factions
@@ -505,7 +505,7 @@ function FactionCardEditDialog({
       <div className="av-modal" onClick={(e) => e.stopPropagation()}>
         <header className="av-modal-head">
           <h3>{mode === 'edit' ? 'Edit' : 'Add'} {faction} card</h3>
-          <button type="button" className="av-btn av-btn-ghost" onClick={onClose}>×</button>
+          <button aria-label="Close" type="button" className="av-btn av-btn-ghost" onClick={onClose}>×</button>
         </header>
         <div className="av-modal-body">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

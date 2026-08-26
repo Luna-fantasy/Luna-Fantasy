@@ -23,17 +23,23 @@ async function getApplicationsQueue(): Promise<{
   const db = client.db('Database');
 
   try {
+    // The `applications` collection also holds st.db-style pointer docs
+    // ({_id: "user_<id>_<type>", value: "app_..."}). Real applications are the
+    // docs with `status` + `id` — same discriminator the Staff Inbox uses.
+    // Counting pointers used to show dozens of phantom "pending" entries.
+    const realApp = { status: { $exists: true }, id: { $exists: true } };
     const [statusRows, typeRows, recent] = await Promise.all([
       db.collection('applications').aggregate([
-        { $group: { _id: { $ifNull: ['$status', 'pending'] }, count: { $sum: 1 } } },
+        { $match: realApp },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
       ]).toArray(),
       db.collection('applications').aggregate([
-        { $match: { $or: [{ status: 'pending' }, { status: null }, { status: { $exists: false } }] } },
+        { $match: { ...realApp, status: 'pending' } },
         { $group: { _id: { $ifNull: ['$type', 'staff'] }, count: { $sum: 1 } } },
         { $sort: { count: -1 } },
       ]).toArray(),
       db.collection('applications')
-        .find({ $or: [{ status: 'pending' }, { status: null }, { status: { $exists: false } }] })
+        .find({ ...realApp, status: 'pending' })
         .project({ type: 1, username: 1, createdAt: 1, submittedAt: 1 })
         .sort({ createdAt: -1 })
         .limit(3)
@@ -43,7 +49,7 @@ async function getApplicationsQueue(): Promise<{
     const byStatus = new Map<string, number>();
     for (const r of statusRows as any[]) byStatus.set(String(r._id), r.count);
 
-    const pending  = (byStatus.get('pending') ?? 0) + (byStatus.get('null') ?? 0);
+    const pending  = byStatus.get('pending') ?? 0;
     const accepted = byStatus.get('accepted') ?? 0;
     const rejected = byStatus.get('rejected') ?? 0;
 

@@ -11,26 +11,30 @@ import CanvasPicker from './CanvasPicker';
 import { useCanvasHistory } from './useCanvasHistory';
 import type { CanvasLayouts, CanvasTypeDef } from './types';
 import { getAtPath, setAtPath } from './layoutPath';
+import { adminFetch, adminPost, adminPut } from '@/lib/admin/http';
 
 interface Props {
   butlerLayouts: CanvasLayouts;
   jesterLayouts: CanvasLayouts;
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
+async function saveLayout(bot: 'butler' | 'jester', canvasType: string, layout: any): Promise<void> {
+  await adminPut(`/api/admin/canvas/${bot}`, { canvasType, layout });
 }
 
-async function saveLayout(bot: 'butler' | 'jester', canvasType: string, layout: any): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch(`/api/admin/canvas/${bot}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ canvasType, layout }),
-  });
-  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `HTTP ${res.status}`); }
+/** Best-effort natural-size read so the trial banner can warn on shape mismatch. */
+async function measureImageFile(file: File): Promise<{ width: number; height: number } | null> {
+  try {
+    return await new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve({ width: img.naturalWidth, height: img.naturalHeight }); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode failed')); };
+      img.src = url;
+    });
+  } catch {
+    return null;
+  }
 }
 
 export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Props) {
@@ -61,7 +65,7 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
 
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [testOpen, setTestOpen] = useState(false);
-  const [trial, setTrial] = useState<{ url: string; key: string; filename: string } | null>(null);
+  const [trial, setTrial] = useState<{ url: string; key: string; filename: string; width?: number; height?: number } | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -72,14 +76,10 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
   useEffect(() => {
     const previousTrial = trialRef.current;
     if (previousTrial) {
-      void fetchCsrf().then((token) =>
-        fetch('/api/admin/canvas/upload-trial', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-          credentials: 'include',
-          body: JSON.stringify({ key: previousTrial.key }),
-        }).catch(() => { /* best-effort cleanup */ })
-      );
+      void adminFetch('/api/admin/canvas/upload-trial', {
+        method: 'DELETE',
+        body: { key: previousTrial.key },
+      }).catch(() => { /* best-effort cleanup */ });
       setTrial(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,30 +90,25 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
     return () => {
       const t = trialRef.current;
       if (!t) return;
-      void fetchCsrf().then((token) =>
-        fetch('/api/admin/canvas/upload-trial', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-          credentials: 'include',
-          body: JSON.stringify({ key: t.key }),
-          keepalive: true,
-        }).catch(() => { /* best-effort */ })
-      );
+      void adminFetch('/api/admin/canvas/upload-trial', {
+        method: 'DELETE',
+        body: { key: t.key },
+        keepalive: true,
+      }).catch(() => { /* best-effort */ });
     };
   }, []);
 
-  if (!canvas) {
-    return <div className="av-commands-empty">No canvas definitions for this bot — nothing to render yet.</div>;
-  }
-
-  const currentLayout = drafts[bot][canvas.id] ?? canvas.defaultLayout;
-  const committedLayout = committedRef.current[bot][canvas.id] ?? canvas.defaultLayout;
+  // NOTE: `canvas` can be undefined when a bot has zero definitions — every
+  // derivation and callback below is null-safe, and the empty state renders
+  // just before the JSX return (after all hooks, so hook order never varies).
+  const currentLayout = canvas ? (drafts[bot][canvas.id] ?? canvas.defaultLayout) : {};
+  const committedLayout = canvas ? (committedRef.current[bot][canvas.id] ?? canvas.defaultLayout) : {};
   const savedOverride = typeof currentLayout?._backgroundOverride === 'string' ? currentLayout._backgroundOverride : null;
-  const effectiveBackgroundUrl = trial?.url ?? savedOverride ?? canvas.backgroundUrl;
+  const effectiveBackgroundUrl = trial?.url ?? savedOverride ?? canvas?.backgroundUrl ?? '';
   const isDirty = JSON.stringify(currentLayout) !== JSON.stringify(committedLayout) || !!trial;
 
   const uploadTrial = async (file: File) => {
-    if (!file) return;
+    if (!file || !canvas) return;
     if (file.size > 8 * 1024 * 1024) {
       toast.show({ tone: 'error', title: 'Too large', message: 'Max 8MB.' });
       return;
@@ -131,33 +126,25 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
         reader.readAsDataURL(file);
       });
 
-      const token = await fetchCsrf();
-      const res = await fetch('/api/admin/canvas/upload-trial', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-        credentials: 'include',
-        body: JSON.stringify({
-          bot,
-          canvasType: canvas.id,
-          imageData: base64,
-          contentType: file.type || 'image/png',
-          filename: file.name,
-        }),
+      const dims = await measureImageFile(file);
+
+      const body = await adminPost<{ url: string; key: string }>('/api/admin/canvas/upload-trial', {
+        bot,
+        canvasType: canvas.id,
+        imageData: base64,
+        contentType: file.type || 'image/png',
+        filename: file.name,
       });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
 
       // If there was a previous trial, delete it first (best-effort)
       if (trial) {
-        void fetch('/api/admin/canvas/upload-trial', {
+        void adminFetch('/api/admin/canvas/upload-trial', {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-          credentials: 'include',
-          body: JSON.stringify({ key: trial.key }),
+          body: { key: trial.key },
         }).catch(() => { /* best-effort */ });
       }
 
-      setTrial({ url: body.url, key: body.key, filename: file.name });
+      setTrial({ url: body.url, key: body.key, filename: file.name, width: dims?.width, height: dims?.height });
       toast.show({ tone: 'success', title: 'Trial uploaded', message: 'Click Save to make it official, or Test render to preview in Discord.' });
     } catch (e) {
       toast.show({ tone: 'error', title: 'Upload failed', message: (e as Error).message });
@@ -172,18 +159,15 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
     const prev = trial;
     setTrial(null);
     try {
-      const token = await fetchCsrf();
-      await fetch('/api/admin/canvas/upload-trial', {
+      await adminFetch('/api/admin/canvas/upload-trial', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-        credentials: 'include',
-        body: JSON.stringify({ key: prev.key }),
+        body: { key: prev.key },
       });
     } catch { /* best-effort */ }
   };
 
   const commitSave = async () => {
-    if (!isDirty) return;
+    if (!isDirty || !canvas) return;
     const snapBot = bot;
     const snapId = canvas.id;
     const current = drafts[snapBot][snapId] ?? canvas.defaultLayout;
@@ -220,6 +204,7 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
   };
 
   const discardChanges = () => {
+    if (!canvas) return;
     setDrafts((d) => ({
       ...d,
       [bot]: { ...d[bot], [canvas.id]: committedLayout },
@@ -233,28 +218,34 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
   // save also resets the history (implicitly, via effect below).
   const history = useCanvasHistory<any>(currentLayout);
   useEffect(() => {
+    if (!canvas) return;
     history.reset(committedRef.current[bot][canvas.id] ?? canvas.defaultLayout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bot, canvas.id]);
+  }, [bot, canvas?.id]);
+
+  // Latest drafts, updated synchronously inside patchElement so rapid drag
+  // frames compound instead of clobbering each other between renders.
+  const draftsRef = useRef(drafts);
+  draftsRef.current = drafts;
 
   const patchElement = useCallback((elementId: string, patch: Record<string, number>) => {
-    if (Object.keys(patch).length === 0) {
-      setActiveElementId(elementId);
-      return;
-    }
     setActiveElementId(elementId);
-    setDrafts((d) => {
-      const layout = d[bot][canvas.id] ?? canvas.defaultLayout;
-      const currentEntry = getAtPath(layout, elementId) ?? {};
-      const nextEntry = { ...currentEntry, ...patch };
-      const nextLayout = setAtPath(layout, elementId, nextEntry);
-      history.push(nextLayout);
-      return { ...d, [bot]: { ...d[bot], [canvas.id]: nextLayout } };
-    });
-  }, [bot, canvas.id, canvas.defaultLayout, history]);
+    if (Object.keys(patch).length === 0 || !canvas) return;
+    const d = draftsRef.current;
+    const layout = d[bot][canvas.id] ?? canvas.defaultLayout;
+    const currentEntry = getAtPath(layout, elementId) ?? {};
+    const nextLayout = setAtPath(layout, elementId, { ...currentEntry, ...patch });
+    const nextDrafts = { ...d, [bot]: { ...d[bot], [canvas.id]: nextLayout } };
+    draftsRef.current = nextDrafts;
+    // History push happens here, outside the state updater — updaters must be
+    // pure (StrictMode double-invokes them, which duplicated undo entries).
+    history.push(nextLayout);
+    setDrafts(nextDrafts);
+  }, [bot, canvas, history]);
 
   const handleMove = (elementId: string, patch: Partial<{
     x: number; y: number;
+    startX: number; startY: number;
     width: number; height: number;
     radiusX: number; radiusY: number;
     fontSize: number;
@@ -263,6 +254,7 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
   };
 
   const patchColor = (key: string, value: string) => {
+    if (!canvas) return;
     const nextColors = { ...(currentLayout.colors ?? {}), [key]: value };
     const nextLayout = { ...currentLayout, colors: nextColors };
     history.push(nextLayout);
@@ -270,6 +262,7 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
   };
 
   const resetDefaults = () => {
+    if (!canvas) return;
     const nextLayout = { ...canvas.defaultLayout };
     history.push(nextLayout);
     setDrafts((d) => ({ ...d, [bot]: { ...d[bot], [canvas.id]: nextLayout } }));
@@ -280,6 +273,7 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
   // The guard below short-circuits when drafts was the source of a history
   // push (both point at the same reference) — prevents an infinite loop.
   useEffect(() => {
+    if (!canvas) return;
     const committedForCurrent = drafts[bot][canvas.id];
     if (committedForCurrent === history.value) return;
     try {
@@ -353,9 +347,13 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
       const b = committed[def.id] ?? def.defaultLayout;
       if (JSON.stringify(a) !== JSON.stringify(b)) set.add(def.id);
     }
-    if (trial) set.add(canvas.id);
+    if (trial && canvas) set.add(canvas.id);
     return set;
-  }, [defs, drafts, bot, trial, canvas.id]);
+  }, [defs, drafts, bot, trial, canvas?.id]);
+
+  if (!canvas) {
+    return <div className="av-commands-empty">No canvas definitions for this bot — nothing to render yet.</div>;
+  }
 
   return (
     <section className="av-media av-media-canvas">
@@ -442,6 +440,22 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
                 Previewing <code>{trial.filename}</code> on the canvas. This is local-only — test render uses it,
                 but nothing on R2 or the DB changes until you click <strong>Save changes</strong>. Leaving this page discards the trial.
               </span>
+              {trial.width && trial.height && (() => {
+                const imgRatio = trial.width / trial.height;
+                const canvasRatio = canvas.width / canvas.height;
+                const matches = Math.abs(imgRatio - canvasRatio) / canvasRatio <= 0.02;
+                return matches ? (
+                  <span className="av-canvas-trial-dims">
+                    Image is {trial.width}×{trial.height} — same shape as the canvas, it will fill it perfectly.
+                  </span>
+                ) : (
+                  <span className="av-canvas-trial-dims av-canvas-trial-dims--warn">
+                    Heads up: this image is {trial.width}×{trial.height} but the canvas is {canvas.width}×{canvas.height} —
+                    a different shape. The photo will show with empty bars and elements may not line up on it.
+                    For a perfect fit, use an image sized {canvas.width}×{canvas.height} (or the same shape).
+                  </span>
+                );
+              })()}
             </div>
           )}
           {isDirty && (

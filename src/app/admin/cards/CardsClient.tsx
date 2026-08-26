@@ -196,7 +196,7 @@ export default function CardsClient({ snapshot }: { snapshot: CardsSnapshot }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-            {q && <button type="button" className="av-audit-clear" onClick={() => setQ('')}>×</button>}
+            {q && <button aria-label="Clear search" type="button" className="av-audit-clear" onClick={() => setQ('')}>×</button>}
           </div>
           <select
             className="av-audit-input av-audit-input--sm"
