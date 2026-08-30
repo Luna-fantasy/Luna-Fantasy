@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { adminPut } from '@/lib/admin/http';
 import { useToast } from '../_components/Toast';
 import { useUndo } from '../_components/UndoProvider';
 import { usePendingAction } from '../_components/PendingActionProvider';
@@ -53,20 +54,10 @@ function setAtPath(obj: any, path: string[], value: any): any {
   return base;
 }
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
-async function saveBotConfig(id: string, data: any): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch(`/api/admin/v2/bot-config/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ data }),
-  });
-  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.error || `HTTP ${res.status}`); }
+// Dot-path write — these docs carry fields owned by other admin pages
+// (application panels, ticket categories), so never send the whole doc.
+async function saveLogChannel(docId: string, path: string[], value: string): Promise<void> {
+  await adminPut(`/api/admin/v2/bot-config/${encodeURIComponent(docId)}`, { path, value });
 }
 
 export default function LoggingClient({ docs }: Props) {
@@ -90,27 +81,37 @@ export default function LoggingClient({ docs }: Props) {
       run: async () => {
         const snap = draftRef.current;
         const comm = committedRef.current;
-        const dirty = Object.keys(snap).filter((id) => JSON.stringify(snap[id]) !== JSON.stringify(comm[id]));
+        const dirty = TARGETS.filter((t) => {
+          const after = String(getAtPath(snap[t.docId] ?? {}, t.path) ?? '');
+          const before = String(getAtPath(comm[t.docId] ?? {}, t.path) ?? '');
+          return after !== before;
+        });
         if (dirty.length === 0) return;
-        for (const id of dirty) {
-          const before = comm[id];
-          const after = snap[id];
+        for (const t of dirty) {
+          const before = String(getAtPath(comm[t.docId] ?? {}, t.path) ?? '');
+          const after = String(getAtPath(snap[t.docId] ?? {}, t.path) ?? '');
           try {
-            await saveBotConfig(id, after);
-            committedRef.current = { ...committedRef.current, [id]: after };
-            toast.show({ tone: 'success', title: 'Saved', message: id });
+            await saveLogChannel(t.docId, t.path, after);
+            committedRef.current = {
+              ...committedRef.current,
+              [t.docId]: setAtPath(committedRef.current[t.docId] ?? {}, t.path, after),
+            };
+            toast.show({ tone: 'success', title: 'Saved', message: t.label });
             undo.push({
-              label: `Restore ${id}`,
+              label: `Restore ${t.label}`,
               detail: 'Rolled back to prior log routing',
               revert: async () => {
-                await saveBotConfig(id, before);
-                committedRef.current = { ...committedRef.current, [id]: before };
-                setDraft((d) => ({ ...d, [id]: before }));
-                toast.show({ tone: 'success', title: 'Reverted', message: id });
+                await saveLogChannel(t.docId, t.path, before);
+                committedRef.current = {
+                  ...committedRef.current,
+                  [t.docId]: setAtPath(committedRef.current[t.docId] ?? {}, t.path, before),
+                };
+                setDraft((d) => ({ ...d, [t.docId]: setAtPath(d[t.docId] ?? {}, t.path, before) }));
+                toast.show({ tone: 'success', title: 'Reverted', message: t.label });
               },
             });
           } catch (e) {
-            toast.show({ tone: 'error', title: `Save failed: ${id}`, message: (e as Error).message });
+            toast.show({ tone: 'error', title: `Save failed: ${t.label}`, message: (e as Error).message });
           }
         }
       },
