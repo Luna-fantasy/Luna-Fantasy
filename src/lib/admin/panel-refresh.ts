@@ -20,7 +20,9 @@ export type PanelTarget =
   | 'shop_luckbox'
   | 'shop_meluna'
   | 'luna_map'
-  | 'shop_mells';
+  | 'shop_mells'
+  | 'app_knight'
+  | 'app_wizard';
 
 let ttlIndexEnsured = false;
 

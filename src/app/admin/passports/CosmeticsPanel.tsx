@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { adminGet, adminPut } from '@/lib/admin/http';
 import RoleChips from '../_components/RoleChips';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
@@ -42,11 +43,6 @@ const STAFF_TEMPLATES = [
   { id: 'mastermind', label: 'Mastermind', url: 'https://assets.lunarian.app/butler/backgrounds/PassportMastermind.png', tone: '#a855f7' },
 ] as const;
 
-async function fetchCsrf(): Promise<string> {
-  const res = await fetch('/api/admin/csrf', { cache: 'no-store' });
-  return (await res.json()).token;
-}
-
 function normalize(apps: ApplicationsDoc | null): CosmeticsConfig {
   return {
     passport_vip_roles: apps?.passport_vip_roles ?? [],
@@ -59,26 +55,19 @@ function normalize(apps: ApplicationsDoc | null): CosmeticsConfig {
   };
 }
 
-async function loadConfig(): Promise<{ applications: ApplicationsDoc; cosmetics: CosmeticsConfig }> {
-  const res = await fetch('/api/admin/config/butler', { cache: 'no-store' });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  const applications: ApplicationsDoc = data.sections?.applications_system ?? {};
-  return { applications, cosmetics: normalize(applications) };
+async function loadConfig(): Promise<CosmeticsConfig> {
+  const data = await adminGet<any>('/api/admin/config/butler');
+  const applications: ApplicationsDoc = data?.sections?.applications_system ?? {};
+  return normalize(applications);
 }
 
-async function saveApplications(value: ApplicationsDoc): Promise<void> {
-  const token = await fetchCsrf();
-  const res = await fetch('/api/admin/config/butler', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'x-csrf-token': token },
-    credentials: 'include',
-    body: JSON.stringify({ section: 'applications_system', value }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `HTTP ${res.status}`);
-  }
+// Three surgical sections instead of the old applications_system root write —
+// a passport save can no longer clobber the Knight/Wizard panel fields (or
+// any category's questions) from a stale tab.
+async function saveCosmetics(cfg: CosmeticsConfig): Promise<void> {
+  await adminPut('/api/admin/config/butler', { section: 'passport_vip_roles', value: cfg.passport_vip_roles });
+  await adminPut('/api/admin/config/butler', { section: 'passport_staff_roles', value: cfg.passport_staff_roles });
+  await adminPut('/api/admin/config/butler', { section: 'passport_merchant_image', value: cfg.merchantPhotoUrl.trim() || DEFAULT_MERCHANT });
 }
 
 export default function CosmeticsPanel() {
@@ -87,14 +76,12 @@ export default function CosmeticsPanel() {
   const undo = useUndo();
 
   const [loading, setLoading] = useState(true);
-  const [applicationsDoc, setApplicationsDoc] = useState<ApplicationsDoc>({});
   const [saved, setSaved] = useState<CosmeticsConfig>(normalize(null));
   const [draft, setDraft] = useState<CosmeticsConfig>(normalize(null));
 
   const refresh = useCallback(async () => {
     try {
-      const { applications, cosmetics } = await loadConfig();
-      setApplicationsDoc(applications);
+      const cosmetics = await loadConfig();
       setSaved(cosmetics);
       setDraft(cosmetics);
     } catch {
@@ -113,42 +100,22 @@ export default function CosmeticsPanel() {
     const prev = saved;
     const next = draft;
 
-    const applicationsNext: ApplicationsDoc = {
-      ...applicationsDoc,
-      passport_vip_roles: next.passport_vip_roles,
-      passport_staff_roles: next.passport_staff_roles,
-      categories: {
-        ...(applicationsDoc.categories ?? {}),
-        passport: {
-          ...(applicationsDoc.categories?.passport ?? {
-            title: 'جواز سفر لونا',
-            description: 'تقدم بطلب للحصول على جواز سفر لونا الرسمي من السيد فيلور ستورم.',
-            questions: [],
-          }),
-          image: next.merchantPhotoUrl.trim() || DEFAULT_MERCHANT,
-        },
-      },
-    };
-
     await pending.queue({
       label: 'Save passport cosmetics',
       detail: 'VIP roles, staff tiers, merchant portrait',
       delayMs: 4000,
       run: async () => {
         try {
-          await saveApplications(applicationsNext);
-          setApplicationsDoc(applicationsNext);
+          await saveCosmetics(next);
           setSaved(next);
           toast.show({ tone: 'success', title: 'Saved', message: 'Passport cosmetics · bot picks up within 60s' });
 
-          const prevApplicationsDoc = applicationsDoc;
           undo.push({
             label: 'Restore passport cosmetics',
             detail: 'Revert VIP roles / staff tiers / merchant portrait',
             revert: async () => {
               try {
-                await saveApplications(prevApplicationsDoc);
-                setApplicationsDoc(prevApplicationsDoc);
+                await saveCosmetics(prev);
                 setSaved(prev);
                 setDraft(prev);
                 toast.show({ tone: 'success', title: 'Reverted', message: 'Passport cosmetics' });

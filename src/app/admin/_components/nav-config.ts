@@ -64,6 +64,7 @@ export const CLUSTERS: NavCluster[] = [
       { label: 'Games',         href: '/admin/games',         icon: 'gamepad' },
       { label: 'Challenges',    href: '/admin/challenges',    icon: 'flag' },
       { label: 'Commands',      href: '/admin/commands',      icon: 'terminal' },
+      { label: 'Applications',  href: '/admin/applications',  icon: 'app' },
       { label: 'Staff Inbox',   href: '/admin/inbox',         icon: 'ticket' },
     ],
   },

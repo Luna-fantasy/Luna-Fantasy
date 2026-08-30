@@ -155,8 +155,71 @@ function validateBadgeThresholds(value: any): ValidationError[] {
   return errors;
 }
 
+// Validates the Knight/Wizard application panel sections. Partial objects are
+// allowed — the route writes each present key as its own dot-path $set.
+function validateAppPanel(value: any): ValidationError[] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return [{ field: 'root', message: 'Must be an object' }];
+  }
+  const errors: ValidationError[] = [];
+  const allowed = new Set(['title', 'description', 'image', 'enabled']);
+  for (const key of Object.keys(value)) {
+    if (!allowed.has(key)) errors.push({ field: key, message: `Unknown field: ${key}` });
+  }
+  if (value.title !== undefined) {
+    if (typeof value.title !== 'string' || !value.title.trim()) errors.push({ field: 'title', message: 'Title must be a non-empty string' });
+    else if (value.title.length > 200) errors.push({ field: 'title', message: 'Title must be at most 200 characters' });
+  }
+  if (value.description !== undefined) {
+    if (typeof value.description !== 'string' || !value.description.trim()) errors.push({ field: 'description', message: 'Description must be a non-empty string' });
+    else if (value.description.length > 2000) errors.push({ field: 'description', message: 'Description must be at most 2000 characters' });
+  }
+  if (value.enabled !== undefined && typeof value.enabled !== 'boolean') {
+    errors.push({ field: 'enabled', message: 'enabled must be true or false' });
+  }
+  if (value.image !== undefined) errors.push(...assetsCdnUrl(value.image, 'image'));
+  return errors;
+}
+
+// Panel images must live on the assets CDN (never raw hosts, never the VPS)
+function assetsCdnUrl(value: any, field: string): ValidationError[] {
+  if (typeof value !== 'string' || !value.trim()) return [{ field, message: `${field} must be a non-empty URL string` }];
+  if (!value.startsWith('https://assets.lunarian.app/')) return [{ field, message: `${field} must be hosted on assets.lunarian.app` }];
+  return [];
+}
+
+function validateRoleIdArray(value: any, field: string): ValidationError[] {
+  if (!Array.isArray(value)) return [{ field, message: `${field} must be an array of role IDs` }];
+  const errors: ValidationError[] = [];
+  if (value.length > 25) errors.push({ field, message: `${field}: max 25 roles` });
+  for (const r of value) {
+    if (typeof r !== 'string' || !/^\d{17,20}$/.test(r)) {
+      errors.push({ field, message: `${field}: invalid Discord role ID` });
+      break;
+    }
+  }
+  return errors;
+}
+
+// Validates the passport staff-tier role config saved from the passports page
+function validatePassportStaffRoles(value: any): ValidationError[] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return [{ field: 'root', message: 'Must be an object' }];
+  }
+  const errors: ValidationError[] = [];
+  for (const tier of ['mastermind', 'sentinel', 'guardian']) {
+    if (value[tier] !== undefined) errors.push(...validateRoleIdArray(value[tier], tier));
+  }
+  return errors;
+}
+
 // Section-specific validators for Butler config
 const BUTLER_VALIDATORS: Record<string, Validator> = {
+  app_panel_staff: validateAppPanel,
+  app_panel_wizard: validateAppPanel,
+  passport_vip_roles: (v) => validateRoleIdArray(v, 'passport_vip_roles'),
+  passport_staff_roles: validatePassportStaffRoles,
+  passport_merchant_image: (v) => assetsCdnUrl(v, 'passport_merchant_image'),
   daily_reward: (v) => [...nonNegative(v, ['amount']), ...positive(v, ['cooldown'])],
   salary: (v) => [...nonNegative(v, ['amount']), ...positive(v, ['cooldown'])],
   vip_reward: (v) => [...nonNegative(v, ['amount']), ...positive(v, ['cooldown'])],

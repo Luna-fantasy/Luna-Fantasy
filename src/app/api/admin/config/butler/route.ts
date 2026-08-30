@@ -8,6 +8,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 import { invalidateLiveBankConfigCache } from '@/lib/bank/live-bank-config';
 import { invalidateShopConfigCache } from '@/lib/bazaar/shop-config';
+import { requestPanelRefresh, type PanelTarget } from '@/lib/admin/panel-refresh';
 
 const DB_NAME = 'Database';
 
@@ -17,7 +18,7 @@ const ALLOWED_SECTIONS = new Set([
   'xo_game', 'rps_game', 'connect4_game', 'coinflip_game',
   'hunt_game', 'roulette_game', 'luna21_game', 'steal_system',
   'loan_tiers', 'investment', 'trade_settings', 'insurance', 'shop_items',
-  'ticket_system', 'applications_system', 'auto_reply', 'auto_images',
+  'ticket_system', 'auto_reply', 'auto_images',
   'channel_config', 'role_config', 'leaderboard_config',
   'insurance_types', 'level_enabled', 'level_up_message', 'level_up_channel',
   'banker_enabled', 'trade_level', 'vip_interest',
@@ -28,6 +29,11 @@ const ALLOWED_SECTIONS = new Set([
   // Investor (bank-VIP renamed). Keep 'vip_reward' + 'vip_interest' as legacy aliases
   // during migration — both resolve to the same bot_config field underneath.
   'investor_reward', 'investor_interest',
+  // Knight/Wizard application panels (per-key dot-path writes; see PUT below)
+  'app_panel_staff', 'app_panel_wizard',
+  // Passport cosmetics — surgical replacements for the old applications_system
+  // root write, which could clobber the panel fields from a stale tab
+  'passport_vip_roles', 'passport_staff_roles', 'passport_merchant_image',
 ]);
 
 // Maps dashboard section names → bot_config document _id + data field path
@@ -53,7 +59,6 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   insurance:       { docId: 'butler_banking', field: 'insurance' },
   shop_items:     { docId: 'butler_shop', field: 'items' },
   ticket_system:        { docId: 'butler_tickets', field: '_root' },
-  applications_system:  { docId: 'butler_applications', field: '_root' },
   auto_reply:           { docId: 'butler_auto_reply', field: '_root' },
   auto_images:          { docId: 'butler_auto_images', field: '_root' },
   channel_config:       { docId: 'butler_channels', field: '_root' },
@@ -77,7 +82,20 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   notifications:        { docId: 'butler_notifications', field: '_root' },
   investor_reward:      { docId: 'butler_economy', field: 'investor_reward' },
   investor_interest:    { docId: 'butler_banking', field: 'investor_interest' },
+  passport_vip_roles:      { docId: 'butler_applications', field: 'passport_vip_roles' },
+  passport_staff_roles:    { docId: 'butler_applications', field: 'passport_staff_roles' },
+  passport_merchant_image: { docId: 'butler_applications', field: 'categories.passport.image' },
 };
+
+// Knight/Wizard panel sections write each provided key as its own dot-path
+// $set so a save can never clobber the category's questions array (or a
+// concurrent editor's work on a sibling field). Saving also nudges Butler to
+// re-edit the posted Discord panel.
+const APP_PANEL_SECTIONS: Record<string, { category: 'staff' | 'wizard'; target: PanelTarget }> = {
+  app_panel_staff:  { category: 'staff',  target: 'app_knight' },
+  app_panel_wizard: { category: 'wizard', target: 'app_wizard' },
+};
+const APP_PANEL_KEYS = ['title', 'description', 'image', 'enabled'] as const;
 
 export async function GET() {
   const auth = await requireMastermindApi();
@@ -268,6 +286,46 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
+    // Knight/Wizard application panel sections — per-key dot-path writes plus
+    // an instant refresh request so the posted panel updates within ~20s.
+    const appPanel = APP_PANEL_SECTIONS[section];
+    if (appPanel) {
+      const client = await clientPromise;
+      const col = client.db(DB_NAME).collection('bot_config');
+
+      const currentDoc = await col.findOne({ _id: 'butler_applications' as any });
+      const currentCat = currentDoc?.data?.categories?.[appPanel.category] ?? null;
+      // Audit the editable fields only — the questions array isn't touched here
+      const before = currentCat
+        ? Object.fromEntries(APP_PANEL_KEYS.map((k) => [k, currentCat[k]]).filter(([, v]) => v !== undefined))
+        : null;
+
+      const sets: Record<string, any> = { updatedAt: new Date(), updatedBy: adminId };
+      for (const key of APP_PANEL_KEYS) {
+        if (value[key] !== undefined) sets[`data.categories.${appPanel.category}.${key}`] = value[key];
+      }
+
+      await col.updateOne(
+        { _id: 'butler_applications' as any },
+        { $set: sets },
+        { upsert: true }
+      );
+
+      await logAdminAction({
+        adminDiscordId: adminId,
+        adminUsername: auth.session.user.username ?? 'unknown',
+        action: 'config_butler_update',
+        metadata: { section, docId: 'butler_applications' },
+        before,
+        after: value,
+        ip: getClientIp(req),
+      });
+
+      requestPanelRefresh('butler', appPanel.target, adminId);
+
+      return NextResponse.json({ success: true, saved: true });
+    }
+
     const mapping = SECTION_MAP[section];
     if (!mapping) {
       return NextResponse.json({ error: `No mapping for section: ${section}` }, { status: 400 });
