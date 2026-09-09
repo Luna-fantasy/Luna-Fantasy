@@ -7,6 +7,7 @@ export interface CanvasElementDef {
   type: 'circle' | 'text' | 'rect';
   props: string[];         // editable properties: ['x','y','size'] or ['x','y','fontSize']
   group: string;           // grouping label for element list
+  align?: 'start' | 'middle' | 'end'; // text anchor, mirrors the bot's ctx.textAlign (default 'start')
 }
 
 export interface ColorKeyDef {
@@ -27,7 +28,9 @@ export interface CanvasTypeDef {
   colorKeys: ColorKeyDef[];
 }
 
-// Helper: generate leaderboard element definitions for 10 ranks
+// Helper: generate leaderboard element definitions for 10 ranks.
+// Text anchors mirror how all three leaderboard renderers draw: podium name and
+// value centered on x, list names growing right from x, list values ending at x.
 function leaderboardElements(valueLabel: string): CanvasElementDef[] {
   const elements: CanvasElementDef[] = [];
 
@@ -35,8 +38,8 @@ function leaderboardElements(valueLabel: string): CanvasElementDef[] {
     const group = `Top 3 — Rank ${rank}`;
     elements.push(
       { id: `top3.${rank}.avatar`, label: `#${rank} Avatar`, type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group },
-      { id: `top3.${rank}.name`, label: `#${rank} Name`, type: 'text', props: ['x', 'y', 'fontSize'], group },
-      { id: `top3.${rank}.value`, label: `#${rank} ${valueLabel}`, type: 'text', props: ['x', 'y', 'fontSize'], group },
+      { id: `top3.${rank}.name`, label: `#${rank} Name`, type: 'text', props: ['x', 'y', 'fontSize'], group, align: 'middle' },
+      { id: `top3.${rank}.value`, label: `#${rank} ${valueLabel}`, type: 'text', props: ['x', 'y', 'fontSize'], group, align: 'middle' },
     );
   }
 
@@ -44,8 +47,8 @@ function leaderboardElements(valueLabel: string): CanvasElementDef[] {
     const group = `List — Rank ${rank}`;
     elements.push(
       { id: `list.${rank}.avatar`, label: `#${rank} Avatar`, type: 'circle', props: ['x', 'y', 'radiusX', 'radiusY'], group },
-      { id: `list.${rank}.name`, label: `#${rank} Name`, type: 'text', props: ['x', 'y', 'fontSize'], group },
-      { id: `list.${rank}.value`, label: `#${rank} ${valueLabel}`, type: 'text', props: ['x', 'y', 'fontSize'], group },
+      { id: `list.${rank}.name`, label: `#${rank} Name`, type: 'text', props: ['x', 'y', 'fontSize'], group, align: 'start' },
+      { id: `list.${rank}.value`, label: `#${rank} ${valueLabel}`, type: 'text', props: ['x', 'y', 'fontSize'], group, align: 'end' },
     );
   }
 

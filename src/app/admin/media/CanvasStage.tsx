@@ -297,17 +297,21 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
         </g>
       );
     }
-    // text
+    // text — anchored the same way the bot draws it (centered podium text,
+    // right-aligned list values), so the preview lands where Discord will.
     const fontSize = Math.max(MIN_FONT, Number(entry.fontSize ?? 20));
+    const anchor = el.align ?? 'start';
+    const boxWidth = fontSize * 6;
+    const boxX = anchor === 'middle' ? x - boxWidth / 2 : anchor === 'end' ? x - boxWidth : x;
     return (
       <g key={`${el.id}-shape`} className={`av-canvas-handle${stateClass}`}>
         <rect
-          x={x - 4} y={y - fontSize - 4} width={fontSize * 6} height={fontSize + 8}
+          x={boxX - 4} y={y - fontSize - 4} width={boxWidth + 8} height={fontSize + 8}
           className="av-canvas-handle-shape av-canvas-handle-shape--text"
           onMouseDown={(e) => beginDrag(e, el, 'move')}
           style={{ cursor: 'move' }}
         />
-        <text x={x} y={y} fontSize={fontSize} className="av-canvas-handle-text" pointerEvents="none">{el.label}</text>
+        <text x={x} y={y} fontSize={fontSize} textAnchor={anchor} className="av-canvas-handle-text" pointerEvents="none">{el.label}</text>
       </g>
     );
   };
@@ -361,10 +365,14 @@ export default function CanvasStage({ canvas, layout, activeElementId, onSelectE
       );
     }
     const fontSize = Math.max(MIN_FONT, Number(entry.fontSize ?? 20));
+    // Same anchored box as renderShape — the dot rides its top-left corner.
+    const anchor = el.align ?? 'start';
+    const boxWidth = fontSize * 6;
+    const boxX = anchor === 'middle' ? x - boxWidth / 2 : anchor === 'end' ? x - boxWidth : x;
     return (
       <g key={`${el.id}-dot`} className={`av-canvas-handle${stateClass}`}>
         <circle
-          cx={x - 4} cy={y - fontSize - 4} r={dotR}
+          cx={boxX - 4} cy={y - fontSize - 4} r={dotR}
           className="av-canvas-handle-dot"
           onMouseDown={(e) => beginDrag(e, el, 'resize')}
           style={{ cursor: 'ns-resize' }}

@@ -17,6 +17,7 @@ export interface CanvasElementDef {
   type: 'circle' | 'text' | 'rect';
   props: string[];
   group: string;
+  align?: 'start' | 'middle' | 'end'; // text anchor, mirrors the bot's ctx.textAlign (default 'start')
 }
 
 export interface ColorKeyDef {

@@ -436,8 +436,8 @@ export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Prop
                 ) : (
                   <span className="av-canvas-trial-dims av-canvas-trial-dims--warn">
                     Heads up: this image is {trial.width}×{trial.height} but the canvas is {canvas.width}×{canvas.height} —
-                    a different shape. The photo will show with empty bars and elements may not line up on it.
-                    For a perfect fit, use an image sized {canvas.width}×{canvas.height} (or the same shape).
+                    a different shape. It shows with empty bars, here and in Discord alike, and elements land exactly
+                    where you place them on it. For an edge-to-edge fit, use an image sized {canvas.width}×{canvas.height} (or the same shape).
                   </span>
                 );
               })()}
