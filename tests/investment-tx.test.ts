@@ -2,6 +2,8 @@ import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { MongoClient } from 'mongodb';
 import { startTestReplSet, type TestReplSet } from './helpers/replset';
+import { holdDocument } from './helpers/hold';
+import { failNextCommit, clearFailPoints } from './helpers/failpoint';
 import { investmentStartMs, withdrawInvestmentTx, depositInvestmentTx, type InvestmentTerms } from '../src/lib/bank/investment-tx';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -34,13 +36,18 @@ after(async () => {
 });
 
 beforeEach(async () => {
+  await clearFailPoints(client);
   await db().dropDatabase();
 });
 
 test('investmentStartMs reads ISO strings and epoch ms', () => {
   assert.equal(investmentStartMs('2026-02-23T21:39:00.000Z'), Date.UTC(2026, 1, 23, 21, 39));
   assert.equal(investmentStartMs(NOW), NOW);
-  for (const bad of [undefined, null, '', 'nope', 0, -1]) assert.equal(investmentStartMs(bad as any), null);
+  assert.equal(investmentStartMs(new Date(NOW)), NOW);
+  assert.equal(investmentStartMs(String(NOW)), NOW);
+  for (const bad of [undefined, null, '', 'nope', 0, -1, '1', '2001', 5, 1_700_000_000, 'Feb 23 2026']) {
+    assert.equal(investmentStartMs(bad as any), null, String(bad));
+  }
 });
 
 test('a matured deposit is paid once and cleared entirely (0.1)', async () => {
@@ -85,10 +92,10 @@ test('an early withdrawal pays the amount minus the fee', async () => {
   assert.equal(await balance(), 35000);
 });
 
-test('if crediting fails the withdrawal is rolled back', async () => {
+test('if crediting fails the withdrawal is rolled back, without showing the raw database error', async () => {
   await points().insertOne({ _id: USER, balance: 'broken' });
   await bank().insertOne({ _id: USER, investment: deposit(100000, NOW - 31 * DAY) });
-  await assert.rejects(withdrawInvestmentTx(client, USER, TERMS, NOW));
+  await assert.rejects(withdrawInvestmentTx(client, USER, TERMS, NOW), (e: Error) => /^Internal/.test(e.message) && !/\$inc/.test(e.message));
   assert.equal((await inv()).active, true);
   assert.equal(await balance(), 'broken');
 });
@@ -152,4 +159,74 @@ test('a top-up racing a withdrawal can never bring the paid-out deposit back', a
     // 50,000 + 20,000 in the deposit, less the 5,000 early fee, whichever order the two ran in
     assert.equal(held, 65000, `round ${round}: balance plus deposit is ${held}`);
   }
+});
+
+test('a record with an amount but no active flag is never overwritten by a new deposit', async () => {
+  await points().insertOne({ _id: USER, balance: 50000 });
+  await bank().insertOne({ _id: USER, investment: { amount: 80000, startDate: NOW - 5 * DAY } });
+  await assert.rejects(depositInvestmentTx(client, USER, 20000, TERMS, NOW), /already have an active deposit/);
+  assert.equal((await inv()).amount, 80000);
+  assert.equal(await balance(), 50000);
+  assert.equal(await reserve(), 0);
+});
+
+test('a withdrawal forced to retry by a write conflict pays once', async () => {
+  await points().insertOne({ _id: USER, balance: 0 });
+  await bank().insertOne({ _id: USER, investment: deposit(100000, NOW - 31 * DAY) });
+  const { released } = await holdDocument(client, 'points', USER, 300);
+  const r = await withdrawInvestmentTx(client, USER, TERMS, NOW);
+  await released;
+  assert.equal(r?.payout, 130000);
+  assert.equal(await balance(), 130000);
+  assert.equal(await inv(), null);
+});
+
+test('a top-up forced to retry by a write conflict moves the money once', async () => {
+  await points().insertOne({ _id: USER, balance: 50000 });
+  await bank().insertOne({ _id: USER, investment: deposit(20000, NOW - DAY) });
+  const { released } = await holdDocument(client, 'system', 'luna_bank_reserve', 300);
+  await depositInvestmentTx(client, USER, 20000, TERMS, NOW);
+  await released;
+  assert.equal(await balance(), 30000);
+  assert.equal((await inv()).amount, 40000);
+  assert.equal(await reserve(), 20000);
+});
+
+test('a new deposit forced to retry by a write conflict moves the money once', async () => {
+  await points().insertOne({ _id: USER, balance: 50000 });
+  const { released } = await holdDocument(client, 'system', 'luna_bank_reserve', 300);
+  await depositInvestmentTx(client, USER, 20000, TERMS, NOW);
+  await released;
+  assert.equal(await balance(), 30000);
+  assert.equal((await inv()).amount, 20000);
+  assert.equal(await reserve(), 20000);
+});
+
+test('a withdrawal replayed after a failed commit pays once', async () => {
+  await points().insertOne({ _id: USER, balance: 0 });
+  await bank().insertOne({ _id: USER, investment: deposit(100000, NOW - 31 * DAY) });
+  await failNextCommit(client);
+  const r = await withdrawInvestmentTx(client, USER, TERMS, NOW);
+  assert.equal(r?.payout, 130000);
+  assert.equal(await balance(), 130000);
+  assert.equal(await inv(), null);
+});
+
+test('a top-up replayed after a failed commit moves the money once', async () => {
+  await points().insertOne({ _id: USER, balance: 50000 });
+  await bank().insertOne({ _id: USER, investment: deposit(20000, NOW - DAY) });
+  await failNextCommit(client);
+  await depositInvestmentTx(client, USER, 20000, TERMS, NOW);
+  assert.equal(await balance(), 30000);
+  assert.equal((await inv()).amount, 40000);
+  assert.equal(await reserve(), 20000);
+});
+
+test('a new deposit replayed after a failed commit moves the money once', async () => {
+  await points().insertOne({ _id: USER, balance: 50000 });
+  await failNextCommit(client);
+  await depositInvestmentTx(client, USER, 20000, TERMS, NOW);
+  assert.equal(await balance(), 30000);
+  assert.equal((await inv()).amount, 20000);
+  assert.equal(await reserve(), 20000);
 });

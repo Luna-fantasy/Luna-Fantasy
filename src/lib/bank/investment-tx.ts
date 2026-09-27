@@ -7,7 +7,7 @@
  * A top-up must never write back a deposit that was paid out in the meantime.
  */
 
-import type { ClientSession, MongoClient } from 'mongodb';
+import { MongoError, MongoServerError, type ClientSession, type MongoClient } from 'mongodb';
 import type { InvestmentRecord } from '@/types/bank';
 
 export interface InvestmentTerms {
@@ -25,10 +25,31 @@ export interface WithdrawResult {
   balanceAfter: number;
 }
 
-// The website stores startDate as an ISO string, Butler as epoch ms
+// Nothing in the Luna economy predates this; smaller values are seconds, typos or junk
+const EARLIEST_START = Date.UTC(2020, 0, 1);
+
+// The website stores startDate as an ISO string, Butler as epoch ms. Date objects and epoch ms
+// saved as text are read too; anything else (e.g. '1', which Date.parse calls the year 2001) is null.
+// Same rules as Butler's depositStartMs.
 export function investmentStartMs(startDate: unknown): number | null {
-  const ms = typeof startDate === 'number' ? startDate : typeof startDate === 'string' ? Date.parse(startDate) : NaN;
-  return Number.isFinite(ms) && ms > 0 ? ms : null;
+  let ms = NaN;
+  if (typeof startDate === 'number') ms = startDate;
+  else if (startDate instanceof Date) ms = startDate.getTime();
+  else if (typeof startDate === 'string') {
+    if (/^\d{12,}$/.test(startDate)) ms = Number(startDate);
+    else if (/^\d{4}-\d{2}-\d{2}T/.test(startDate)) ms = Date.parse(startDate);
+  }
+  return Number.isFinite(ms) && ms >= EARLIEST_START ? ms : null;
+}
+
+// Player-facing refusals are plain Errors and pass through; a database failure becomes a generic
+// "Internal" error so the route answers 500 instead of echoing driver text to the player
+function hideDatabaseErrors(err: unknown): never {
+  if (err instanceof MongoError) {
+    console.error('[bank/investment] transaction failed:', err);
+    throw new Error('Internal: bank transaction failed', { cause: err });
+  }
+  throw err;
 }
 
 function collections(client: MongoClient) {
@@ -84,7 +105,7 @@ export async function withdrawInvestmentTx(
       early,
       balanceAfter: typeof credited?.balance === 'number' ? credited.balance : payout,
     };
-  });
+  }).catch(hideDatabaseErrors);
 }
 
 /**
@@ -130,8 +151,11 @@ export async function depositInvestmentTx(
       investment = { ...existing, amount: existing.amount + amount, lastDepositDate: nowIso };
     } else {
       investment = { amount, startDate: nowIso, lastDepositDate: nowIso, depositLocked: false, active: true };
+      // Only replaces "no deposit": cleared, explicitly inactive, or empty. An old record carrying
+      // an amount without an active flag makes the filter miss and the upsert collide on _id,
+      // which undoes the whole transaction, debit included.
       await bank.updateOne(
-        { _id: userId, 'investment.active': { $ne: true } },
+        { _id: userId, $or: [{ investment: null }, { 'investment.active': false }, { 'investment.amount': { $not: { $gt: 0 } } }] },
         { $set: { investment, updatedAt: new Date() } },
         { session, upsert: true }
       );
@@ -139,5 +163,8 @@ export async function depositInvestmentTx(
 
     await system.updateOne({ _id: 'luna_bank_reserve' }, { $inc: { value: amount } }, { session, upsert: true });
     return { investment, balanceAfter: debited.balance as number };
+  }).catch((err) => {
+    if (err instanceof MongoServerError && err.code === 11000) throw new Error('You already have an active deposit');
+    return hideDatabaseErrors(err);
   });
 }

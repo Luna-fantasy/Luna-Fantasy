@@ -16,6 +16,8 @@ export async function startTestReplSet(): Promise<TestReplSet> {
   const rs = await MongoMemoryReplSet.create({
     replSet: { count: 1, storageEngine: 'wiredTiger' },
     binary: { version: MONGOD_VERSION, downloadDir: DOWNLOAD_DIR },
+    // Test commands allow fail points (see failpoint.ts); this is the throwaway server only
+    instanceOpts: [{ args: ['--setParameter', 'enableTestCommands=1'] }],
   });
   const uri = rs.getUri();
   if (!/^mongodb:\/\/127\.0\.0\.1:/.test(uri)) throw new Error(`refusing to test against ${uri}`);
