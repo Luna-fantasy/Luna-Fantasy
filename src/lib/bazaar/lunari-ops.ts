@@ -10,7 +10,7 @@ function getDb() {
  * Fire-and-forget: increment money_earned + total_earned in profiles collection.
  * Matches bot behavior: profilesManager.addMoneyEarned(userId, amount)
  */
-async function trackProfileEarnings(discordId: string, amount: number): Promise<void> {
+export async function trackProfileEarnings(discordId: string, amount: number): Promise<void> {
   if (amount <= 0) return;
   try {
     const db = await getDb();
@@ -43,7 +43,7 @@ async function trackProfileEarnings(discordId: string, amount: number): Promise<
  * Fire-and-forget: increment money_spent + total_spent in profiles collection.
  * Matches bot behavior: profilesManager.addMoneySpent(userId, amount)
  */
-async function trackProfileSpending(discordId: string, amount: number): Promise<void> {
+export async function trackProfileSpending(discordId: string, amount: number): Promise<void> {
   if (amount <= 0) return;
   try {
     const db = await getDb();

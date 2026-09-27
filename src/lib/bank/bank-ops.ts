@@ -6,7 +6,8 @@
 import clientPromise from '@/lib/mongodb';
 import { getLiveBankConfig } from './live-bank-config';
 import { getUserGuildRoles, classifyUserRoles } from './discord-roles';
-import { deductLunari, creditLunari, getBalance, checkDebt, addToBankReserve, logTransaction } from '@/lib/bazaar/lunari-ops';
+import { deductLunari, creditLunari, getBalance, checkDebt, addToBankReserve, logTransaction, trackProfileEarnings, trackProfileSpending } from '@/lib/bazaar/lunari-ops';
+import { depositInvestmentTx, withdrawInvestmentTx, type InvestmentTerms } from './investment-tx';
 import type { LoanRecord, InvestmentRecord, BankDashboardData } from '@/types/bank';
 
 function getDb() {
@@ -394,6 +395,16 @@ export async function getInvestment(userId: string): Promise<InvestmentRecord | 
   return data as InvestmentRecord;
 }
 
+function investmentTerms(config: Awaited<ReturnType<typeof getLiveBankConfig>>): InvestmentTerms {
+  return {
+    maturityMs: config.investmentMaturityMs,
+    profitRate: config.investmentProfitRate,
+    earlyFee: config.investmentEarlyFee,
+    depositLockMs: config.investmentDepositLockMs,
+  };
+}
+
+// The debit, the deposit write and the reserve update happen in one transaction (investment-tx)
 export async function depositInvestment(
   userId: string,
   amount: number
@@ -404,89 +415,22 @@ export async function depositInvestment(
     throw new Error(`Minimum deposit is ${config.investmentMinAmount.toLocaleString()} Lunari`);
   }
 
-  const existing = await getInvestment(userId);
-  const now = new Date();
-
-  if (existing) {
-    // Check deposit lock — can only add within 7 days of start
-    const startDate = new Date(existing.startDate);
-    const elapsed = now.getTime() - startDate.getTime();
-    if (elapsed > config.investmentDepositLockMs) {
-      throw new Error('Deposit window has closed (7 days after initial deposit)');
-    }
-  }
-
-  // Deduct from user
-  const deductResult = await deductLunari(userId, amount);
-  if (!deductResult.success) throw new Error('Insufficient balance');
-
-  const db = await getDb();
-  let investment: InvestmentRecord;
-
-  if (existing) {
-    // Add to existing investment
-    investment = {
-      ...existing,
-      amount: existing.amount + amount,
-      lastDepositDate: now.toISOString(),
-    };
-  } else {
-    // Create new investment
-    investment = {
-      amount,
-      startDate: now.toISOString(),
-      lastDepositDate: now.toISOString(),
-      depositLocked: false,
-      active: true,
-    };
-  }
-
-  await db.collection('bank').updateOne(
-    { _id: userId as any },
-    { $set: { investment, updatedAt: new Date() } },
-    { upsert: true }
-  );
-
-  // Add to bank reserve
-  await addToBankReserve(amount);
-
-  return { investment, balanceAfter: deductResult.balanceAfter };
+  const result = await depositInvestmentTx(await clientPromise, userId, amount, investmentTerms(config));
+  void trackProfileSpending(userId, amount);
+  return result;
 }
 
+// Claiming, paying and clearing the deposit happen in one transaction, so a double click or
+// Butler's payout can't pay it again (investment-tx)
 export async function withdrawInvestment(
   userId: string
 ): Promise<{ payout: number; profit: number; early: boolean; balanceAfter: number }> {
-  const investment = await getInvestment(userId);
-  if (!investment) throw new Error('No active investment');
-
   const config = await getLiveBankConfig();
-  const now = Date.now();
-  const startDate = new Date(investment.startDate).getTime();
-  const elapsed = now - startDate;
-  const isMature = elapsed >= config.investmentMaturityMs;
+  const result = await withdrawInvestmentTx(await clientPromise, userId, investmentTerms(config));
+  if (!result) throw new Error('No active investment');
 
-  let payout: number;
-  let profit: number;
-
-  if (isMature) {
-    payout = Math.floor(investment.amount * (1 + config.investmentProfitRate));
-    profit = payout - investment.amount;
-  } else {
-    payout = Math.max(0, investment.amount - config.investmentEarlyFee);
-    profit = payout - investment.amount; // negative
-  }
-
-  // Credit payout to user
-  const { balanceAfter } = await creditLunari(userId, payout);
-
-  // Clear investment record
-  const db = await getDb();
-  await db.collection('bank').updateOne(
-    { _id: userId as any },
-    { $set: { investment: { ...investment, active: false }, updatedAt: new Date() } }
-  );
-
-  return { payout, profit, early: !isMature, balanceAfter };
+  if (result.payout > 0) void trackProfileEarnings(userId, result.payout);
+  return { payout: result.payout, profit: result.profit, early: result.early, balanceAfter: result.balanceAfter };
 }
 
 // ── Insurance ──
