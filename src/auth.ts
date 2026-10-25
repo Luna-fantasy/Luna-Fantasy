@@ -6,7 +6,7 @@ import { MASTERMIND_IDS } from "@/lib/admin/constants";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(clientPromise, { databaseName: "Database" }),
-  providers: [Discord],
+  providers: [Discord({ issuer: "https://discord.com" })],
   session: { strategy: "database", maxAge: 7 * 24 * 60 * 60 },
   pages: {
     signIn: "/auth/signin",
