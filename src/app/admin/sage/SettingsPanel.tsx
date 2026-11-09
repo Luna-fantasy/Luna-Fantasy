@@ -24,7 +24,7 @@ export default function SettingsPanel({ data, onChange }: Props) {
           <h4 className="av-sage-card-title">Provider</h4>
         </header>
         <div className="av-sage-provider-row">
-          {(['google', 'openrouter'] as const).map((p) => (
+          {(['openai', 'google', 'openrouter'] as const).map((p) => (
             <button
               key={p}
               type="button"
@@ -32,12 +32,27 @@ export default function SettingsPanel({ data, onChange }: Props) {
               onClick={() => onChange('provider', p)}
               aria-pressed={data.provider === p}
             >
-              <strong>{p === 'google' ? 'Google' : 'OpenRouter'}</strong>
-              <span>{p === 'google' ? 'Gemini models' : 'Claude, GPT, others'}</span>
+              <strong>{p === 'openai' ? 'OpenAI' : (p === 'google' ? 'Google' : 'OpenRouter')}</strong>
+              <span>{p === 'openai' ? 'GPT and image models' : (p === 'google' ? 'Gemini models' : 'Claude, GPT, others')}</span>
             </button>
           ))}
         </div>
         <div className="av-commands-row-grid">
+          {data.provider === 'openai' && <>
+            <label className="av-shopf-field">
+              <span>OpenAI conversation model</span>
+              <input className="av-shopf-input av-shopf-input--mono" value={data.openai_model ?? ''}
+                onChange={(e) => onChange('openai_model', e.target.value)}
+                placeholder="gpt-6-luna" />
+            </label>
+            <label className="av-shopf-field">
+              <span>OpenAI image and GIF model</span>
+              <input className="av-shopf-input av-shopf-input--mono" value={data.openai_image_model ?? ''}
+                onChange={(e) => onChange('openai_image_model', e.target.value)}
+                placeholder="gpt-image-2.6-sunburst" />
+            </label>
+          </>}
+          {data.provider !== 'openai' && <>
           <label className="av-shopf-field">
             <span>Google model</span>
             <input className="av-shopf-input av-shopf-input--mono" value={data.google_model ?? ''}
@@ -56,6 +71,7 @@ export default function SettingsPanel({ data, onChange }: Props) {
               onChange={(e) => onChange('image_generation_model', e.target.value)}
               placeholder="gemini-2.5-flash-image" />
           </label>
+          </>}
         </div>
       </article>
 

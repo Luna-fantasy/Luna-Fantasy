@@ -1,5 +1,7 @@
 export interface SageSettings {
-  provider?: 'google' | 'openrouter';
+  provider?: 'openai' | 'google' | 'openrouter';
+  openai_model?: string;
+  openai_image_model?: string;
   google_model?: string;
   openrouter_model?: string;
   enable_search?: boolean;
@@ -95,7 +97,7 @@ export interface SageSnapshot {
 
 /** Settings/prompt/lore/privileges hit `/api/admin/config/sage`; liveChat sections hit a different route */
 export const SETTINGS_SECTIONS = [
-  'provider', 'google_model', 'openrouter_model',
+  'provider', 'openai_model', 'openai_image_model', 'google_model', 'openrouter_model',
   'enable_search', 'enable_image_generation', 'image_generation_model',
   'sage_prefix', 'owner_role_ids', 'image_gen_roles', 'channel_context_limit',
   'system_prompt', 'lore_text',

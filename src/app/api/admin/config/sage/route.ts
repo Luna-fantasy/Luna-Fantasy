@@ -9,7 +9,7 @@ import clientPromise from '@/lib/mongodb';
 const DB_NAME = 'Database';
 
 const ALLOWED_SECTIONS = new Set([
-  'provider', 'google_model', 'openrouter_model',
+  'provider', 'openai_model', 'openai_image_model', 'google_model', 'openrouter_model',
   'enable_search', 'enable_image_generation',
   'system_prompt', 'privileged_roles', 'lunarian_role_id', 'lunarian_access',
   'all_known_roles', 'image_generation_model', 'sage_prefix', 'owner_role_ids',
@@ -19,6 +19,8 @@ const ALLOWED_SECTIONS = new Set([
 // Maps dashboard section names → bot_config document _id + data field path
 const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   provider:           { docId: 'sage_settings', field: 'provider' },
+  openai_model:       { docId: 'sage_settings', field: 'openai_model' },
+  openai_image_model: { docId: 'sage_settings', field: 'openai_image_model' },
   google_model:       { docId: 'sage_settings', field: 'google_model' },
   openrouter_model:   { docId: 'sage_settings', field: 'openrouter_model' },
   enable_search:      { docId: 'sage_settings', field: 'enable_search' },
@@ -57,6 +59,8 @@ export async function GET() {
     // Settings
     if (settings?.data) {
       sections.provider = settings.data.provider;
+      sections.openai_model = settings.data.openai_model;
+      sections.openai_image_model = settings.data.openai_image_model;
       sections.google_model = settings.data.google_model;
       sections.openrouter_model = settings.data.openrouter_model;
       sections.enable_search = settings.data.enable_search;
