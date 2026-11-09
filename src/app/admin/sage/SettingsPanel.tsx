@@ -5,6 +5,7 @@ import RoleChips from '../_components/RoleChips';
 import ChipEditor from '../commands/ChipEditor';
 import NumberUnitInput from '../games/fields/NumberUnitInput';
 import type { SageSettings, SettingsSection } from './types';
+import { SAGE_IMAGE_MODELS, SAGE_IMAGE_QUALITIES } from './imageOptions';
 
 interface Props {
   data: SageSettings;
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export default function SettingsPanel({ data, onChange }: Props) {
+  const imageModel = data.openai_image_model || 'gpt-image-2.6-sunburst';
+  const knownImageModel = SAGE_IMAGE_MODELS.some(option => option.value === imageModel);
   return (
     <section className="av-sage-panel">
       <div className="av-commands-banner">
@@ -47,9 +50,16 @@ export default function SettingsPanel({ data, onChange }: Props) {
             </label>
             <label className="av-shopf-field">
               <span>OpenAI image and GIF model</span>
-              <input className="av-shopf-input av-shopf-input--mono" value={data.openai_image_model ?? ''}
-                onChange={(e) => onChange('openai_image_model', e.target.value)}
-                placeholder="gpt-image-2.6-sunburst" />
+              <select className="av-shopf-input" value={imageModel} onChange={(e) => onChange('openai_image_model', e.target.value)}>
+                {!knownImageModel && <option value={imageModel}>{imageModel} (current)</option>}
+                {SAGE_IMAGE_MODELS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+            <label className="av-shopf-field">
+              <span>Image and GIF quality</span>
+              <select className="av-shopf-input" value={data.openai_image_quality || 'high'} onChange={(e) => onChange('openai_image_quality', e.target.value)}>
+                {SAGE_IMAGE_QUALITIES.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
             </label>
           </>}
           {data.provider !== 'openai' && <>

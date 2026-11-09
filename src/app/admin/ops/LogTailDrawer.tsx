@@ -1,18 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { readAgentLogs, type AgentLogs } from './logData';
 
 interface Props {
   /** PM2 process name. null = drawer closed. */
   processName: string | null;
   displayName: string;
   onClose: () => void;
-}
-
-interface LogsResponse {
-  out?: string;
-  err?: string;
-  lines?: string[];
 }
 
 /**
@@ -41,14 +36,8 @@ export default function LogTailDrawer({ processName, displayName, onClose }: Pro
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error || `HTTP ${res.status}`);
       }
-      const data: LogsResponse = await res.json();
-      // Agent may return `lines[]` OR concatenated `out`/`err` strings —
-      // normalize to a single string with newlines. Prefer the most
-      // informative payload shape available.
-      const text = Array.isArray(data.lines)
-        ? data.lines.join('\n')
-        : [data.out, data.err].filter(Boolean).join('\n');
-      setRaw(text);
+      const data: AgentLogs = await res.json();
+      setRaw(readAgentLogs(data));
     } catch (e) {
       setError((e as Error).message);
     } finally {
