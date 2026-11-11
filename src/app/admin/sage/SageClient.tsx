@@ -186,6 +186,7 @@ function readSettings(s: SageSnapshot, section: SettingsSection): any {
     case 'lunarian_role_id': return s.privileges.lunarianRoleId;
     case 'lunarian_access':  return s.privileges.lunarianAccess;
     case 'all_known_roles':  return s.privileges.allKnownRoles;
+    case 'gif_gen_roles': return s.settings.gif_gen_roles ?? null;
     default: return (s.settings as any)[section];
   }
 }

@@ -6,6 +6,7 @@ import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
 import { isSageImageQuality } from '@/app/admin/sage/imageOptions';
+import { isSageMediaRoleList } from '@/app/admin/sage/mediaRoles';
 
 const DB_NAME = 'Database';
 
@@ -14,7 +15,7 @@ const ALLOWED_SECTIONS = new Set([
   'enable_search', 'enable_image_generation',
   'system_prompt', 'privileged_roles', 'lunarian_role_id', 'lunarian_access',
   'all_known_roles', 'image_generation_model', 'sage_prefix', 'owner_role_ids',
-  'image_gen_roles', 'lore_text', 'channel_context_limit',
+  'image_gen_roles', 'gif_gen_roles', 'lore_text', 'channel_context_limit',
 ]);
 
 // Maps dashboard section names → bot_config document _id + data field path
@@ -36,6 +37,7 @@ const SECTION_MAP: Record<string, { docId: string; field: string }> = {
   sage_prefix:        { docId: 'sage_settings', field: 'sage_prefix' },
   owner_role_ids:     { docId: 'sage_settings', field: 'owner_role_ids' },
   image_gen_roles:    { docId: 'sage_settings', field: 'image_gen_roles' },
+  gif_gen_roles:      { docId: 'sage_settings', field: 'gif_gen_roles' },
   lore_text:          { docId: 'sage_lore', field: 'text' },
   channel_context_limit: { docId: 'sage_settings', field: 'channel_context_limit' },
 };
@@ -72,6 +74,7 @@ export async function GET() {
       sections.sage_prefix = settings.data.sage_prefix ?? null;
       sections.owner_role_ids = settings.data.owner_role_ids ?? null;
       sections.image_gen_roles = settings.data.image_gen_roles ?? null;
+      sections.gif_gen_roles = settings.data.gif_gen_roles ?? null;
       sections.channel_context_limit = settings.data.channel_context_limit ?? null;
     }
 
@@ -120,6 +123,10 @@ export async function PUT(req: NextRequest) {
   }
   if (section === 'openai_image_quality' && !isSageImageQuality(value)) {
     return NextResponse.json({ error: 'Invalid image quality' }, { status: 400 });
+  }
+  if ((section === 'image_gen_roles' || section === 'gif_gen_roles')
+      && !(section === 'gif_gen_roles' && value === null) && !isSageMediaRoleList(value)) {
+    return NextResponse.json({ error: 'Invalid role list' }, { status: 400 });
   }
 
   // NoSQL injection check

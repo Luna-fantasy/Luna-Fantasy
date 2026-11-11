@@ -6,6 +6,7 @@ import ChipEditor from '../commands/ChipEditor';
 import NumberUnitInput from '../games/fields/NumberUnitInput';
 import type { SageSettings, SettingsSection } from './types';
 import { SAGE_IMAGE_MODELS, SAGE_IMAGE_QUALITIES } from './imageOptions';
+import { getGifRoles } from './mediaRoles';
 
 interface Props {
   data: SageSettings;
@@ -124,8 +125,14 @@ export default function SettingsPanel({ data, onChange }: Props) {
           </div>
           <div>
             <label className="av-games-field-label">Image gen roles</label>
-            <p className="av-games-field-help">Roles allowed to ask Sage to generate images.</p>
+            <p className="av-games-field-help">Roles allowed to generate still images. An empty list allows everyone who can use Sage; Masterminds always have access.</p>
             <RoleChips value={data.image_gen_roles ?? []} onChange={(next) => onChange('image_gen_roles', next)} />
+          </div>
+          <div>
+            <label className="av-games-field-label">GIF generation roles</label>
+            <p className="av-games-field-help">Roles allowed to generate GIFs. An empty list allows everyone who can use Sage. Until changed, this follows the image roles; Masterminds always have access.</p>
+            <RoleChips value={getGifRoles(data)} onChange={(next) => onChange('gif_gen_roles', next)} />
+            {data.gif_gen_roles != null && <button type="button" className="av-commands-add" onClick={() => onChange('gif_gen_roles', null)}>Follow image roles</button>}
           </div>
           <div>
             <label className="av-games-field-label">Channel context window</label>

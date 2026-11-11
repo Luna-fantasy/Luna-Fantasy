@@ -11,6 +11,7 @@ export interface SageSettings {
   sage_prefix?: string[];
   owner_role_ids?: string[];
   image_gen_roles?: string[];
+  gif_gen_roles?: string[] | null;
   channel_context_limit?: number;
   thread_history_limit?: number;
   thread_slowmode?: number;
@@ -100,7 +101,7 @@ export interface SageSnapshot {
 export const SETTINGS_SECTIONS = [
   'provider', 'openai_model', 'openai_image_model', 'openai_image_quality', 'google_model', 'openrouter_model',
   'enable_search', 'enable_image_generation', 'image_generation_model',
-  'sage_prefix', 'owner_role_ids', 'image_gen_roles', 'channel_context_limit',
+  'sage_prefix', 'owner_role_ids', 'image_gen_roles', 'gif_gen_roles', 'channel_context_limit',
   'system_prompt', 'lore_text',
   'privileged_roles', 'lunarian_role_id', 'lunarian_access', 'all_known_roles',
 ] as const;
