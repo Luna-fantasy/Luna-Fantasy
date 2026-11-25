@@ -1,6 +1,6 @@
 'use client';
 
-import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { collectibleDisplayImage } from '@/lib/cinematic/collectible-display';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Link } from '@/i18n/routing';
@@ -52,6 +52,7 @@ export default function RevealModal({ data, balance, onClose, onBuyAnother, onBa
 
   const rarityClass = data.item.rarity ? `reveal-${data.item.rarity}` : 'reveal-common';
   const isCard = data.type === 'card';
+  const displayImage = isCard ? collectibleDisplayImage(data.item.imageUrl) : data.item.imageUrl;
   const canAffordAnother = data.price == null || balance >= data.price;
 
   const handleSellDuplicate = async () => {
@@ -156,11 +157,11 @@ export default function RevealModal({ data, balance, onClose, onBuyAnother, onBa
           {/* Item reveal — clickable to expand */}
           <div
             className={`reveal-item ${expanded ? 'reveal-item-expanded' : ''}`}
-            onClick={() => phase === 'done' && data.item.imageUrl && setExpanded(!expanded)}
-            style={{ cursor: phase === 'done' && data.item.imageUrl ? 'pointer' : 'default' }}
+            onClick={() => phase === 'done' && displayImage && setExpanded(!expanded)}
+            style={{ cursor: phase === 'done' && displayImage ? 'pointer' : 'default' }}
           >
-            {data.item.imageUrl ? (
-              <img src={isCard ? collectibleDisplayImage(data.item.imageUrl) : data.item.imageUrl} alt={data.item.name} className="reveal-item-image" />
+            {displayImage ? (
+              <img src={displayImage} alt={data.item.name} className="reveal-item-image" />
             ) : (
               <div className="reveal-item-placeholder">
                 {isCard ? (

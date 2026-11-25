@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/cards.css';
 import '@/styles/archive-card-search.css';
 import { CardsContent } from './CardsContent';
+import { publishedCardRoster } from '@/lib/release-card-art';
 import { getCardCatalog } from '@/lib/cards';
 import type { Card } from '@/types';
 import TabGuard from '@/components/TabGuard';
@@ -51,7 +52,7 @@ export default async function LunaFantasyPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const cards = await getCardCatalog();
+  const cards = publishedCardRoster(await getCardCatalog(), 'luna');
 
   return (
     <TabGuard tabKey="luna-fantasy">

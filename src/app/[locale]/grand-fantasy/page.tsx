@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/cards.css';
 import '@/styles/archive-card-search.css';
 import { CardsContent } from './CardsContent';
+import { publishedCardRoster } from '@/lib/release-card-art';
 import { getCardCatalog } from '@/lib/cards';
 import type { Card } from '@/types';
 import TabGuard from '@/components/TabGuard';
@@ -51,7 +52,7 @@ export default async function GrandFantasyPage({
   setRequestLocale(locale);
 
   const allCards = await getCardCatalog();
-  const cards = allCards.filter(c => c.rarity !== 'secret');
+  const cards = publishedCardRoster(allCards, 'grand');
   const cinematic = cinematicPresentationEnabled();
   const publicPresentation = searchParams?.editMode !== '1';
   const bookPresentation = grandBookPresentationEnabled(cinematic) && publicPresentation;

@@ -80,7 +80,7 @@ export function CharacterLinkedCards({person, cardId, entries, locale, onSelect}
     <div onKeyDown={onKey}>
       <div className={s.cardTeaser}>
         <button type="button" onClick={e=>open(e.currentTarget)} aria-haspopup="dialog" aria-label={(ar?'تكبير بطاقة ':'Enlarge card ')+name}>
-          <CinematicArtwork key={item.card.id} approved={item.artwork?.thumb} original={item.card.imageUrl} alt="" width={150} height={210}/>
+          <CinematicArtwork key={item.card.id} approved={item.artwork?.thumb} original={item.artwork?.detail ?? '/images/logo.png'} alt="" width={150} height={210}/>
         </button>
         <div><strong><ArchiveName>{name}</ArchiveName></strong><small><ArchiveName>{characterName}</ArchiveName> · {rarity}</small>
           <button className={s.cardOpen} type="button" data-open-linked-card onClick={e=>open(e.currentTarget)} aria-haspopup="dialog">{ar?'افتح البطاقة':'Open card'}</button>
@@ -94,7 +94,7 @@ export function CharacterLinkedCards({person, cardId, entries, locale, onSelect}
         <button type="button" autoFocus className={s.readerClose} aria-label={ar?'إغلاق البطاقة':'Close card'} onClick={()=>dialog.current?.close()}>×</button>
       </div>
       {expanded && <CinematicArtwork key={item.card.id} nativeDetail={inspectorArtworkViewerSrc(item.artwork?.releaseId)} approved={item.artwork?.detail}
-        original={item.card.imageUrl} alt={name} width={800} height={1200} className={s.readerFace}/>}
+        original={item.artwork?.detail ?? '/images/logo.png'} alt={name} width={800} height={1200} className={s.readerFace}/>}
       {controls()}
     </dialog>
   </section>;

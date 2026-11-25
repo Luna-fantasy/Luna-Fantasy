@@ -1,6 +1,6 @@
 'use client';
 
-import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { collectibleDisplayImage } from '@/lib/cinematic/collectible-display';
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import type { CardSwap, SwapCard } from '@/types/marketplace';
@@ -138,7 +138,7 @@ export default function CounterOfferModal({ originalSwap, onClose, onCreated }: 
                       >
                         <div className={`create-listing-card-img rarity-border-${r}`}>
                           {card.imageUrl ? (
-                            <img src={collectibleDisplayImage(card.imageUrl, 'thumb')} alt={card.name} />
+                            <img src={collectibleDisplayImage(card.imageUrl, 'thumb') || undefined} alt={card.name} />
                           ) : (
                             <div className={`mini-card-placeholder rarity-bg-${r}`} />
                           )}
@@ -165,7 +165,7 @@ export default function CounterOfferModal({ originalSwap, onClose, onCreated }: 
                       >
                         <div className={`create-listing-card-img rarity-border-${r}`}>
                           {card.imageUrl ? (
-                            <img src={collectibleDisplayImage(card.imageUrl, 'thumb')} alt={card.name} />
+                            <img src={collectibleDisplayImage(card.imageUrl, 'thumb') || undefined} alt={card.name} />
                           ) : (
                             <div className={`mini-card-placeholder rarity-bg-${r}`} />
                           )}
@@ -188,7 +188,7 @@ export default function CounterOfferModal({ originalSwap, onClose, onCreated }: 
                     <span className="swap-confirm-label">{t('yourCard')}</span>
                     <div className={`swap-confirm-card-img rarity-border-${selectedMyCard.rarity.toLowerCase()}`}>
                       {selectedMyCard.imageUrl ? (
-                        <img src={collectibleDisplayImage(selectedMyCard.imageUrl, 'thumb')} alt={selectedMyCard.name} />
+                        <img src={collectibleDisplayImage(selectedMyCard.imageUrl, 'thumb') || undefined} alt={selectedMyCard.name} />
                       ) : (
                         <div className={`mini-card-placeholder rarity-bg-${selectedMyCard.rarity.toLowerCase()}`} />
                       )}
@@ -206,7 +206,7 @@ export default function CounterOfferModal({ originalSwap, onClose, onCreated }: 
                     <span className="swap-confirm-label">{t('theirCard')}</span>
                     <div className={`swap-confirm-card-img rarity-border-${selectedTheirCard.rarity.toLowerCase()}`}>
                       {selectedTheirCard.imageUrl ? (
-                        <img src={collectibleDisplayImage(selectedTheirCard.imageUrl, 'thumb')} alt={selectedTheirCard.name} />
+                        <img src={collectibleDisplayImage(selectedTheirCard.imageUrl, 'thumb') || undefined} alt={selectedTheirCard.name} />
                       ) : (
                         <div className={`mini-card-placeholder rarity-bg-${selectedTheirCard.rarity.toLowerCase()}`} />
                       )}

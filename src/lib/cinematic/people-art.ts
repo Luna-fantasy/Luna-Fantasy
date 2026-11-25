@@ -1,4 +1,5 @@
 // Approved V15 presentation bytes only; all live metadata and IDs remain in the official app.
+import { releaseSourceKey } from './release-source-key';
 import galleryMap from './people-gallery-map.json';
 import nativePreviewStems from './people-native-previews.json';
 import { revisedDragonArtwork } from './revised-dragon-art';
@@ -39,8 +40,9 @@ export function peopleHeroSources(medium: (typeof PEOPLE_HERO)[keyof typeof PEOP
 
 export function approvedPortraitFor(dbSource: string | null | undefined) {
   // Preserve exact slot identity and image revisions; no guessing by name or path fragments.
-  if (!dbSource || !Object.prototype.hasOwnProperty.call(CHARACTER_TEXTURES, dbSource)) return null;
-  const id = CHARACTER_TEXTURES[dbSource];
+  const key = releaseSourceKey(dbSource);
+  if (!Object.hasOwn(CHARACTER_TEXTURES, key)) return null;
+  const id = CHARACTER_TEXTURES[key];
   if (id === ANCIENT_DRAGON_PORTRAIT.id) return ANCIENT_DRAGON_PORTRAIT;
   const dragon = reviewedArtwork(id) ?? revisedDragonArtwork(id);
   if (dragon) return dragon;

@@ -43,7 +43,7 @@ const REFERENCE: Record<ArchiveKind, { title: [string, string]; description?: [s
     description: ['The next card lifts from the deck.', 'الكرت التالي يطلع من الرزمة.'],
   },
   grand: {
-    title: ['The Grand Folio', 'سِجل جراند'],
+    title: ['Grand Fantasy Cards', 'كروت جراند فانتسي'],
     description: ['Each new plate is set into the folio.', 'كل كرت يدخل في مكانه داخل السِجل.'],
   },
   faction: {

@@ -7,6 +7,7 @@ import '@/styles/archive-card-search.css';
 import { CharactersContent } from './CharactersContent';
 
 import factions from '@/data/factions.json';
+import { publishedCardRoster } from '@/lib/release-card-art';
 import { getCardCatalog } from '@/lib/cards';
 import { getCharacters } from '@/lib/characters';
 import type { Character, Faction, Card } from '@/types';
@@ -61,7 +62,7 @@ export default async function CharactersPage({ params, searchParams }: {
       <CharactersContent
         characters={allCharacters}
         factions={factions as Faction[]}
-        cards={cards as Card[]}
+        cards={publishedCardRoster(cards, 'luna')}
         locale={locale as 'en' | 'ar'}
         cinematicPresentation={cinematicPresentationEnabled() && searchParams?.editMode !== '1'}
       />

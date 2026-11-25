@@ -1,6 +1,6 @@
 'use client';
 
-import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { collectibleDisplayImage } from '@/lib/cinematic/collectible-display';
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { MarketplaceListing } from '@/types/marketplace';
@@ -116,7 +116,7 @@ export default function AuctionBidModal({ listing, onClose, onBidPlaced }: Aucti
         <div className="create-listing-preview">
           <div className={`create-listing-preview-img rarity-border-${rKey}`}>
             {listing.card.imageUrl ? (
-              <img src={collectibleDisplayImage(listing.card.imageUrl, 'thumb')} alt={listing.card.name} />
+              <img src={collectibleDisplayImage(listing.card.imageUrl, 'thumb') || undefined} alt={listing.card.name} />
             ) : (
               <div className={`mini-card-placeholder rarity-bg-${rKey}`} />
             )}

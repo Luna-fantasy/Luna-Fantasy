@@ -417,7 +417,7 @@ html[dir="rtl"] .listing-card-rarity {
   border-radius: 50px;
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   border: none;
-  color: #fff;
+  color: var(--accent-ink);
   font-size: 12px;
   font-weight: 700;
   font-family: inherit;
@@ -712,7 +712,7 @@ html[lang="ar"] .create-listing-title {
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   border: none;
-  color: #fff;
+  color: var(--accent-ink);
   font-size: 13px;
   font-weight: 700;
   font-family: inherit;

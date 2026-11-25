@@ -8,7 +8,7 @@ export function selectedLinkedCardIndex(entries: readonly LinkedCard[], characte
   return selected >= 0 ? selected : entries.findIndex(entry => entry.character.id === characterId);
 }
 
-export function linkedCardsFor(people:readonly Character[],cards:readonly Card[],cinematic:boolean):LinkedCard[] {
+export function linkedCardsFor(people:readonly Character[],cards:readonly Card[],_cinematic:boolean):LinkedCard[] {
   const groups=new Map<string,Card[]>();
   const byId=new Map(cards.map(card=>[card.id,card]));
   for(const card of cards){
@@ -21,6 +21,6 @@ export function linkedCardsFor(people:readonly Character[],cards:readonly Card[]
     const group=groups.get(character.id)??[];
     const declared=character.cardId ? byId.get(character.cardId) : undefined;
     const linked=declared ? [declared,...group.filter(card=>card.id!==declared.id)] : group;
-    return linked.map(card=>({character,card,artwork:projectLunaCardArtwork(card,cinematic)}));
+    return linked.map(card=>({character,card,artwork:projectLunaCardArtwork(card,true)}));
   });
 }

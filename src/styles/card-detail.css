@@ -277,7 +277,7 @@ html[lang="ar"] .card-detail-name {
 
 .card-detail-action-primary {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .card-detail-action-primary:hover {

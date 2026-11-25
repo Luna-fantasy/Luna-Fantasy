@@ -1,3 +1,4 @@
+import { releaseSourceKey } from './cinematic/release-source-key';
 import { revisedFantasyFace } from './cinematic/revised-fantasy-face';
 import fantasyDisplaySources from './cinematic/fantasy-display-sources.json';
 import { revisedDragonArtwork } from './cinematic/revised-dragon-art';
@@ -31,7 +32,7 @@ const approvedMythicalFaces: Readonly<Partial<Record<ReleaseId, Face>>> = {
 
 function byVersionedSource(rows: readonly string[][]) {
   const result = new Map<string, ApprovedRecord>();
-  for (const [source, name, group, id] of rows) result.set(source, { name, group, id: id as ReleaseId });
+  for (const [source, name, group, id] of rows) result.set(releaseSourceKey(source), { name, group, id: id as ReleaseId });
   return result;
 }
 
@@ -68,7 +69,7 @@ const factionPrintLabels: Readonly<Partial<Record<ReleaseId, { title?: string; p
 // Accept only those exact filenames. Never strip a mismatching raw ?v or accept a new URL.
 const factionLegacy = new Map<string, ApprovedRecord>();
 for (const [source] of approvedCards.faction)
-  factionLegacy.set(source.slice(factionCdn.length).split('?')[0], faction.get(source)!);
+  factionLegacy.set(releaseSourceKey(source.slice(factionCdn.length).split('?')[0]), faction.get(releaseSourceKey(source))!);
 
 export function releaseEnabled() {
   return cinematicPresentationEnabled();
@@ -91,14 +92,14 @@ function select(surface: 'fantasy' | 'faction', releaseId: ReleaseId, original: 
 /** Grand reuses the 121 exact published non-Secret cards, not other official or spawned cards. */
 export function projectFantasyCardArtwork(card: FantasyRecord, enabled = releaseEnabled()): ReleaseCardArt | undefined {
   if (!enabled) return;
-  const row = fantasy.get(card.imageUrl);
+  const row = fantasy.get(releaseSourceKey(card.imageUrl));
   if (row && row.group !== 'secret' && row.group === card.rarity && row.name === card.name.en)
     return select('fantasy', row.id, card.imageUrl);
 }
 
 export function projectLunaCardArtwork(card: FantasyRecord, enabled = releaseEnabled()): ReleaseCardArt | undefined {
   if (!enabled) return;
-  const row = fantasy.get(card.imageUrl);
+  const row = fantasy.get(releaseSourceKey(card.imageUrl));
   if (!row || row.name !== card.name.en) return;
 
   // Native metadata may name one of these exact three Luna-only cards Secret or Mythical.
@@ -111,6 +112,17 @@ export function projectLunaCardArtwork(card: FantasyRecord, enabled = releaseEna
     return { releaseId: row.id, thumb: folder + '/' + approved.thumb, detail: folder + '/' + approved.detail, original: card.imageUrl };
   }
   return select('fantasy', row.id, card.imageUrl);
+}
+
+export function publishedCardRoster<T extends FantasyRecord>(cards: readonly T[], surface: 'luna' | 'grand'): T[] {
+  const project = surface === 'grand' ? projectFantasyCardArtwork : projectLunaCardArtwork;
+  const seen = new Set<string>();
+  return cards.filter(card => {
+    const art = project(card, true);
+    if (!art || seen.has(art.releaseId)) return false;
+    seen.add(art.releaseId);
+    return true;
+  });
 }
 
 /** Character records refer to Luna's native cards by database identity, never by display name. */
@@ -126,7 +138,7 @@ export function projectFactionCardArtwork(factionId: string, card: FactionRecord
   if (!enabled) return;
   const absolute = card.image.startsWith(factionCdn);
   const original = absolute ? card.image : factionCdn + card.image;
-  const row = faction.get(original) ?? (!absolute ? factionLegacy.get(card.image) : undefined);
+  const row = faction.get(releaseSourceKey(original)) ?? (!absolute ? factionLegacy.get(releaseSourceKey(card.image)) : undefined);
   if (!row || row.group !== factionId) return;
   const renamedDeer = row.id === 'LUNA-0608';
   if (row.name !== card.name && !(renamedDeer && card.name === 'Great Dear')) return;

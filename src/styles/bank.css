@@ -260,7 +260,7 @@
   margin-top: 24px;
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: var(--accent-ink);
   background: linear-gradient(135deg, var(--accent-primary), #0099cc);
   border-radius: var(--radius-md);
   box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
@@ -2145,7 +2145,7 @@
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
-  color: #fff;
+  color: var(--accent-ink);
   background: linear-gradient(135deg, var(--accent-primary), #0099cc);
   border: none;
   border-radius: var(--radius-md);

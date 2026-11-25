@@ -39,11 +39,11 @@ export function CardsContent({ cards, locale, cinematicPresentation }: CardsCont
   const [indexOpen, setIndexOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<{ fallback: string; native?: string; id: string; name: string; opener?: HTMLElement } | null>(null);
   // The catalog and labels remain live; only explicitly mapped cards gain local presentation art.
-  const releaseArt = new Map(cards.map(card => [card, projectLunaCardArtwork(card, cinematic)]));
+  const releaseArt = new Map(cards.map(card => [card, projectLunaCardArtwork(card, true)]));
 
   function openCardArtwork(card: Card, opener?: HTMLElement) {
     const art = releaseArt.get(card);
-    setLightboxImage({ id: art?.releaseId ?? card.id, fallback: art?.detail ?? card.imageUrl, native: inspectorArtworkViewerSrc(art?.releaseId), name: card.name[locale], opener });
+    setLightboxImage({ id: art?.releaseId ?? card.id, fallback: art?.detail ?? '/images/logo.png', native: inspectorArtworkViewerSrc(art?.releaseId), name: card.name[locale], opener });
   }
 
   const matchesQuery = archiveCardMatcher('luna-fantasy', locale, editMode ? '' : archiveQuery);
@@ -58,7 +58,7 @@ export function CardsContent({ cards, locale, cinematicPresentation }: CardsCont
     if (archiveByReleaseId.has(id)) return [];
     archiveByReleaseId.set(id, card);
     return [{ id, name: card.name[locale], group: t(`filters.${card.rarity}`),
-      detail: art?.detail ?? card.imageUrl, thumb: art?.thumb ?? card.imageUrl, releaseId: art?.releaseId }];
+      detail: art?.detail ?? '/images/logo.png', thumb: art?.thumb ?? '/images/logo.png', releaseId: art?.releaseId }];
   });
   const showCarousel = cinematic && archiveEntries.length > 0;
   const indexId = "luna-archive-index";
@@ -206,7 +206,7 @@ export function CardsContent({ cards, locale, cinematicPresentation }: CardsCont
                         >
                           <div className="card-image-wrapper">
                             <ArchiveCardThumbnail
-                              src={releaseArt.get(card)?.thumb ?? card.imageUrl}
+                              src={releaseArt.get(card)?.thumb ?? '/images/logo.png'}
                               highDensitySrc={releaseArt.get(card)?.detail}
                               alt={card.name[locale]}
                               className="card-image"
@@ -238,7 +238,7 @@ export function CardsContent({ cards, locale, cinematicPresentation }: CardsCont
                 >
                   <div className="card-image-wrapper">
                     <ArchiveCardThumbnail
-                      src={releaseArt.get(card)?.thumb ?? card.imageUrl}
+                      src={releaseArt.get(card)?.thumb ?? '/images/logo.png'}
                       highDensitySrc={releaseArt.get(card)?.detail}
                       alt={card.name[locale]}
                       className="card-image"

@@ -1,6 +1,6 @@
 'use client';
 
-import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { collectibleDisplayImage } from '@/lib/cinematic/collectible-display';
 import { useTranslations } from 'next-intl';
 import type { CardSwap } from '@/types/marketplace';
 
@@ -71,7 +71,7 @@ export default function SwapOfferCard({
         <div className="swap-offer-card-side">
           <div className={`swap-offer-card-img rarity-border-${rKeyReq}`}>
             {swap.requesterCard.imageUrl ? (
-              <img src={collectibleDisplayImage(swap.requesterCard.imageUrl, 'thumb')} alt={swap.requesterCard.name} />
+              <img src={collectibleDisplayImage(swap.requesterCard.imageUrl, 'thumb') || undefined} alt={swap.requesterCard.name} />
             ) : (
               <div className={`mini-card-placeholder rarity-bg-${rKeyReq}`} />
             )}
@@ -89,7 +89,7 @@ export default function SwapOfferCard({
         <div className="swap-offer-card-side">
           <div className={`swap-offer-card-img rarity-border-${rKeyTarget}`}>
             {swap.targetCard.imageUrl ? (
-              <img src={collectibleDisplayImage(swap.targetCard.imageUrl, 'thumb')} alt={swap.targetCard.name} />
+              <img src={collectibleDisplayImage(swap.targetCard.imageUrl, 'thumb') || undefined} alt={swap.targetCard.name} />
             ) : (
               <div className={`mini-card-placeholder rarity-bg-${rKeyTarget}`} />
             )}

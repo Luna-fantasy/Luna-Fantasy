@@ -1,6 +1,6 @@
 'use client';
 
-import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { collectibleDisplayImage } from '@/lib/cinematic/collectible-display';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
@@ -290,7 +290,7 @@ export default function VendorSeluna({ balance, hasDebt, hasPassport, isLoggedIn
                 {item.imageUrl && (
                   <div className="seluna-card-image">
                     <img
-                      src={collectibleDisplayImage(item.imageUrl, 'thumb')}
+                      src={(item.type === 'card' ? collectibleDisplayImage(item.imageUrl, 'thumb') : item.imageUrl) || undefined}
                       alt={item.name}
                       loading="lazy"
                     />

@@ -162,6 +162,8 @@
     background-image: linear-gradient(169deg, var(--type-light) 8%, var(--type-title) 33%, var(--type-copper) 59%, var(--type-title) 80%) !important;
   }
   [data-luna-type="rose"] :where(.passage-primary, .cta-discord, .auth-discord-btn, .btn-discord-login, .btn-primary,
+    .reveal-another-btn, .card-detail-action-primary, .listing-card-buy-btn, .create-listing-submit,
+    .seluna-buy-btn, .social-link:hover, .partner-website:hover,
     .contact-btn, .about-btn-primary, .trading-sign-in-btn, .trading-action-btn, .section-action-btn,
     [class*="night-worlds_primary__"], [class*="night-journey_action__"], [class*="NightBank_discord__"], [class*="_viewerOpen__"],
     [class*="archive-card-carousel_inspect__"], .filter-btn.active, .lp-filter-btn.active,

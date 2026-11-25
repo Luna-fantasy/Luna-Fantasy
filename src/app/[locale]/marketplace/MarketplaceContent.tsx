@@ -1,6 +1,6 @@
 'use client';
 
-import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { collectibleDisplayImage } from '@/lib/cinematic/collectible-display';
 import { SectionWindow } from '@/components/cinematic/SectionWindow';
 import { additionalWindows } from '@/lib/cinematic/section-window';
 

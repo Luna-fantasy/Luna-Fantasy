@@ -235,7 +235,7 @@
 .social-link:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  color: #fff;
+  color: var(--accent-ink);
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
 }
@@ -265,7 +265,7 @@
 .partner-website:hover {
   background: var(--accent-secondary);
   border-color: var(--accent-secondary);
-  color: #fff;
+  color: var(--accent-ink);
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
 }

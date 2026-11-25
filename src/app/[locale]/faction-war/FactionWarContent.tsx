@@ -20,7 +20,7 @@ import gameStyles from '@/components/cinematic-games/cinematic-games.module.css'
 import type { FactionWarCard, FactionWarFaction } from '@/types/faction-war';
 import type { Locale } from '@/types';
 
-const R2_BASE = 'https://assets.lunarian.app/LunaPairs';
+const unavailableCardImage = '/images/logo.png';
 
 function printedSpelling(art: ReleaseCardArt | undefined, locale: Locale) {
   if (!art?.printedAs) return;
@@ -47,18 +47,6 @@ const FALLBACK_BUST =
   ?? process.env.NEXT_PUBLIC_RAILWAY_DEPLOYMENT_ID
   ?? '1';
 
-function getFactionWarImageUrl(image: string) {
-  // Cards in MongoDB store either bare filenames (`lunarians_seluna.png`,
-  // optionally with a `?v=...` cache-buster appended by the admin upload) or
-  // a full URL pasted manually in the dashboard. Handle both.
-  const baseUrl = (image.startsWith('http://') || image.startsWith('https://'))
-    ? image
-    : `${R2_BASE}/${image}`;
-
-  if (/[?&]v=/.test(baseUrl)) return baseUrl;
-  const sep = baseUrl.includes('?') ? '&' : '?';
-  return `${baseUrl}${sep}v=${FALLBACK_BUST}`;
-}
 function getFactionWarBgUrl() {
   // Append the deploy bust as a `?v=` token so a re-uploaded PNG actually
   // refetches in browsers. The asset is served with a 1-year `immutable`
@@ -89,7 +77,7 @@ export function FactionWarContent({ factions, locale, cinematicPresentation }: F
 
   const matchesQuery = archiveCardMatcher('faction-war', locale, editMode ? '' : archiveQuery);
   const releaseArt = new Map(factions.flatMap(faction => faction.cards.map(card =>
-    [card, projectFactionCardArtwork(faction.id, card, cinematic)] as const,
+    [card, projectFactionCardArtwork(faction.id, card, true)] as const,
   )));
   const filteredFactions = factions
     .filter(faction => activeFilter === 'all' || faction.id === activeFilter)
@@ -111,7 +99,7 @@ export function FactionWarContent({ factions, locale, cinematicPresentation }: F
     if (archiveCards.has(id)) return [];
     archiveCards.set(id, card);
     idsByCard.set(card, id);
-    const fallback = getFactionWarImageUrl(card.image);
+    const fallback = unavailableCardImage;
     return [{
       id, name: art?.title ?? card.name, group: faction.name[locale],
       detail: art?.detail ?? fallback, releaseId: art?.releaseId,
@@ -128,7 +116,7 @@ export function FactionWarContent({ factions, locale, cinematicPresentation }: F
     if (!id) return;
     setLightboxCard({
       id,
-      src: artwork?.detail ?? getFactionWarImageUrl(card.image),
+      src: artwork?.detail ?? unavailableCardImage,
       native: inspectorArtworkViewerSrc(artwork?.releaseId),
       fix: visualFixSrc(artwork?.releaseId, 'card-inspector'),
       name: artwork?.title ?? card.name, description: cardDescription(card, artwork, locale), opener,
@@ -321,7 +309,7 @@ export function FactionWarContent({ factions, locale, cinematicPresentation }: F
                 </div>
                 <div className="lp-cards-grid">
                   {visibleCards.map(card => {
-                    const imageUrl = getFactionWarImageUrl(card.image);
+                    const imageUrl = unavailableCardImage;
                     const artwork = releaseArt.get(card);
                     const displayName = artwork?.title ?? card.name;
                     const approvedThumb = visualFixSrc(artwork?.releaseId, 'card-thumb');

@@ -36,11 +36,11 @@ export function CardsContent({ cards, locale, bookPresentation = false, cinemati
   const [indexOpen, setIndexOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<{ fallback: string; native?: string; id: string; name: string; opener?: HTMLElement } | null>(null);
   // The catalog and labels remain live; only explicitly mapped cards gain local presentation art.
-  const releaseArt = new Map(cards.map(card => [card, projectFantasyCardArtwork(card, cinematicArtwork && !editMode)]));
+  const releaseArt = new Map(cards.map(card => [card, projectFantasyCardArtwork(card, true)]));
 
   function openCardArtwork(card: Card, opener?: HTMLElement) {
     const art = releaseArt.get(card);
-    setLightboxImage({ id: art?.releaseId ?? card.id, fallback: art?.detail ?? card.imageUrl, native: inspectorArtworkViewerSrc(art?.releaseId), name: card.name[locale], opener });
+    setLightboxImage({ id: art?.releaseId ?? card.id, fallback: art?.detail ?? '/images/logo.png', native: inspectorArtworkViewerSrc(art?.releaseId), name: card.name[locale], opener });
   }
 
   const matchesQuery = archiveCardMatcher('grand-fantasy', locale, editMode ? '' : archiveQuery);
@@ -55,7 +55,7 @@ export function CardsContent({ cards, locale, bookPresentation = false, cinemati
     if (archiveByReleaseId.has(id)) return [];
     archiveByReleaseId.set(id, card);
     return [{ id, name: card.name[locale], group: t(`filters.${card.rarity}`),
-      detail: art?.detail ?? card.imageUrl, thumb: art?.thumb ?? card.imageUrl, releaseId: art?.releaseId }];
+      detail: art?.detail ?? '/images/logo.png', thumb: art?.thumb ?? '/images/logo.png', releaseId: art?.releaseId }];
   });
   const showCarousel = cinematicArtwork && !editMode && archiveEntries.length > 0;
   const indexId = "grand-archive-index";
@@ -205,7 +205,7 @@ export function CardsContent({ cards, locale, bookPresentation = false, cinemati
                         >
                           <div className="card-image-wrapper">
                             <ArchiveCardThumbnail
-                              src={releaseArt.get(card)?.thumb ?? card.imageUrl}
+                              src={releaseArt.get(card)?.thumb ?? '/images/logo.png'}
                               highDensitySrc={releaseArt.get(card)?.detail}
                               alt={card.name[locale]}
                               className="card-image"
@@ -237,7 +237,7 @@ export function CardsContent({ cards, locale, bookPresentation = false, cinemati
                 >
                   <div className="card-image-wrapper">
                     <ArchiveCardThumbnail
-                      src={releaseArt.get(card)?.thumb ?? card.imageUrl}
+                      src={releaseArt.get(card)?.thumb ?? '/images/logo.png'}
                       highDensitySrc={releaseArt.get(card)?.detail}
                       alt={card.name[locale]}
                       className="card-image"

@@ -1,6 +1,6 @@
 'use client';
 
-import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { collectibleDisplayImage } from '@/lib/cinematic/collectible-display';
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import type { UserCard } from '@/types/gameData';
@@ -137,7 +137,7 @@ export default function CreateAuctionModal({ onClose, onCreated }: CreateAuction
                     >
                       <div className={`create-listing-card-img rarity-border-${r}`}>
                         {card.imageUrl ? (
-                          <img src={collectibleDisplayImage(card.imageUrl, 'thumb')} alt={card.name} />
+                          <img src={collectibleDisplayImage(card.imageUrl, 'thumb') || undefined} alt={card.name} />
                         ) : (
                           <div className={`mini-card-placeholder rarity-bg-${r}`}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -159,7 +159,7 @@ export default function CreateAuctionModal({ onClose, onCreated }: CreateAuction
             <div className="create-listing-preview">
               <div className={`create-listing-preview-img rarity-border-${rKey}`}>
                 {selectedCard.imageUrl ? (
-                  <img src={collectibleDisplayImage(selectedCard.imageUrl, 'thumb')} alt={selectedCard.name} />
+                  <img src={collectibleDisplayImage(selectedCard.imageUrl, 'thumb') || undefined} alt={selectedCard.name} />
                 ) : (
                   <div className={`mini-card-placeholder rarity-bg-${rKey}`} />
                 )}

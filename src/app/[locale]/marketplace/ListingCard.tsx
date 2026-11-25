@@ -1,6 +1,6 @@
 'use client';
 
-import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { collectibleDisplayImage } from '@/lib/cinematic/collectible-display';
 import { useTranslations } from 'next-intl';
 import type { MarketplaceListing } from '@/types/marketplace';
 import LunariIcon from '@/components/LunariIcon';
@@ -54,7 +54,7 @@ export default function ListingCard({
       {/* Card image */}
       <div className={`listing-card-image rarity-border-${rKey}`}>
         {listing.card.imageUrl ? (
-          <img src={collectibleDisplayImage(listing.card.imageUrl, 'thumb')} alt={listing.card.name} />
+          <img src={collectibleDisplayImage(listing.card.imageUrl, 'thumb') || undefined} alt={listing.card.name} />
         ) : (
           <div className={`mini-card-placeholder rarity-bg-${rKey}`}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
