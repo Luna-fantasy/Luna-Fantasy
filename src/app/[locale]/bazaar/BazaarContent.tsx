@@ -1,16 +1,24 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useCallback } from 'react';
-// import { useSearchParams } from 'next/navigation'; // hidden — Stripe not yet active
 import { Link } from '@/i18n/routing';
+// import { useSearchParams } from 'next/navigation'; // hidden — Stripe not yet active
 // import LunariStore from './LunariStore'; // hidden — Stripe not yet active
 import type { CatalogResponse } from '@/types/bazaar';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
 import LunariIcon from '@/components/LunariIcon';
 import { E } from '@/components/edit-mode/EditableText';
 import { EImg } from '@/components/edit-mode/EditableImage';
+import { BazaarTrack, BazaarOverlay } from '@/components/cinematic/economy/EconomyScenes';
+import { MarketGate, MarketRegister } from '@/components/cinematic/night-economy/NightMarket';
+import night from '@/components/cinematic/night-economy/NightMarket.module.css';
+import { rememberShelf, useShelfRestoration } from '@/components/cinematic/economy/shelf-navigation';
+import { useEditMode } from '@/lib/edit-mode/context';
+import { cinematicBazaarHero, cinematicMerchantHero } from '@/lib/cinematic/economy-assets';
+import '@/styles/luna-cinematic-economy.css';
+import '@/styles/luna-cinematic-bazaar-entry.css';
 
 const MERCHANTS = [
   {
@@ -63,6 +71,11 @@ function formatNumber(n: number): string {
 
 export default function BazaarContent() {
   const t = useTranslations('bazaarPage');
+  const locale = useLocale();
+  const { editMode } = useEditMode();
+  useShelfRestoration(!editMode);
+  // A document navigation starts a scrolled-to merchant's cinematic at its first frame.
+  const MerchantCardLink = editMode ? Link : 'a';
   const { data: session } = useSession();
   // const searchParams = useSearchParams(); // hidden — Stripe not yet active
 
@@ -112,17 +125,20 @@ export default function BazaarContent() {
   }, [balance]);
 
   return (
-    <main>
+    <main lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={editMode ? undefined : night.marketPage} data-economy-route={editMode ? undefined : "bazaar"}>
       {/* Hero */}
-      <section className="bazaar-hero">
+      {editMode ? <BazaarTrack scene="hub">
+      <section className="bazaar-hero cinematic-economy-hero cinematic-economy-hero--bazaar">
         <div className="bazaar-hero-bg">
-          <EImg editId="bazaar-hero-bg" src="https://assets.lunarian.app/backgrounds/BazaarHero.png" alt="Bazaar" fill priority className="bazaar-hero-bg-image" />
+          <EImg editId="bazaar-hero-bg" src={cinematicBazaarHero} alt={t('title')} fill sizes="100vw" priority className="bazaar-hero-bg-image" />
         </div>
         <div className="bazaar-hero-content">
           <h1 className="bazaar-hero-title"><E ns="bazaarPage" k="title">{t('title')}</E></h1>
           <p className="bazaar-hero-desc"><E ns="bazaarPage" k="subtitle">{t('subtitle')}</E></p>
         </div>
+        <BazaarOverlay scene="hub" />
       </section>
+      </BazaarTrack> : <MarketGate />}
 
       <div className="bazaar-wrap">
         {/* Purchase status banner (hidden — Stripe not yet active) */}
@@ -143,18 +159,19 @@ export default function BazaarContent() {
         )}
 
         {/* Merchant Showcase */}
-        <section className="merchants-section">
+        {editMode ? <section className="merchants-section">
           <h2 className="merchants-heading"><E ns="bazaarPage" k="merchantsHeading">{t('merchantsHeading')}</E></h2>
 
           <div className="merchant-showcase">
             {MERCHANTS.map((merchant) => (
-              <Link
+              <MerchantCardLink
                 key={merchant.slug}
-                href={`/bazaar/${merchant.slug}`}
+                href={editMode ? `/bazaar/${merchant.slug}` : `/${locale}/bazaar/${merchant.slug}/`}
                 className="merchant-card"
+                onClick={editMode ? undefined : rememberShelf}
               >
                 <img
-                  src={catalog?.merchants?.[merchant.slug] ?? merchant.image}
+                  src={editMode ? (catalog?.merchants?.[merchant.slug] ?? merchant.image) : cinematicMerchantHero(merchant.slug)}
                   alt={t(merchant.nameKey)}
                   className="merchant-card-img"
                   loading="lazy"
@@ -170,10 +187,10 @@ export default function BazaarContent() {
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </span>
-              </Link>
+              </MerchantCardLink>
             ))}
           </div>
-        </section>
+        </section> : <MarketRegister />}
 
         {/* Lunari Store Section (hidden — Stripe not yet active) */}
       </div>

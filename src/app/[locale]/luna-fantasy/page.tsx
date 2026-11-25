@@ -1,5 +1,7 @@
+import { cinematicPresentationEnabled } from '@/lib/cinematic/presentation-flags';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/cards.css';
+import '@/styles/archive-card-search.css';
 import { CardsContent } from './CardsContent';
 import { getCardCatalog } from '@/lib/cards';
 import type { Card } from '@/types';
@@ -40,7 +42,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export default async function LunaFantasyPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function LunaFantasyPage({
+  params, searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams?: { editMode?: string | string[] };
+}) {
   const { locale } = await params;
   setRequestLocale(locale);
 
@@ -51,6 +58,7 @@ export default async function LunaFantasyPage({ params }: { params: Promise<{ lo
       <CardsContent
         cards={cards as Card[]}
         locale={locale as 'en' | 'ar'}
+        cinematicPresentation={cinematicPresentationEnabled() && searchParams?.editMode !== '1'}
       />
     </TabGuard>
   );

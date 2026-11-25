@@ -78,4 +78,13 @@ const nextConfig = {
   },
 };
 
-module.exports = withNextIntl(nextConfig);
+module.exports = (phase) => {
+  if (phase === 'phase-production-build' || phase === 'phase-production-server') {
+    if (process.env.NEXT_PUBLIC_LUNA_ART_RELEASE === 'v19') {
+      require('./scripts/check-v19-native-artwork.cjs').assertCompleteV19ArtworkRelease();
+    } else {
+      require('./scripts/check-exact-native-artwork.cjs').assertCompleteNativeArtworkRelease();
+    }
+  }
+  return withNextIntl(nextConfig);
+};

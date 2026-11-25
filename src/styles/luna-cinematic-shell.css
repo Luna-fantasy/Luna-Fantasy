@@ -1,0 +1,39 @@
+/* This layer only dresses the existing authenticated shell. Its DOM, hit targets,
+   breakpoints, language switch, nav, game flags and stacking stay authoritative. */
+[data-luna-shell="cinematic"] .navbar-island {
+  border-color: rgba(156, 167, 185, .24);
+  background: linear-gradient(105deg, #111628eb, #121321e0 65%, #171524ec);
+  box-shadow: 0 8px 34px rgba(2, 4, 16, .35);
+  backdrop-filter: blur(15px);
+}
+[data-luna-shell="cinematic"] .navbar-island::before {
+  opacity: 0;
+}
+[data-luna-shell="cinematic"] .navbar-island .nav-link.active,
+[data-luna-shell="cinematic"] .navbar-island .games-dropdown-trigger.active {
+  color: #f4ebd8;
+}
+[data-luna-shell="cinematic"] .navbar-island .games-dropdown {
+  border-color: rgba(156, 167, 185, .24);
+  background: #101421f7;
+}
+[data-luna-shell="cinematic"] .mobile-sidebar-header,
+[data-luna-shell="cinematic"] .mobile-sidebar-footer {
+  border-color: rgba(156, 167, 185, .24);
+}
+[data-luna-shell="cinematic"] footer {
+  border-top-color: rgba(156, 167, 185, .19);
+  background: linear-gradient(#0c0d1c, #080910);
+}
+[data-luna-shell="cinematic"] footer a:focus-visible,
+[data-luna-shell="cinematic"] .navbar-island :is(a, button):focus-visible,
+[data-luna-shell="cinematic"] .mobile-nav :is(a, button):focus-visible {
+  outline: 2px solid #c3d2fa;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-luna-shell="cinematic"] .navbar-island,
+  [data-luna-shell="cinematic"] .navbar-island::before {
+    animation: none;
+  }
+}

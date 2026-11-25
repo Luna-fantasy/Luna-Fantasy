@@ -1,7 +1,10 @@
 import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { E } from '@/components/edit-mode/EditableText';
+import { ReadingDesk } from '@/components/cinematic/ReadingDesk';
+import { EditorialMotif } from '../cinematic-editorial/EditorialMotif';
 import '@/styles/legal.css';
+import '@/styles/luna-editorial-public.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -39,16 +42,17 @@ function TermsContent() {
   const t = useTranslations('termsPage');
 
   return (
-    <section className="legal-page">
+    <main className="legal-page" data-luna-editorial="legal">
       <div className="wrap">
         <div className="legal-header">
+          <EditorialMotif motif="terms" />
           <h1><E ns="termsPage" k="title">{t('title')}</E></h1>
           <p><E ns="termsPage" k="desc">{t('desc')}</E></p>
         </div>
-        <div className="legal-content">
+        <ReadingDesk>
           <p><E ns="termsPage" k="content">{t('content')}</E></p>
-        </div>
+        </ReadingDesk>
       </div>
-    </section>
+    </main>
   );
 }

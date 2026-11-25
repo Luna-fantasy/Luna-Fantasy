@@ -17,6 +17,8 @@ export interface AuditEntry {
 
 export interface EconomyOverview {
   totalUsers: number;
+  memberCountSource: 'discord' | 'levels';
+  hourlyTransactions: number[];
   totalLunariCirculation: number;
   activeHolders: number;
   bankReserve: number;

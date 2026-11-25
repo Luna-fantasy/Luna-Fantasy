@@ -8,6 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import type { NextAuthConfig } from 'next-auth';
+import { discordOAuthCredentials } from '../src/lib/discord-signin';
 
 const root = resolve(__dirname, '..');
 const requireFromApp = createRequire(join(root, 'package.json'));
@@ -31,6 +32,7 @@ async function readAppConfig(): Promise<NextAuthConfig> {
     'next-auth/providers/discord': Discord,
     '@auth/mongodb-adapter': { MongoDBAdapter: () => ({}) },
     '@/lib/mongodb': undefined,
+    '@/lib/discord-signin': { discordOAuthCredentials },
     '@/lib/admin/constants': { MASTERMIND_IDS: [] },
   };
   const source = readFileSync(join(root, 'src/auth.ts'), 'utf8');
@@ -39,6 +41,7 @@ async function readAppConfig(): Promise<NextAuthConfig> {
   });
   runInNewContext(outputText, {
     exports: {},
+    process: { env: { AUTH_DISCORD_ID: '123456789012345678', AUTH_DISCORD_SECRET: 'fixture-only-discord-secret' } },
     require(name: string) {
       assert.ok(Object.hasOwn(modules, name), `Unexpected auth dependency: ${name}`);
       return modules[name];

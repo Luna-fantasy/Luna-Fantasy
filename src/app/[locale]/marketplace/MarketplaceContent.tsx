@@ -1,6 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
+import { SectionWindow } from '@/components/cinematic/SectionWindow';
+import { additionalWindows } from '@/lib/cinematic/section-window';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { onBalanceUpdate, dispatchBalanceUpdate } from '@/lib/balance-events';
@@ -12,7 +16,6 @@ import AuctionBidModal from './AuctionBidModal';
 import MyListings from './MyListings';
 import SwapsTab from './SwapsTab';
 import CardDetailModal from '@/components/CardDetailModal';
-import type { CardDetailData } from '@/components/CardDetailModal';
 import LunariIcon from '@/components/LunariIcon';
 import { E } from '@/components/edit-mode/EditableText';
 type Tab = 'browse' | 'my-listings' | 'sell' | 'swaps';
@@ -49,7 +52,10 @@ export default function MarketplaceContent() {
   const [sellType, setSellType] = useState<SellType>('fixed');
 
   // Card detail modal
-  const [selectedCard, setSelectedCard] = useState<{ card: CardDetailData; listing: MarketplaceListing } | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const selectedIndex = selectedId === null ? -1 : listings.findIndex(listing => listing.listingId === selectedId);
+  const selectedListing = listings[selectedIndex];
 
   // Auction bid modal
   const [biddingListing, setBiddingListing] = useState<MarketplaceListing | null>(null);
@@ -122,7 +128,7 @@ export default function MarketplaceContent() {
 
   // Buy handler
   const handleBuy = async (listing: MarketplaceListing) => {
-    setSelectedCard(null);
+    setSelectedId(null);
     try {
       const res = await fetch('/api/marketplace/buy', {
         method: 'POST',
@@ -251,6 +257,7 @@ export default function MarketplaceContent() {
     <div className="marketplace-page">
       {/* Hero */}
       <div className="marketplace-hero">
+        <SectionWindow scene={additionalWindows['marketplace-top']} priority />
         <div className="marketplace-hero-bg" />
         <div className="marketplace-hero-content">
           <h1 className="marketplace-hero-title"><E ns="marketplacePage" k="title">{t('title')}</E></h1>
@@ -322,7 +329,7 @@ export default function MarketplaceContent() {
 
         {/* Browse tab — card listings (gated) */}
         {activeTab === 'browse' && (
-          <div className="marketplace-browse">
+          <div className="marketplace-browse" data-card-preview-scope tabIndex={-1}>
             {/* Filters */}
             <div className="marketplace-filters">
               <input
@@ -392,20 +399,9 @@ export default function MarketplaceContent() {
                     listing={listing}
                     onBuy={() => handleBuy(listing)}
                     onBid={() => setBiddingListing(listing)}
-                    onViewDetail={() => {
-                      setSelectedCard({
-                        card: {
-                          id: listing.card.id,
-                          name: listing.card.name,
-                          rarity: listing.card.rarity,
-                          imageUrl: listing.card.imageUrl,
-                          attack: listing.card.attack,
-                          weight: listing.card.weight,
-                          source: listing.card.source,
-                          owned: false,
-                        },
-                        listing,
-                      });
+                    onViewDetail={source => {
+                      opener.current = source;
+                      setSelectedId(listing.listingId);
                     }}
                     isLoggedIn={isLoggedIn}
                     isOwnListing={listing.sellerId === session?.user?.discordId}
@@ -526,18 +522,27 @@ export default function MarketplaceContent() {
         )}
 
         {/* Card Detail Modal for listing */}
-        {selectedCard && (
+        {selectedListing && (
           <CardDetailModal
-            card={selectedCard.card}
-            onClose={() => setSelectedCard(null)}
+            card={{
+              id: selectedListing.card.id, name: selectedListing.card.name, rarity: selectedListing.card.rarity,
+              imageUrl: collectibleDisplayImage(selectedListing.card.imageUrl), attack: selectedListing.card.attack,
+              weight: selectedListing.card.weight, source: selectedListing.card.source, owned: false,
+            }}
+            index={selectedIndex}
+            total={listings.length}
+            onNavigate={index => setSelectedId(listings[index].listingId)}
+            opener={opener.current}
+            showOwnershipLock={false}
+            onClose={() => setSelectedId(null)}
             actions={
-              isLoggedIn && !selectedCard.listing.sellerId?.includes(session?.user?.discordId ?? '') ? (
-                selectedCard.listing.type === 'auction' ? (
+              isLoggedIn && !selectedListing.sellerId?.includes(session?.user?.discordId ?? '') ? (
+                selectedListing.type === 'auction' ? (
                   <button
                     className="card-detail-action-primary"
                     onClick={() => {
-                      setSelectedCard(null);
-                      setBiddingListing(selectedCard.listing);
+                      setSelectedId(null);
+                      setBiddingListing(selectedListing);
                     }}
                   >
                     {t('auction.placeBid')}
@@ -545,9 +550,9 @@ export default function MarketplaceContent() {
                 ) : (
                   <button
                     className="card-detail-action-primary"
-                    onClick={() => handleBuy(selectedCard.listing)}
+                    onClick={() => handleBuy(selectedListing)}
                   >
-                    {t('buyFor', { price: selectedCard.listing.price.toLocaleString() })}
+                    {t('buyFor', { price: selectedListing.price.toLocaleString() })}
                   </button>
                 )
               ) : undefined

@@ -1,0 +1,26 @@
+{
+  "LUNA-0037": {
+    "stem": "blood-marsh-wading-b161c14891781b57",
+    "detail": "b161c14891781b57974395d2321c06b87012047b7082cb9d7ef3540b5d572edc",
+    "medium": "751d76d1119db51da9b4eeb576fc6a0369a6f755d8c06eeed7a2f51f4ff5ec5b",
+    "thumb": "93a49737f2180ab745bbe5460dfff34965c8f1227537d819ac6434a11c67e691"
+  },
+  "LUNA-0093": {
+    "stem": "glacial-river-4210e283dc5e7047",
+    "detail": "4210e283dc5e7047187ca22b3170377c181dcab7be1427e2c30185f11ba0f2f6",
+    "medium": "e9b1adf75e775e4199265560bdb0342b63e20113c903ac6c755865690911e09e",
+    "thumb": "fab16c18087123554545de11ba7b18b23a0511f6e57410debb6b856c3cf85fa3"
+  },
+  "LUNA-0458": {
+    "stem": "blood-marsh-folded-wing-08b7119055704786",
+    "detail": "08b7119055704786b8217dc2db9644fadb49b118e0fcdad5e8887a56150d0818",
+    "medium": "6c7dc7bf3e30b1fc0f60f7467413cf981e1e28cad64bb187990e6ea1e9ac19dc",
+    "thumb": "613c4651c468446432fa093daa366cca6f955560a019fb749e9e435dc6e30a72"
+  },
+  "LUNA-0470": {
+    "stem": "glacial-pass-553d80eeb132fd48",
+    "detail": "553d80eeb132fd48c3fb3ae1bd4a25db49a9173cc339d57052807d3902e6f02b",
+    "medium": "a14e1ceca87c4debc383c9b34c99f7b03f96320d64d9df0ac3c2e249418a3d7c",
+    "thumb": "aca1f2ba10e609301912a7210a524c507c74f849734f59782552141ad4101aa2"
+  }
+}

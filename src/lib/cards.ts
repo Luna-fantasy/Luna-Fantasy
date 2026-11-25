@@ -1,4 +1,5 @@
 import clientPromise from "./mongodb";
+import { previewCatalogIsLive } from "./cinematic/preview-catalog-cache";
 import type { Card, CardGame } from "@/types";
 
 // Luna Fantasy cards have "Luna " prefix in their name
@@ -20,7 +21,9 @@ export function invalidateCardCatalogCache(): void {
 }
 
 export async function getCardCatalog(game?: CardGame): Promise<Card[]> {
-  if (!cache || Date.now() - cacheTime > CACHE_TTL) {
+  const livePreview = previewCatalogIsLive();
+  let result = cache;
+  if (livePreview || !result || Date.now() - cacheTime > CACHE_TTL) {
     const client = await clientPromise;
     const db = client.db("Database");
 
@@ -93,12 +96,15 @@ export async function getCardCatalog(game?: CardGame): Promise<Card[]> {
       }
     }
 
-    cache = cards;
-    cacheTime = Date.now();
+    result = cards;
+    if (!livePreview) {
+      cache = cards;
+      cacheTime = Date.now();
+    }
   }
 
   if (game) {
-    return cache.filter((card) => card.game === game);
+    return result.filter((card) => card.game === game);
   }
-  return cache;
+  return result;
 }

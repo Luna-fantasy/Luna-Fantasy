@@ -124,10 +124,12 @@ export default function VendorKael({ tiers, balance, hasDebt, hasPassport, isLog
               <button
                 className="luckbox-buy-btn"
                 disabled={disabled}
-                onClick={() => handleBuy(tier.tier, tier.price)}
+                onClick={() => handleBuy(tier.tier, effectivePrice)}
               >
                 {buying === tier.tier ? (
                   <span className="luckbox-spinner" />
+                ) : !isLoggedIn ? (
+                  <E ns="bazaarPage" k="loginRequired">{t('loginRequired')}</E>
                 ) : hasDebt ? (
                   <E ns="bazaarPage" k="inDebt">{t('inDebt')}</E>
                 ) : !canAfford ? (

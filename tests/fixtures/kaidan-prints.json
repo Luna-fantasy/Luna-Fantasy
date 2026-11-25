@@ -1,0 +1,20 @@
+{
+  "gallery": {
+    "detail": "/luna-cinematic/kaidan/LUNA-0243/gallery-unarmed-e6900b2e983e.webp",
+    "thumb": "/luna-cinematic/kaidan/LUNA-0243/gallery-unarmed-e6900b2e983e-thumb.webp",
+    "detailSha": "e6900b2e983e457d61917895e4cfae34325278ab86c2cea4c7fc630dcdeb22d5",
+    "thumbSha": "666fca899206479522027dc8cda810f0628a4d914b00c99fcf030ae532320665"
+  },
+  "faction": {
+    "detail": "/luna-cinematic/kaidan/LUNA-0420/faction-unarmed-4f8f912c83ab.webp",
+    "thumb": "/luna-cinematic/kaidan/LUNA-0420/faction-unarmed-4f8f912c83ab-thumb.webp",
+    "detailSha": "4f8f912c83abb93b24288cda22609c3d202adbc9299587a86619547f6feb81cf",
+    "thumbSha": "303b0909cd7e4128ded2233d52772719b4854711e3179e662e6f68051174b222"
+  },
+  "luna": {
+    "detail": "/luna-cinematic/kaidan/LUNA-0392/luna-unarmed-f5b7f0d86b75.webp",
+    "thumb": "/luna-cinematic/kaidan/LUNA-0392/luna-unarmed-f5b7f0d86b75-thumb.webp",
+    "detailSha": "f5b7f0d86b75f99f108ade213e4fe3084b84f0e74176e0d6ea9c7a024bd4fa95",
+    "thumbSha": "6f74ed3b8ca32915d1ad242c9236073430bb10789360252c4f906ad2f81d9456"
+  }
+}

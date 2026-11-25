@@ -1,5 +1,8 @@
 'use client';
 
+import { lunaBrandMark } from '@/lib/luna-brand';
+import { LunaWordmark } from '@/components/LunaWordmark';
+import { FooterHarbour, FooterReturn } from '@/components/cinematic/FooterHarbour';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { E } from '@/components/edit-mode/EditableText';
@@ -97,19 +100,24 @@ interface FooterProps {
 export function Footer({ config, locale = 'en' }: FooterProps) {
   const t = useTranslations('footer');
   const brand = useTranslations('brand');
+  const brandLink = (
+    <Link href="/" className="footer-brand-row luna-wordmark-link" aria-label={locale === 'ar' ? 'لونا، الصفحة الرئيسية' : 'Luna home'}>
+      <EImg editId="footer-brand-logo" src={lunaBrandMark} alt="Luna Logo" width={40} height={40} className="footer-logo" />
+      <h3 className="footer-word"><LunaWordmark className="footer-word-glyphs"><E ns="brand" k="name">{brand('name')}</E></LunaWordmark></h3>
+    </Link>
+  );
 
   // If no config passed, render with translation keys (backward compatible)
   if (!config) {
     return (
-      <footer>
+      <footer className="luna-night-footer">
+        <FooterHarbour />
         <div className="wrap">
           <div className="footer-top">
             <div className="footer-brand">
-              <div className="footer-brand-row">
-                <EImg editId="footer-brand-logo" src="/images/logo.png" alt="Luna Logo" width={40} height={40} className="footer-logo" />
-                <h3><E ns="brand" k="name">{brand('name')}</E></h3>
-              </div>
+              {brandLink}
               <p><E ns="footer" k="desc">{t('desc')}</E></p>
+              <FooterReturn ar={locale === 'ar'} />
             </div>
           </div>
           <div className="footer-bottom">
@@ -127,16 +135,15 @@ export function Footer({ config, locale = 'en' }: FooterProps) {
   const copyright = locale === 'ar' ? config.copyrightAr : config.copyrightEn;
 
   return (
-    <footer>
+    <footer className="luna-night-footer">
+        <FooterHarbour />
       <div className="wrap">
         {/* Brand Section */}
         <div className="footer-top">
           <div className="footer-brand">
-            <div className="footer-brand-row">
-              <EImg editId="footer-brand-logo" src="/images/logo.png" alt="Luna Logo" width={40} height={40} className="footer-logo" />
-              <h3><E ns="brand" k="name">{brand('name')}</E></h3>
-            </div>
+            {brandLink}
             {config.brandDescription && <p><E ns="footer" k="desc">{t('desc')}</E></p>}
+              <FooterReturn ar={locale === 'ar'} />
           </div>
         </div>
 

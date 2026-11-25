@@ -1,5 +1,6 @@
 'use client';
 
+import { canChooseLoanTier, loanQuote } from '@/lib/bank/loan-quote';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { LoanContractCanvas } from '@/components/LoanContractCanvas';
@@ -18,6 +19,7 @@ interface LoanManagerProps {
   loanTiersFull?: LoanTierDetail[];
   interestRate?: number;
   vipInterestRate?: number;
+  loanDurationMs?: number;
   onTakeLoan: (tier: number) => Promise<void>;
   onRepayLoan: () => Promise<void>;
   onPartialRepayLoan: (amount: number) => Promise<void>;
@@ -44,7 +46,7 @@ function formatCountdownDays(dueDate: number): { text: string; overdue: boolean 
   return { text: `${hours}h`, overdue: false };
 }
 
-export function LoanManager({ activeLoan, level, debt, isVip, hasPassport, balance, userName, userAvatar, loanTiers, loanTiersFull, interestRate, vipInterestRate, onTakeLoan, onRepayLoan, onPartialRepayLoan }: LoanManagerProps) {
+export function LoanManager({ activeLoan, level, debt, isVip, hasPassport, balance, userName, userAvatar, loanTiers, loanTiersFull, interestRate, vipInterestRate, loanDurationMs, onTakeLoan, onRepayLoan, onPartialRepayLoan }: LoanManagerProps) {
   const DEFAULT_LOAN_TIERS = [5_000, 10_000, 15_000, 20_000, 25_000, 30_000, 40_000, 50_000, 75_000, 100_000];
   const tiers = loanTiers ?? DEFAULT_LOAN_TIERS;
 
@@ -74,9 +76,13 @@ export function LoanManager({ activeLoan, level, debt, isVip, hasPassport, balan
     return () => clearInterval(interval);
   }, [activeLoan]);
 
-  const interestPercent = isVip
-    ? Math.round((vipInterestRate ?? 0.15) * 100)
-    : Math.round((interestRate ?? 0.20) * 100);
+  const selectedDetail = selectedTier == null ? undefined : tierDetails.get(selectedTier);
+  const standardRate = selectedDetail?.interest ?? interestRate ?? 0.20;
+  const vipRate = vipInterestRate ?? 0.15;
+  const rate = isVip ? vipRate : standardRate;
+  const interestPercent = Number((rate * 100).toFixed(4));
+  const quote = loanQuote(selectedTier ?? 0, rate);
+  const durationDays = (selectedDetail?.duration ?? loanDurationMs ?? 604_800_000) / 86_400_000;
 
   const handleTakeLoan = async () => {
     if (!selectedTier || loading) return;
@@ -236,7 +242,7 @@ export function LoanManager({ activeLoan, level, debt, isVip, hasPassport, balan
   }
 
   // No active loan — tier selector
-  const canTakeLoan = level >= 1 && debt === 0;
+  const canTakeLoan = debt === 0 && tiers.some(tier => canChooseLoanTier(tierDetails.get(tier), level, hasPassport));
 
   return (
     <section className="bank-section loan-section">
@@ -251,15 +257,15 @@ export function LoanManager({ activeLoan, level, debt, isVip, hasPassport, balan
           <div className="loan-overview">
             <div className="loan-stat">
               <div className="loan-stat-label">{t('loans.interest')}</div>
-              <div className="loan-stat-value interest">{Math.round((interestRate ?? 0.20) * 100)}%</div>
+              <div className="loan-stat-value interest">{Number((standardRate * 100).toFixed(4))}%</div>
             </div>
             <div className="loan-stat">
               <div className="loan-stat-label">{t('loans.vipInterest')}</div>
-              <div className="loan-stat-value vip">{Math.round((vipInterestRate ?? 0.15) * 100)}%</div>
+              <div className="loan-stat-value vip">{Number((vipRate * 100).toFixed(4))}%</div>
             </div>
             <div className="loan-stat">
               <div className="loan-stat-label">{t('loans.deadline')}</div>
-              <div className="loan-stat-value deadline">7 {t('loans.days')}</div>
+              <div className="loan-stat-value deadline">{durationDays.toLocaleString()} {t('loans.days')}</div>
             </div>
           </div>
 
@@ -292,7 +298,7 @@ export function LoanManager({ activeLoan, level, debt, isVip, hasPassport, balan
             {tiers.map((tier) => {
               const detail = tierDetails.get(tier);
               const passportGated = !!detail?.passport_required;
-              const tierDisabled = !canTakeLoan || (passportGated && !hasPassport);
+              const tierDisabled = debt > 0 || !canChooseLoanTier(detail, level, hasPassport);
               const title = passportGated && !hasPassport
                 ? 'Requires Luna Passport'
                 : passportGated
@@ -321,11 +327,11 @@ export function LoanManager({ activeLoan, level, debt, isVip, hasPassport, balan
               </div>
               <div className="loan-preview-row">
                 <span>{t('loanAction.interest')} ({interestPercent}%)</span>
-                <span className="loan-preview-value interest">+{Math.floor(selectedTier * interestPercent / 100).toLocaleString()}</span>
+                <span className="loan-preview-value interest">+{quote.interest.toLocaleString()}</span>
               </div>
               <div className="loan-preview-row total">
                 <span>{t('loanAction.youRepay')}</span>
-                <span className="loan-preview-value">{Math.floor(selectedTier * (1 + interestPercent / 100)).toLocaleString()} {t('currency')}</span>
+                <span className="loan-preview-value">{quote.repayment.toLocaleString()} {t('currency')}</span>
               </div>
             </div>
           )}

@@ -7,16 +7,24 @@ import { getBalance, checkDebt } from '@/lib/bazaar/lunari-ops';
 import { hasPassport as checkPassport } from '@/lib/bazaar/passport-discount';
 import { getUserTickets } from '@/lib/bazaar/ticket-ops';
 import { setCsrfCookie } from '@/lib/bazaar/csrf';
-import { checkRateLimit, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
+import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/bazaar/rate-limit';
+import { snapshotGuestCatalog, readGuestCatalog } from '@/lib/bazaar/public-catalog-snapshot';
 import clientPromise from '@/lib/mongodb';
 
+let guestSnapshot: ReturnType<typeof snapshotGuestCatalog> | undefined;
+
 export async function GET() {
-  // Rate limit by session user if authenticated, skip if not (catalog is semi-public)
   const session = await auth();
   const rateLimitKey = session?.user?.discordId || 'anon';
   const rl = checkRateLimit('catalog_browse', rateLimitKey, RATE_LIMITS.catalog_browse.maxRequests, RATE_LIMITS.catalog_browse.windowMs);
   if (!rl.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    const cached = session?.user ? null : readGuestCatalog(guestSnapshot, Date.now());
+    if (cached !== null) {
+      const response = new NextResponse(cached, { headers: { 'Content-Type': 'application/json' } });
+      await setCsrfCookie(response);
+      return response;
+    }
+    return rateLimitResponse(rl.retryAfterMs, 'Too many requests');
   }
 
   try {
@@ -83,7 +91,6 @@ export async function GET() {
     // Optional auth for user data
     let user: { balance: number; tickets: number; hasDebt: boolean; hasPassport: boolean } | undefined;
     try {
-      const session = await auth();
       if (session?.user?.discordId) {
         const discordId = session.user.discordId;
         const [balance, tickets, hasDebt, passport] = await Promise.all([
@@ -107,14 +114,17 @@ export async function GET() {
       stripePriceId: '', // Don't expose to client
     }));
 
-    const response = NextResponse.json({
+    const publicCatalog = {
       luckboxTiers,
       stoneBox,
       ticketPackages,
       lunariPackages,
       merchants,
-      user,
-    });
+    };
+    if (!session?.user) {
+      guestSnapshot = snapshotGuestCatalog(publicCatalog, Date.now() + RATE_LIMITS.catalog_browse.windowMs);
+    }
+    const response = NextResponse.json({ ...publicCatalog, user });
 
     // Issue CSRF token cookie for subsequent POST requests
     await setCsrfCookie(response);

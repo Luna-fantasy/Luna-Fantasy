@@ -30,6 +30,14 @@ export function CmdKProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={{ open, openCmdK, closeCmdK }}>{children}</Ctx.Provider>;
 }
 
+export function CommandShortcut() {
+  const [shortcut, setShortcut] = useState('Ctrl+K');
+  useEffect(() => {
+    if (/Mac|iPhone|iPad|iPod/i.test(navigator.platform)) setShortcut('⌘K');
+  }, []);
+  return <kbd>{shortcut}</kbd>;
+}
+
 export function useCmdK(): CmdKCtx {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useCmdK must be used inside <CmdKProvider>');

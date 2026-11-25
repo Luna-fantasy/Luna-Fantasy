@@ -15,6 +15,7 @@ import ApplicationsQueue from './_components/ApplicationsQueue';
 import SystemHealth from './_components/SystemHealth';
 import Skeleton from './_components/Skeleton';
 import DashboardLayout, { Section } from './_components/DashboardLayout';
+import { CommandShortcut } from './_components/CmdKProvider';
 
 // Server wrappers for streaming Suspense
 async function FlowsSection() {
@@ -26,22 +27,11 @@ function fmt(n: number): string {
   return n.toLocaleString('en-US');
 }
 
-/** Build 24-hour transaction histogram from recent transactions. */
-function buildHourlyHistogram(transactions: { timestamp: Date | string }[]): number[] {
-  const bins = new Array(24).fill(0);
-  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-  for (const t of transactions) {
-    const ts = typeof t.timestamp === 'string' ? new Date(t.timestamp).getTime() : t.timestamp.getTime();
-    if (ts < cutoff) continue;
-    const h = new Date(ts).getHours();
-    bins[h]++;
-  }
-  return bins;
-}
+
 
 export default async function OverviewPage() {
   const overview = await getEconomyOverview();
-  const hourly = buildHourlyHistogram(overview.recentTransactions);
+  const hourly = overview.hourlyTransactions;
   const totalToday = hourly.reduce((a, b) => a + b, 0);
 
   // Reserve vs Circulating proportion for the ratio meter
@@ -71,8 +61,8 @@ export default async function OverviewPage() {
           tone="cyan"
           value={overview.totalUsers}
           copyable
-          hint="Total members in the Luna Discord guild. Snapshotted by Butler every 5 minutes."
-          meta="Live from Discord"
+          hint={overview.memberCountSource === 'discord' ? 'Guild member count from the latest Butler snapshot.' : 'Accounts with leveling records. The Discord member snapshot is unavailable.'}
+          meta={overview.memberCountSource === 'discord' ? 'Discord snapshot' : 'Leveling records · estimate'}
         />
         <StatCard
           label="Lunari in Circulation"
@@ -98,8 +88,8 @@ export default async function OverviewPage() {
           tone="green"
           value={overview.activeLoans}
           copyable
-          hint="Number of users with an outstanding loan from the bank right now."
-          meta={overview.activeLoanValue > 0 ? `${fmt(overview.activeLoanValue)} Lunari out` : 'No outstanding'}
+          hint="Number of active loan records and their remaining repayments."
+          meta={overview.activeLoans > 0 ? `${fmt(overview.activeLoanValue)} Lunari in repayments` : 'No active loans'}
         />
         <StatCard
           label="Outstanding Debt"
@@ -107,8 +97,8 @@ export default async function OverviewPage() {
           tone={overview.totalDebt > 0 ? 'red' : 'cyan'}
           value={overview.totalDebt}
           copyable
-          hint="Total Lunari owed to the bank across all active loans."
-          trend={overview.totalDebt > 0 ? { dir: 'down', label: 'Watching' } : { dir: 'flat', label: 'Clean' }}
+          hint="Total Lunari owed according to the debt ledger."
+          meta="Debt ledger"
         />
       </div>
         </Section>
@@ -118,7 +108,7 @@ export default async function OverviewPage() {
         <Surface
           title="Hourly Activity"
           icon="trending"
-          meta={`${fmt(totalToday)} txns / 24h`}
+          meta={`${fmt(totalToday)} txns / 24h · UTC`}
         >
           <HourlyBars data={hourly} />
         </Surface>
@@ -168,7 +158,7 @@ export default async function OverviewPage() {
         }>
           <SystemHealth />
           <p className="av-callout">
-            <strong>Tip</strong> — press <kbd>?</kbd> for keyboard shortcuts. <kbd>⌘</kbd>+<kbd>K</kbd> opens global search, right-click rows for actions.
+            <strong>Tip</strong> — press <kbd>?</kbd> for keyboard shortcuts. <CommandShortcut /> opens global search, right-click rows for actions.
           </p>
         </Surface>
       </div>

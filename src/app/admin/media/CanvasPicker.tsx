@@ -77,8 +77,7 @@ export default function CanvasPicker({
 
   const isOpen = (groupId: string, hasActive: boolean): boolean => {
     if (isFiltering) return true;
-    if (hasActive) return true;
-    return openGroups[groupId] ?? false;
+    return openGroups[groupId] ?? hasActive;
   };
 
   const toggleGroup = (groupId: string, currentOpen: boolean) => {

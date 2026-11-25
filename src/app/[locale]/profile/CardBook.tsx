@@ -1,9 +1,10 @@
 'use client';
 
+import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { UserCard, CatalogCard } from '@/types/gameData';
-import type { CardDetailData } from '@/components/CardDetailModal';
+import CardDetailModal from '@/components/CardDetailModal';
 
 // Build-time cache-bust applied to legacy URLs that have no `?v=` query.
 // New uploads carry a server-stamped `?v=<ts>` already; this only kicks in
@@ -43,7 +44,6 @@ interface CardBookProps {
   ownedCards: UserCard[];
   catalogCards: CatalogCard[];
   isLoading: boolean;
-  onCardClick: (card: CardDetailData) => void;
   brokenImages: Set<string>;
   onImageError: (id: string) => void;
 }
@@ -57,7 +57,6 @@ export default function CardBook({
   ownedCards,
   catalogCards,
   isLoading,
-  onCardClick,
   brokenImages,
   onImageError,
 }: CardBookProps) {
@@ -65,6 +64,12 @@ export default function CardBook({
   const [currentPage, setCurrentPage] = useState(0);
   const [rarityFilter, setRarityFilter] = useState<string | null>(null);
   const [showOwnedOnly, setShowOwnedOnly] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const openCard = useCallback((card: MergedCard, source: HTMLElement) => {
+    opener.current = source;
+    setSelectedId(card.id);
+  }, []);
   const [flipDirection, setFlipDirection] = useState<'left' | 'right' | null>(null);
   const touchStartX = useRef<number | null>(null);
 
@@ -91,7 +96,7 @@ export default function CardBook({
           id: c.id || `owned-${merged.length}`,
           name: c.name,
           rarity: c.rarity,
-          imageUrl: c.imageUrl,
+          imageUrl: collectibleDisplayImage(c.imageUrl),
           attack: c.attack,
           owned: true,
           weight: c.weight,
@@ -129,7 +134,7 @@ export default function CardBook({
         id: cat.id,
         name: cat.name,
         rarity: cat.rarity,
-        imageUrl: cat.imageUrl || ownedCard?.imageUrl || '',
+        imageUrl: collectibleDisplayImage(cat.imageUrl || ownedCard?.imageUrl || ''),
         attack: cat.attack || ownedCard?.attack || 0,
         owned,
         weight: cat.weight ?? ownedCard?.weight,
@@ -148,7 +153,7 @@ export default function CardBook({
         id: c.id || `owned-extra-${merged.length}`,
         name: c.name,
         rarity: c.rarity,
-        imageUrl: c.imageUrl,
+        imageUrl: collectibleDisplayImage(c.imageUrl),
         attack: c.attack,
         owned: true,
         weight: c.weight,
@@ -179,6 +184,7 @@ export default function CardBook({
     }
     return cards;
   }, [mergedCards, rarityFilter, showOwnedOnly]);
+  const selectedIndex = selectedId === null ? -1 : filteredCards.findIndex(card => card.id === selectedId);
 
   // Rarity stats for filter pills
   const rarityStats = useMemo(() => {
@@ -315,7 +321,7 @@ export default function CardBook({
           card={card}
           isBroken={brokenImages.has(card.id)}
           onImageError={onImageError}
-          onCardClick={onCardClick}
+          onCardClick={openCard}
         />
       ))}
       {Array.from({ length: emptyCount }).map((_, i) => (
@@ -324,7 +330,7 @@ export default function CardBook({
         </div>
       ))}
     </>
-  ), [brokenImages, onImageError, onCardClick]);
+  ), [brokenImages, onImageError, openCard]);
 
   if (isLoading) {
     return (
@@ -351,7 +357,7 @@ export default function CardBook({
   const hasCatalog = catalogCards.length > 0;
 
   return (
-    <div className="book-container">
+    <div className="book-container" data-card-preview-scope tabIndex={-1}>
       {/* Collection progress — only show when catalog exists (owned vs unowned is meaningful) */}
       {hasCatalog && (
         <div className="book-progress">
@@ -513,6 +519,16 @@ export default function CardBook({
           </button>
         </div>
       )}
+      {selectedIndex >= 0 && (
+        <CardDetailModal
+          card={filteredCards[selectedIndex]}
+          index={selectedIndex}
+          total={filteredCards.length}
+          onNavigate={index => setSelectedId(filteredCards[index].id)}
+          opener={opener.current}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
     </div>
   );
 }
@@ -526,26 +542,23 @@ function BookCard({
   card: MergedCard;
   isBroken: boolean;
   onImageError: (id: string) => void;
-  onCardClick: (card: CardDetailData) => void;
+  onCardClick: (card: MergedCard, source: HTMLElement) => void;
 }) {
   const rKey = card.rarity.toLowerCase();
 
   return (
     <div
       className={`book-card ${card.owned ? 'book-card-owned' : 'book-card-unowned'}`}
-      onClick={() => {
-        onCardClick({
-          id: card.id,
-          name: card.name,
-          rarity: card.rarity,
-          imageUrl: card.imageUrl,
-          attack: card.attack,
-          weight: card.weight,
-          source: card.source,
-          obtainedDate: card.obtainedDate,
-          owned: card.owned,
-          duplicateCount: card.duplicateCount,
-        });
+      role="button"
+      tabIndex={0}
+      aria-label={card.name}
+      aria-haspopup="dialog"
+      onClick={event => onCardClick(card, event.currentTarget)}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onCardClick(card, event.currentTarget);
+        }
       }}
     >
       <div className={`book-card-image rarity-border-${rKey}`}>

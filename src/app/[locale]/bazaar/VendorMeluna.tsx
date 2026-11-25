@@ -100,7 +100,7 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, hasPassport, 
           sellPrice: data.sellPrice,
           refundAmount: 0,
           newBalance: data.newBalance,
-          price: stoneBox.price,
+          price: effectivePrice,
         });
         // Refresh duplicates list after purchase
         if (showDuplicates) fetchDuplicates();
@@ -112,7 +112,7 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, hasPassport, 
           isDuplicate: false,
           refundAmount: data.refundAmount,
           newBalance: data.newBalance,
-          price: stoneBox.price,
+          price: effectivePrice,
         });
       }
     } catch {
@@ -225,6 +225,8 @@ export default function VendorMeluna({ stoneBox, balance, hasDebt, hasPassport, 
           >
             {buying ? (
               <span className="luckbox-spinner" />
+            ) : !isLoggedIn ? (
+              <E ns="bazaarPage" k="loginRequired">{t('loginRequired')}</E>
             ) : hasDebt ? (
               <E ns="bazaarPage" k="inDebt">{t('inDebt')}</E>
             ) : !canAfford ? (

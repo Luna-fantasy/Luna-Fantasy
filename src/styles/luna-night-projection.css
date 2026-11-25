@@ -1,0 +1,9 @@
+.night-projection { display:block; position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.night-projection > :is(img, video) { display:block; position:absolute; inset:0; width:100%; height:100%; max-width:none; object-fit:cover; object-position:var(--night-framing,50% 50%); }
+.night-projection > video { opacity:0; transition:opacity .42s ease; }
+.night-projection[data-film="playing"] > video { opacity:1; }
+.night-film-switch { display:inline-flex; gap:.65em; align-items:center; min-block-size:40px; padding:.35rem .25rem; border:0; background:none; color:#f6dfce; font:inherit; font-size:.82rem; cursor:pointer; }
+.night-film-switch:focus-visible { outline:2px solid #ffcfab; outline-offset:4px; }
+.night-pause-sign { width:9px; height:11px; border-inline:3px solid currentColor; }
+.night-play-sign { width:0; height:0; border-block:5px solid transparent; border-left:8px solid currentColor; }
+@media (prefers-reduced-motion: reduce) { .night-projection > video { transition:none; } }

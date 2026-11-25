@@ -1,0 +1,20 @@
+.atlas { margin:clamp(1.8rem,4.5vw,3.8rem) 0; color-scheme:only dark; background:#211a24; border:1px solid #765962; color:#f5e4dc; }
+.tabs { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-block-end:1px solid #765962; }
+.tabs button { display:flex; align-items:center; justify-content:center; gap:.55rem; padding:.62rem .45rem; min-height:48px; color:#ead0ca; background:#241c26; border:0; border-inline-end:1px solid #5e4853; border-block-end:3px solid transparent; font:inherit; font-size:.89rem; line-height:1.4; cursor:pointer; }
+.tabs button:last-child { border-inline-end:0; }
+.tabs button i { width:.45rem; height:.45rem; flex:none; border:1px solid currentColor; transform:rotate(45deg); }
+.tabs button[aria-selected=true] { color:#ffe9dd; background:#44303b; border-block-end-color:#e7ad99; }
+.tabs button[aria-selected=true] i { background:#e7ad99; }
+.panel { display:grid; grid-template-columns:minmax(0,1.16fr) minmax(0,.84fr); align-items:center; }
+.panel[hidden] { display:none; }
+.photograph { position:relative; min-height:0; width:100%; aspect-ratio:16/9; overflow:hidden; background:#19141c; }
+.atlas .photograph img { position:absolute; inset:0; display:block; width:100%; height:100%; max-height:100%; object-fit:contain; }
+.description { padding:clamp(1.1rem,3vw,3.3rem); }
+.description h3 { margin:0 0 .6rem; color:#fae8de!important; -webkit-text-fill-color:currentColor!important; font-family:var(--m-title,Georgia,serif); font-weight:500; font-size:clamp(1.55rem,2.65vw,3rem); line-height:1.15; }
+.description p { color:#e7d2d1; margin:.4rem 0 1.1rem; font-size:1rem; line-height:1.7; max-width:42ch; }
+.description a { display:inline-flex; gap:1.25rem; align-items:center; min-height:44px; padding:.45rem .85rem; border:1px solid #bf9487; color:#f4c7b6; text-decoration:none; }
+.atlas :is(a,button):focus-visible { outline:3px solid #ffdcbd; outline-offset:-4px; }
+:global([dir=rtl]) .description h3 { font-family:inherit; line-height:1.4; }
+@media(prefers-reduced-motion:no-preference) { .panel:not([hidden]) .photograph img { animation:expose .42s ease-out both; } @keyframes expose { from { opacity:.55; } to { opacity:1; } } }
+@media(max-width:650px) { .tabs { grid-template-columns:repeat(2,minmax(0,1fr)); } .tabs button { font-size:.82rem; } .panel { grid-template-columns:1fr; } .description { padding:1rem 1.1rem 1.2rem; } }
+@media(forced-colors:active) { .tabs button[aria-selected=true] { border-block-end-color:Highlight; } }

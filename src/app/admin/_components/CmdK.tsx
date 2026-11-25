@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { useCmdK } from './CmdKProvider';
+import { CommandShortcut, useCmdK } from './CmdKProvider';
 import { usePeek } from './PeekProvider';
 import { CLUSTERS } from './nav-config';
 import { getAdminPortalTarget } from './portal-root';
@@ -48,7 +48,7 @@ export default function CmdK() {
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+
 
   useEffect(() => setMounted(true), []);
 
@@ -62,28 +62,25 @@ export default function CmdK() {
     }
   }, [open]);
 
-  // Debounced remote search
   useEffect(() => {
-    if (!open) return;
-    if (query.length < 1) { setRemoteHits([]); return; }
-    const t = window.setTimeout(async () => {
-      abortRef.current?.abort();
-      const ctrl = new AbortController();
-      abortRef.current = ctrl;
+    setRemoteHits([]);
+    setLoading(false);
+    if (!open || !query.trim()) return;
+    const ctrl = new AbortController();
+    const timer = window.setTimeout(async () => {
       setLoading(true);
       try {
         const res = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`, {
-          signal: ctrl.signal,
-          cache: 'no-store',
+          signal: ctrl.signal, cache: 'no-store',
         });
         if (res.ok) {
           const data = await res.json();
-          setRemoteHits(data.hits ?? []);
+          if (!ctrl.signal.aborted) setRemoteHits(data.hits ?? []);
         }
-      } catch { /* ignore */ }
-      finally { if (abortRef.current === ctrl) setLoading(false); }
+      } catch { /* Static navigation remains available. */ }
+      finally { if (!ctrl.signal.aborted) setLoading(false); }
     }, 180);
-    return () => window.clearTimeout(t);
+    return () => { window.clearTimeout(timer); ctrl.abort(); };
   }, [query, open]);
 
   // Merge nav hits (local fuzzy) + remote hits
@@ -109,7 +106,7 @@ export default function CmdK() {
     if (e.key === 'Escape') { e.preventDefault(); closeCmdK(); return; }
     if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => Math.min(hits.length - 1, i + 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => Math.max(0, i - 1)); }
-    else if (e.key === 'Enter') { e.preventDefault(); if (hits[active]) selectHit(hits[active]); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (visibleHits[active]) selectHit(visibleHits[active]); }
   };
 
   if (!mounted || !open) return null;
@@ -125,19 +122,20 @@ export default function CmdK() {
   }
   const groupOrder = ['Players', 'Passports', 'Audit', 'Navigate', 'Other'].filter((k) => groups[k]);
 
+  const visibleHits = groupOrder.flatMap((group) => groups[group]);
   let flatIdx = 0;
   const portal = (
     <>
       <div className="av-cmdk-scrim" onClick={closeCmdK} aria-hidden="true" />
       <div className="av-cmdk" role="dialog" aria-modal="true" aria-label="Command menu">
         <div className="av-cmdk-input-wrap">
-          <span className="av-cmdk-icon">⌘K</span>
+          <span className="av-cmdk-icon"><CommandShortcut /></span>
           <input
             ref={inputRef}
             className="av-cmdk-input"
             placeholder="Search players, passports, audit, go anywhere…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setActive(0); }}
             onKeyDown={onKey}
             aria-label="Search command"
           />

@@ -7,12 +7,12 @@ import Icon from './Icon';
 import ThemePicker from './ThemePicker';
 import PresencePill from './PresencePill';
 import type { ThemeState } from './theme-cookie';
-import { useCmdK } from './CmdKProvider';
+import { CommandShortcut, useCmdK } from './CmdKProvider';
 import { useTimezone } from './TimezoneProvider';
 import { useMobileNav } from './MobileNavProvider';
 
 const LABELS: Record<string, string> = {
-  v2: 'Dashboard',
+  media: 'Media',
   ops: 'Operations',
   audit: 'Audit Log',
   users: 'Users',
@@ -48,8 +48,7 @@ export default function Topbar({
 }) {
   const pathname = usePathname() || '';
   const segments = pathname.split('/').filter(Boolean);
-  // segments: ['admin', 'v2', ...rest]
-  const tail = segments.slice(2); // strip 'admin', 'v2'
+  const tail = segments.slice(1);
 
   const [agentStatus, setAgentStatus] = useState<'ok' | 'warn' | 'err' | null>(null);
 
@@ -65,7 +64,7 @@ export default function Topbar({
     { label: 'Admin', href: '/admin' },
     ...tail.map((seg, i) => {
       const href = '/admin/' + tail.slice(0, i + 1).join('/');
-      return { label: LABELS[seg] || seg.replace(/-/g, ' '), href };
+      return { label: LABELS[seg] || seg.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase()), href };
     }),
   ];
 
@@ -126,10 +125,10 @@ export default function Topbar({
 function CmdKButton() {
   const { openCmdK } = useCmdK();
   return (
-    <button type="button" className="av-cmdk-btn" onClick={openCmdK} title="Command menu (⌘K)">
+    <button type="button" className="av-cmdk-btn" onClick={openCmdK} title="Open command menu" aria-keyshortcuts="Control+K Meta+K">
       <Icon name="search" size={12} />
       <span>Search</span>
-      <kbd>⌘K</kbd>
+      <CommandShortcut />
     </button>
   );
 }

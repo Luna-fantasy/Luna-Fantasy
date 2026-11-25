@@ -1,214 +1,94 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/routing';
+import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
+import { Link } from '@/i18n/routing';
 import { E } from '@/components/edit-mode/EditableText';
-import { EImg } from '@/components/edit-mode/EditableImage';
-import type { MemberListItem, MembersResponse } from '@/types/members';
 import LunariIcon from '@/components/LunariIcon';
+import type { MemberListItem, MembersResponse } from '@/types/members';
+import { WorldPicture, WorldStage } from '../night-worlds/WorldStage';
+import s from '../night-worlds/night-worlds.module.css';
+
+const sorts=['newest','oldest','level','lunari','cards'] as const;
 
 export default function MembersContent() {
-  const t = useTranslations('membersPage');
-
-  const [members, setMembers] = useState<MemberListItem[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
-  const [loading, setLoading] = useState(true);
-  const [brokenAvatars, setBrokenAvatars] = useState<Set<string>>(new Set());
-
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
-  const debouncedSearch = useRef(search);
-
-  // Debounce search input
-  useEffect(() => {
-    clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      debouncedSearch.current = search;
-      setPage(1);
-      fetchMembers(1, search, sortBy);
-    }, 400);
-    return () => clearTimeout(searchTimer.current);
-  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchMembers = useCallback(async (p: number, s: string, sort: string) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page: String(p), sort });
-      if (s.trim()) params.set('search', s.trim());
-      const res = await fetch(`/api/members?${params}`);
-      if (res.ok) {
-        const data: MembersResponse = await res.json();
-        setMembers(data.members);
-        setTotalPages(data.totalPages);
-        setTotal(data.total);
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Fetch on page/sort change
-  useEffect(() => {
-    fetchMembers(page, debouncedSearch.current, sortBy);
-  }, [page, sortBy, fetchMembers]);
-
-  const handleSortChange = (newSort: string) => {
-    setSortBy(newSort);
-    setPage(1);
-  };
-
-  return (
-    <>
-      {/* Hero */}
-      <section className="members-hero">
-        <div className="members-hero-bg">
-          <EImg editId="members-hero-bg" source="r2" src="https://assets.lunarian.app/backgrounds/Members_Hero.png" alt="Members" fill priority className="members-hero-bg-image" />
-        </div>
-        <h1 className="members-hero-title"><E ns="membersPage" k="title">{t('title')}</E></h1>
-        <p className="members-hero-subtitle"><E ns="membersPage" k="subtitle">{t('subtitle')}</E></p>
-        {total > 0 && (
-          <div className="members-count-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            {t('totalMembers', { count: total })}
-          </div>
-        )}
-      </section>
-
-    <div className="wrap">
-
-      {/* Filters */}
-      <div className="members-filters">
-        <input
-          type="text"
-          className="members-search"
-          placeholder={t('searchPlaceholder')}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select
-          className="members-sort"
-          value={sortBy}
-          onChange={(e) => handleSortChange(e.target.value)}
-        >
-          <option value="newest">{t('sort.newest')}</option>
-          <option value="oldest">{t('sort.oldest')}</option>
-          <option value="level">{t('sort.level')}</option>
-          <option value="lunari">{t('sort.lunari')}</option>
-          <option value="cards">{t('sort.cards')}</option>
-        </select>
+  const locale=useLocale(), ar=locale==='ar', t=useTranslations('membersPage');
+  const [search,setSearch]=useState('');
+  const [request,setRequest]=useState({term:'',sort:'newest',page:1});
+  const [round,setRound]=useState(0);
+  const [data,setData]=useState<MembersResponse>({members:[],total:0,page:1,totalPages:1});
+  const [state,setState]=useState<'loading'|'ready'|'error'>('loading');
+  const [list,setList]=useState(false);
+  const [broken,setBroken]=useState<Set<string>>(new Set());
+  useEffect(()=>{
+    const id=window.setTimeout(()=>setRequest(previous=>previous.term===search.trim()?previous:{...previous,term:search.trim(),page:1}),350);
+    return()=>window.clearTimeout(id);
+  },[search]);
+  useEffect(()=>{
+    const controller=new AbortController();
+    const params=new URLSearchParams({page:String(request.page),sort:request.sort});
+    if(request.term)params.set('search',request.term);
+    setState('loading');
+    fetch('/api/members?'+params.toString(),{signal:controller.signal}).then(async res=>{
+      if(!res.ok)throw Error(String(res.status));
+      const result:MembersResponse=await res.json();
+      if(!Array.isArray(result.members))throw Error('Invalid member directory');
+      if(!controller.signal.aborted){setData(result);setState('ready')}
+    }).catch(()=>{if(!controller.signal.aborted)setState('error')});
+    return()=>controller.abort();
+  },[request,round]);
+  const num=(n:number)=>n.toLocaleString(locale);
+  const turn=(direction:number)=>setRequest(prev=>({...prev,page:Math.max(1,Math.min(data.page+direction,data.totalPages))}));
+  function reset(){setSearch('');setRequest(prev=>({...prev,term:'',page:1}))}
+  function resident(m: MemberListItem) {
+    return <Link key={m.discordId} className={s.resident} href={'/profile?discordId='+encodeURIComponent(m.discordId)} data-member-id={m.discordId}>
+      <span className={s.residentAvatar}>{m.image&&!broken.has(m.discordId)
+        ? <Image src={m.image} width={64} height={64} alt="" onError={()=>setBroken(old=>new Set(old).add(m.discordId))}/>
+        : <span aria-hidden="true">{m.name.charAt(0).toUpperCase()}</span>}</span>
+      <strong>{m.name}</strong>{m.username&&<small dir="auto">@{m.username}</small>}
+      <span className={s.residentStats}>
+        {m.level>0&&<span>{(ar?'مستوى ':'Lv. ')+num(m.level)}</span>}
+        <span aria-label={(ar?'لوناري ':'Lunari ')+num(m.lunari)}><LunariIcon size={12}/>{num(m.lunari)}</span>
+        <span aria-label={(ar?'بطاقات ':'Cards ')+num(m.cardCount)}>▤ {num(m.cardCount)}</span>
+      </span>
+    </Link>;
+  }
+  return <main>
+    <WorldStage world="members" locale={locale} title={<E ns="membersPage" k="title">{t('title')}</E>}
+      description={<E ns="membersPage" k="subtitle">{t('subtitle')}</E>}/>
+    <section id="members-directory" className={s.directory} aria-labelledby="night-members-title" data-night-directory>
+      <div className={s.directoryHead}><div><h2 id="night-members-title">{ar?'دليل الأعضاء':'Member directory'}</h2>
+        {state==='ready'&&<p role="status">{t('totalMembers',{count:data.total})}</p>}
       </div>
-
-      {/* Content */}
-      {loading ? (
-        <div className="members-skeleton-grid">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="member-skeleton">
-              <div className="skeleton-avatar" />
-              <div className="skeleton-name" />
-              <div className="skeleton-username" />
-              <div className="skeleton-stats" />
-            </div>
-          ))}
+        {state==='ready' && data.members.length>0 && <div className={s.switcher} role="group" aria-label={ar?'عرض الدليل':'Directory layout'}>
+          <button type="button" aria-pressed={!list} onClick={()=>setList(false)}>{ar?'النوافذ':'Windows'}</button>
+          <button type="button" aria-pressed={list} onClick={()=>setList(true)}>{ar?'السجلّ':'Ledger'}</button>
+        </div>}
+      </div>
+      <div className={s.directoryTools}>
+        <label htmlFor="members-search">{ar?'اسم العضو':'Member name'}<input id="members-search" type="search" value={search} placeholder={t('searchPlaceholder')} autoComplete="off" onChange={e=>setSearch(e.target.value)}/></label>
+        <label>{ar?'ترتيب الأعضاء':'Sort members'}<select value={request.sort} onChange={e=>setRequest(prev=>({...prev,sort:e.target.value,page:1}))}>
+          {sorts.map(k=><option key={k} value={k}>{t('sort.'+k)}</option>)}
+        </select></label>
+      </div>
+      {state==='ready'&&data.members.length ? <>
+        <div className={s.windows+' '+(list?s.listResidents:'')}>{data.members.map(resident)}</div>
+        {data.totalPages>1&&<nav className={s.pager} aria-label={ar?'صفحات الأعضاء':'Member pages'}>
+          <button type="button" disabled={data.page<=1} onClick={()=>turn(-1)}>{ar?'السابق':'Previous'}</button>
+          <span>{num(data.page)} / {num(data.totalPages)}</span>
+          <button type="button" disabled={data.page>=data.totalPages} onClick={()=>turn(1)}>{ar?'التالي':'Next'}</button>
+        </nav>}
+      </> : <div className={s.memberEmpty} data-member-state={state}>
+        <div className={s.memberEmptyArt} aria-hidden="true"><WorldPicture world="members"/></div>
+        <div role="status">{state==='loading' ? <p>{ar?'جارٍ فتح الدليل…':'Opening the directory…'}</p> :
+          state==='error' ? <><p>{ar?'تعذّر تحميل دليل الأعضاء.':'The member directory could not be loaded.'}</p>
+            <button type="button" onClick={()=>setRound(n=>n+1)}>{ar?'أعد المحاولة':'Try again'}</button></> :
+          <><p><E ns="membersPage" k="noResults">{t('noResults')}</E></p>
+            {request.term?<button type="button" onClick={reset}>{ar?'مسح البحث':'Clear search'}</button>
+              :<Link href="/profile" className={s.profileLink}>{ar?'ملفي الشخصي':'My profile'}</Link>}</>}
         </div>
-      ) : members.length === 0 ? (
-        <div className="members-empty">
-          <svg className="members-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <line x1="23" y1="11" x2="17" y2="11" />
-          </svg>
-          <p><E ns="membersPage" k="noResults">{t('noResults')}</E></p>
-        </div>
-      ) : (
-        <>
-          <div className="members-grid">
-            {members.map((member) => (
-              <Link
-                key={member.discordId}
-                href={`/profile?discordId=${member.discordId}`}
-                className="member-card"
-              >
-                <div className="member-avatar-wrap">
-                  {member.image && !brokenAvatars.has(member.discordId) ? (
-                    <Image
-                      src={member.image}
-                      alt={member.name}
-                      width={64}
-                      height={64}
-                      className="member-avatar"
-                      onError={() => setBrokenAvatars(prev => new Set(prev).add(member.discordId))}
-                    />
-                  ) : (
-                    <div className="member-avatar-fallback">
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  {member.level > 0 && (
-                    <span className="member-level-badge">{member.level}</span>
-                  )}
-                </div>
-                <span className="member-name">{member.name}</span>
-                {member.username && (
-                  <span className="member-username">@{member.username}</span>
-                )}
-                <div className="member-stats">
-                  <span className="member-stat">
-                    <LunariIcon size={12} />
-                    {member.lunari.toLocaleString()}
-                  </span>
-                  <span className="member-stat">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="2">
-                      <rect x="2" y="3" width="20" height="14" rx="2" />
-                      <path d="M2 7h20" />
-                    </svg>
-                    {member.cardCount}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="members-pagination">
-              <button
-                className="members-page-btn"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              <span className="members-page-info">
-                {page} / {totalPages}
-              </span>
-              <button
-                className="members-page-btn"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-    </>
-  );
+      </div>}
+    </section>
+  </main>;
 }

@@ -3,6 +3,7 @@ import { requireMastermindApi } from '@/lib/admin/auth';
 import { logAdminAction } from '@/lib/admin/audit';
 import { hasMongoOperator, getClientIp } from '@/lib/admin/sanitize';
 import { validateButlerConfig } from '@/lib/admin/config-validation';
+import { PASSPORT_COSMETIC_PATHS } from '@/lib/admin/passport-cosmetics';
 import { validateCsrf } from '@/lib/bazaar/csrf';
 import { checkRateLimit, rateLimitResponse } from '@/lib/bazaar/rate-limit';
 import clientPromise from '@/lib/mongodb';
@@ -33,7 +34,7 @@ const ALLOWED_SECTIONS = new Set([
   'app_panel_staff', 'app_panel_wizard',
   // Passport cosmetics — surgical replacements for the old applications_system
   // root write, which could clobber the panel fields from a stale tab
-  'passport_vip_roles', 'passport_staff_roles', 'passport_merchant_image',
+  'passport_cosmetics', 'passport_vip_roles', 'passport_staff_roles', 'passport_merchant_image',
 ]);
 
 // Maps dashboard section names → bot_config document _id + data field path
@@ -286,6 +287,26 @@ export async function PUT(req: NextRequest) {
   }
 
   try {
+    if (section === 'passport_cosmetics') {
+      const fields = Object.entries(PASSPORT_COSMETIC_PATHS).filter(([key]) => Object.prototype.hasOwnProperty.call(value, key));
+      const sets = Object.fromEntries(fields.map(([key, path]) => [`data.${path}`, value[key]]));
+      const client = await clientPromise;
+      const previous = await client.db(DB_NAME).collection('bot_config').findOneAndUpdate(
+        { _id: 'butler_applications' as any },
+        { $set: { ...sets, updatedAt: new Date(), updatedBy: adminId } },
+        { upsert: true, returnDocument: 'before', includeResultMetadata: false },
+      );
+      const before = Object.fromEntries(fields.map(([key, path]) =>
+        [key, path.split('.').reduce((item, part) => item?.[part], previous?.data) ?? null]
+      ));
+      await logAdminAction({
+        adminDiscordId: adminId, adminUsername: auth.session.user.username ?? 'unknown',
+        action: 'config_butler_update', metadata: { section, docId: 'butler_applications' },
+        before, after: value, ip: getClientIp(req),
+      });
+      return NextResponse.json({ success: true, saved: true });
+    }
+
     // Knight/Wizard application panel sections — per-key dot-path writes plus
     // an instant refresh request so the posted panel updates within ~20s.
     const appPanel = APP_PANEL_SECTIONS[section];

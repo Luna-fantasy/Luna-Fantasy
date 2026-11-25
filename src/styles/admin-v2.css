@@ -47,15 +47,15 @@ body:has(.admin-v2-shell) .admin-particles-container {
   --av-7: 48px; --av-8: 64px;
 
   /* Surface system (frosted-glass islands, derived from accent) */
-  --av-island-bg: linear-gradient(135deg, rgba(12, 16, 24, 0.92), rgba(7, 10, 18, 0.96));
+  --av-island-bg: linear-gradient(135deg, rgba(22, 20, 19, 0.96), rgba(12, 11, 11, 0.98));
   --av-island-border: 1px solid color-mix(in srgb, var(--accent-primary) 18%, transparent);
   --av-island-shadow:
     0 4px 30px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 0 60px rgba(0, 212, 255, 0.08);
+    0 0 60px rgba(188, 123, 110, 0.06);
 
-  --av-surface-bg: linear-gradient(135deg, rgba(17, 24, 34, 0.96), rgba(12, 16, 24, 0.98));
-  --av-surface-bg-solid: rgba(14, 20, 29, 0.96);
+  --av-surface-bg: linear-gradient(135deg, rgba(32, 28, 27, 0.96), rgba(19, 18, 17, 0.98));
+  --av-surface-bg-solid: rgba(24, 22, 21, 0.96);
   --av-surface-border: 1px solid rgba(255, 255, 255, 0.06);
   --av-surface-hover-border: color-mix(in srgb, var(--accent-primary) 35%, transparent);
 
@@ -228,7 +228,9 @@ body:has(.admin-v2-shell) .admin-particles-container {
 }
 
 /* ── View transitions (page navigation crossfade) ── */
-@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
 ::view-transition-old(root) {
   animation: avPageExit 0.25s cubic-bezier(0.65, 0, 0.35, 1) both;
 }
@@ -3030,6 +3032,26 @@ kbd, .av-kbd {
 }
 .av-audit-pager-meta strong { color: var(--text-primary); }
 
+@media (max-width: 520px) {
+  .av-users .av-audit-pager {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-inline-size: 16rem;
+    margin-inline: auto;
+    gap: 8px;
+  }
+
+  .av-users .av-audit-pager-meta {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    text-align: center;
+  }
+
+  .av-users .av-audit-pager .av-btn {
+    min-block-size: 44px;
+  }
+}
+
 @media (max-width: 1200px) {
   .av-audit-row-trigger {
     grid-template-columns: 28px 140px 1fr 1fr 110px 90px;
@@ -4661,12 +4683,19 @@ kbd, .av-kbd {
   border: 1px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent);
   background: color-mix(in srgb, var(--accent-primary) 3%, transparent);
 }
+.av-dashsection-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.av-dashsection-controls .av-btn { min-width: 40px; min-height: 40px; }
 .av-dashsection-handle {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 4px 10px;
-  margin-bottom: 8px;
   background: color-mix(in srgb, var(--bg-island) 92%, black);
   border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
   border-radius: 6px;
@@ -19287,9 +19316,10 @@ body > div[role="dialog"] select option:hover {
   .av-page-title { font-size: 22px !important; }
   .av-page-subtitle { font-size: 13px !important; }
 
-  /* Drag-reorder handles on dashboard: hide on mobile (touch drag unreliable) */
-  .av-dashsection-handle { display: none !important; }
-  .av-dashlayout-edit { display: none !important; }
+  /* Touch users move sections with the two arrow buttons. */
+  .av-dashsection-handle { cursor: default; }
+  .av-dashsection-handle span:first-child { display: none; }
+  .av-dashsection-controls .av-btn { min-width: 44px; min-height: 44px; }
 
   /* Spotlight cursor — not useful on touch */
   .av-spotlight-cursor { display: none !important; }
@@ -19652,3 +19682,24 @@ body > div[role="dialog"] select option:hover {
                 .site-tabs-btn-danger { background: linear-gradient(90deg, #ff5566, #c8344b); color: #fff; }
                 .site-tabs-btn-danger:hover { opacity: 0.92; }
             
+
+/* Keep the signed-in navigation in the public ribbon palette. */
+.av-sidebar {
+  --accent-primary: #aebaff;
+  background: radial-gradient(ellipse at 90% 0%, #30284777, transparent 36%),
+    linear-gradient(165deg, #181e32, #111627 55%, #171625);
+  border-inline-end-color: #8880b452;
+}
+.av-sidebar .av-sidebar-brand::after {
+  background: linear-gradient(90deg, #72beff70, #a186ee8c, #deb29067);
+}
+.av-sidebar .av-sidebar-brand img,
+.av-sidebar .av-sidebar-brand:hover img { object-fit: contain; filter: none; transform: none; }
+.av-sidebar .av-nav-item[aria-current="page"] {
+  background: linear-gradient(100deg, #466e9e40, #7462a838);
+  color: #f3f0ff;
+  border-color: #9799d25e;
+}
+.av-sidebar .av-nav-item[aria-current="page"] svg { color: #b3c5ff; }
+.av-sidebar .av-sidebar-filter input:focus { border-color: #a49ad7; }
+.av-sidebar :is(a,button):focus-visible { outline: 2px solid #b6c9ff; outline-offset: -2px; }

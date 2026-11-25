@@ -1,0 +1,162 @@
+/* The warm edge of the brand mark travels along the navigation rim. */
+.topbar .navbar-island.luna-ribbon-nav {
+  --ribbon-light-x: 22%;
+  --ribbon-base: #cf998c;
+  --ribbon-mid: #b17f74;
+  --ribbon-high: #dfad9e;
+  border: 1px solid transparent;
+  border-radius: 21px;
+  background:
+    linear-gradient(114deg, #100f0ff7, #0e0d0dfa 42%, #100f0ff7 78%, #121111f5) padding-box,
+    linear-gradient(106deg, #8f645bad, #4a3a368f 27%, #75544d88 64%, #b17f7487) border-box;
+  box-shadow: 0 10px 30px #07070768, inset 0 1px 0 #f2cdbc09;
+  isolation: isolate;
+}
+[dir="rtl"] .topbar .navbar-island.luna-ribbon-nav { --ribbon-light-x: 78%; }
+.topbar .navbar-island.luna-ribbon-nav::before {
+  inset: -1px;
+  z-index: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 155px 92px at var(--ribbon-light-x) 50%,
+    #fcecdff2 0%, #deab9de3 18%, #a8786db8 45%, transparent 86%);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: none;
+  opacity: .45;
+  transition: opacity .2s ease;
+}
+.topbar .luna-ribbon-nav:is(:hover, :focus-within)::before { opacity: 1; }
+.topbar .luna-ribbon-nav::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 150px 80px at var(--ribbon-light-x) 110%, #78564f21, transparent 90%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.topbar .luna-ribbon-nav:is(:hover, :focus-within)::after { opacity: 1; }
+.topbar.scrolled .luna-ribbon-nav { box-shadow: 0 8px 24px #07070788, inset 0 1px 0 #f2cdbc0a; }
+.luna-ribbon-nav > * { position: relative; z-index: 1; }
+.topbar .luna-ribbon-nav :is(.nav-link, .games-dropdown-trigger):is(:hover, :focus-visible, .active) {
+  color: #fae6d8;
+  background-color: #a172681c;
+}
+.topbar .luna-ribbon-nav .nav-link::before { background: linear-gradient(115deg, #a272681c, transparent); }
+.topbar .luna-ribbon-nav .nav-link:not(.nav-link-closed)::after {
+  background: linear-gradient(90deg, var(--ribbon-base), var(--ribbon-mid) 62%, var(--ribbon-high));
+}
+.luna-ribbon-nav > .brand { flex: none; mix-blend-mode: screen; }
+.luna-nav-mark {
+  position: relative;
+  display: inline-grid;
+  inline-size: 38px;
+  block-size: 38px;
+  flex: none;
+  overflow: hidden;
+}
+.luna-nav-mark .brand-logo-img,
+.luna-ribbon-nav .brand:hover .brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: none;
+  filter: none;
+}
+.luna-nav-mark video {
+  position: absolute;
+  pointer-events: none;
+  width: 127.18%;
+  height: 127.18%;
+  max-width: none;
+  left: -18.66%;
+  top: -10.24%;
+  object-fit: contain;
+  opacity: 0;
+}
+.luna-nav-mark[data-playing] video { opacity: 1; }
+.luna-nav-mark[data-playing] .brand-logo-img { visibility: hidden; }
+.mobile-sidebar.luna-ribbon-drawer {
+  height: 100dvh;
+  background: linear-gradient(155deg, #141212, #0e0d0d 34%, #0d0d0d);
+  visibility: hidden;
+  transition: transform .32s cubic-bezier(.2,.75,.24,1), visibility 0s linear .32s;
+}
+.mobile-sidebar.luna-ribbon-drawer.open { visibility: visible; transform: translateX(0); transition-delay: 0s; }
+.luna-ribbon-drawer .mobile-sidebar-header {
+  position: relative;
+  background: linear-gradient(110deg, #885f571a, #855e5610 62%, #dfac9d0e);
+}
+.luna-ribbon-drawer .mobile-sidebar-header::after {
+  content: '';
+  position: absolute;
+  inset-inline: 18px;
+  inset-block-end: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, #ce998c94, #ab7a70bd, #dda89a8c);
+  transform: scaleX(.2);
+  transform-origin: left;
+  transition: transform .4s ease-out;
+}
+[dir="rtl"] .luna-ribbon-drawer .mobile-sidebar-header::after { transform-origin: right; }
+.luna-ribbon-drawer.open .mobile-sidebar-header::after { transform: scaleX(1); }
+.luna-ribbon-drawer .brand-logo-img, .footer-brand .footer-logo, .auth-card .auth-logo {
+  object-fit: contain;
+  filter: none;
+}
+.luna-ribbon-drawer .mobile-nav { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.luna-ribbon-drawer .mobile-sidebar-footer { padding-block-end: max(16px, env(safe-area-inset-bottom)); }
+@media (prefers-reduced-motion: reduce) {
+  .topbar .luna-ribbon-nav::before, .topbar .luna-ribbon-nav::after,
+  .mobile-sidebar.luna-ribbon-drawer, .luna-ribbon-drawer .mobile-sidebar-header::after { transition: none; }
+  .topbar .luna-ribbon-nav::before { opacity: 0; }
+  .topbar .luna-ribbon-nav::after { display: none; }
+  .luna-nav-mark video { display: none; }
+  .luna-nav-mark[data-playing] .brand-logo-img { visibility: visible; }
+}
+
+.mobile-sidebar.luna-ribbon-drawer {
+  width: min(336px, calc(100vw - 40px));
+  border-inline-start: 1px solid #986a6164;
+  background: radial-gradient(ellipse at 90% 0%, #1e1b1aaa, transparent 40%),
+    linear-gradient(160deg, #141313, #0f0e0e 52%, #0f0f0f);
+  box-shadow: 0 16px 58px #07070785;
+}
+.luna-ribbon-drawer .mobile-sidebar-header { min-height: 84px; padding-inline: 24px; }
+.luna-ribbon-drawer .mobile-nav { padding: 16px 12px; }
+.luna-ribbon-drawer :is(.mobile-nav-link, .mobile-games-trigger) {
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding-inline: 17px;
+  transition: color .16s ease, background-color .16s ease, border-color .16s ease;
+}
+.luna-ribbon-drawer :is(.mobile-nav-link, .mobile-games-trigger):is(.active, :hover, :focus-visible, [aria-expanded="true"]) {
+  color: #fae4d5;
+  border-color: #b6847835;
+  background: linear-gradient(105deg, #6a4e4735, #6e50492b 72%, #9d6e6420);
+}
+.luna-ribbon-drawer .mobile-nav-link::before { background: linear-gradient(#dca799, #b07e74 68%, #deaa9b); }
+.luna-ribbon-drawer .mobile-games-sublinks {
+  margin: 3px 14px 8px;
+  padding-inline-start: 8px;
+  border: 0;
+  border-inline-start: 1px solid #a9786e62;
+}
+.luna-ribbon-drawer .mobile-sidebar-footer {
+  background: linear-gradient(180deg, #100f0f, #131212);
+  border-block-start: 1px solid #a373694d;
+}
+.luna-ribbon-drawer .lang-btn.active {
+  background: linear-gradient(110deg, #53403b, #57423d);
+  box-shadow: inset 0 0 0 1px #e2b2a35c;
+  color: #fff;
+}
+.luna-ribbon-drawer :is(button, a):focus-visible { outline: 2px solid #e6b8a9; outline-offset: 2px; }
+.luna-ribbon-drawer .mobile-close-btn { transition-property: background-color, border-color, color, transform; }
+.luna-ribbon-drawer.open .mobile-close-btn { visibility: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .luna-ribbon-drawer :is(.mobile-nav-link, .mobile-games-trigger) { transition: none; }
+}

@@ -109,7 +109,13 @@ export interface PublicUserInfo {
   discordId: string;
 }
 
+export interface ProfileMembership {
+  source: 'guild' | 'website';
+  at: string;
+}
+
 export interface GameDataResponse {
+  membership?: ProfileMembership | null;
   cardsByGame: CardsByGame;
   totalCards: number;
   stones: UserStone[];

@@ -4,13 +4,26 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
 import Image from 'next/image';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { onBalanceUpdate } from '@/lib/balance-events';
 import { NotificationBell } from '@/components/NotificationBell';
 import { FEATURE_FLAGS } from '@/lib/feature-flags';
 import LunariIcon from '@/components/LunariIcon';
 import { E } from '@/components/edit-mode/EditableText';
 import { EImg } from '@/components/edit-mode/EditableImage';
+
+import { NavBrandMark } from '@/components/NavBrandMark';
+import { lunaBrandMark } from '@/lib/luna-brand';
+import { LunaWordmark } from '@/components/LunaWordmark';
+import { guestSignInHref, localeNavigationHref, publicNavigationGroups, toggleDesktopGroup, type DesktopDisclosure, type NavigationGroup } from '@/lib/site-navigation';
+
+function positionNavLight(nav: HTMLElement, clientX: number) {
+  const box = nav.getBoundingClientRect();
+  if (!box.width) return;
+  const position = (clientX - box.left) / box.width * 100;
+  const percent = Math.max(0, Math.min(100, position));
+  nav.style.setProperty('--ribbon-light-x', `${percent}%`);
+}
 
 export function Navbar() {
   const t = useTranslations('nav');
@@ -20,17 +33,13 @@ export function Navbar() {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [gamesDropdownOpen, setGamesDropdownOpen] = useState(false);
-  const [worldDropdownOpen, setWorldDropdownOpen] = useState(false);
-  const [economyDropdownOpen, setEconomyDropdownOpen] = useState(false);
-  const [mobileGamesOpen, setMobileGamesOpen] = useState(false);
-  const [mobileWorldOpen, setMobileWorldOpen] = useState(false);
-  const [mobileEconomyOpen, setMobileEconomyOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const [desktopGroup, setDesktopGroup] = useState<DesktopDisclosure>(null);
+  const [mobileGroups, setMobileGroups] = useState<Partial<Record<NavigationGroup, boolean>>>({});
+  const hoverDelay = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [lunariBalance, setLunariBalance] = useState<number | null>(null);
-  const gamesDropdownRef = useRef<HTMLDivElement>(null);
-  const worldDropdownRef = useRef<HTMLDivElement>(null);
-  const economyDropdownRef = useRef<HTMLDivElement>(null);
   const { data: session, status } = useSession();
   const [closedTabs, setClosedTabs] = useState<Set<string>>(new Set());
   const isMM = !!session?.user?.isMastermind;
@@ -54,11 +63,7 @@ export function Navbar() {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  const gameRoutes = ['/luna-fantasy', '/grand-fantasy', '/faction-war'];
-  const worldRoutes = ['/story', '/characters', '/partners', '/members'];
-  const economyRoutes = FEATURE_FLAGS.marketplace
-    ? ['/bank', '/bazaar', '/trading', '/marketplace']
-    : ['/bank', '/bazaar', '/trading'];
+  const groups = publicNavigationGroups(closedTabs, isMM, FEATURE_FLAGS.marketplace);
 
   // Fetch Lunari balance when logged in
   const fetchBalance = useCallback(async () => {
@@ -90,35 +95,56 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+    if (!mobileMenuOpen) return;
+    const drawer = drawerRef.current;
+    const opener = menuButtonRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusFrame = requestAnimationFrame(() => {
+      drawer?.querySelector<HTMLButtonElement>('.mobile-close-btn')?.focus({ preventScroll: true });
+    });
+    function handleKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setMobileMenuOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab' || !drawer) return;
+      const items = Array.from(drawer.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]'))
+        .filter(item => item.getClientRects().length > 0);
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
     }
+    document.addEventListener('keydown', handleKey);
     return () => {
-      document.body.style.overflow = '';
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = previousOverflow;
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   }, [mobileMenuOpen]);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (gamesDropdownRef.current && !gamesDropdownRef.current.contains(e.target as Node)) {
-        setGamesDropdownOpen(false);
-      }
-      if (worldDropdownRef.current && !worldDropdownRef.current.contains(e.target as Node)) {
-        setWorldDropdownOpen(false);
-      }
-      if (economyDropdownRef.current && !economyDropdownRef.current.contains(e.target as Node)) {
-        setEconomyDropdownOpen(false);
-      }
+    function closeOutside(event: PointerEvent) {
+      if (event.target instanceof Element && !event.target.closest('.games-dropdown-wrap')) setDesktopGroup(null);
+    }
+    document.addEventListener('pointerdown', closeOutside);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      if (hoverDelay.current) clearTimeout(hoverDelay.current);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const switchLocale = (newLocale: 'en' | 'ar') => {
-    localStorage.setItem('luna-lang', newLocale);
-    router.replace(pathname, { locale: newLocale });
+    if (newLocale === locale) return;
+    try { localStorage.setItem('luna-lang', newLocale); } catch {}
+    router.replace(localeNavigationHref(pathname, window.location.search, window.location.hash), { locale: newLocale, scroll: false });
   };
 
   const isActive = (path: string) => {
@@ -126,9 +152,33 @@ export function Navbar() {
     return pathname.startsWith(path);
   };
 
-  const isGamesActive = gameRoutes.some(route => pathname.startsWith(route));
-  const isWorldActive = worldRoutes.some(route => pathname.startsWith(route));
-  const isEconomyActive = economyRoutes.some(route => pathname.startsWith(route));
+  const [guestHref, setGuestHref] = useState(() => guestSignInHref(locale, '/' + locale + (pathname === '/' ? '' : pathname)));
+  useEffect(() => {
+    const sync = () => {
+      const current = window.location;
+      setGuestHref(guestSignInHref(locale, current.pathname + current.search + current.hash));
+    };
+    sync();
+    const navigation = (window as Window & { navigation?: EventTarget }).navigation;
+    navigation?.addEventListener('currententrychange', sync);
+    window.addEventListener('hashchange', sync);
+    window.addEventListener('popstate', sync);
+    return () => {
+      navigation?.removeEventListener('currententrychange', sync);
+      window.removeEventListener('hashchange', sync);
+      window.removeEventListener('popstate', sync);
+    };
+  }, [locale, pathname]);
+  const updateGuestDestination = (event: React.SyntheticEvent<HTMLAnchorElement>) => {
+    const { pathname, search, hash } = window.location;
+    event.currentTarget.href = guestSignInHref(locale, pathname + search + hash);
+  };
+  const guestLink = {
+    href: guestHref,
+    onFocus: updateGuestDestination,
+    onPointerDown: updateGuestDestination,
+    onContextMenu: updateGuestDestination,
+  };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -155,22 +205,23 @@ export function Navbar() {
   return (
     <>
       <div className={`topbar ${scrolled ? 'scrolled' : ''}`}>
-        <nav className="navbar-island">
+        <nav className="navbar-island luna-ribbon-nav"
+          onPointerMove={event => {
+            if (event.pointerType !== 'touch') positionNavLight(event.currentTarget, event.clientX);
+          }}
+          onFocusCapture={event => {
+            const target = event.target.getBoundingClientRect();
+            positionNavLight(event.currentTarget, target.left + target.width / 2);
+          }}>
           <div className="brand">
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <EImg
-                editId="nav-brand-logo"
-                src="/images/logo.png"
-                alt="Luna"
-                width={40}
-                height={40}
-                className="brand-logo-img"
-              />
-              <span><E ns="brand" k="name">{brand('name')}</E></span>
+            <Link href="/" className="luna-wordmark-link" aria-label={locale === 'ar' ? 'لونا، الصفحة الرئيسية' : 'Luna home'}>
+              <NavBrandMark />
+              <LunaWordmark><E ns="brand" k="name">{brand('name')}</E></LunaWordmark>
             </Link>
           </div>
 
           <div className="nav">
+            <span className="luna-nav-index" aria-hidden="true" />
             {!hideForViewer('home') && (
               <Link
                 href="/"
@@ -181,167 +232,54 @@ export function Navbar() {
               </Link>
             )}
 
-            {/* Games Dropdown */}
-            {!hideForViewer('games') && (
-            <div className="games-dropdown-wrap" ref={gamesDropdownRef}>
-              <button
-                className={`games-dropdown-trigger ${isGamesActive ? 'active' : ''} ${isClosed('games') ? 'nav-link-closed' : ''}`}
-                onClick={() => { setGamesDropdownOpen(!gamesDropdownOpen); setWorldDropdownOpen(false); setEconomyDropdownOpen(false); }}
-                onMouseEnter={() => { setGamesDropdownOpen(true); setWorldDropdownOpen(false); setEconomyDropdownOpen(false); }}
-              >
-                <E ns="nav" k="games">{t('games')}</E>
-                <ChevronIcon open={gamesDropdownOpen} />
-              </button>
-              {gamesDropdownOpen && (
-                <div
-                  className="games-dropdown"
-                  onMouseLeave={() => setGamesDropdownOpen(false)}
-                >
-                  {!hideForViewer('luna-fantasy') && (
-                    <Link
-                      href="/luna-fantasy"
-                      className={`games-dropdown-item ${isActive('/luna-fantasy') ? 'active' : ''} ${isClosed('luna-fantasy') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setGamesDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="lunaFantasy">{t('lunaFantasy')}</E>
-                    </Link>
-                  )}
-                  {!hideForViewer('grand-fantasy') && (
-                    <Link
-                      href="/grand-fantasy"
-                      className={`games-dropdown-item ${isActive('/grand-fantasy') ? 'active' : ''} ${isClosed('grand-fantasy') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setGamesDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="grandFantasy">{t('grandFantasy')}</E>
-                    </Link>
-                  )}
-                  {!hideForViewer('faction-war') && (
-                    <Link
-                      href="/faction-war"
-                      className={`games-dropdown-item ${isActive('/faction-war') ? 'active' : ''} ${isClosed('faction-war') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setGamesDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="factionWar">{t('factionWar')}</E>
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-            )}
-
-            {/* World Dropdown */}
-            {!hideForViewer('world') && (
-            <div className="games-dropdown-wrap" ref={worldDropdownRef}>
-              <button
-                className={`games-dropdown-trigger ${isWorldActive ? 'active' : ''} ${isClosed('world') ? 'nav-link-closed' : ''}`}
-                onClick={() => { setWorldDropdownOpen(!worldDropdownOpen); setGamesDropdownOpen(false); setEconomyDropdownOpen(false); }}
-                onMouseEnter={() => { setWorldDropdownOpen(true); setGamesDropdownOpen(false); setEconomyDropdownOpen(false); }}
-              >
-                <E ns="nav" k="world">{t('world')}</E>
-                <ChevronIcon open={worldDropdownOpen} />
-              </button>
-              {worldDropdownOpen && (
-                <div
-                  className="games-dropdown"
-                  onMouseLeave={() => setWorldDropdownOpen(false)}
-                >
-                  {!hideForViewer('story') && (
-                    <Link
-                      href="/story"
-                      className={`games-dropdown-item ${isActive('/story') ? 'active' : ''} ${isClosed('story') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setWorldDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="story">{t('story')}</E>
-                    </Link>
-                  )}
-                  {!hideForViewer('characters') && (
-                    <Link
-                      href="/characters"
-                      className={`games-dropdown-item ${isActive('/characters') ? 'active' : ''} ${isClosed('characters') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setWorldDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="characters">{t('characters')}</E>
-                    </Link>
-                  )}
-                  {!hideForViewer('partners') && (
-                    <Link
-                      href="/partners"
-                      className={`games-dropdown-item ${isActive('/partners') ? 'active' : ''} ${isClosed('partners') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setWorldDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="partners">{t('partners')}</E>
-                    </Link>
-                  )}
-                  {!hideForViewer('members') && (
-                    <Link
-                      href="/members"
-                      className={`games-dropdown-item ${isActive('/members') ? 'active' : ''} ${isClosed('members') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setWorldDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="members">{t('members')}</E>
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-            )}
-
-            {/* Economy Dropdown */}
-            {!hideForViewer('economy') && (
-            <div className="games-dropdown-wrap" ref={economyDropdownRef}>
-              <button
-                className={`games-dropdown-trigger ${isEconomyActive ? 'active' : ''} ${isClosed('economy') ? 'nav-link-closed' : ''}`}
-                onClick={() => { setEconomyDropdownOpen(!economyDropdownOpen); setGamesDropdownOpen(false); setWorldDropdownOpen(false); }}
-                onMouseEnter={() => { setEconomyDropdownOpen(true); setGamesDropdownOpen(false); setWorldDropdownOpen(false); }}
-              >
-                <E ns="nav" k="economy">{t('economy')}</E>
-                <ChevronIcon open={economyDropdownOpen} />
-              </button>
-              {economyDropdownOpen && (
-                <div
-                  className="games-dropdown"
-                  onMouseLeave={() => setEconomyDropdownOpen(false)}
-                >
-                  {!hideForViewer('bank') && (
-                    <Link
-                      href="/bank"
-                      className={`games-dropdown-item ${isActive('/bank') ? 'active' : ''} ${isClosed('bank') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setEconomyDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="bank">{t('bank')}</E>
-                    </Link>
-                  )}
-                  {!hideForViewer('bazaar') && (
-                    <Link
-                      href="/bazaar"
-                      className={`games-dropdown-item ${isActive('/bazaar') ? 'active' : ''} ${isClosed('bazaar') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setEconomyDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="bazaar">{t('bazaar')}</E>
-                    </Link>
-                  )}
-                  {!hideForViewer('trading') && (
-                    <Link
-                      href="/trading"
-                      className={`games-dropdown-item ${isActive('/trading') ? 'active' : ''} ${isClosed('trading') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setEconomyDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="trading">{t('trading')}</E>
-                    </Link>
-                  )}
-                  {FEATURE_FLAGS.marketplace && !hideForViewer('marketplace') && (
-                    <Link
-                      href="/marketplace"
-                      className={`games-dropdown-item ${isActive('/marketplace') ? 'active' : ''} ${isClosed('marketplace') ? 'nav-link-closed' : ''}`}
-                      onClick={() => setEconomyDropdownOpen(false)}
-                    >
-                      <E ns="nav" k="marketplace">{t('marketplace')}</E>
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-            )}
+            {groups.map(group => {
+              const expanded = desktopGroup?.group === group.key;
+              const active = group.links.some(link => isActive(link.path));
+              const menuId = 'luna-nav-' + group.key;
+              return <div key={group.key} className="games-dropdown-wrap" data-nav-group={group.key}
+                onPointerEnter={event => {
+                  if (event.pointerType !== 'mouse') return;
+                  if (hoverDelay.current) clearTimeout(hoverDelay.current);
+                  setDesktopGroup(current => current?.group === group.key ? current : { group: group.key, pinned: false });
+                }}
+                onPointerLeave={event => {
+                  if (event.pointerType !== 'mouse') return;
+                  hoverDelay.current = setTimeout(() => {
+                    setDesktopGroup(current => current?.group === group.key && !current.pinned ? null : current);
+                  }, 160);
+                }}
+                onBlur={event => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    setDesktopGroup(current => current?.group === group.key ? null : current);
+                  }
+                }}
+                onKeyDown={event => {
+                  const trigger = event.currentTarget.querySelector('button');
+                  if (event.key === 'Escape' && expanded) {
+                    event.preventDefault();
+                    setDesktopGroup(null);
+                    trigger?.focus();
+                  } else if (event.key === 'ArrowDown' && event.target === trigger) {
+                    event.preventDefault();
+                    const wrapper = event.currentTarget;
+                    setDesktopGroup({ group: group.key, pinned: true });
+                    requestAnimationFrame(() => wrapper.querySelector('a')?.focus());
+                  }
+                }}>
+                <button type="button" aria-expanded={expanded} aria-controls={expanded ? menuId : undefined}
+                  className={`games-dropdown-trigger ${active ? 'active' : ''} ${isClosed(group.key) ? 'nav-link-closed' : ''}`}
+                  onClick={() => setDesktopGroup(current => toggleDesktopGroup(current, group.key))}>
+                  <E ns="nav" k={group.key}>{t(group.key)}</E><ChevronIcon open={expanded} />
+                </button>
+                {expanded && <div id={menuId} className="games-dropdown">
+                  {group.links.map(link => <Link key={link.tab} href={link.path}
+                    className={`games-dropdown-item ${isActive(link.path) ? 'active' : ''} ${isClosed(link.tab) ? 'nav-link-closed' : ''}`}
+                    aria-current={isActive(link.path) ? 'page' : undefined} onClick={() => setDesktopGroup(null)}>
+                    <E ns="nav" k={link.label}>{t(link.label)}</E>
+                  </Link>)}
+                </div>}
+              </div>;
+            })}
           </div>
           <style jsx>{`
             .nav-link-closed { opacity: 0.55; position: relative; }
@@ -397,25 +335,24 @@ export function Navbar() {
                 </Link>
                 </>
               ) : (
-                <button
-                  className="btn-discord-login"
-                  onClick={() => signIn('discord')}
-                >
+                <a {...guestLink} className="btn-discord-login" onClick={updateGuestDestination}>
                   <DiscordIcon />
                   <E ns="nav" k="signIn">{t('signIn')}</E>
-                </button>
+                </a>
               )}
             </div>
 
             <div className="lang-switcher">
               <button
                 className={`lang-btn ${locale === 'ar' ? 'active' : ''}`}
+                lang="ar" aria-pressed={locale === 'ar'}
                 onClick={() => switchLocale('ar')}
               >
                 AR
               </button>
               <button
                 className={`lang-btn ${locale === 'en' ? 'active' : ''}`}
+                lang="en" aria-pressed={locale === 'en'}
                 onClick={() => switchLocale('en')}
               >
                 EN
@@ -424,8 +361,11 @@ export function Navbar() {
 
             <button
               className={`mobile-menu-btn ${mobileMenuOpen ? 'open' : ''}`}
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              onClick={() => { setDesktopGroup(null); setMobileMenuOpen(!mobileMenuOpen); }}
+              ref={menuButtonRef}
+              aria-controls="luna-mobile-menu"
+              aria-expanded={mobileMenuOpen}
+              aria-label={locale === 'ar' ? 'فتح القائمة' : 'Open menu'}
             >
               <span className="hamburger-line"></span>
               <span className="hamburger-line"></span>
@@ -437,20 +377,24 @@ export function Navbar() {
 
       {/* Mobile Sidebar */}
       <div className={`mobile-sidebar-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={closeMobileMenu}></div>
-      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
+      <aside ref={drawerRef} id="luna-mobile-menu" className={`mobile-sidebar luna-ribbon-drawer ${mobileMenuOpen ? 'open' : ''}`}
+        role={mobileMenuOpen ? 'dialog' : undefined} aria-modal={mobileMenuOpen || undefined}
+        inert={!mobileMenuOpen} aria-hidden={!mobileMenuOpen} aria-label={locale === 'ar' ? 'قائمة التنقل' : 'Site navigation'}>
         <div className="mobile-sidebar-header">
           <div className="brand">
-            <EImg
-              editId="nav-mobile-brand-logo"
-              src="/images/logo.png"
-              alt="Luna"
-              width={36}
-              height={36}
-              className="brand-logo-img"
-            />
-            <span><E ns="brand" k="name">{brand('name')}</E></span>
+            <Link href="/" className="luna-wordmark-link" onClick={closeMobileMenu} aria-label={locale === 'ar' ? 'لونا، الصفحة الرئيسية' : 'Luna home'}>
+              <EImg
+                editId="nav-mobile-brand-logo"
+                src={lunaBrandMark}
+                alt="Luna"
+                width={36}
+                height={36}
+                className="brand-logo-img"
+              />
+              <LunaWordmark><E ns="brand" k="name">{brand('name')}</E></LunaWordmark>
+            </Link>
           </div>
-          <button className="mobile-close-btn" onClick={closeMobileMenu} aria-label="Close menu">
+          <button className="mobile-close-btn" onClick={closeMobileMenu} aria-label={locale === 'ar' ? 'إغلاق القائمة' : 'Close menu'}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -459,133 +403,29 @@ export function Navbar() {
         </div>
 
         <nav className="mobile-nav">
-          <Link href="/" className={`mobile-nav-link ${isActive('/') && pathname === '/' ? 'active' : ''}`} onClick={closeMobileMenu}>
+          {!hideForViewer('home') && <Link href="/" aria-current={pathname === '/' ? 'page' : undefined}
+            className={`mobile-nav-link ${pathname === '/' ? 'active' : ''}`} onClick={closeMobileMenu}>
             <E ns="nav" k="home">{t('home')}</E>
-          </Link>
-
-          {/* Mobile Games Group */}
-          <div className="mobile-games-group">
-            <button
-              className={`mobile-games-trigger ${isGamesActive ? 'active' : ''}`}
-              onClick={() => setMobileGamesOpen(!mobileGamesOpen)}
-            >
-              <span><E ns="nav" k="games">{t('games')}</E></span>
-              <ChevronIcon open={mobileGamesOpen} />
-            </button>
-            {mobileGamesOpen && (
-              <div className="mobile-games-sublinks">
-                <Link
-                  href="/luna-fantasy"
-                  className={`mobile-nav-link ${isActive('/luna-fantasy') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="lunaFantasy">{t('lunaFantasy')}</E>
-                </Link>
-                <Link
-                  href="/grand-fantasy"
-                  className={`mobile-nav-link ${isActive('/grand-fantasy') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="grandFantasy">{t('grandFantasy')}</E>
-                </Link>
-                <Link
-                  href="/faction-war"
-                  className={`mobile-nav-link ${isActive('/faction-war') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="factionWar">{t('factionWar')}</E>
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile World Group */}
-          <div className="mobile-games-group">
-            <button
-              className={`mobile-games-trigger ${isWorldActive ? 'active' : ''}`}
-              onClick={() => setMobileWorldOpen(!mobileWorldOpen)}
-            >
-              <span><E ns="nav" k="world">{t('world')}</E></span>
-              <ChevronIcon open={mobileWorldOpen} />
-            </button>
-            {mobileWorldOpen && (
-              <div className="mobile-games-sublinks">
-                <Link
-                  href="/story"
-                  className={`mobile-nav-link ${isActive('/story') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="story">{t('story')}</E>
-                </Link>
-                <Link
-                  href="/characters"
-                  className={`mobile-nav-link ${isActive('/characters') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="characters">{t('characters')}</E>
-                </Link>
-                <Link
-                  href="/partners"
-                  className={`mobile-nav-link ${isActive('/partners') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="partners">{t('partners')}</E>
-                </Link>
-                <Link
-                  href="/members"
-                  className={`mobile-nav-link ${isActive('/members') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="members">{t('members')}</E>
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Economy Group */}
-          <div className="mobile-games-group">
-            <button
-              className={`mobile-games-trigger ${isEconomyActive ? 'active' : ''}`}
-              onClick={() => setMobileEconomyOpen(!mobileEconomyOpen)}
-            >
-              <span><E ns="nav" k="economy">{t('economy')}</E></span>
-              <ChevronIcon open={mobileEconomyOpen} />
-            </button>
-            {mobileEconomyOpen && (
-              <div className="mobile-games-sublinks">
-                <Link
-                  href="/bank"
-                  className={`mobile-nav-link ${isActive('/bank') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="bank">{t('bank')}</E>
-                </Link>
-                <Link
-                  href="/bazaar"
-                  className={`mobile-nav-link ${isActive('/bazaar') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="bazaar">{t('bazaar')}</E>
-                </Link>
-                <Link
-                  href="/trading"
-                  className={`mobile-nav-link ${isActive('/trading') ? 'active' : ''}`}
-                  onClick={closeMobileMenu}
-                >
-                  <E ns="nav" k="trading">{t('trading')}</E>
-                </Link>
-                {FEATURE_FLAGS.marketplace && (
-                  <Link
-                    href="/marketplace"
-                    className={`mobile-nav-link ${isActive('/marketplace') ? 'active' : ''}`}
-                    onClick={closeMobileMenu}
-                  >
-                    <E ns="nav" k="marketplace">{t('marketplace')}</E>
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
+          </Link>}
+          {groups.map(group => {
+            const expanded = Boolean(mobileGroups[group.key]);
+            const active = group.links.some(link => isActive(link.path));
+            const menuId = 'luna-mobile-' + group.key;
+            return <div key={group.key} data-nav-group={group.key} className="mobile-games-group">
+              <button type="button" className={`mobile-games-trigger ${active ? 'active' : ''}`}
+                aria-expanded={expanded} aria-controls={expanded ? menuId : undefined}
+                onClick={() => setMobileGroups(current => ({ ...current, [group.key]: !current[group.key] }))}>
+                <span><E ns="nav" k={group.key}>{t(group.key)}</E></span><ChevronIcon open={expanded} />
+              </button>
+              {expanded && <div id={menuId} className="mobile-games-sublinks">
+                {group.links.map(link => <Link key={link.tab} href={link.path}
+                  className={`mobile-nav-link ${isActive(link.path) ? 'active' : ''}`}
+                  aria-current={isActive(link.path) ? 'page' : undefined} onClick={closeMobileMenu}>
+                  <E ns="nav" k={link.label}>{t(link.label)}</E>
+                </Link>)}
+              </div>}
+            </div>;
+          })}
         </nav>
 
         <div className="mobile-sidebar-footer">
@@ -642,25 +482,25 @@ export function Navbar() {
                 </button>
               </>
             ) : (
-              <button
-                className="mobile-discord-login"
-                onClick={() => { signIn('discord'); closeMobileMenu(); }}
-              >
+              <a {...guestLink} className="mobile-discord-login"
+                onClick={event => { updateGuestDestination(event); closeMobileMenu(); }}>
                 <DiscordIcon />
                 <E ns="nav" k="signIn">{t('signIn')}</E>
-              </button>
+              </a>
             )}
           </div>
 
           <div className="lang-switcher">
             <button
               className={`lang-btn ${locale === 'ar' ? 'active' : ''}`}
+                lang="ar" aria-pressed={locale === 'ar'}
               onClick={() => { switchLocale('ar'); closeMobileMenu(); }}
             >
               AR
             </button>
             <button
               className={`lang-btn ${locale === 'en' ? 'active' : ''}`}
+                lang="en" aria-pressed={locale === 'en'}
               onClick={() => { switchLocale('en'); closeMobileMenu(); }}
             >
               EN

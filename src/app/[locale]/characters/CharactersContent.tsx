@@ -1,10 +1,25 @@
 'use client';
+import { ArchiveName } from '@/components/ArchiveName';
+import { PortraitLens } from './PortraitLens';
 
 import { useTranslations } from 'next-intl';
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { useState, useEffect, useRef } from 'react';
 import { E } from '@/components/edit-mode/EditableText';
-import { EImg } from '@/components/edit-mode/EditableImage';
+import { approvedPortraitFor, parseCharacterName } from '@/lib/cinematic/people-art';
+import { canonicalCharacterFaction } from '@/lib/cinematic/character-faction';
+import { inspectorArtworkViewerSrc } from '@/lib/cinematic/native-art-inspector';
+import { linkedCardsFor, type LinkedCard } from './linked-card-records';
+import { useEditMode } from '@/lib/edit-mode/context';
+import { CinematicArtwork, EditableCinematicArtwork } from '../cinematic-people/CinematicArtwork';
+import { WorldStage } from '../night-worlds/WorldStage';
+import { CastArchive } from './CastArchive';
+import night from '../night-worlds/night-worlds.module.css';
+import { CharactersAisle } from '../cinematic-people/CharactersAisle';
+import { useCharacterRecordMotion } from '../cinematic-people/useCharacterRecordMotion';
+import { ArchiveCardSearch } from '@/components/cinematic-games/ArchiveCardSearch';
+import { CharacterLinkedCards } from './CharacterLinkedCards';
+import cast from './cast-viewer.module.css';
+import { archiveLabelMatcher } from '@/lib/cinematic/archive-card-search';
 import { EDb } from '@/components/edit-mode/EditableDbText';
 import type { Character, Faction, Card, Locale } from '@/types';
 
@@ -13,87 +28,105 @@ interface CharactersContentProps {
   factions: Faction[];
   cards: Card[];
   locale: Locale;
+  cinematicPresentation: boolean;
 }
 
-// Parse character name to extract subtitle (text in quotes)
-// e.g., "Buddha Ban 'The Mastermind'" → { name: "Buddha Ban", subtitle: "The Mastermind" }
-function parseCharacterName(fullName: string): { name: string; subtitle: string | null } {
-  // Match patterns like: Name 'Subtitle' or Name "Subtitle" or Name «Subtitle»
-  const patterns = [
-    /'([^']+)'/, // Single quotes
-    /"([^"]+)"/, // Double quotes
-    /«([^»]+)»/, // French guillemets
-    /「([^」]+)」/, // Japanese quotes
-  ];
-
-  for (const pattern of patterns) {
-    const match = fullName.match(pattern);
-    if (match) {
-      const subtitle = match[1].trim();
-      const name = fullName.replace(match[0], '').trim();
-      return { name, subtitle };
-    }
-  }
-
-  return { name: fullName, subtitle: null };
-}
-
-export function CharactersContent({ characters, factions, cards, locale }: CharactersContentProps) {
+export function CharactersContent({ characters, factions, cards, locale, cinematicPresentation }: CharactersContentProps) {
   const t = useTranslations('charactersPage');
   const showcase = useTranslations('showcase');
   const hero = useTranslations('hero');
-  const cardsT = useTranslations('cardsPage');
+  const { editMode } = useEditMode();
+  const cinematic = cinematicPresentation && !editMode;
 
   const [activeFaction, setActiveFaction] = useState<string>('all');
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [archiveQuery, setArchiveQuery] = useState('');
+  const [selection, setSelection] = useState<{ characterId: string; cardId?: string } | null>(null);
+  const selectedCharacter = selection && characters.find(character => character.id === selection.characterId);
+  const recordIsOpen = Boolean(selectedCharacter);
+
+  const modalClose = useRef<HTMLButtonElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const openerScroll = useRef({ left: 0, top: 0 });
+  const recordMotion = useCharacterRecordMotion(selectedCharacter?.id, cinematic, locale === 'ar', opener);
+  const closeRecord = () => recordMotion.close(() => setSelection(null));
+  const openCharacter = (character: Character, control: HTMLElement) => {
+    opener.current = control;
+    openerScroll.current = { left: window.scrollX, top: window.scrollY };
+    setSelection({ characterId: character.id });
+  };
+  const matchesName = archiveLabelMatcher(editMode ? '' : archiveQuery);
+  const matches = characters.filter(character => matchesName(character.name[locale], character.name.en));
 
   // Get factions that have characters (exclude "all" for grouping)
   const factionsWithCharacters = factions.filter(f =>
-    f.id !== 'all' && characters.some(c => c.faction === f.id)
+    f.id !== 'all' && characters.some(c => canonicalCharacterFaction(c.faction) === f.id)
   );
 
   // Filter characters based on active faction
   const filteredCharacters = activeFaction === 'all'
-    ? characters
-    : characters.filter(c => c.faction === activeFaction);
+    ? matches
+    : matches.filter(c => canonicalCharacterFaction(c.faction) === activeFaction);
 
   // Group characters by faction (for "all" view)
   const charactersByFaction = factionsWithCharacters.map(faction => ({
     faction,
-    characters: characters.filter(c => c.faction === faction.id)
+    characters: matches.filter(c => canonicalCharacterFaction(c.faction) === faction.id)
   })).filter(group => group.characters.length > 0);
+  const visibleRecords = activeFaction === 'all' && !cinematic ? charactersByFaction.flatMap(group => group.characters) : filteredCharacters;
+  const selectedIndex = visibleRecords.findIndex(character => character.id === selectedCharacter?.id);
+  const canTurnRecord = selectedIndex >= 0 && visibleRecords.length > 1;
+  const turnRecord = (step: number) => {
+    if (!canTurnRecord) return;
+    const character = visibleRecords[(selectedIndex + step + visibleRecords.length) % visibleRecords.length];
+    recordMotion.turn(step, () => setSelection({ characterId: character.id }));
+  };
 
-  // Close modal on escape
+  const selectLinkedCard = (entry: LinkedCard, step: number) => {
+    const select = () => setSelection({ characterId: entry.character.id, cardId: entry.card.id });
+    if (entry.character.id === selectedCharacter?.id) select();
+    else recordMotion.turn(step, select);
+  };
+
+  // Keep modal keyboard focus and restore the exact initiating control on close.
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedCharacter(null);
+    if (!recordIsOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    modalClose.current?.focus({ preventScroll: true });
+    const onKey = (event: KeyboardEvent) => {
+      if (modalClose.current?.closest('[role="dialog"]')?.querySelector('dialog[open]')) return;
+      if (event.key === 'Escape' && !event.defaultPrevented) closeRecord();
+      if (event.key !== 'Tab') return;
+      const modal = modalClose.current?.closest('[role="dialog"]');
+      const focusable = Array.from(modal?.querySelectorAll<HTMLElement>('button:not([disabled]),a[href],input:not([type="file"]),[tabindex="0"]') ?? [])
+        .filter(node => node.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const active = document.activeElement;
+      const endpoint = event.shiftKey ? focusable[0] : focusable[focusable.length - 1];
+      if (active === endpoint || !modal?.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? focusable[focusable.length - 1] : focusable[0]).focus();
+      }
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, []);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (selectedCharacter) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-  }, [selectedCharacter]);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKey);
+      if (opener.current?.isConnected) opener.current.focus({ preventScroll: true });
+      window.scrollTo({ ...openerScroll.current, behavior: 'instant' });
+    };
+    // Focus is held for the complete inspection, including turns between records.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recordIsOpen]);
 
   // Get faction name for a character
   const getFactionName = (factionId: string) => {
-    return factions.find(f => f.id === factionId)?.name[locale] || factionId;
+    return factions.find(f => f.id === canonicalCharacterFaction(factionId))?.name[locale] || factionId;
   };
 
   // Get faction color class
   const getFactionClass = (factionId: string) => {
-    return `faction-${factionId}`;
-  };
-
-  // Find card for a character
-  const getCharacterCard = (characterId: string): Card | undefined => {
-    return cards.find(card => card.characterId === characterId);
+    return `faction-${canonicalCharacterFaction(factionId)}`;
   };
 
   // Render a character card
@@ -101,14 +134,18 @@ export function CharactersContent({ characters, factions, cards, locale }: Chara
     const { name, subtitle } = parseCharacterName(character.name[locale]);
     const factionClass = getFactionClass(character.faction);
     return (
-      <div
-        key={character.id}
-        className={`char-card ${factionClass}`}
-        onClick={() => setSelectedCharacter(character)}
-      >
+      <div key={character.id} className={`char-card ${factionClass}`}>
+        <button
+          type="button"
+          className="people-character-hit"
+          aria-haspopup="dialog"
+          aria-label={character.name[locale]}
+          onClick={event => openCharacter(character, event.currentTarget)}
+        />
         <div className="char-img-container">
-          <Image
-            src={character.imageUrl}
+          <CinematicArtwork
+            approved={cinematic ? approvedPortraitFor(character.imageUrl)?.thumb : undefined}
+            original={character.imageUrl}
             alt={character.name[locale]}
             width={300}
             height={400}
@@ -117,23 +154,37 @@ export function CharactersContent({ characters, factions, cards, locale }: Chara
         </div>
         <div className="char-info">
           <span className={`char-role ${factionClass}`}>{getFactionName(character.faction)}</span>
-          <h3 className="char-name">{name}</h3>
+          <h3 className="char-name"><ArchiveName>{name}</ArchiveName></h3>
           {subtitle && <span className="char-subtitle">{subtitle}</span>}
         </div>
       </div>
     );
   };
 
-  const characterCard = selectedCharacter ? getCharacterCard(selectedCharacter.id) : undefined;
+  const linkedCards = recordIsOpen ? linkedCardsFor(visibleRecords,cards,cinematic) : [];
 
   return (
-    <>
+    <main className="people-characters-surface">
+      {cinematic ? <>
+        <WorldStage world="characters" locale={locale}
+          badge={<E ns="charactersPage" k="heroBadge">{t('heroBadge')}</E>}
+          title={<E ns="showcase" k="charsTitle">{showcase('charsTitle')}</E>}
+          description={<E ns="charactersPage" k="subtitle">{t('subtitle')}</E>}
+          secondary={<a href="https://discord.gg/lunarian" target="_blank" rel="noopener noreferrer"><E ns="hero" k="joinBtn">{hero('joinBtn')}</E></a>} />
+        <CastArchive records={visibleRecords} factions={factions} locale={locale} faction={activeFaction} query={archiveQuery}
+          onFaction={setActiveFaction} onQuery={setArchiveQuery} factionName={getFactionName} openRecord={openCharacter} />
+        <aside className={night.castFooter}><div><h3><E ns="charactersPage" k="ctaTitle">{t('ctaTitle')}</E></h3>
+          <p><E ns="charactersPage" k="ctaDesc">{t('ctaDesc')}</E></p></div>
+          <a href="https://discord.gg/lunarian" target="_blank" rel="noopener noreferrer"><E ns="hero" k="joinBtn">{hero('joinBtn')}</E> ↗</a>
+        </aside>
+      </> : <>
       {/* Characters Hero */}
-      <section className="characters-hero">
+      <CharactersAisle cinematic={cinematic}>
         <div className="characters-hero-bg">
-          <EImg
+          <EditableCinematicArtwork
             editId="characters-hero-bg"
-            src="/images/our-characters.png"
+            approved={cinematic ? '/luna-cinematic/people/hero/archive-intro.webp' : undefined}
+            original="/images/our-characters.png"
             alt="Luna Characters"
             fill
             priority
@@ -151,17 +202,21 @@ export function CharactersContent({ characters, factions, cards, locale }: Chara
               </svg>
               <span><E ns="hero" k="joinBtn">{hero('joinBtn')}</E></span>
             </a>
+            {cinematic && <a className="c7-enter" href="#c7-portrait-archive">{locale === 'ar' ? 'استكشف سجلّ الشخصيات' : 'Explore the portrait archive'} <span aria-hidden="true">↓</span></a>}
           </div>
         </div>
-      </section>
+      </CharactersAisle>
 
-      <div className="wrap">
+      <div id="c6-gallery" className="wrap cinematic-archive-content">
 
       {/* Faction Filter */}
+      {!editMode && <ArchiveCardSearch locale={locale} query={archiveQuery} count={filteredCharacters.length} onQuery={setArchiveQuery} />}
       <div className="faction-filter">
         {factions.map(faction => (
           <button
             key={faction.id}
+            type="button"
+            aria-pressed={activeFaction === faction.id}
             className={`faction-btn ${activeFaction === faction.id ? 'active' : ''}`}
             onClick={() => setActiveFaction(faction.id)}
           >
@@ -209,37 +264,49 @@ export function CharactersContent({ characters, factions, cards, locale }: Chara
         </div>
       </div>
 
+      </div>
+      </>}
       {/* Character Detail Modal */}
       {selectedCharacter && (
-        <div className="char-lightbox" onClick={() => setSelectedCharacter(null)}>
-          <div className="char-lightbox-content" onClick={e => e.stopPropagation()}>
+        <div className={'char-lightbox'+(cinematic?' '+night.recordOverlay+' '+cast.overlay:'')} onClick={closeRecord}>
+          <div ref={recordMotion.panel} className="char-lightbox-content" data-record-id={selectedCharacter.id} role="dialog" aria-modal="true" aria-label={selectedCharacter.name[locale]} onClick={e => e.stopPropagation()}
+            onKeyDown={event => {
+              if (event.defaultPrevented || event.currentTarget.querySelector('dialog[open]') || !cinematic || event.altKey || event.ctrlKey || event.metaKey) return;
+              const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+              if (direction) { event.preventDefault(); turnRecord(locale === 'ar' ? -direction : direction); }
+            }}>
             <button
               className="char-lightbox-close"
-              onClick={() => setSelectedCharacter(null)}
+              type="button"
+              ref={modalClose}
+              aria-label={locale === 'ar' ? 'إغلاق' : 'Close'}
+              onClick={closeRecord}
             >
               &times;
             </button>
-            <div className="char-lightbox-img">
-              <EImg
+            <PortraitLens key={selectedCharacter.id} locale={locale} overviewSrc={cinematic ? approvedPortraitFor(selectedCharacter.imageUrl)?.thumb : undefined}>
+              <EditableCinematicArtwork
                 editId={`char-img-${selectedCharacter.id}`}
-                src={selectedCharacter.imageUrl}
+                nativeDetail={cinematic ? inspectorArtworkViewerSrc(approvedPortraitFor(selectedCharacter.imageUrl)?.id) : undefined}
+                approved={cinematic ? approvedPortraitFor(selectedCharacter.imageUrl)?.medium : undefined}
+                original={selectedCharacter.imageUrl}
                 alt={selectedCharacter.name[locale]}
-                width={450}
-                height={600}
-                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                width={900}
+                height={1350}
+                style={{ objectFit: 'contain', width: '100%', height: '100%' }}
                 dbCollection="characters"
                 dbId={selectedCharacter.id}
                 dbField="imageUrl"
               />
-            </div>
-            <div className="char-lightbox-info">
+            </PortraitLens>
+            <div className={'char-lightbox-info'+(cinematic?' '+night.recordBody:'')}>
               <span className={`char-role ${getFactionClass(selectedCharacter.faction)}`}>{getFactionName(selectedCharacter.faction)}</span>
               {(() => {
                 const { name, subtitle } = parseCharacterName(selectedCharacter.name[locale]);
                 return (
                   <>
                     <h2 className="char-name">
-                      <EDb collection="characters" id={selectedCharacter.id} field={`name.${locale}`}>{name}</EDb>
+                      <EDb collection="characters" id={selectedCharacter.id} field={`name.${locale}`}><ArchiveName>{name}</ArchiveName></EDb>
                     </h2>
                     {subtitle && <span className="char-subtitle char-subtitle-modal">{subtitle}</span>}
                   </>
@@ -250,34 +317,17 @@ export function CharactersContent({ characters, factions, cards, locale }: Chara
                   <EDb collection="characters" id={selectedCharacter.id} field={`lore.${locale}`}>{selectedCharacter.lore[locale]}</EDb>
                 </p>
               )}
-
-              {/* Character's Card */}
-              {characterCard && (
-                <div className="char-card-section">
-                  <h4 className="char-card-title">
-                    {locale === 'ar' ? 'الكرت' : 'Card'}
-                  </h4>
-                  <div className="char-card-preview">
-                    <Image
-                      src={characterCard.imageUrl}
-                      alt={characterCard.name[locale]}
-                      width={150}
-                      height={210}
-                      className="char-card-img"
-                    />
-                    <div className="char-card-info">
-                      <span className={`card-rarity-badge rarity-${characterCard.rarity}`}>
-                        {cardsT(`filters.${characterCard.rarity}`)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className={cast.documentTurn+' char-record-turn'} role="group" aria-label={locale==='ar'?'تصفّح الشخصيات':'Browse characters'}>
+                <button type="button" data-step="-1" disabled={!canTurnRecord} onClick={()=>turnRecord(-1)}>{locale==='ar'?'الشخصية السابقة':'Previous character'}</button>
+                <span aria-live="polite">{(selectedIndex+1).toLocaleString(locale)} / {visibleRecords.length.toLocaleString(locale)}</span>
+                <button type="button" data-step="1" disabled={!canTurnRecord} onClick={()=>turnRecord(1)}>{locale==='ar'?'الشخصية التالية':'Next character'}</button>
+              </div>
+              <CharacterLinkedCards person={selectedCharacter} cardId={selection?.cardId} entries={linkedCards}
+                locale={locale} onSelect={selectLinkedCard} />
             </div>
           </div>
         </div>
       )}
-      </div>
-    </>
+    </main>
   );
 }

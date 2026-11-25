@@ -35,7 +35,8 @@ export default function PassportsClient() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(36);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [q, setQ] = useState('');
   const [faction, setFaction] = useState('');
   const [staffOnly, setStaffOnly] = useState(false);
@@ -46,6 +47,7 @@ export default function PassportsClient() {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     setLoading(true);
+    setLoadError(false);
 
     const params = new URLSearchParams();
     if (q.trim()) params.set('q', q.trim());
@@ -61,18 +63,27 @@ export default function PassportsClient() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      if (ctrl.signal.aborted) return;
       setRows(data.rows ?? []);
       setTotal(data.total ?? 0);
-    } catch (err) {
-      if ((err as Error).name !== 'AbortError') console.error('Passports fetch:', err);
+    } catch {
+      if (!ctrl.signal.aborted) {
+        setLoadError(true);
+        setRows([]);
+        setTotal(0);
+      }
     } finally {
-      if (abortRef.current === ctrl) setLoading(false);
+      if (!ctrl.signal.aborted) setLoading(false);
     }
   }, [q, faction, staffOnly, page, limit]);
 
   useEffect(() => {
+    setLoading(true);
     const t = window.setTimeout(fetchList, 220);
-    return () => window.clearTimeout(t);
+    return () => {
+      window.clearTimeout(t);
+      abortRef.current?.abort();
+    };
   }, [fetchList]);
 
   // Reset page whenever a filter changes (not page itself).
@@ -97,6 +108,7 @@ export default function PassportsClient() {
             <input
               className="av-audit-input"
               placeholder="Search passport number or name…"
+              aria-label="Search passports"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -104,7 +116,7 @@ export default function PassportsClient() {
           </div>
 
           <select className="av-audit-input av-audit-input--sm"
-            value={faction} onChange={(e) => setFaction(e.target.value)}
+            value={faction} onChange={(e) => setFaction(e.target.value)} aria-label="Filter by faction"
             style={{ width: 180 }}>
             <option value="">All factions</option>
             {PASSPORT_FACTIONS.map((f) => <option key={f} value={f}>{f}</option>)}
@@ -118,11 +130,16 @@ export default function PassportsClient() {
       </section>
 
       <div className="av-audit-meta">
-        <span>{loading ? 'Loading…' : `${total.toLocaleString()} ${total === 1 ? 'passport' : 'passports'}`}</span>
+        {loadError && !loading ? (
+          <div role="alert">
+            Passport registry could not be loaded.{' '}
+            <button type="button" className="av-btn av-btn-ghost" onClick={() => void fetchList()}>Retry</button>
+          </div>
+        ) : <span>{loading ? 'Loading…' : `${total.toLocaleString()} ${total === 1 ? 'passport' : 'passports'}`}</span>}
       </div>
 
       <div className="av-passports-grid">
-        {rows.length === 0 && !loading && (
+        {rows.length === 0 && !loading && !loadError && (
           <div className="av-flows-empty" style={{ gridColumn: '1 / -1' }}>
             No passports match these filters.
           </div>

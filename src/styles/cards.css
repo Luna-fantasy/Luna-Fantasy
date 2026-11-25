@@ -373,6 +373,7 @@
 
 /* Card Info */
 .card-info {
+  container-type: inline-size;
   padding: 16px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
   position: absolute;
@@ -383,7 +384,11 @@
 
 .card-name {
   font-weight: 800;
-  font-size: 14px;
+  font-size: clamp(.75rem, 9cqi, .875rem);
+  line-height: 1.5;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
   color: #fff;
   margin: 8px 0 0;
 }

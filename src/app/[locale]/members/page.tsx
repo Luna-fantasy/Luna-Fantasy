@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import '@/styles/members.css';
 import MembersContent from './MembersContent';
 import TabGuard from '@/components/TabGuard';
 

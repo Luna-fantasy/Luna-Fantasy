@@ -1,0 +1,89 @@
+.bankPage {
+  --bank-ink: #100d0e;
+  --bank-ivory: #f5e9db;
+  --bank-rose: #dfa998;
+  --bank-edge: #a2796b94;
+  background: var(--bank-ink);
+  color: var(--bank-ivory);
+  padding-block-end: 1px;
+}
+.bankPage [id] { scroll-margin-block-start: 6.8rem; }
+.atrium {
+  display: grid;
+  grid-template-columns: minmax(0, 1.38fr) minmax(0, .85fr);
+  position: relative;
+  width: min(100%, 116rem);
+  margin: 0 auto;
+  min-height: min(83svh, 52rem);
+  border-block-end: 1px solid var(--bank-edge);
+  background: #191517;
+}
+.window { position: relative; min-height: 32rem; isolation: isolate; overflow: hidden; }
+.window::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 4rem #05070a30; }
+.frame { position: absolute; inset: 1.5rem; border: 1px solid #cc99845c; pointer-events: none; }
+.reception { position: relative; align-self: center; padding: clamp(5rem, 9vw, 9rem) clamp(1.7rem, 4vw, 5rem) clamp(3rem, 6vw, 5.6rem); }
+.reception::before { content: ''; height: 1px; width: 3rem; background: #d5a18a; display: block; margin-block-end: 1.8rem; }
+.reception h1, .settings h2 { color: var(--bank-ivory); font: 400 clamp(3.25rem, 6vw, 7.25rem)/.99 Georgia, 'Noto Naskh Arabic', 'Times New Roman', serif; text-wrap: balance; letter-spacing: -.045em; margin: 0; }
+.reception:dir(rtl) h1, .settings:dir(rtl) h2 { line-height: 1.35; letter-spacing: 0; }
+.reception p { font: 400 clamp(.97rem, 1.24vw, 1.25rem)/1.7 system-ui, sans-serif; color: #d2c4bd; margin: 1rem 0 1.75rem; }
+.drawerIndex { display: grid; border-top: 1px solid var(--bank-edge); }
+.drawerIndex a { text-decoration: none; display: grid; grid-template-columns: 1rem 1fr auto; align-items: center; gap: .8rem; border-bottom: 1px solid var(--bank-edge); color: var(--bank-ivory); min-height: 3.35rem; padding: .4rem .35rem; font-size: 1.02rem; transition: background .2s ease, padding .25s ease; }
+.drawerIndex a:hover, .drawerIndex a:focus-visible { background: #a16c5724; padding-inline: .8rem; }
+.drawerMark { width: .65rem; height: .65rem; border: 1px solid #cb9c89; transform: rotate(45deg); transition: transform .24s; }
+.drawerIndex a:hover .drawerMark, .drawerIndex a:focus-visible .drawerMark { transform: rotate(135deg); }
+.arrow { color: var(--bank-rose); font: 1.25rem system-ui; }
+.discord { display: inline-block; color: #d9b8a7; margin-top: 1.25rem; text-underline-offset: .25rem; font-size: .9rem; }
+.bankPage :global(.wrap) { width: min(90%, 79rem); max-width: none; margin-inline: auto; }
+.bankPage :global(.bank-sections) { padding-top: clamp(2.5rem, 5vw, 5.5rem); }
+.bankPage :global(.bank-sections > .bank-section) { border-block-start: 1px solid var(--bank-edge); margin: 0 auto; padding: clamp(2.4rem, 5vw, 5.6rem) 0; }
+.bankPage :global(#vip-section) { padding-block-end: clamp(.75rem, 1.5vw, 1.15rem); margin-block-end: 0; }
+main.bankPage[data-economy-route=bank] :global(.bank-sections) { padding-block-end: .25rem; }
+main.bankPage[data-economy-route=bank] :global(.bank-sections :is(.salary-card,.service-card)) {
+  background: linear-gradient(140deg,#2a2023,#1b1618 72%);
+  border: 1px solid #bc8e7966;
+  box-shadow: inset 0 1px #f4c9b411, 0 .5rem 1.3rem #08060725;
+}
+main.bankPage[data-economy-route=bank] :global(.bank-sections .vip-card) { background: linear-gradient(140deg,#332629,#21191b 72%); }
+main.bankPage[data-economy-route=bank] :global(.bank-sections :is(.salary-card,.service-card))::after { background: linear-gradient(125deg,#e2a3860a,transparent 45%); }
+main.bankPage[data-economy-route=bank] :global(.bank-sections :is(.salary-value,.salary-card-title,.service-card-title)) { color: #f4e8dc; }
+main.bankPage[data-economy-route=bank] :global(.bank-sections :is(.salary-desc,.service-desc,.section-desc)) { color: #dacbc4; }
+main.bankPage[data-economy-route=bank] :global(.bank-sections :is(.loan-tier,.salary-timer,.role-command)) { background: #2b2022; border-color: #ac817064; color: #efd0bc; }
+main.bankPage[data-economy-route=bank] :global(.bank-sections .section-action-btn) { background: #674949; border-color: #bd9281; color: #fff1e3; }
+main.bankPage[data-economy-route=bank] :global(.bank-dashboard :is(.salary-card,.active-loan-card,.investment-active-card)) { background: #211a1c; }
+.bankPage :global(.bank-sections .bank-section-header) { margin-block: 0 1.5rem; }
+.bankPage :global(.bank-sections .bank-section-title) { color: #f4e7da; font-family: Georgia, 'Noto Naskh Arabic', serif; }
+.bankPage :global(.bank-sections .salary-card), .bankPage :global(.bank-sections .service-card) { border-radius: 0; border: 1px solid #785d557a; background: #211b1d; }
+.bankPage :global(.bank-sections .section-action-btn) { background: #66483f; color: #fff1e3; border: 1px solid #bd9281; border-radius: 2px; }
+.estimator { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(15rem, .85fr); align-items: stretch; margin-block: clamp(.75rem, 1.3vw, 1.125rem) clamp(1.3rem, 2.5vw, 2.25rem); border-block: 1px solid var(--bank-edge); background: #251c1f; }
+.settings { padding: clamp(1.4rem, 4vw, 3.8rem); }
+.settings h2 { font-size: clamp(2.2rem, 4vw, 4rem); margin-block-end: 1.6rem; }
+.settings fieldset { border: 0; padding: 0; margin: 0 0 1.1rem; display: flex; flex-wrap: wrap; gap: .4rem; }
+.settings legend { color: #d8c6bb; font-size: .88rem; padding: 0 0 .45rem; }
+.settings button { font: inherit; color: #e1cfc3; background: #1b1517; border: 1px solid #916f63; padding: .48rem .8rem; min-height: 2.75rem; cursor: pointer; transition: background .2s, color .2s; }
+.settings button[aria-pressed=true] { color: #1a171a; background: #e4b6a4; }
+.receipt { display: grid; position: relative; align-content: center; justify-items: start; padding: clamp(1.5rem, 4vw, 4rem); background: #dfcab2; color: #322625; }
+.receipt::before { content: ''; position: absolute; inset-inline-start: 0; top: 0; bottom: 0; border-inline-start: 2px dashed #5745386b; }
+.receipt output { font: 400 clamp(2.6rem, 4.9vw, 5.8rem)/1.15 Georgia, serif; font-variant-numeric: tabular-nums; animation: stamp .4s ease-out; margin-block: .5rem .1rem; }
+.receipt small { border-block-start: 1px solid #916f63; margin-top: 1.4rem; padding-top: .65rem; align-self: end; width: 100%; }
+.crossing { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-block: 1px solid var(--bank-edge); margin: 2rem 0 clamp(3rem, 6vw, 7rem); }
+.crossing a { display: flex; justify-content: space-between; align-items: center; color: #ebd4c5; text-decoration: none; padding: 1rem clamp(.9rem, 2vw, 2rem); min-height: 5.2rem; font: 400 clamp(1.45rem, 3vw, 3rem)/1.3 Georgia, 'Noto Naskh Arabic', serif; }
+.crossing a + a { border-inline-start: 1px solid var(--bank-edge); }
+.crossing b { font: 1.5rem system-ui; transition: transform .2s; }
+.crossing a:hover b { transform: translateY(-.23rem); }
+.bankPage :is(a, button):focus-visible { outline: 2px solid #ecc7ab; outline-offset: 3px; }
+@keyframes stamp { from { opacity: .45; transform: translateY(-.35rem); } to { opacity: 1; transform: none; } }
+@media(max-width: 800px) {
+  .atrium { grid-template-columns: 1fr; min-height: 0; }
+  .window { min-height: 0; aspect-ratio: 16/9; margin-top: 3.9rem; }
+  .frame { inset: .7rem; }
+  .reception { padding: 1.65rem 6% 2rem; }
+  .reception::before { margin-bottom: .7rem; }
+  .reception h1 { font-size: clamp(3rem, 9vw, 4.4rem); }
+  .reception p { margin-block: .6rem 1rem; }
+  .drawerIndex a { min-height: 2.75rem; }
+  .estimator { grid-template-columns: 1fr; }
+  .receipt::before { inset: 0 0 auto; border: 0; border-block-start: 2px dashed #5745386b; }
+}
+@media(max-width: 420px) { .bankPage :global(.wrap) { width: 90%; } .settings { padding: 1.1rem; } }
+@media(prefers-reduced-motion: reduce) { .bankPage *, .bankPage *::before, .bankPage *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+

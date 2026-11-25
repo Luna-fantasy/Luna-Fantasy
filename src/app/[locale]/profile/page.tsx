@@ -9,18 +9,21 @@ export const metadata: Metadata = {
   title: 'Profile — Luna',
 };
 
-export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ discordId?: string }> }) {
+type ProfileProps = { params: Promise<{locale:string}>; searchParams: Promise<{discordId?:string}> };
+
+export default async function ProfilePage({ params, searchParams }: ProfileProps) {
   const { discordId } = await searchParams;
 
   // Public profile — no auth needed
   if (discordId) {
-    return <ProfileContent viewingDiscordId={discordId} />;
+    return <ProfileContent key={discordId} viewingDiscordId={discordId} />;
   }
 
   // Own profile — requires auth
   const session = await auth();
   if (!session) {
-    redirect('/auth/signin');
+    const {locale} = await params;
+    redirect('/' + locale + '/auth/signin/?' + new URLSearchParams({ callbackUrl: '/' + locale + '/profile/' }));
   }
 
   return <ProfileContent />;

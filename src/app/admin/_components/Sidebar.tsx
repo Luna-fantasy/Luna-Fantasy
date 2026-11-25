@@ -1,5 +1,6 @@
 'use client';
 
+import { lunaBrandMark } from '@/lib/luna-brand';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -21,31 +22,33 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
   const { open: mobileOpen, setOpen: setMobileOpen } = useMobileNav();
   const [collapsed, setCollapsed] = useState(false);
   const [filter, setFilter] = useState('');
-  // Default: all clusters start collapsed. The cluster containing the active
-  // route auto-opens via the `hasActive` check below without flipping state,
-  // so users only see the section relevant to where they are on first paint.
-  // localStorage overrides persist any manual expand/collapse they do.
-  const [openClusters, setOpenClusters] = useState<Record<string, boolean>>(
-    () => Object.fromEntries(CLUSTERS.map((c) => [c.id, false]))
-  );
+  const [openClusters, setOpenClusters] = useState<Record<string, boolean>>({});
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
-  // Persist sidebar state across navigations
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (typeof parsed.collapsed === 'boolean') setCollapsed(parsed.collapsed);
-        if (parsed.openClusters) setOpenClusters(parsed.openClusters);
+        if (parsed.openClusters && typeof parsed.openClusters === 'object') {
+          // The earlier format wrote false for every untouched section.
+          const entries = Object.entries(parsed.openClusters).filter(([, value]) =>
+            typeof value === 'boolean' && (parsed.version === 2 || value === true)
+          );
+          setOpenClusters(Object.fromEntries(entries) as Record<string, boolean>);
+        }
       }
     } catch { /* ignore */ }
+    setPreferencesLoaded(true);
   }, []);
 
   useEffect(() => {
+    if (!preferencesLoaded) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ collapsed, openClusters }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, collapsed, openClusters }));
     } catch { /* ignore */ }
-  }, [collapsed, openClusters]);
+  }, [collapsed, openClusters, preferencesLoaded]);
 
   const filtered = useMemo(() => {
     if (!filter.trim()) return CLUSTERS;
@@ -65,7 +68,7 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
     >
       <div className="av-sidebar-mobile-top">
         <Link href="/admin" className="av-sidebar-brand">
-          <Image src="/images/logo.png" alt="" width={32} height={32} priority />
+          <Image src={lunaBrandMark} alt="" width={32} height={32} priority />
           <div>
             <div className="av-sidebar-brand-text">Luna</div>
             <div className="av-sidebar-brand-sub">Admin · v2</div>
@@ -93,17 +96,17 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
 
       <nav className="av-sidebar-nav">
         {filtered.map((cluster) => {
-          const open = openClusters[cluster.id] ?? false;
+
           const hasActive = cluster.items.some((i) =>
-            i.href === pathname || (i.href !== '/admin' && pathname?.startsWith(i.href))
+            i.href === pathname || (i.href !== '/admin' && pathname?.startsWith(i.href + '/'))
           );
-          const showOpen = open || hasActive || Boolean(filter.trim());
+          const showOpen = Boolean(filter.trim()) || (openClusters[cluster.id] ?? hasActive);
           return (
             <div key={cluster.id} className="av-cluster" data-open={showOpen}>
               <button
                 type="button"
                 className="av-cluster-label"
-                onClick={() => setOpenClusters((s) => ({ ...s, [cluster.id]: !open }))}
+                onClick={() => setOpenClusters((s) => ({ ...s, [cluster.id]: !showOpen }))}
                 aria-expanded={showOpen}
               >
                 <span>{cluster.label}</span>
@@ -114,7 +117,7 @@ export default function Sidebar({ user }: { user: SidebarUser }) {
                 {cluster.items.map((item) => {
                   const active =
                     item.href === pathname ||
-                    (item.href !== '/admin' && pathname?.startsWith(item.href));
+                    (item.href !== '/admin' && pathname?.startsWith(item.href + '/'));
                   return (
                     <Link
                       key={item.href}

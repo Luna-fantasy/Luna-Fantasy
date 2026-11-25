@@ -5,8 +5,8 @@
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "node scripts/run-v19-release.cjs build",
+    "start": "node scripts/run-v19-release.cjs start",
     "lint": "next lint",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d out",

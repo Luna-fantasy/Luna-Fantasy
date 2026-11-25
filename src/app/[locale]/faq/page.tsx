@@ -1,7 +1,9 @@
 import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { E } from '@/components/edit-mode/EditableText';
+import { EditorialMotif } from '../cinematic-editorial/EditorialMotif';
 import '@/styles/legal.css';
+import '@/styles/luna-editorial-public.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -41,21 +43,24 @@ function FaqContent() {
   const questions = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'] as const;
 
   return (
-    <section className="faq-page">
+    <main className="faq-page" data-luna-editorial="faq">
       <div className="wrap">
         <div className="faq-header">
-          <h1><E ns="faq" k="title">{t('title')}</E></h1>
-          <p><E ns="faq" k="subtitle">{t('subtitle')}</E></p>
+          <div className="luna-editorial-copy">
+            <h1><E ns="faq" k="title">{t('title')}</E></h1>
+            <p><E ns="faq" k="subtitle">{t('subtitle')}</E></p>
+          </div>
+          <EditorialMotif motif="faq" />
         </div>
         <div className="faq-list">
           {questions.map((key) => (
-            <div key={key} className="faq-item">
-              <h3><E ns="faq" k={`${key}.question`}>{t(`${key}.question`)}</E></h3>
+            <details key={key} className="faq-item" open={key === 'q1'}>
+              <summary><h3><E ns="faq" k={`${key}.question`}>{t(`${key}.question`)}</E></h3></summary>
               <p><E ns="faq" k={`${key}.answer`}>{t(`${key}.answer`)}</E></p>
-            </div>
+            </details>
           ))}
         </div>
       </div>
-    </section>
+    </main>
   );
 }

@@ -1,5 +1,4 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import '@/styles/partners.css';
 import { PartnersContent } from './PartnersContent';
 import TabGuard from '@/components/TabGuard';
 

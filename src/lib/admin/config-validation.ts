@@ -3,6 +3,8 @@
  * Prevents API-level bypass of invalid values (negative XP, zero cooldowns, min > max, etc.)
  */
 
+import { PASSPORT_COSMETIC_PATHS } from './passport-cosmetics';
+
 interface ValidationError {
   field: string;
   message: string;
@@ -213,10 +215,23 @@ function validatePassportStaffRoles(value: any): ValidationError[] {
   return errors;
 }
 
+function validatePassportCosmetics(value: unknown): ValidationError[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !Object.keys(value).length) {
+    return [{ field: 'root', message: 'Provide at least one passport setting' }];
+  }
+  return Object.entries(value).flatMap(([key, field]) => {
+    if (!Object.prototype.hasOwnProperty.call(PASSPORT_COSMETIC_PATHS, key)) {
+      return [{ field: key, message: 'Unknown passport setting' }];
+    }
+    return key === 'portrait' ? assetsCdnUrl(field, key) : validateRoleIdArray(field, key);
+  });
+}
+
 // Section-specific validators for Butler config
 const BUTLER_VALIDATORS: Record<string, Validator> = {
   app_panel_staff: validateAppPanel,
   app_panel_wizard: validateAppPanel,
+  passport_cosmetics: validatePassportCosmetics,
   passport_vip_roles: (v) => validateRoleIdArray(v, 'passport_vip_roles'),
   passport_staff_roles: validatePassportStaffRoles,
   passport_merchant_image: (v) => assetsCdnUrl(v, 'passport_merchant_image'),

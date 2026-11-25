@@ -1,4 +1,5 @@
 import { discordAvatarUrl } from '@/lib/admin/avatar';
+import { getHourlyTransactions } from './hourly-transactions';
 import clientPromise from '@/lib/mongodb';
 import type { EconomyOverview, RecentTransaction, AdminUserProfile, AdminUserSearchResult } from '@/types/admin';
 
@@ -81,6 +82,7 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
     activeLoansResult,
     debtResult,
     recentTransactions,
+    hourlyTransactions,
   ] = await Promise.all([
     // Server member count from system collection (written by Butler every 5 min)
     db.collection('system').findOne({ _id: 'guild_member_count' as any }),
@@ -128,13 +130,14 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
       .sort({ createdAt: -1 })
       .limit(100)
       .toArray(),
+    getHourlyTransactions(db.collection('lunari_transactions')),
   ]);
 
   // Server members: prefer guild_member_count, fallback to levels collection count
-  let serverMembers = memberCountDoc?.value ?? 0;
-  if (!serverMembers) {
-    serverMembers = await db.collection('levels').countDocuments();
-  }
+  const rawCount = memberCountDoc?.value;
+  const count = typeof rawCount === 'string' && rawCount.trim() ? Number(rawCount) : rawCount;
+  const hasDiscordCount = typeof count === 'number' && Number.isSafeInteger(count) && count >= 0;
+  const serverMembers = hasDiscordCount ? count : await db.collection('levels').countDocuments();
 
   const totalLunari = lunariResult[0]?.total ?? 0;
   const activeHolders = lunariResult[0]?.holders ?? 0;
@@ -147,6 +150,8 @@ export async function getEconomyOverview(): Promise<EconomyOverview> {
 
   overviewCache = {
     totalUsers: serverMembers,
+    memberCountSource: hasDiscordCount ? 'discord' : 'levels',
+    hourlyTransactions,
     totalLunariCirculation: Math.round(totalLunari),
     activeHolders,
     bankReserve: Math.round(bankReserve),

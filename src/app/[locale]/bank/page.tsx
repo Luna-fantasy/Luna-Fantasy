@@ -63,8 +63,10 @@ export default async function BankPage({ params }: { params: Promise<{ locale: s
       ...bankData.loans,
       interestRate: Math.round(liveConfig.loanInterestRate * 100),
       vipInterestRate: Math.round(liveConfig.loanVipInterestRate * 100),
+      vipExactRate: liveConfig.loanVipInterestRate,
       deadline: Math.round(liveConfig.loanDurationMs / 86_400_000),
       tiers: liveConfig.loanTiers,
+      tierTerms: liveConfig.loanTiersFull.map(({ amount, interest, duration }) => ({ amount, interest, duration })),
     },
     insurance: {
       ...bankData.insurance,

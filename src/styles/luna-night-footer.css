@@ -1,0 +1,42 @@
+footer.luna-night-footer {position:relative;isolation:isolate;overflow:clip;--footer-word-ink:#e4bea6;background:#161218;border-block-start:1px solid #aa8c7466;color:#e7d8ce;}
+.luna-night-footer .footer-night-window {position:absolute;inset:0 0 auto;height:clamp(16rem,23vw,32rem);z-index:-1;pointer-events:none;overflow:hidden;background:#241d24;}
+.luna-night-footer .footer-night-window i {position:absolute;inset:0;background:linear-gradient(90deg,#17131af5 0%,#1a141ae6 24%,#19131955 62%,transparent),linear-gradient(0deg,#161218 0%,#1612180a 40%);}
+[dir=rtl] .luna-night-footer .footer-night-window i {background:linear-gradient(270deg,#17131af5 0%,#1a141ae6 24%,#19131955 61%,transparent),linear-gradient(0deg,#161218,transparent 42%);}
+.luna-night-footer > .wrap {position:relative;z-index:1;max-width:112rem;width:91%;padding-inline:0;}
+.luna-night-footer .footer-top {padding-block:clamp(1.55rem,3.8vw,5rem) clamp(1.1rem,2.4vw,3rem);margin:0;border-block-end:1px solid #c99a794d;}
+.luna-night-footer .footer-brand{max-width:42rem;}
+.luna-night-footer .footer-brand-row {gap:clamp(.8rem,1.3vw,1.8rem);margin-block-end:.55rem;}
+.luna-night-footer .footer-brand-row img.footer-logo{width:clamp(2.7rem,4.6vw,5rem);height:auto;aspect-ratio:1;object-fit:contain;}
+.luna-night-footer .footer-brand-row h3.footer-word {margin:0;padding:0;line-height:1.3;font-family:Georgia,"Times New Roman",serif;font-size:clamp(2.35rem,5vw,6.4rem);font-weight:500;letter-spacing:-.035em;background:none;color:var(--footer-word-ink);-webkit-text-fill-color:currentColor;filter:none;opacity:1;}
+[dir=rtl] .luna-night-footer .footer-brand-row h3.footer-word {font-family:inherit;letter-spacing:0;}
+.luna-night-footer .footer-word .footer-word-glyphs {display:inline-block;background:none;color:var(--footer-word-ink);-webkit-text-fill-color:currentColor;}
+.luna-night-footer .footer-brand p {margin:0;max-width:39ch;font-size:clamp(.95rem,1.05vw,1.21rem);color:#ebdcd2;line-height:1.65;}
+.footer-return {display:flex;align-items:center;flex-wrap:wrap;gap:1.4rem;margin-block-start:.65rem;}
+.footer-return >button {display:inline-flex;align-items:center;gap:.6rem;background:transparent;border:0;min-height:44px;text-align:start;color:#f7d9c1;cursor:pointer;font:inherit;font-size:.84rem;}
+.footer-return >button:first-child i{display:grid;place-items:center;border:1px solid #d6ad91;border-radius:50%;width:23px;height:23px;font-style:normal;}
+.luna-night-footer .footer-columns{position:relative;margin:0;padding-block:clamp(1.6rem,2.6vw,3.6rem);}
+.luna-night-footer .footer-col a {color:#dfd0c7;text-underline-offset:.35em;}
+.luna-night-footer :is(a,button):focus-visible {outline:2px solid #fac9ad;outline-offset:3px;}
+.luna-night-footer .footer-bottom {border-color:#b28c7152;}
+@media(max-width:620px) {
+ .luna-night-footer>.wrap{width:90%;}
+ .luna-night-footer .footer-night-window{height:19rem;}
+ .luna-night-footer .footer-night-window i {background:linear-gradient(0deg,#161218,transparent 60%),linear-gradient(90deg,#17131aea,#17131a9e);}
+ .luna-night-footer .footer-top {padding-block:1.45rem 1rem;}
+ .luna-night-footer .footer-columns {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.4rem 1rem;text-align:start;}
+}
+@media(forced-colors:active){.luna-night-footer .footer-word .footer-word-glyphs{background:none;color:CanvasText;-webkit-text-fill-color:CanvasText;}}
+
+footer.luna-night-footer {margin-block:0;padding-block-start:0;}
+
+@media (min-width:768px) {
+  .footer-night-window[data-section-footer="home"] [data-harbour-film="quayside"] { --effect-y: 98%; }
+  .luna-night-footer .footer-night-window[data-section-footer="home"] i {
+    background: linear-gradient(to right, #15121bd6 0%, #19151cbd 24%, #17151a42 44%, transparent 66%),
+                linear-gradient(to top, #161218e6 0%, #17151a36 17%, transparent 35%);
+  }
+  [dir=rtl] .luna-night-footer .footer-night-window[data-section-footer="home"] i {
+    background: linear-gradient(to left, #15121bd6 0%, #19151cbd 24%, #17151a42 44%, transparent 66%),
+                linear-gradient(to top, #161218e6 0%, #17151a36 17%, transparent 35%);
+  }
+}

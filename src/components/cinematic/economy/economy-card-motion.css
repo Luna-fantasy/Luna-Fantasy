@@ -1,0 +1,36 @@
+/* The market and bank rules from the approved world-pages editorial score. */
+@media (prefers-reduced-motion: no-preference) {
+  :where(main[data-economy-cards]) [data-cadence] { --folio-pos: .5; --folio-x: 50%; }
+  :where(main[data-economy-cards]) [data-cadence="stall"] {
+    background: radial-gradient(ellipse at var(--folio-x) 93%,#30253747,transparent 50%),linear-gradient(155deg,#222637,#121723);
+  }
+  :where(main[data-economy-cards]) [data-cadence="coffer"] .luckbox-rarity-badge { letter-spacing: calc(var(--folio-pos) * .07em); }
+  :where(main[data-economy-cards]) [data-cadence="ticket"] { background: linear-gradient(165deg,#252536aa,#141923 68%); border-inline-start-color: #a397735d; }
+  :where(main[data-economy-cards]) [data-cadence="role"]:hover { border-color: #9591aaab; }
+  :where(main[data-economy-cards]) [data-cadence="frame"] .mells-card-img { transition: filter .28s; }
+  :where(main[data-economy-cards]) [data-cadence="frame"] .mells-card-preview:hover .mells-card-img { filter: brightness(1.08); }
+  :where(main[data-economy-cards]) [data-cadence="moon"] { background: radial-gradient(ellipse at var(--folio-x) 50%,#27354b66,transparent 70%),#141a29; }
+
+  main[data-economy-cards] [data-score] {
+    --unveil: 0; --transit: 0; --bias: 1; --shift: 0px; --rise: 0px; --lean: 0deg; --twist: 0deg;
+    transform: perspective(1250px)
+      translate3d(calc(var(--unveil) * var(--shift) * var(--bias)),calc(var(--unveil) * var(--rise)),0)
+      rotateX(calc(var(--unveil) * var(--lean))) rotateY(calc(var(--unveil) * var(--twist) * var(--bias)));
+    transform-origin: center 28%;
+  }
+  main[data-economy-cards] [data-score="crossing"] { --shift: 55px; --rise: 20px; --twist: 5deg; }
+  main[data-economy-cards] [data-score="crossing"] .merchant-card-img { clip-path: inset(0 calc(var(--unveil) * 6%) 0 calc(var(--unveil) * 6%) round .5rem); }
+  main[data-economy-cards] [data-score="coffer-leaf"] { --rise: calc(25px + var(--beat) * 7px); --lean: -12deg; transform-origin: center 90%; }
+  main[data-economy-cards] [data-score="ticket-leaf"] { --twist: 11deg; --rise: 25px; transform-origin: 0% 100%; }
+  main[data-economy-cards] [data-score="dyed-leaf"] { --lean: 8deg; --shift: 30px; }
+  main[data-economy-cards] [data-score="frame-leaf"] { --rise: 36px; --lean: -10deg; }
+  main[data-economy-cards] [data-score="account-leaf"] { --rise: 22px; --twist: 6deg; }
+  main[data-economy-cards] [data-score="cabochon"] { --rise: 27px; --lean: -5deg; }
+  main[data-economy-cards] :is([data-score="treasury-line"],[data-score="inscription"]) { --shift: 24px; --rise: 12px; }
+  main[data-economy-cards] [data-score="illustration"] {
+    --rise: 32px; --lean: 5deg; clip-path: inset(calc(var(--unveil) * 9%) 0 0 round .5rem);
+  }
+}
+@media (prefers-reduced-motion: no-preference) and (max-width: 620px) {
+  main[data-economy-cards] [data-score] { --shift: 11px; --rise: 15px; --twist: 2deg; }
+}

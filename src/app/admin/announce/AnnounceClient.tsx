@@ -353,17 +353,16 @@ export default function AnnounceClient({ initial }: Props) {
         <section className="av-announce-preview av-surface">
           <header className="av-announce-preview-head">
             <div className="av-announce-preview-avatar" aria-hidden="true">
-              <img src="https://assets.lunarian.app/oracle/oracle_avatar.png" alt="" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-              <span>☾</span>
+              <img src="/images/luna-ribbon-v19-mark.png" alt="" />
             </div>
             <div>
-              <strong>Oracle</strong>
+              <strong>{bots.find((bot) => bot.id === botId)?.label ?? `Luna ${botId[0].toUpperCase()}${botId.slice(1)}`}</strong>
               <span className="av-announce-preview-time">now · preview</span>
             </div>
           </header>
           <div className="av-announce-preview-body">
             {content.trim() === '' && !imagePreview && (
-              <em className="av-announce-preview-empty">Your message will render here exactly like Discord will show it.</em>
+              <em className="av-announce-preview-empty">Your announcement preview will appear here.</em>
             )}
             {content && (
               <div className="av-announce-preview-content">

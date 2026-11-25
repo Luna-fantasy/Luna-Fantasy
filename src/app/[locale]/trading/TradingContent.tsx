@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSession, signIn } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { useSession } from 'next-auth/react';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { E } from '@/components/edit-mode/EditableText';
 import { EImg } from '@/components/edit-mode/EditableImage';
+import { EditorialMotif } from '../cinematic-editorial/EditorialMotif';
 import { onBalanceUpdate, dispatchBalanceUpdate } from '@/lib/balance-events';
+import { useEditMode } from '@/lib/edit-mode/context';
+import { TradingQuay, TradeModel } from '@/components/cinematic/night-economy/NightTrading';
+import { projectTrade, type TradeTerms } from '@/lib/cinematic/night-economy-pricing';
+import night from '@/components/cinematic/night-economy/NightTrading.module.css';
 
 const PRESET_AMOUNTS = [5_000, 10_000, 25_000, 50_000];
-const MAX_AMOUNT = 50_000;
-const COOLDOWN_MS = 4 * 60 * 60 * 1000;
 
 function getCsrfToken(): string {
   const match = document.cookie.match(/bazaar_csrf=([^;]+)/);
@@ -36,7 +39,9 @@ type TradeResult = {
   amount: number;
 } | null;
 
-export default function TradingContent() {
+export default function TradingContent({ terms }: { terms: TradeTerms }) {
+  const locale = useLocale();
+  const { editMode } = useEditMode();
   const { data: session } = useSession();
   const t = useTranslations('tradingPage');
   const isLoggedIn = !!session?.user;
@@ -112,9 +117,10 @@ export default function TradingContent() {
     !loading &&
     !cooldownEnd &&
     tradeAmount > 0 &&
-    tradeAmount <= MAX_AMOUNT &&
+    tradeAmount <= terms.maximum &&
     balance !== null &&
     tradeAmount <= balance;
+  const preview = projectTrade(tradeAmount, terms);
 
   const handleTrade = async () => {
     if (!canTrade) return;
@@ -180,22 +186,31 @@ export default function TradingContent() {
     setResult(null);
   };
 
+  const applyModelAmount = (amount: number) => {
+    setIsCustom(true);
+    setCustomAmount(String(amount));
+    setSelectedAmount(null);
+    setError('');
+    setResult(null);
+  };
+
   return (
-    <div className="trading-page">
+    <main lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={editMode ? "trading-page" : 'trading-page ' + night.exchange} data-luna-editorial={editMode ? 'trading' : undefined}>
       {/* Hero */}
-      <div className="trading-hero">
+      {editMode ? <div className="trading-hero">
         <div className="trading-hero-bg">
-          <EImg editId="trading-hero-bg" source="r2" src="https://assets.lunarian.app/backgrounds/BankHero.png" alt="Trading" fill priority className="trading-hero-bg-image" />
+          <EImg editId="trading-hero-bg" source="r2" src="/luna-cinematic/editorial-public/trading.webp" alt="Trading" fill priority className="trading-hero-bg-image" />
         </div>
+        <EditorialMotif motif="trading" />
         <div className="trading-hero-content">
           <h1 className="trading-hero-title"><E ns="tradingPage" k="title">{t('title')}</E></h1>
           <p className="trading-hero-desc"><E ns="tradingPage" k="subtitle">{t('subtitle')}</E></p>
         </div>
-      </div>
+      </div> : <TradingQuay terms={terms} />}
 
       <div className="trading-wrap">
         {/* Stats overview */}
-        <div className="trading-stats-bar">
+        {editMode && <><div className="trading-stats-bar">
           <div className="trading-stat-item">
             <span className="trading-stat-label"><E ns="tradingPage" k="maxTrade">{t('maxTrade')}</E></span>
             <span className="trading-stat-value accent">50,000</span>
@@ -224,11 +239,18 @@ export default function TradingContent() {
           <span className="trading-warning-text"><E ns="tradingPage" k="warning">{t('warning')}</E></span>
         </div>
 
+        </>}
+        {!editMode && <TradeModel terms={terms} onApply={isLoggedIn && !cooldownEnd && !loading ? applyModelAmount : undefined} />}
+        <section id="night-trade-desk" className={editMode ? undefined : night.desk} aria-label={t('title')}>
         {!isLoggedIn ? (
           /* Signed-out state */
-          <div className="trading-signed-out">
+          <div className={editMode ? 'trading-signed-out' : night.guestDesk}>
             <p><E ns="tradingPage" k="signInRequired">{t('signInRequired')}</E></p>
-            <button className="trading-sign-in-btn" onClick={() => signIn('discord')}>
+            <button type="button" className="trading-sign-in-btn" onClick={() => {
+              const { pathname, search, hash } = window.location;
+              const callback = new URLSearchParams({ callbackUrl: pathname + search + hash });
+              window.location.assign(`/${locale}/auth/signin/?${callback}`);
+            }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
               </svg>
@@ -284,7 +306,7 @@ export default function TradingContent() {
             <div className="trading-amount-section">
               <div className="trading-amount-title"><E ns="tradingPage" k="selectAmount">{t('selectAmount')}</E></div>
               <div className="trading-presets">
-                {PRESET_AMOUNTS.map((amount) => (
+                {PRESET_AMOUNTS.filter(amount => amount <= terms.maximum).map((amount) => (
                   <button
                     key={amount}
                     className={`trading-preset-btn ${!isCustom && selectedAmount === amount ? 'selected' : ''}`}
@@ -312,7 +334,7 @@ export default function TradingContent() {
                     value={customAmount}
                     onChange={(e) => setCustomAmount(e.target.value)}
                     min={1}
-                    max={MAX_AMOUNT}
+                    max={terms.maximum}
                     disabled={!!cooldownEnd}
                   />
                 </div>
@@ -323,11 +345,11 @@ export default function TradingContent() {
                 <div className="trading-preview">
                   <div className="trading-preview-row win">
                     <span><E ns="tradingPage" k="winReward">{t('winReward')}</E></span>
-                    <span>+{Math.floor(tradeAmount * 0.2).toLocaleString()}</span>
+                    <span>+{preview.win.toLocaleString()}</span>
                   </div>
                   <div className="trading-preview-row loss">
                     <span><E ns="tradingPage" k="lossPenalty">{t('lossPenalty')}</E></span>
-                    <span>-{Math.floor(tradeAmount * 0.3).toLocaleString()}</span>
+                    <span>-{preview.loss.toLocaleString()}</span>
                   </div>
                 </div>
               )}
@@ -348,7 +370,8 @@ export default function TradingContent() {
             </button>
           </div>
         )}
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

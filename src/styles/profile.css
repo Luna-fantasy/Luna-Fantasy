@@ -484,6 +484,50 @@ html[lang="ar"] .profile-section-title {
   container-type: inline-size;
 }
 
+.profile-page .profile-banner-default {
+  background: linear-gradient(180deg, rgb(24 15 24 / 12%), rgb(24 15 24 / 55%)), url('/luna-cinematic/section-windows/profile.webp') center 45% / cover;
+}
+
+button.profile-detail-copyable {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  background-color: transparent;
+}
+
+.profile-copy-status:not(:empty) {
+  display: block;
+  margin: 0.4rem 0.75rem;
+  color: var(--text-secondary);
+}
+
+.passport-canvas-wrap:has(.passport-record) {
+  aspect-ratio: auto;
+}
+
+.passport-record {
+  position: relative;
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: clamp(2rem, 6vw, 3.5rem) clamp(1rem, 4vw, 2.5rem);
+  background: #ead9c3;
+  color: #362723;
+}
+.passport-record > div {
+  display: grid;
+  grid-template-columns: minmax(6rem, 1fr) minmax(0, 1.6fr);
+  align-items: baseline;
+  gap: 0.75rem;
+  padding-block-end: 0.4rem;
+  border-block-end: 1px solid #bba78d;
+}
+.passport-record dt { font-weight: 600; }
+.passport-record dd { margin: 0; overflow-wrap: anywhere; }
+
 .passport-canvas-wrap:hover {
   box-shadow:
     0 0 80px rgba(0, 212, 255, 0.35),

@@ -15,6 +15,7 @@ import { adminFetch, adminPut } from '@/lib/admin/http';
 import { uploadFileViaPresign } from '@/lib/admin/upload';
 
 interface Props {
+  initialCanvasId?: string | null;
   butlerLayouts: CanvasLayouts;
   jesterLayouts: CanvasLayouts;
 }
@@ -38,13 +39,15 @@ async function measureImageFile(file: File): Promise<{ width: number; height: nu
   }
 }
 
-export default function CanvasEditorPanel({ butlerLayouts, jesterLayouts }: Props) {
+export default function CanvasEditorPanel({ initialCanvasId, butlerLayouts, jesterLayouts }: Props) {
   const toast = useToast();
   const undo = useUndo();
 
   const [bot, setBot] = useState<'butler' | 'jester'>('butler');
   const defs = useMemo(() => CANVAS_DEFINITIONS.filter((c) => c.bot === bot) as CanvasTypeDef[], [bot]);
-  const [canvasId, setCanvasId] = useState<string>(defs[0]?.id ?? '');
+  const [canvasId, setCanvasId] = useState(() =>
+    defs.find((definition) => definition.id === initialCanvasId)?.id ?? defs[0]?.id ?? ''
+  );
 
   const [drafts, setDrafts] = useState<{ butler: CanvasLayouts; jester: CanvasLayouts }>({
     butler: butlerLayouts,

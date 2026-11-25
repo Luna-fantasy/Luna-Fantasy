@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Tooltip from './Tooltip';
 
 interface HourlyBarsProps {
@@ -17,7 +17,7 @@ export default function HourlyBars({ data, height = 64 }: HourlyBarsProps) {
 
   const max = Math.max(1, ...data);
   const now = new Date();
-  const currentHour = now.getHours();
+  const currentHour = now.getUTCHours();
 
   return (
     <div className="av-hourly" style={{ ['--av-hourly-h' as any]: `${height}px` }}>
@@ -25,7 +25,7 @@ export default function HourlyBars({ data, height = 64 }: HourlyBarsProps) {
         {data.map((v, i) => {
           const pct = v === 0 ? 0 : Math.max(6, (v / max) * 100);
           const isNow = i === currentHour;
-          const label = `${i.toString().padStart(2, '0')}:00 — ${v} transaction${v === 1 ? '' : 's'}`;
+          const label = `${i.toString().padStart(2, '0')}:00 UTC — ${v} transaction${v === 1 ? '' : 's'}`;
           return (
             <Tooltip key={i} content={label} side="top" delay={150}>
               <div className={`av-hourly-bar${isNow ? ' av-hourly-bar--now' : ''}`}>

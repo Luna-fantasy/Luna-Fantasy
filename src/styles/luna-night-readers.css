@@ -1,0 +1,39 @@
+[data-luna-editorial] {--editorial-ink:#f1dfd1;--editorial-sub:#d6c4bb;--editorial-line:#a983705c;}
+[data-luna-shell] [data-luna-editorial] :is(.about-hero,.faq-header,.contact-header,.legal-header) {background:linear-gradient(105deg,#2c2028,#211b24 67%,#35252a);border-color:#9a76645e;}
+[data-luna-editorial=legal]>.wrap {max-inline-size:76rem;width:92%;}
+.luna-reading-desk {display:grid;grid-template-columns:minmax(12rem,1fr) minmax(0,3fr);gap:clamp(1rem,4vw,5rem);align-items:start;padding-block-end:2rem;}
+.luna-reading-desk .desk-bookmark {position:sticky;top:6.3rem;color:#edceba;border-block:1px solid #a4816d6b;background:#211b20;}
+.desk-ribbon{block-size:4.3rem;background:linear-gradient(0deg,#211b20a3,#140e1820),url('/luna-cinematic/night-worlds/story-960.webp') 72% 70%/cover;}
+.desk-typesize,.desk-contents summary,.desk-contents button {cursor:pointer;color:inherit;background:transparent;border:0;font:inherit;}
+.desk-typesize {min-height:44px;width:100%;display:flex;align-items:center;gap:.75rem;padding:.45rem .8rem;font-size:.83rem;}
+.desk-typesize>span {font-family:Georgia,serif;letter-spacing:-.15em;font-size:1.05rem;}
+.desk-typesize>span>span {font-size:1.3em;}
+.desk-typesize[aria-pressed=true]{background:#51363b;color:#fff0db;}
+.desk-contents{padding-inline:.8rem;border-block-start:1px solid #97766552;}
+.desk-contents summary {min-height:44px;align-content:center;font-size:.83rem;}
+.desk-contents ol {max-height:42svh;overflow:auto;padding-inline:0;list-style:none;margin:.2rem 0 .7rem;}
+.desk-contents button {width:100%;padding:.4rem .25rem;text-align:start;font-size:.8rem;line-height:1.55;}
+.desk-contents [aria-current=location] {color:#ffe2bd;border-inline-start:2px solid #e4ae86;padding-inline-start:.5rem;}
+.luna-reading-desk .legal-content {background:linear-gradient(110deg,#292126,#1c191e);border:1px solid #9c79625e;border-inline-start:3px double #c5a287;padding:clamp(1.1rem,3.5vw,3.2rem);margin:0;width:100%;max-width:none;box-sizing:border-box;color:#e9dfd7;}
+.luna-reading-desk[data-large-type=true] .legal-content, .luna-reading-desk[data-large-type=true] .legal-content :is(p,div) {font-size:1.22rem;line-height:1.9;}
+.luna-reading-desk .legal-content h2 {scroll-margin-block-start:7rem;}
+[data-luna-shell] .about-pillars a.about-pillar {display:flex;flex-direction:column;justify-content:end;position:relative;isolation:isolate;overflow:hidden;min-height:15rem;color:#f6e9dc;text-decoration:none;padding:1.45rem;border:1px solid #ae856968;}
+.about-pillar .night-projection {z-index:-2;transform:scale(1.022);transition:transform .5s ease-in-out;}
+.about-pillar::after {content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#211720f7,#211720a6 42%,transparent);}
+.about-pillar:is(:hover,:focus-visible) .night-projection {transform:scale(1.07);}
+[data-luna-shell] .about-pillars .about-pillar :is(h3,p) {color:#ffeedf;}
+[data-luna-shell] .faq-list .faq-item {position:relative;isolation:isolate;background:#211a21;border:1px solid #a27f6d5e;border-inline-start:3px solid #b78a72;overflow:hidden;}
+[data-luna-shell] .faq-list .faq-item[open] {background:linear-gradient(105deg,#39292e,#241c25 68%);}
+[data-luna-shell] .faq-list .faq-item summary {min-height:3.2rem;}
+[data-luna-shell] .contact-page .contact-field {border-inline-start:2px solid #9a776148;padding-inline-start:.82rem;transition:border-color .3s;}
+[data-luna-shell] .contact-page .contact-field:focus-within {border-color:#f0ba94;}
+[data-luna-shell] .marketplace-hero {isolation:isolate;overflow:hidden;background:#251d25;}
+[data-luna-shell] .marketplace-hero .night-projection {z-index:-2;}
+[data-luna-shell] .marketplace-hero .marketplace-hero-bg {z-index:-1;background:linear-gradient(90deg,#1c1521de,#20192370,#24192068);}
+[data-luna-shell] .marketplace-hero-content {position:relative;}
+[data-luna-shell] .marketplace-wrap {border-inline:1px solid #aa867238;background:linear-gradient(105deg,#221c21e8,#19171ce8);}
+[data-luna-shell] .auth-page {position:relative;isolation:isolate;background:#1d1720;overflow:hidden;}
+[data-luna-shell] .auth-page>.night-projection{z-index:-2;}
+[data-luna-shell] .auth-page:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#1c1420ad,#1b151c54);z-index:-1;pointer-events:none;}
+@media(max-width:700px){.luna-reading-desk{grid-template-columns:1fr;gap:.7rem;}.luna-reading-desk .desk-bookmark{position:relative;top:auto;}.desk-ribbon{height:2.3rem;}.desk-contents ol{max-height:34svh;}[data-luna-shell] .about-pillars a.about-pillar{min-height:11rem;}}
+@media(prefers-reduced-motion:reduce){.about-pillar .night-projection{transition:none;}}

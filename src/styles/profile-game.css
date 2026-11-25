@@ -532,6 +532,8 @@ html[lang="ar"] .treasury-item-value {
 
 /* Stone Card */
 .stone-card {
+  font: inherit;
+  color: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;

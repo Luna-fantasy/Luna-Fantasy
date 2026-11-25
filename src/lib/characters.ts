@@ -1,11 +1,13 @@
 import clientPromise from "./mongodb";
+import { previewCatalogIsLive } from "./cinematic/preview-catalog-cache";
 import type { Character } from "@/types";
 
 const cache: Record<string, Character[]> = {};
 
 export async function getCharacters(faction?: string): Promise<Character[]> {
   const key = faction || "all";
-  if (cache[key]) return cache[key];
+  const livePreview = previewCatalogIsLive();
+  if (!livePreview && cache[key]) return cache[key];
 
   const client = await clientPromise;
   const db = client.db("Database");
@@ -23,6 +25,6 @@ export async function getCharacters(faction?: string): Promise<Character[]> {
     cardId: doc.cardId,
   }));
 
-  cache[key] = characters;
+  if (!livePreview) cache[key] = characters;
   return characters;
 }

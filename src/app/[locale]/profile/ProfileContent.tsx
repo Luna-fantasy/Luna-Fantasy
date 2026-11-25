@@ -1,15 +1,15 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatMembershipMonth } from '@/lib/profile-membership';
 import Image from 'next/image';
 import { Link } from '@/i18n/routing';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGameData } from '@/hooks/useGameData';
 import type { UserCard, UserStone, CardsByGame, CatalogCard, BadgeData } from '@/types/gameData';
 import CardBook from './CardBook';
-import CardDetailModal from '@/components/CardDetailModal';
-import type { CardDetailData } from '@/components/CardDetailModal';
+import { ProfileDialog } from './ProfileDialog';
 import { E } from '@/components/edit-mode/EditableText';
 import '@/styles/profile.css';
 import '@/styles/profile-game.css';
@@ -99,15 +99,16 @@ interface ProfileContentProps {
 export default function ProfileContent({ viewingDiscordId }: ProfileContentProps) {
   const { data: session } = useSession();
   const t = useTranslations('profilePage');
+  const locale = useLocale();
   const isPublicView = !!viewingDiscordId;
   const { data: gameData, isLoading, error: gameDataError } = useGameData(viewingDiscordId || null);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<'idle' | 'copied' | 'manual'>('idle');
+  const copied = copyFeedback === 'copied';
   const activeGame: GameKey = 'lunaFantasy';
   const [lightbox, setLightbox] = useState<{ src: string; caption: string } | null>(null);
-  const [selectedCard, setSelectedCard] = useState<CardDetailData | null>(null);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
-  const [passportTemplateFailed, setPassportTemplateFailed] = useState(false);
+  const [failedPassportUrl, setFailedPassportUrl] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLoading, setTxLoading] = useState(true);
   const [txPage, setTxPage] = useState(0);
@@ -141,24 +142,24 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
   // than plumbing a refetch signal through the existing hook.
   if (!isLoading && gameDataError && !gameData) {
     return (
-      <div className="profile-page">
+      <main className="profile-page" tabIndex={-1}>
         <div className="profile-container" style={{ maxWidth: 600, margin: '80px auto', textAlign: 'center' }}>
           <div className="profile-card" style={{ padding: 32 }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
-            <h2 style={{ margin: '0 0 8px' }}>Failed to load profile</h2>
+            <h2 style={{ margin: '0 0 8px' }}>{t('loadFailure')}</h2>
             <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 20px' }}>
-              {gameDataError}
+              {t('loadFailureHelp')}
             </p>
             <button
               className="btn btn-primary"
               onClick={() => window.location.reload()}
               style={{ padding: '10px 24px' }}
             >
-              Retry
+              {t('retryProfile')}
             </button>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -187,19 +188,20 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
     ? (publicUser?.name || viewingDiscordId!)
     : (user!.username || user!.email?.split('@')[0] || 'user');
   const rawAvatarUrl = isPublicView ? publicUser?.image : user!.image;
-  const avatarUrl = isSafeAvatarUrl(rawAvatarUrl) ? rawAvatarUrl : null;
+  const avatarUrl = rawAvatarUrl && isSafeAvatarUrl(rawAvatarUrl) && !brokenImages.has(rawAvatarUrl) ? rawAvatarUrl : null;
   const profileDiscordId = isPublicView ? viewingDiscordId! : user!.discordId;
 
-  const memberSince = new Date().toLocaleDateString(undefined, {
-    month: 'long',
-    year: 'numeric',
-  });
+  const membership = gameData?.membership;
+  const memberSince = formatMembershipMonth(membership?.at, locale);
 
   const copyDiscordId = async () => {
     if (!profileDiscordId) return;
-    await navigator.clipboard.writeText(profileDiscordId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(profileDiscordId);
+      setCopyFeedback('copied');
+    } catch {
+      setCopyFeedback('manual');
+    }
   };
 
   const handleImageError = (id: string) => {
@@ -221,11 +223,13 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
   const winRate = pvpTotal > 0 ? Math.round(((gameData?.pvp.wins ?? 0) / pvpTotal) * 100) : 0;
 
   // Backgrounds
-  const profileBgUrl = getBackgroundUrl(gameData?.profile?.active_background);
-  const rankBgUrl = getRankBackgroundUrl(gameData?.profile?.active_rank_background);
+  const headerAsset = getBackgroundUrl(gameData?.profile?.active_background);
+  const rankAsset = getRankBackgroundUrl(gameData?.profile?.active_rank_background);
+  const profileBgUrl = headerAsset && !brokenImages.has(headerAsset) ? headerAsset : null;
+  const rankBgUrl = rankAsset && !brokenImages.has(rankAsset) ? rankAsset : null;
 
   return (
-    <div className="profile-page">
+    <main className="profile-page" tabIndex={-1}>
       <div className="profile-container">
 
         {/* Header Card — Banner + Avatar + Identity */}
@@ -234,6 +238,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
             <>
               <Image
                 src={profileBgUrl}
+                onError={() => handleImageError(profileBgUrl)}
                 alt=""
                 fill
                 className="profile-header-bg"
@@ -257,6 +262,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
+                  onError={() => handleImageError(avatarUrl)}
                   alt={displayName}
                   width={88}
                   height={88}
@@ -281,7 +287,11 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
             <p className="profile-meta">
               <span className="profile-username">@{username}</span>
               <span className="profile-meta-dot">·</span>
-              <span className="profile-date">{t('memberSince')} {memberSince}</span>
+              <span className="profile-date" data-profile-membership={isLoading ? 'loading' : memberSince ? membership?.source : 'unavailable'}>
+                {isLoading ? '…' : memberSince
+                  ? `${t(membership?.source === 'guild' ? 'memberSince' : 'websiteMemberSince')} ${memberSince}`
+                  : t('membershipDateUnavailable')}
+              </span>
             </p>
           </div>
 
@@ -298,14 +308,14 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                 </div>
               </div>
 
-              {!isPublicView && (gameData?.tickets ?? 0) > 0 && (
+              {!isPublicView && (
                 <div className="treasury-item treasury-item-tickets">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2">
                     <path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4V9z" />
                   </svg>
                   <div className="treasury-item-info">
                     <span className="treasury-item-value treasury-tickets-value">
-                      {formatNumber(gameData?.tickets ?? 0)}
+                      {isLoading ? '…' : formatNumber(gameData?.tickets ?? 0)}
                     </span>
                     <span className="treasury-item-label">{t('treasury.tickets')}</span>
                   </div>
@@ -368,6 +378,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
             : isVipPassport
             ? 'https://assets.lunarian.app/butler/backgrounds/PassportVIPFinal.png'
             : 'https://assets.lunarian.app/butler/backgrounds/Passport.jpeg';
+          const passportTemplateFailed = failedPassportUrl === templateUrl;
           const L = {
             avatar:   { ...DEFAULTS.avatar,   ...(layoutOverrides.avatar   || {}) },
             number:   { ...DEFAULTS.number,   ...(layoutOverrides.number   || {}) },
@@ -416,19 +427,24 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                   src={templateUrl}
                   alt={hasPassport ? (isStaffPassport ? `${staffTemplateName} Passport` : isVipPassport ? 'Luna Passport VIP' : 'Luna Passport') : ''}
                   className="passport-template"
-                  onError={() => setPassportTemplateFailed(true)}
+                  hidden={passportTemplateFailed}
+                  onError={() => setFailedPassportUrl(templateUrl)}
                 />
-                {passportTemplateFailed && (
-                  <div className="passport-template-error">
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>🛂</div>
-                    <div>Passport template unavailable</div>
-                    <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
-                      Try refreshing the page
-                    </div>
-                  </div>
+                {passportTemplateFailed && passport && (
+                  <dl className="passport-record">
+                    {[
+                      [t('passportFields.number'), passport.number],
+                      [t('passportFields.name'), passport.fullName],
+                      [t('passportFields.birthday'), passport.dateOfBirth],
+                      [t('passportFields.issued'), issuedStr],
+                      [t('passportFields.faction'), passport.faction],
+                    ].map(([label, value]) => (
+                      <div key={label}><dt>{label}</dt><dd dir="auto">{value || '—'}</dd></div>
+                    ))}
+                  </dl>
                 )}
                 {hasPassport ? (
-                  <>
+                  !passportTemplateFailed && <>
                     {avatarUrl && (
                       <div
                         className="passport-avatar-slot"
@@ -445,8 +461,8 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                   <div className="passport-locked-overlay">
                     <div className="passport-locked-icon">🛂</div>
                     <div className="passport-locked-text">
-                      <div>No Luna Passport yet</div>
-                      <div className="passport-locked-hint">Apply via our Discord</div>
+                      <div>{t('passportEmptyTitle')}</div>
+                      <div className="passport-locked-hint">{t('passportApplyHint')}</div>
                     </div>
                     <a
                       href="https://discord.gg/lunarian"
@@ -457,7 +473,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                       <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
                         <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.157 2.419 0 1.334-.946 2.419-2.157 2.419z"/>
                       </svg>
-                      <span>Join our Discord</span>
+                      <span>{t('passportJoinDiscord')}</span>
                     </a>
                   </div>
                 )}
@@ -475,7 +491,6 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
             ownedCards={effectiveCards}
             catalogCards={filteredCatalog}
             isLoading={isLoading}
-            onCardClick={(card) => setSelectedCard(card)}
             brokenImages={brokenImages}
             onImageError={handleImageError}
           />
@@ -555,6 +570,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
               <div className="inventory-pagination">
                 <button
                   className="inventory-page-btn"
+                  aria-label={t('previousPage')}
                   disabled={inventoryPage <= 1}
                   onClick={() => setInventoryPage(p => p - 1)}
                 >
@@ -565,6 +581,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                 </span>
                 <button
                   className="inventory-page-btn"
+                  aria-label={t('nextPage')}
                   disabled={inventoryPage >= Math.ceil(gameData!.inventory.length / INVENTORY_PER_PAGE)}
                   onClick={() => setInventoryPage(p => p + 1)}
                 >
@@ -581,6 +598,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
             <>
               <Image
                 src={rankBgUrl}
+                onError={() => handleImageError(rankBgUrl)}
                 alt=""
                 fill
                 className="stats-orb-card-bg"
@@ -787,6 +805,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                 <div className="transaction-pagination">
                   <button
                     className="transaction-page-btn"
+                    aria-label={t('previousPage')}
                     disabled={txPage === 0}
                     onClick={() => setTxPage(txPage - 1)}
                   >
@@ -799,6 +818,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                   </span>
                   <button
                     className="transaction-page-btn"
+                    aria-label={t('nextPage')}
                     disabled={txPage >= totalPages - 1}
                     onClick={() => setTxPage(txPage + 1)}
                   >
@@ -816,16 +836,16 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
         {isPublicView && (
           <div className="profile-card profile-details-card">
             <div className="profile-details">
-              <div
+              <button type="button"
                 className="profile-detail-row profile-detail-copyable"
                 onClick={copyDiscordId}
                 title={t('clickToCopy')}
               >
-                <div className="profile-detail-icon">
+                <span className="profile-detail-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" opacity="0.5">
                     <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
                   </svg>
-                </div>
+                </span>
                 <span className="profile-detail-label">{t('discordId')}</span>
                 <span className="profile-detail-value">
                   {profileDiscordId}
@@ -842,7 +862,10 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                     )}
                   </span>
                 </span>
-              </div>
+              </button>
+              <span role="status" data-copy-status className="profile-copy-status">
+                {copyFeedback === 'manual' ? t('copyFailed') : copied ? t('copyDone') : ''}
+              </span>
             </div>
           </div>
         )}
@@ -853,16 +876,17 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
             <h2 className="profile-section-title"><E ns="profilePage" k="accountDetails">{t('accountDetails')}</E></h2>
 
             <div className="profile-details">
-              <div
+              <button type="button"
                 className={`profile-detail-row ${profileDiscordId ? 'profile-detail-copyable' : ''}`}
+                disabled={!profileDiscordId}
                 onClick={copyDiscordId}
                 title={profileDiscordId ? t('clickToCopy') : undefined}
               >
-                <div className="profile-detail-icon">
+                <span className="profile-detail-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" opacity="0.5">
                     <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
                   </svg>
-                </div>
+                </span>
                 <span className="profile-detail-label">{t('discordId')}</span>
                 <span className="profile-detail-value">
                   {profileDiscordId || '—'}
@@ -881,7 +905,10 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                     </span>
                   )}
                 </span>
-              </div>
+              </button>
+              <span role="status" data-copy-status className="profile-copy-status">
+                {copyFeedback === 'manual' ? t('copyFailed') : copied ? t('copyDone') : ''}
+              </span>
 
               <div className="profile-detail-row">
                 <div className="profile-detail-icon">
@@ -937,7 +964,7 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
 
       {/* Sign Out Confirmation Modal — own profile only */}
       {!isPublicView && showSignOutModal && (
-        <div className="signout-modal-overlay" onClick={() => setShowSignOutModal(false)}>
+        <ProfileDialog className="signout-modal-overlay" label={t('signOutConfirmTitle')} onDismiss={() => setShowSignOutModal(false)}>
           <div className="signout-modal" onClick={(e) => e.stopPropagation()}>
             <h3 className="signout-modal-title"><E ns="profilePage" k="signOutConfirmTitle">{t('signOutConfirmTitle')}</E></h3>
             <p className="signout-modal-desc"><E ns="profilePage" k="signOutConfirmDesc">{t('signOutConfirmDesc')}</E></p>
@@ -952,34 +979,27 @@ export default function ProfileContent({ viewingDiscordId }: ProfileContentProps
                 className="signout-modal-confirm"
                 onClick={async () => {
                   await signOut({ redirect: false });
-                  window.location.href = '/';
+                  window.location.href = '/' + locale + '/';
                 }}
               >
                 {t('signOut')}
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Card Detail Modal */}
-      {selectedCard && (
-        <CardDetailModal
-          card={selectedCard}
-          onClose={() => setSelectedCard(null)}
-        />
+        </ProfileDialog>
       )}
 
       {/* Lightbox (for stones) */}
       {lightbox && (
-        <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
+        <ProfileDialog className="lightbox-overlay" label={lightbox.caption} onDismiss={() => setLightbox(null)}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="profile-lightbox-close" aria-label={t('closeDetail')} onClick={() => setLightbox(null)}>×</button>
             <img src={lightbox.src} alt={lightbox.caption} />
             <div className="lightbox-caption">{lightbox.caption}</div>
           </div>
-        </div>
+        </ProfileDialog>
       )}
-    </div>
+    </main>
   );
 }
 
@@ -994,6 +1014,7 @@ function AchievementsSection({
   isLoading: boolean;
 }) {
   const t = useTranslations('profilePage');
+  const locale = useLocale();
   const [viewingBadge, setViewingBadge] = useState<typeof BADGE_DEFS[number] | null>(null);
   const [viewingDate, setViewingDate] = useState<string | null>(null);
 
@@ -1039,6 +1060,13 @@ function AchievementsSection({
           return (
             <div
               key={badge.id}
+              role="button" tabIndex={0} aria-haspopup="dialog"
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  event.currentTarget.click();
+                }
+              }}
               className={`achievement-card ${isEarned ? 'achievement-card-earned' : 'achievement-card-locked'}`}
               title={isEarned ? t('achievements.earnedOn', { date: earnedDate! }) : badge.desc}
               onClick={() => { setViewingBadge(badge); setViewingDate(earnedDate); }}
@@ -1073,9 +1101,9 @@ function AchievementsSection({
 
       {/* Achievement lightbox */}
       {viewingBadge && (
-        <div className="achievement-lightbox" onClick={() => setViewingBadge(null)}>
+        <ProfileDialog className="achievement-lightbox" label={viewingBadge.name} onDismiss={() => setViewingBadge(null)}>
           <div className="achievement-lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <button className="achievement-lightbox-close" onClick={() => setViewingBadge(null)}>
+            <button type="button" className="achievement-lightbox-close" aria-label={t('closeDetail')} onClick={() => setViewingBadge(null)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
@@ -1093,7 +1121,7 @@ function AchievementsSection({
               <span className="achievement-lightbox-date">{t('achievements.earnedOn', { date: viewingDate })}</span>
             )}
           </div>
-        </div>
+        </ProfileDialog>
       )}
     </div>
   );
@@ -1142,6 +1170,7 @@ function StoneCollection({
   onStoneClick: (src: string, caption: string) => void;
 }) {
   const t = useTranslations('profilePage');
+  const locale = useLocale();
 
   const { ownedMoonNames, ownedForbiddenNames, moonStones, forbiddenStones } = useMemo(() => {
     const ownedMap = new Map<string, UserStone>();
@@ -1221,27 +1250,26 @@ function StoneCollection({
           {moonStones.map((stone) => {
             const imgUrl = STONE_IMAGE_FALLBACK[stone.name] || stone.data?.imageUrl;
             return (
-            <div
+            <button
               key={stone.name}
+              type="button"
               className={`stone-card ${stone.owned ? 'stone-card-owned' : 'stone-card-locked'}`}
-              onClick={() => {
-                if (stone.owned && imgUrl) {
-                  onStoneClick(imgUrl, stone.name);
-                }
-              }}
+              disabled={!stone.owned || !imgUrl}
+              aria-haspopup={stone.owned && imgUrl ? 'dialog' : undefined}
+              onClick={() => { if (imgUrl) onStoneClick(imgUrl, stone.name); }}
             >
-              <div className="stone-image-wrap">
+              <span className="stone-image-wrap">
                 {stone.owned && imgUrl ? (
-                  <img src={imgUrl} alt={stone.name} />
+                  <img src={imgUrl} alt="" />
                 ) : (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                 )}
-              </div>
+              </span>
               <span className="stone-name">{stone.name}</span>
-            </div>
+            </button>
             );
           })}
         </div>
@@ -1265,30 +1293,29 @@ function StoneCollection({
           {forbiddenStones.map((stone) => {
             const imgUrl = STONE_IMAGE_FALLBACK[stone.name] || stone.data?.imageUrl;
             return (
-            <div
+            <button
               key={stone.name}
+              type="button"
               className={`stone-card stone-card-forbidden ${stone.owned ? 'stone-card-owned' : 'stone-card-locked'}`}
-              onClick={() => {
-                if (stone.owned && imgUrl) {
-                  onStoneClick(imgUrl, stone.name);
-                }
-              }}
+              disabled={!stone.owned || !imgUrl}
+              aria-haspopup={stone.owned && imgUrl ? 'dialog' : undefined}
+              onClick={() => { if (imgUrl) onStoneClick(imgUrl, stone.name); }}
             >
-              <div className="stone-image-wrap stone-image-forbidden">
+              <span className="stone-image-wrap stone-image-forbidden">
                 {stone.owned && imgUrl ? (
-                  <img src={imgUrl} alt={stone.name} />
+                  <img src={imgUrl} alt="" />
                 ) : (
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3">
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                 )}
-              </div>
+              </span>
               <span className="stone-name">{stone.name}</span>
               {!stone.owned && (
                 <span className="stone-hint">{t(`stones.${FORBIDDEN_HINTS[stone.name]}`)}</span>
               )}
-            </div>
+            </button>
             );
           })}
         </div>

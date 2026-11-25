@@ -16,7 +16,7 @@ export default async function AnnouncePage() {
     <>
       <PageHeader
         title="Announce"
-        subtitle="Here you post announcements — pick a channel, write a message, attach an image, and send as Oracle."
+        subtitle="Choose a bot and channel, then compose your announcement."
       />
       <AnnounceClient />
     </>

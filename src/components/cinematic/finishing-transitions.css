@@ -1,0 +1,52 @@
+.luna-finish-mark {
+  position: fixed;
+  inset: 0 auto auto 0;
+  z-index: 80;
+  display: none;
+  pointer-events: none;
+  color: var(--finish-ink);
+  contain: layout style;
+}
+.luna-finish-mark[data-mark] { display: block; }
+.luna-finish-mark > i { position: absolute; display: block; inset: 0; }
+.luna-finish-mark > i::before, .luna-finish-mark > i::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+}
+.luna-finish-mark[data-mark="margin"] > i::before {
+  inset-block: 3px;
+  inset-inline-start: -3px;
+  inline-size: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.luna-finish-mark[data-mark="underline"] > i::before {
+  inset-block-end: 0;
+  inset-inline-start: 12%;
+  inline-size: 76%;
+  block-size: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.luna-finish-mark[data-mark="register"] > i::before,
+.luna-finish-mark[data-mark="register"] > i::after {
+  inline-size: min(12px, 18%);
+  block-size: min(8px, 24%);
+}
+.luna-finish-mark[data-mark="register"] > i::before {
+  inset-inline-start: 0;
+  inset-block-start: 0;
+  border-inline-start: 1.5px solid;
+  border-block-start: 1.5px solid;
+}
+.luna-finish-mark[data-mark="register"] > i::after {
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  border-inline-end: 1.5px solid;
+  border-block-end: 1.5px solid;
+}
+@media (prefers-reduced-motion: reduce), (forced-colors: active), print {
+  .luna-finish-mark[data-mark] { display: none; }
+}
+[data-luna-finishing-motion="off"] .luna-finish-mark { display: none; }

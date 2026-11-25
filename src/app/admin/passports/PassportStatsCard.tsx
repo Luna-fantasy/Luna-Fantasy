@@ -1,6 +1,8 @@
 import type { PassportStats } from '@/lib/admin/passports';
 
-const FACTION_TONES: Record<string, string> = {
+import { FACTION_TONES, PASSPORT_FACTIONS } from '../_components/factions';
+
+const LEGACY_TONES: Record<string, string> = {
   lunarians: '#00d4ff',
   sentinel:  '#fbbf24',
   mastermind:'#a855f7',
@@ -12,6 +14,12 @@ const FACTION_TONES: Record<string, string> = {
   knight:    '#93c5fd',
   guardian:  '#3b82f6',
 };
+
+function factionTone(name: string) {
+  const key = name.toLowerCase();
+  const faction = PASSPORT_FACTIONS.find((entry) => entry.toLowerCase() === key);
+  return faction ? FACTION_TONES[faction] : LEGACY_TONES[key] ?? 'var(--accent-primary)';
+}
 
 export default function PassportStatsCard({ stats }: { stats: PassportStats }) {
   const factionEntries = Object.entries(stats.byFaction);
@@ -51,7 +59,7 @@ export default function PassportStatsCard({ stats }: { stats: PassportStats }) {
                 title={`${name}: ${count} (${((count / total) * 100).toFixed(1)}%)`}
                 style={{
                   flex: `${count / total} 0 0`,
-                  background: FACTION_TONES[name.toLowerCase()] ?? 'var(--accent-primary)',
+                  background: factionTone(name),
                 }}
               />
             ))}
@@ -61,7 +69,7 @@ export default function PassportStatsCard({ stats }: { stats: PassportStats }) {
               <li key={name}>
                 <span
                   className="av-flows-dot"
-                  style={{ background: FACTION_TONES[name.toLowerCase()] ?? 'var(--accent-primary)' }}
+                  style={{ background: factionTone(name) }}
                 />
                 <span>{name}</span>
                 <span>{count.toLocaleString()}</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { getAdminPortalTarget } from './portal-root';
 
@@ -100,9 +100,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const normTone = (t?: ToastTone): string => t === 'error' ? 'err' : (t ?? 'info');
 
   const portalTarget = getAdminPortalTarget();
+  const api = useMemo(() => ({ show, push }), [show, push]);
 
   return (
-    <ToastCtx.Provider value={{ show, push }}>
+    <ToastCtx.Provider value={api}>
       {children}
       {mounted && portalTarget && createPortal(
         <div className="av-toast-stack" aria-live="polite" aria-atomic="true">

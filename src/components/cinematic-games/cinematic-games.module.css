@@ -1,0 +1,147 @@
+/* The approved scene plates remain visible without scripting. All selectors are scoped. */
+.dealer,.council { --ink:#0d1417; --brass:#c7a775; --ivory:#f2e6d1; position:relative; isolation:isolate; color:var(--ivory); background:var(--ink); }
+.dealer { min-block-size:0; overflow:visible; }
+.dealer[data-dealer-live=true] { block-size:calc(var(--dealer-pin-height,100svh) + var(--dealer-runway,126svh)); }
+.councilFrame,.dealer[data-dealer-live=true] .dealerFrame { position:sticky; inset-block-start:0; }
+.dealerFrame { position:relative; display:flex; flex-direction:column; justify-content:flex-end; block-size:min(100svh,1200px); min-block-size:470px; padding-block-start:clamp(62px,7.6svh,93px); overflow:hidden; isolation:isolate; }
+.dealerVisual { position:relative; flex:1; min-block-size:0; overflow:hidden; isolation:isolate; background:radial-gradient(ellipse at 54% 51%,#24292a,#0c1216 74%); }
+.dealerTable { position:absolute; display:block; top:0; left:0; width:100%; height:100%; max-width:none; max-height:none; object-fit:contain; object-position:50% 52%; transform-origin:0 0; user-select:none; pointer-events:none; }
+.dealerVisual[data-art-ready=true] { cursor:grab; touch-action:pan-y pinch-zoom; -webkit-touch-callout:none; user-select:none; }
+.dealerVisual[data-grabbing=true] { cursor:grabbing; }
+.dealerVisual :global(canvas[data-dealer-room-canvas]),.dealerVisual :global(canvas[data-dealer-cards-canvas]) { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; visibility:hidden; }
+.dealerVisual :global(canvas[data-dealer-room-canvas]) { z-index:0; }
+.dealerVisual :global(canvas[data-dealer-cards-canvas]) { z-index:1; }
+.dealerVisual[data-room-paint=true] :global(canvas[data-dealer-room-canvas]:not([hidden])),
+.dealerVisual[data-painted=true] :global(canvas[data-dealer-cards-canvas]) { visibility:visible; }
+.dealer :global(.cards-hero-content) { position:relative; z-index:2; display:grid; grid-template-columns:minmax(0,1.08fr) minmax(12rem,27rem) auto; align-items:center; flex:none; gap:.35rem clamp(1.3rem,4vw,4rem); width:100%; max-width:none; padding:clamp(.85rem,2.7svh,1.8rem) clamp(1rem,5vw,6rem); border-block-start:1px solid var(--luna-rule,#805d50); background:linear-gradient(108deg,#2b1e20,#171113 67%); text-align:start; }
+.dealer :global(.hero-badge) { grid-area:1/1; }
+.dealer :global(.cards-hero-title) { grid-area:2/1; }
+.dealer :global(.cards-hero-desc) { grid-area:1/2/3/3; }
+.dealer :global(.cards-hero-cta) { grid-area:1/3/3/4; }
+.dealer :global(.hero-badge),.council :global(.hero-badge) { padding:0; margin:0; color:var(--brass); background:none; border:0; border-radius:0; font-size:clamp(.66rem,.9vw,.88rem); letter-spacing:.14em; }
+.dealer :global(.cards-hero-title),.council :global(.lp-hero-title) { color:var(--ivory); -webkit-text-fill-color:currentColor; background:none; filter:none; margin:0; font-size:clamp(2.5rem,5.6vw,6.3rem); font-weight:800; letter-spacing:-.048em; line-height:1.04; }
+.dealer:dir(rtl) :global(.cards-hero-title),.council:dir(rtl) :global(.lp-hero-title) { font-size:clamp(2.15rem,5.1vw,5.9rem); letter-spacing:0; line-height:1.24; }
+.dealer:dir(rtl) :global(.hero-badge),.council:dir(rtl) :global(.hero-badge) { letter-spacing:0; }
+.dealer :global(.cards-hero-desc),.council :global(.lp-hero-desc) { color:#e0dbcf; font-size:clamp(.88rem,1.15vw,1.1rem); line-height:1.59; margin:0; }
+.dealer :global(.cards-hero-cta),.council :global(.lp-hero-cta) { margin:0; }
+.dealer :global(.cta-discord),.council :global(.cta-discord) { gap:.48rem; min-height:44px; min-width:fit-content; padding:.54rem .9rem; border:1px solid #b795615b; border-radius:3px; background:#19252b; color:#f3e7d4; box-shadow:none; font-size:clamp(.72rem,1.05vw,.92rem); white-space:nowrap; }
+.dealer :global(.cta-discord svg),.council :global(.cta-discord svg) { width:1.06em; height:1.06em; fill:currentColor; }
+
+.council { --council-p:.68; min-block-size:132svh; }
+.councilVisual { position:relative; isolation:isolate; height:clamp(36rem,81svh,58rem); overflow:hidden; background:#10161a; }
+.councilHall,.councilMap,.councilCards { position:absolute; inset:0; width:100%; height:100%; }
+.councilHall { display:block; object-fit:cover; object-position:55% 53%; }
+.councilVisual::after { position:absolute; z-index:1; inset:0; pointer-events:none; content:""; background:linear-gradient(90deg,#05090bdd 0%,#090d11a6 28%,#070c101f 62%,transparent 76%),linear-gradient(0deg,#070b0bb6,transparent 42%); }
+.council:dir(rtl) .councilVisual::after { background:linear-gradient(270deg,#05090bdc 0%,#090d11ab 28%,#070c101c 62%,transparent 76%),linear-gradient(0deg,#070b0bb6,transparent 42%); }
+.councilMap { z-index:2; pointer-events:none; stroke:#caac77; fill:none; stroke-width:1.4px; opacity:clamp(0,calc((var(--council-p) - .35) * .8),.52); mix-blend-mode:screen; }
+.councilMap path { stroke-dasharray:1; stroke-dashoffset:calc(1 - var(--council-p)); }
+.councilCards { perspective:1300px; pointer-events:none; z-index:3; }
+.councilCard { position:absolute; top:69%; left:var(--center,68%); inline-size:clamp(100px,11vw,205px); aspect-ratio:2/3; margin:0; border-radius:5%; box-shadow:0 18px 28px #010405bb,0 2px 3px #000; transform-origin:50% 82%; opacity:clamp(.3,calc(.35 + var(--council-p)),1); transform:translate3d(calc(-50% + var(--fan,0vw)),calc(-50% + (1 - var(--council-p))*30px),0) rotateX(calc(22deg - var(--council-p)*10deg)) rotateZ(var(--twist,0deg)); animation:seat-card .68s cubic-bezier(.2,.78,.28,1) both; }
+.councilCard[data-slot="0"]{ --fan:-9vw; --twist:-10deg; filter:brightness(.87); animation-delay:.04s; }
+.councilCard[data-slot="1"]{ z-index:2; inline-size:clamp(115px,12.3vw,225px); animation-delay:.105s; }
+.councilCard[data-slot="2"]{ --fan:9vw; --twist:10deg; filter:brightness(.88); animation-delay:.16s; }
+.councilCard img { display:block; width:100%; height:100%; object-fit:contain; border-radius:inherit; }
+.council:dir(rtl) .councilCard,.council:dir(rtl) .councilFlags { --center:35%; }
+@keyframes seat-card { from { translate:0 25px; } to { translate:0; } }
+.councilFlags { position:absolute; z-index:2; top:9%; left:var(--center,68%); display:flex; align-items:flex-start; gap:clamp(1.2rem,8.6vw,8rem); transform:translateX(-50%); pointer-events:none; }
+.councilFlag { display:grid; place-items:center; grid-template-rows:1fr auto; row-gap:.2rem; position:relative; width:clamp(3rem,6vw,6.7rem); height:clamp(5.8rem,25svh,15rem); padding:.5rem .35rem 30%; background:linear-gradient(100deg,#04090984,#f0e0bd22 42%,#080b0bb0 97%),var(--council-color); border-inline:2px solid #c1a072a8; box-shadow:0 12px 12px #0009,inset 0 0 0 2px #b495695e; clip-path:polygon(0 0,100% 0,100% 85%,50% 100%,0 85%); opacity:clamp(.45,calc(.4 + var(--council-p)*.54),.91); transform-origin:center top; transform:scaleY(clamp(.44,calc(.45 + var(--council-p)*.66),1)); }
+.councilFlag:nth-child(2) { height:clamp(6.5rem,29svh,17rem); }
+.councilFlag img { width:82%; height:auto; border-radius:50%; border:1px solid #cfb18c9c; }
+.councilFlag b { font:700 clamp(.62rem,1vw,.9rem)/1.2 Georgia,serif; color:#f4dcc0; }
+.councilOrnament { display:block; width:42%; aspect-ratio:1; border:1px double #e6cb98; transform:rotate(45deg); }
+.council :global(.lp-hero-content) { position:absolute; z-index:4; inset-inline-start:max(6.2%,calc((100vw - 94rem)/2)); top:50%; transform:translateY(-50%); max-width:min(40vw,35rem); text-align:start; }
+.council :global(.lp-hero-title) { font-size:clamp(3.3rem,7.7vw,7.4rem); line-height:.97; margin:.19em 0 .21em; text-shadow:0 5px 27px #0008; }
+.council :global(.lp-hero-desc) { max-width:34ch; margin-block:1rem; text-shadow:0 3px 14px #000b; }
+.councilControls { position:relative; z-index:4; display:flex; justify-content:space-between; align-items:center; gap:.9rem; padding:.78rem max(5%,calc((100vw - 94rem)/2)); background:#191615; border-block-start:1px solid #c7a77559; }
+.councilBeats,.councilRoster { display:flex; align-items:center; gap:clamp(.4rem,1.23vw,1.22rem); }
+.councilBeats { list-style:none; color:#c3b8a9; margin:0; padding:0; font-size:clamp(.66rem,.86vw,.87rem); }
+.councilBeats li { padding:.33rem .15rem; white-space:nowrap; border-bottom:1px solid transparent; }
+.council[data-council-phase="1"] [data-beat="1"],.council[data-council-phase="2"] [data-beat="2"],.council[data-council-phase="3"] [data-beat="3"] { border-color:#c7a775; color:#f6e9d3; }
+.councilRoster button { font:inherit; font-size:clamp(.73rem,1.1vw,.9rem); min-width:44px; min-height:44px; padding:.26rem .54rem; background:#27211e; color:#f2e3cb; border:1px solid #bf9f795e; border-radius:3px; cursor:pointer; }
+.councilRoster [data-council-step] { font-size:1.34rem; }
+.councilRoster button:hover { border-color:#d8b887; background:#303f49; }
+.councilRoster button:focus-visible { outline:2px solid #dac294; outline-offset:3px; }
+.councilLabel { display:grid; text-align:center; white-space:nowrap; min-width:9.5rem; font-size:.93em; }
+.councilLabel small { color:#c7a775; font-size:.69em; }
+.councilOpen { white-space:nowrap; }
+/* Flags and their card slots share physical positions on both reading directions. */
+.councilFlags { direction:ltr; }
+.councilCard {
+  pointer-events:auto; cursor:pointer; touch-action:manipulation; padding:0; border:0; opacity:1;
+  color:var(--ivory); background:transparent; font:inherit;
+  transition:transform .43s cubic-bezier(.2,.78,.28,1),width .43s cubic-bezier(.2,.78,.28,1),filter .15s;
+}
+.councilCard[data-council-seat-action=open] { box-shadow:0 0 0 1px var(--brass),0 15px 28px #010405bc; }
+.councilCard:focus-visible { outline:3px solid #fff0c5; outline-offset:4px; }
+.seatLabel {
+  position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
+  width:max-content; max-width:122%; padding:.22em .55em; border:1px solid #b199695c;
+  color:#fff2d8; background:#131715e8; font-size:clamp(.65rem,.89vw,.85rem);
+  font-weight:650; line-height:1.25; text-align:center; box-shadow:0 2px 5px #0007;
+}
+.councilCard[data-council-seat-action=open] .seatLabel { border-color:var(--brass); }
+.councilCard[data-slot="0"] .seatLabel { left:40%; }
+.councilCard[data-slot="2"] .seatLabel { left:60%; }
+.councilLabel { position:relative; align-content:center; min-height:44px; padding:.24rem .5rem; cursor:pointer; }
+.councilLabel strong::after {
+  content:""; display:inline-block; width:.4em; height:.4em; margin-inline-start:.6em; vertical-align:.23em;
+  border-inline-end:1.5px solid var(--brass); border-block-end:1.5px solid var(--brass); transform:rotate(45deg);
+}
+.councilLabel:dir(rtl) strong::after { transform:rotate(-45deg); }
+.councilLabel select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; color-scheme:dark; }
+.councilLabel:focus-within { outline:2px solid #dac294; outline-offset:2px; border-radius:3px; }
+@media(hover:hover) {
+  .councilCard:hover { filter:brightness(1.1); }
+  .councilCard:hover .seatLabel { color:#fff; border-color:var(--brass); }
+  .councilLabel:hover { background:#302822; }
+}
+.cinematicCatalog :global(.card-image-wrapper),.cinematicCatalog :global(.lp-card-image-wrapper) { aspect-ratio:2 / 3; height:auto; border-radius:6px; }
+.cinematicCatalog :global(.card-image),.cinematicCatalog :global(.lp-card-image) { width:100%; height:100%; object-fit:contain; }
+
+@media(max-width:850px) {
+ .dealer :global(.cards-hero-content) { grid-template-columns:minmax(0,1fr) minmax(0,.85fr); }
+ .dealer :global(.cards-hero-cta) { grid-area:3/1/4/3; justify-self:start; }
+ .councilControls { display:grid; gap:.4rem; }
+ .councilBeats { justify-content:space-between; }
+ .councilRoster { display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; }
+ .councilLabel { min-width:0; white-space:normal; line-height:1.22; }
+}
+@media(max-width:620px) {
+ .dealerFrame { block-size:min(100svh,960px); min-block-size:485px; padding-block-start:65px; }
+ .dealerTable { object-fit:cover; object-position:65% 48%; }
+ .dealer :global(.cards-hero-content) { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:.38rem .55rem; }
+ .dealer :global(.cards-hero-desc) { grid-area:3/1/4/3; font-size:.88rem; line-height:1.41; }
+ .dealer :global(.cards-hero-cta) { grid-area:2/2; justify-self:end; }
+ .dealer :global(.cards-hero-title) { font-size:clamp(1.8rem,8vw,3rem); }
+ .dealer:dir(rtl) :global(.cards-hero-title) { font-size:clamp(1.6rem,6.8vw,2.75rem); }
+ .dealer :global(.cta-discord),.council :global(.cta-discord) { font-size:.72rem; min-height:40px; padding:.34rem .52rem; }
+ .council { min-block-size:122svh; }
+ .councilVisual { height:clamp(31rem,77svh,45rem); }
+ .councilHall { object-position:62% 51%; }
+ .councilVisual::after,.council:dir(rtl) .councilVisual::after { background:linear-gradient(180deg,#080b11e7 0%,#080d13b6 19%,#10141a2b 57%,transparent 65%,#050709ab 100%); }
+ .council :global(.lp-hero-content) { max-width:none; inset-inline:6%; top:clamp(76px,14%,104px); transform:none; }
+ .council :global(.lp-hero-title) { font-size:clamp(2.4rem,11vw,4.3rem); }
+ .council:dir(rtl) :global(.lp-hero-title) { font-size:clamp(2.1rem,10vw,3.8rem); }
+ .council :global(.lp-hero-desc) { line-height:1.45; max-width:31ch; margin-block:.5rem; }
+ .councilCard,.council:dir(rtl) .councilCard { --center:50%; top:77%; width:clamp(62px,18vw,104px); }
+ .councilCard[data-slot="0"] { --fan:-22vw; }
+ .councilCard[data-slot="2"] { --fan:22vw; }
+ .councilCard[data-slot="1"] { width:clamp(73px,22vw,124px); }
+ .councilFlags,.council:dir(rtl) .councilFlags { --center:50%; top:56%; gap:17vw; }
+ .councilFlag,.councilFlag:nth-child(2) { width:clamp(36px,12vw,67px); height:clamp(60px,11svh,90px); }
+ .councilBeats { font-size:.64rem; gap:.15rem; }
+ .councilControls { padding-inline:4.6%; }
+}
+@media(max-height:570px) and (min-width:621px) {
+ .dealerFrame { min-block-size:340px; padding-block-start:48px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .dealer[data-dealer-live=true] { block-size:auto; }
+ .dealer,.council { min-block-size:0; }
+ .dealerFrame,.dealer[data-dealer-live=true] .dealerFrame,.councilFrame { position:relative; min-block-size:0; }
+ .dealerFrame { block-size:auto; }
+ .dealerVisual { flex:none; min-block-size:0; aspect-ratio:3 / 2; width:100%; max-block-size:72svh; }
+ .dealerTable { object-fit:contain; object-position:center; }
+ .dealerVisual :global(canvas) { display:none; }
+ .councilCard { animation:none; transition:none; }
+}

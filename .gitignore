@@ -42,3 +42,6 @@ scripts/seed-bot-config.mjs
 # Stray seeding logs (never commit)
 bot-config-errors.log
 shops-errors.log
+
+# Local, checksum-verified native artwork cache
+/.luna-native/

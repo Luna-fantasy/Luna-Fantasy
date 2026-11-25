@@ -3,10 +3,13 @@ import Discord from "next-auth/providers/discord";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
 import { MASTERMIND_IDS } from "@/lib/admin/constants";
+import { discordOAuthCredentials } from "@/lib/discord-signin";
+
+const discord = discordOAuthCredentials(process.env);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(clientPromise, { databaseName: "Database" }),
-  providers: [Discord({ issuer: "https://discord.com" })],
+  providers: discord ? [Discord({ ...discord, issuer: "https://discord.com" })] : [],
   session: { strategy: "database", maxAge: 7 * 24 * 60 * 60 },
   pages: {
     signIn: "/auth/signin",

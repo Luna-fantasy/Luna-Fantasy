@@ -307,6 +307,8 @@ html[dir="rtl"] .contact-field select {
 
 /* Dropzone */
 .contact-dropzone {
+  width: 100%;
+  font: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -319,6 +321,7 @@ html[dir="rtl"] .contact-field select {
   transition: border-color 0.2s, background 0.2s;
 }
 
+.contact-dropzone:focus-visible,
 .contact-dropzone:hover,
 .contact-dropzone.dragging {
   border-color: rgba(0, 212, 255, 0.35);

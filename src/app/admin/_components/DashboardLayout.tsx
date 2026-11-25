@@ -69,14 +69,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [overId, setOverId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
 
-  // Hydrate order from localStorage once children are known
   useEffect(() => {
-    const saved = loadOrder();
-    if (saved.length === 0) { setOrder(entries.map((e) => e.id)); return; }
-    const known = new Set(entries.map((e) => e.id));
-    const kept = saved.filter((id) => known.has(id));
-    const appended = entries.map((e) => e.id).filter((id) => !kept.includes(id));
-    setOrder([...kept, ...appended]);
+    const movable = entries.filter((entry) => !entry.locked).map((entry) => entry.id);
+    const saved = loadOrder().filter((id) => movable.includes(id));
+    const sorted = Array.from(new Set([...saved, ...movable]));
+    let index = 0;
+    setOrder(entries.map((entry) => entry.locked ? entry.id : sorted[index++]));
   }, [entries]);
 
   const ordered = useMemo(() => {
@@ -86,19 +84,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       .filter((e): e is SectionEntry => !!e);
   }, [order, entries]);
 
+  const movableIds = useMemo(() => ordered.filter((entry) => !entry.locked).map((entry) => entry.id), [ordered]);
+
   const move = useCallback((fromId: string, toId: string) => {
     if (fromId === toId) return;
     setOrder((prev) => {
-      const next = [...prev];
-      const from = next.indexOf(fromId);
-      const to = next.indexOf(toId);
+      const movable = prev.filter((id) => movableIds.includes(id));
+      const from = movable.indexOf(fromId);
+      const to = movable.indexOf(toId);
       if (from === -1 || to === -1) return prev;
-      next.splice(from, 1);
-      next.splice(to, 0, fromId);
+      movable.splice(from, 1);
+      movable.splice(to, 0, fromId);
+      let index = 0;
+      const next = prev.map((id) => movableIds.includes(id) ? movable[index++] : id);
       saveOrder(next);
       return next;
     });
-  }, []);
+  }, [movableIds]);
 
   const reset = useCallback(() => {
     const fresh = entries.map((e) => e.id);
@@ -114,6 +116,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           className={`av-btn av-btn-ghost av-dashlayout-edit${editMode ? ' av-dashlayout-edit--on' : ''}`}
           onClick={() => setEditMode((m) => !m)}
           title="Rearrange dashboard sections"
+          aria-pressed={editMode}
         >
           ⁝⁝ {editMode ? 'Done' : 'Rearrange'}
         </button>
@@ -124,6 +127,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         )}
       </div>
       {ordered.map((entry) => {
+        const position = movableIds.indexOf(entry.id);
+        const label = entry.label ?? entry.id;
         const isDragging = draggingId === entry.id;
         const isOver = overId === entry.id && draggingId && draggingId !== entry.id;
         return (
@@ -146,19 +151,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             }}
           >
             {editMode && !entry.locked && (
-              <div
-                className="av-dashsection-handle"
-                draggable
-                onDragStart={(e) => {
-                  setDraggingId(entry.id);
-                  e.dataTransfer.effectAllowed = 'move';
-                  e.dataTransfer.setData('text/plain', entry.id);
-                }}
-                onDragEnd={() => { setDraggingId(null); setOverId(null); }}
-                title="Drag to reorder"
-              >
-                <span aria-hidden="true">⋮⋮</span>
-                {entry.label && <span>{entry.label}</span>}
+              <div className="av-dashsection-controls">
+                <div
+                  className="av-dashsection-handle"
+                  draggable
+                  onDragStart={(e) => {
+                    setDraggingId(entry.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', entry.id);
+                  }}
+                  onDragEnd={() => { setDraggingId(null); setOverId(null); }}
+                  title="Drag to reorder"
+                >
+                  <span aria-hidden="true">⋮⋮</span>
+                  <span>{label}</span>
+                </div>
+                <button
+                  type="button"
+                  className="av-btn av-btn-ghost"
+                  aria-label={`Move ${label} up`}
+                  disabled={position <= 0}
+                  onClick={() => move(entry.id, movableIds[position - 1])}
+                >↑</button>
+                <button
+                  type="button"
+                  className="av-btn av-btn-ghost"
+                  aria-label={`Move ${label} down`}
+                  disabled={position >= movableIds.length - 1}
+                  onClick={() => move(entry.id, movableIds[position + 1])}
+                >↓</button>
               </div>
             )}
             {entry.node}

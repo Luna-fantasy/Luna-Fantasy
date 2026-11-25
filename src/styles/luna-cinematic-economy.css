@@ -1,0 +1,144 @@
+/* Decorative only. The original localized React components still own account
+   state, controls and data. Scope every selector to an explicitly marked hero. */
+.cinematic-economy-hero {
+  --economy-hero-horizon: 51%;
+  --economy-hero-x: 50%;
+  isolation: isolate;
+  background: #0a0e17;
+}
+.bank-hero.cinematic-economy-hero,
+.bazaar-hero.cinematic-economy-hero {
+  min-height: clamp(30rem, 73svh, 51rem);
+  min-width: 0;
+  align-items: flex-end;
+}
+.bank-hero.cinematic-economy-hero {
+  padding-block: clamp(5.25rem, 17vh, 10rem) clamp(3.1rem, 8vh, 5.5rem);
+}
+.cinematic-economy-hero .bank-hero-bg,
+.cinematic-economy-hero .bazaar-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: clip;
+}
+.cinematic-economy-hero .bank-hero-bg-image,
+.cinematic-economy-hero .bazaar-hero-bg-image {
+  object-fit: cover;
+  object-position: var(--economy-hero-x) var(--economy-hero-horizon);
+  opacity: 1;
+  filter: none;
+  transform-origin: var(--economy-hero-x) var(--economy-hero-horizon);
+}
+.cinematic-economy-hero .bank-hero-bg::after,
+.cinematic-economy-hero .bazaar-hero-bg::after {
+  background: linear-gradient(180deg, #06091360, transparent 27%, #070b17a8 63%, var(--bg-void, #090c15) 100%);
+  pointer-events: none;
+}
+.cinematic-economy-hero .bank-hero-content,
+.cinematic-economy-hero .bazaar-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: min(48rem, 100%);
+  box-sizing: border-box;
+  text-align: center;
+}
+.cinematic-economy-hero .bazaar-hero-content {
+  padding-block: clamp(5.2rem, 17vh, 10rem) clamp(3.1rem, 8vh, 5.5rem);
+}
+.cinematic-economy-hero .bank-hero-title,
+.cinematic-economy-hero .bazaar-hero-title {
+  background: none;
+  color: #f4f0e8;
+  -webkit-text-fill-color: currentColor;
+  font-size: clamp(2.45rem, 6.2vw, 5.2rem);
+  filter: none;
+  text-shadow: 0 .12em .34em #070a12;
+}
+.cinematic-economy-hero .bank-hero-desc,
+.cinematic-economy-hero .bazaar-hero-desc {
+  color: #ecedf4;
+  text-shadow: 0 .13em .32em #060911;
+}
+.cinematic-economy-hero--merchant[data-cinematic-merchant="seluna"] { --economy-hero-x: 61%; }
+.cinematic-economy-hero--merchant[data-cinematic-merchant="mells"] { --economy-hero-x: 55%; }
+.cinematic-economy-hero--merchant[data-cinematic-merchant="brimor"] { --economy-hero-x: 37%; }
+.cinematic-bank-contract-note {
+  margin: 0 0 .65rem;
+  color: var(--text-primary, #edf0f8);
+  text-align: center;
+  font-weight: 600;
+  font-size: .86rem;
+  line-height: 1.35;
+}
+@media (max-width: 640px) {
+  .bank-hero.cinematic-economy-hero,
+  .bazaar-hero.cinematic-economy-hero {
+    min-height: min(40rem, 72svh);
+  }
+  .cinematic-economy-hero--merchant {
+    --economy-hero-horizon: 38%;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cinematic-economy-hero .bank-hero-bg-image,
+  .cinematic-economy-hero .bazaar-hero-bg-image {
+    animation: luna-economy-settle 1600ms cubic-bezier(.2,.68,.25,1) both;
+  }
+  @keyframes luna-economy-settle {
+    from { transform: scale(1.045); }
+    to { transform: scale(1); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinematic-economy-hero .bank-hero-bg-image,
+  .cinematic-economy-hero .bazaar-hero-bg-image {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* V18: use the approved portrait focal points on the native merchant hero.
+   Only the photograph is reframed; the fixed topbar, purchase and edit UI stay native. */
+@media (max-width: 620px) and (orientation: portrait) {
+  .cinematic-economy-hero--merchant[data-cinematic-merchant] {
+    --merchant-mobile-height: min(45svh, 68vw);
+    --economy-hero-x: 55%;
+    --economy-hero-horizon: 50%;
+    min-height: 0;
+    padding-block-start: var(--merchant-mobile-height);
+  }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant] > .bazaar-hero-content {
+    padding-block: 1rem 1.5rem;
+  }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="kael"] { --economy-hero-x: 62%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="meluna"] { --economy-hero-x: 54%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="zoldar"] { --economy-hero-x: 63%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="seluna"] { --economy-hero-x: 86%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="brimor"] { --economy-hero-x: 28%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="mells"] { --economy-hero-x: 62%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant] > .bazaar-hero-bg {
+    inset: 0 0 auto;
+    height: var(--merchant-mobile-height);
+    mask-image: linear-gradient(#000 0% 92%, transparent 100%);
+  }
+}
+
+@media (min-width: 621px) and (max-width: 768px) and (orientation: portrait) {
+  .cinematic-economy-hero--merchant[data-cinematic-merchant] { --economy-hero-horizon: 51%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="kael"] { --economy-hero-x: 67%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="meluna"] { --economy-hero-x: 56%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="zoldar"] { --economy-hero-x: 64%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="seluna"] { --economy-hero-x: 56%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="brimor"] { --economy-hero-x: 25%; }
+  .cinematic-economy-hero--merchant[data-cinematic-merchant="mells"] { --economy-hero-x: 64%; }
+}
+
+@media (max-width: 620px) and (min-height: 500px) and (orientation: portrait) {
+  .cinematic-economy-hero--merchant[data-cinematic-merchant] > .bazaar-hero-bg {
+    /* Native Next topbar is taller than the temporary preview mast. */
+    --merchant-photo-nav-clearance: calc(4.5rem + env(safe-area-inset-top, 0px));
+    inset-block-start: var(--merchant-photo-nav-clearance);
+    height: calc(var(--merchant-mobile-height) - var(--merchant-photo-nav-clearance));
+  }
+}

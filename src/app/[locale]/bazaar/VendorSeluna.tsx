@@ -1,10 +1,12 @@
 'use client';
 
+import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
 import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
+import { StallCalendar } from '@/components/cinematic/night-economy/StockGuide';
 
 interface SelunaItem {
   id: string;
@@ -29,6 +31,7 @@ interface ShopState {
 }
 
 interface VendorSelunaProps {
+  night?: boolean;
   balance: number;
   hasDebt: boolean;
   hasPassport: boolean;
@@ -66,7 +69,7 @@ const TYPE_ICONS: Record<string, string> = {
   stone: '\u25C6',   // diamond
 };
 
-export default function VendorSeluna({ balance, hasDebt, hasPassport, isLoggedIn }: VendorSelunaProps) {
+export default function VendorSeluna({ balance, hasDebt, hasPassport, isLoggedIn, night }: VendorSelunaProps) {
   const t = useTranslations('bazaarPage');
 
   const [shop, setShop] = useState<ShopState | null>(null);
@@ -248,6 +251,7 @@ export default function VendorSeluna({ balance, hasDebt, hasPassport, isLoggedIn
       </div>
 
       {/* Closed state atmospheric message */}
+      {night && <StallCalendar active={shop.active} endsAt={shop.endsAt} nextOpenAt={shop.nextOpenAt} />}
       {!shop.active && (
         <div className="seluna-closed-message">
           <p><E ns="bazaarPage" k="seluna.returnsMessage">{t('seluna.returnsMessage')}</E></p>
@@ -286,7 +290,7 @@ export default function VendorSeluna({ balance, hasDebt, hasPassport, isLoggedIn
                 {item.imageUrl && (
                   <div className="seluna-card-image">
                     <img
-                      src={item.imageUrl}
+                      src={collectibleDisplayImage(item.imageUrl, 'thumb')}
                       alt={item.name}
                       loading="lazy"
                     />
@@ -366,7 +370,7 @@ export default function VendorSeluna({ balance, hasDebt, hasPassport, isLoggedIn
                     <p className="seluna-confirm-text">
                       {t('seluna.confirmPurchase', {
                         item: item.name,
-                        price: formatNumber(item.price),
+                        price: formatNumber(applyPassportDiscount(item.price, hasPassport)),
                       })}
                     </p>
                     <div className="seluna-confirm-buttons">

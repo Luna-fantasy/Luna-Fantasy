@@ -1,0 +1,146 @@
+[
+  {
+    "id": "Candy",
+    "name": "Candy",
+    "price": 250000,
+    "gradientColors": [
+      "#e138ea",
+      "#3af3b5"
+    ]
+  },
+  {
+    "id": "Moon",
+    "name": "Moon",
+    "price": 300000,
+    "gradientColors": [
+      "#9a9a9a",
+      "#12121b"
+    ]
+  },
+  {
+    "id": "Dragon",
+    "name": "Dragon",
+    "price": 350000,
+    "gradientColors": [
+      "#cf5a00",
+      "#730c00"
+    ]
+  },
+  {
+    "id": "Darkness",
+    "name": "Darkness",
+    "price": 400000,
+    "gradientColors": [
+      "#0e0e0f",
+      "#192131"
+    ]
+  },
+  {
+    "id": "Vampire",
+    "name": "Vampire",
+    "price": 450000,
+    "gradientColors": [
+      "#030205",
+      "#4a0900"
+    ]
+  },
+  {
+    "id": "Sapphire",
+    "name": "Sapphire",
+    "price": 500000,
+    "gradientColors": [
+      "#001764",
+      "#0454e8"
+    ]
+  },
+  {
+    "id": "Emerald",
+    "name": "Emerald",
+    "price": 550000,
+    "gradientColors": [
+      "#c0ffb5",
+      "#00ff77"
+    ]
+  },
+  {
+    "id": "Opal",
+    "name": "Opal",
+    "price": 600000,
+    "gradientColors": [
+      "#ae9fe0",
+      "#85ba9d"
+    ]
+  },
+  {
+    "id": "Ruby",
+    "name": "Ruby",
+    "price": 650000,
+    "gradientColors": [
+      "#e5006b",
+      "#69063c"
+    ]
+  },
+  {
+    "id": "Diamond",
+    "name": "Diamond",
+    "price": 750000,
+    "gradientColors": [
+      "#ebe7f4",
+      "#10b9d7"
+    ]
+  },
+  {
+    "id": "Phantom",
+    "name": "Phantom",
+    "price": 850000,
+    "gradientColors": [
+      "#5a585f",
+      "#691428"
+    ]
+  },
+  {
+    "id": "Titan",
+    "name": "Titan",
+    "price": 950000,
+    "gradientColors": [
+      "#020006",
+      "#666f7f"
+    ]
+  },
+  {
+    "id": "Royal",
+    "name": "Royal",
+    "price": 1050000,
+    "gradientColors": [
+      "#dcbb24",
+      "#7d0a0a"
+    ]
+  },
+  {
+    "id": "Special",
+    "name": "Special",
+    "price": 1150000,
+    "gradientColors": [
+      "#5a0298",
+      "#419f1f"
+    ]
+  },
+  {
+    "id": "Mythical",
+    "name": "Mythical",
+    "price": 1250000,
+    "gradientColors": [
+      "#2b83e7",
+      "#5b040a"
+    ]
+  },
+  {
+    "id": "CustomRole",
+    "name": "Custom Role",
+    "price": 1500000,
+    "gradientColors": [
+      "#afaf0f",
+      "#79ffef"
+    ]
+  }
+]

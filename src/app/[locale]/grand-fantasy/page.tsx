@@ -1,5 +1,7 @@
+import { cinematicPresentationEnabled, grandBookPresentationEnabled } from '@/lib/cinematic/presentation-flags';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/cards.css';
+import '@/styles/archive-card-search.css';
 import { CardsContent } from './CardsContent';
 import { getCardCatalog } from '@/lib/cards';
 import type { Card } from '@/types';
@@ -39,18 +41,28 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export default async function GrandFantasyPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function GrandFantasyPage({
+  params, searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams?: { editMode?: string | string[] };
+}) {
   const { locale } = await params;
   setRequestLocale(locale);
 
   const allCards = await getCardCatalog();
   const cards = allCards.filter(c => c.rarity !== 'secret');
+  const cinematic = cinematicPresentationEnabled();
+  const publicPresentation = searchParams?.editMode !== '1';
+  const bookPresentation = grandBookPresentationEnabled(cinematic) && publicPresentation;
 
   return (
     <TabGuard tabKey="grand-fantasy">
       <CardsContent
         cards={cards as Card[]}
         locale={locale as 'en' | 'ar'}
+        bookPresentation={bookPresentation}
+        cinematicArtwork={cinematic && publicPresentation}
       />
     </TabGuard>
   );

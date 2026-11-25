@@ -3,23 +3,19 @@
    ============================================ */
 
 :root {
-  /* Core Colors - Dark Epic Fantasy Palette */
-  --bg-void: #030306;
-  --bg-deep: #070a12;
-  --bg-surface: #0c1018;
-  --bg-elevated: #111822;
-
-  /* Accent Colors - Neon Blue Theme */
-  --accent-primary: #00d4ff;      /* Neon Blue */
-  --accent-secondary: #8b5cf6;    /* Purple Magic */
-  --accent-fire: #00d4ff;         /* Neon Blue (was Crimson) */
-  --accent-energy: #00d4ff;       /* Cyan Energy */
-  --accent-legendary: #ffd700;    /* Legendary Gold */
-
-  /* Text Colors */
-  --text-primary: #f0f0f5;
-  --text-secondary: rgba(240, 240, 245, 0.7);
-  --text-muted: rgba(240, 240, 245, 0.5);
+  /* Shared inks for public pages, authentication and admin tools. */
+  --bg-void: #050505;
+  --bg-deep: #080808;
+  --bg-surface: #100f0f;
+  --bg-elevated: #151413;
+  --accent-primary: #e9baaa;
+  --accent-secondary: #d89a92;
+  --accent-fire: #faccad;
+  --accent-energy: #e9baaa;
+  --accent-legendary: #ffd700;
+  --text-primary: #f8f1e9;
+  --text-secondary: #c9c0ba;
+  --text-muted: #b3a69f;
 
   /* Rarity Colors */
   --common: #4ade80;
@@ -31,9 +27,9 @@
   --special: #FFD27F;
 
   /* Effects */
-  --glow-blue: 0 0 40px rgba(0, 212, 255, 0.4);
-  --glow-purple: 0 0 40px rgba(139, 92, 246, 0.4);
-  --glow-neon: 0 0 40px rgba(0, 212, 255, 0.4);
+  --glow-blue: 0 0 28px rgba(189, 137, 122, 0.16);
+  --glow-purple: 0 0 28px rgba(195, 152, 143, 0.16);
+  --glow-neon: 0 0 28px rgba(189, 137, 122, 0.16);
 
   /* Spacing & Sizing */
   --max-width: 1200px;
@@ -765,6 +761,27 @@ footer::before {
 .lightbox-content {
   position: relative;
   z-index: 2;
+}
+.lightbox-close {
+  position: absolute;
+  z-index: 3;
+  inset-block-start: .5rem;
+  inset-inline-end: .5rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  background: rgba(10, 14, 24, .93);
+  border: 1px solid rgba(255, 255, 255, .45);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.lightbox-close:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .lightbox, .lightbox img, .lightbox-caption { transition: none; animation: none; }
 }
 .lightbox-caption {
   max-width: 560px;

@@ -1,30 +1,65 @@
 'use client';
 
+import { ArchiveName } from '@/components/ArchiveName';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import Image from 'next/image';
 import { Lightbox } from '@/components';
+import { ArchiveCardCarousel } from '@/components/archive-card-carousel/ArchiveCardCarousel';
+import { ArchiveCardThumbnail } from '@/components/archive-card-carousel/ArchiveCardThumbnail';
+import { ArchiveCardSearch } from '@/components/cinematic-games/ArchiveCardSearch';
+import { archiveCardMatcher } from '@/lib/cinematic/archive-card-search';
+import { inspectorArtworkViewerSrc } from '@/lib/cinematic/native-art-inspector';
 import { E } from '@/components/edit-mode/EditableText';
 import { EImg } from '@/components/edit-mode/EditableImage';
+import { useEditMode } from '@/lib/edit-mode/context';
+import { GrandBookStage } from './GrandBookStage';
+import { projectFantasyCardArtwork } from '@/lib/release-card-art';
 import type { Card, CardRarity, Locale } from '@/types';
 
 interface CardsContentProps {
   cards: Card[];
   locale: Locale;
+  bookPresentation?: boolean;
+  cinematicArtwork?: boolean;
 }
 
 type FilterKey = 'all' | CardRarity;
+const allRarities: CardRarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'mythical'];
 
-export function CardsContent({ cards, locale }: CardsContentProps) {
+export function CardsContent({ cards, locale, bookPresentation = false, cinematicArtwork = false }: CardsContentProps) {
   const t = useTranslations('grandFantasyPage');
   const hero = useTranslations('hero');
+  const { editMode } = useEditMode();
 
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [archiveQuery, setArchiveQuery] = useState('');
+  const [indexOpen, setIndexOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<{ fallback: string; native?: string; id: string; name: string; opener?: HTMLElement } | null>(null);
+  // The catalog and labels remain live; only explicitly mapped cards gain local presentation art.
+  const releaseArt = new Map(cards.map(card => [card, projectFantasyCardArtwork(card, cinematicArtwork && !editMode)]));
 
-  const filteredCards = activeFilter === 'all'
-    ? cards
-    : cards.filter(card => card.rarity === activeFilter);
+  function openCardArtwork(card: Card, opener?: HTMLElement) {
+    const art = releaseArt.get(card);
+    setLightboxImage({ id: art?.releaseId ?? card.id, fallback: art?.detail ?? card.imageUrl, native: inspectorArtworkViewerSrc(art?.releaseId), name: card.name[locale], opener });
+  }
+
+  const matchesQuery = archiveCardMatcher('grand-fantasy', locale, editMode ? '' : archiveQuery);
+  const matchesSearch = (card: Card) => matchesQuery(releaseArt.get(card)?.releaseId, card.name[locale], card.name.en);
+  // Shared list of visible records; keeps the original card objects and role pins.
+  const filteredCards = cards.filter(card => (activeFilter === 'all' || card.rarity === activeFilter) && matchesSearch(card))
+    .sort((a, b) => allRarities.indexOf(a.rarity) - allRarities.indexOf(b.rarity));
+  const archiveByReleaseId = new Map<string, Card>();
+  const archiveEntries = filteredCards.flatMap(card => {
+    const art = releaseArt.get(card);
+    const id = art?.releaseId ?? card.id;
+    if (archiveByReleaseId.has(id)) return [];
+    archiveByReleaseId.set(id, card);
+    return [{ id, name: card.name[locale], group: t(`filters.${card.rarity}`),
+      detail: art?.detail ?? card.imageUrl, thumb: art?.thumb ?? card.imageUrl, releaseId: art?.releaseId }];
+  });
+  const showCarousel = cinematicArtwork && !editMode && archiveEntries.length > 0;
+  const indexId = "grand-archive-index";
+
 
   // Group cards by rarity — only rarities present in the data
   const cardsByRarity: Partial<Record<CardRarity, Card[]>> = {};
@@ -34,7 +69,6 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
   }
 
   // Build filters and rarity order from what actually exists
-  const allRarities: CardRarity[] = ['common', 'rare', 'epic', 'unique', 'legendary', 'mythical'];
   const rarityOrder = allRarities.filter(r => cardsByRarity[r] && cardsByRarity[r]!.length > 0);
 
   const filters: { key: FilterKey; label: string }[] = [
@@ -42,21 +76,7 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
     ...rarityOrder.map(r => ({ key: r as FilterKey, label: t(`filters.${r}`) })),
   ];
 
-  return (
-    <>
-      {/* Cards Hero */}
-      <section className="cards-hero">
-        <div className="cards-hero-bg">
-          <EImg
-            editId="grand-fantasy-hero-bg"
-            source="r2"
-            src={`https://assets.lunarian.app/backgrounds/GrandFantasyHero.jpeg?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? process.env.NEXT_PUBLIC_RAILWAY_DEPLOYMENT_ID ?? '1'}`}
-            alt="Grand Fantasy Card Game"
-            fill
-            priority
-            className="cards-hero-bg-image"
-          />
-        </div>
+  const heroCopy = (
         <div className="cards-hero-content">
           <span className="hero-badge"><E ns="grandFantasyPage" k="heroSubtitle">{t('heroSubtitle')}</E></span>
           <h1 className="cards-hero-title"><E ns="grandFantasyPage" k="heroTitle">{t('heroTitle')}</E></h1>
@@ -70,7 +90,28 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
             </a>
           </div>
         </div>
-      </section>
+  );
+  return (
+    <main>
+      {/* Existing editable/static poster is retained when disabled or in edit mode. */}
+      {bookPresentation && !editMode ? (
+        <GrandBookStage locale={locale}>{heroCopy}</GrandBookStage>
+      ) : (
+        <section className="cards-hero">
+        <div className="cards-hero-bg">
+          <EImg
+            editId="grand-fantasy-hero-bg"
+            source="r2"
+            src={`https://assets.lunarian.app/backgrounds/GrandFantasyHero.jpeg?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? process.env.NEXT_PUBLIC_RAILWAY_DEPLOYMENT_ID ?? '1'}`}
+            alt="Grand Fantasy Card Game"
+            fill
+            priority
+            className="cards-hero-bg-image"
+          />
+        </div>
+          {heroCopy}
+        </section>
+      )}
 
       {/* What Is Grand Fantasy */}
       <section className="cards-info-section">
@@ -101,11 +142,14 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
       {/* Cards Gallery */}
       <section className="cards-gallery-section">
         <div className="wrap">
+          {!editMode && <ArchiveCardSearch locale={locale} query={archiveQuery} count={filteredCards.length} onQuery={setArchiveQuery} />}
           {/* Filters */}
           <div className="filter-bar">
             {filters.map(filter => (
               <button
                 key={filter.key}
+                type="button"
+                aria-pressed={activeFilter === filter.key}
                 className={`filter-btn filter-btn-${filter.key} ${activeFilter === filter.key ? 'active' : ''}`}
                 onClick={() => setActiveFilter(filter.key)}
               >
@@ -119,12 +163,20 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
             ))}
           </div>
 
+          {showCarousel && <ArchiveCardCarousel variant="grand" locale={locale} entries={archiveEntries}
+            onInspect={(entry, trigger) => {
+              const card = archiveByReleaseId.get(entry.id);
+              if (card) openCardArtwork(card, trigger);
+            }}
+            index={{ open:indexOpen, controls:indexId, onToggle:() => setIndexOpen(open => !open) }}
+          />}
           {/* Cards Display */}
-          {activeFilter === 'all' ? (
+          <div id={indexId} hidden={showCarousel && !indexOpen}>
+          {filteredCards.length === 0 ? null : activeFilter === 'all' ? (
             // Grouped by rarity
             <div className="cards-by-rarity">
               {rarityOrder.map(rarity => {
-                const rarityCards = cardsByRarity[rarity];
+                const rarityCards = filteredCards.filter(card => card.rarity === rarity);
                 if (!rarityCards || rarityCards.length === 0) return null;
                 return (
                   <div key={rarity} className="rarity-section">
@@ -141,14 +193,21 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
                         <div
                           key={card.id}
                           className={`card-item card-${card.rarity}`}
-                          onClick={() => setLightboxImage(card.imageUrl)}
+                          data-release-card={releaseArt.get(card)?.releaseId}
+                          role="button" tabIndex={0} aria-haspopup="dialog" aria-label={card.name[locale]}
+                          onClick={event => openCardArtwork(card, event.currentTarget)}
+                          onKeyDown={event => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              openCardArtwork(card, event.currentTarget);
+                            }
+                          }}
                         >
                           <div className="card-image-wrapper">
-                            <Image
-                              src={card.imageUrl}
+                            <ArchiveCardThumbnail
+                              src={releaseArt.get(card)?.thumb ?? card.imageUrl}
+                              highDensitySrc={releaseArt.get(card)?.detail}
                               alt={card.name[locale]}
-                              width={300}
-                              height={420}
                               className="card-image"
                             />
                           </div>
@@ -166,14 +225,21 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
                 <div
                   key={card.id}
                   className={`card-item card-${card.rarity}`}
-                  onClick={() => setLightboxImage(card.imageUrl)}
+                  data-release-card={releaseArt.get(card)?.releaseId}
+                  role="button" tabIndex={0} aria-haspopup="dialog" aria-label={card.name[locale]}
+                  onClick={event => openCardArtwork(card, event.currentTarget)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      openCardArtwork(card, event.currentTarget);
+                    }
+                  }}
                 >
                   <div className="card-image-wrapper">
-                    <Image
-                      src={card.imageUrl}
+                    <ArchiveCardThumbnail
+                      src={releaseArt.get(card)?.thumb ?? card.imageUrl}
+                      highDensitySrc={releaseArt.get(card)?.detail}
                       alt={card.name[locale]}
-                      width={300}
-                      height={420}
                       className="card-image"
                     />
                   </div>
@@ -181,22 +247,28 @@ export function CardsContent({ cards, locale }: CardsContentProps) {
                     <span className={`card-rarity rarity-${card.rarity}`}>
                       {t(`filters.${card.rarity}`)}
                     </span>
-                    <h4 className="card-name">{card.name[locale]}</h4>
+                    <h4 className="card-name"><ArchiveName>{card.name[locale]}</ArchiveName></h4>
                   </div>
                 </div>
               ))}
             </div>
           )}
+          </div>
         </div>
       </section>
 
       {/* Lightbox */}
       <Lightbox
         isOpen={!!lightboxImage}
-        imageSrc={lightboxImage || ''}
-        alt="Card Preview"
+        inspection={lightboxImage ? { kind: 'grand', id: lightboxImage.id } : undefined}
+        archiveEntries={archiveEntries}
+        imageSrc={lightboxImage?.fallback || ''}
+        preferredImageSrc={lightboxImage?.native}
+        openerElement={lightboxImage?.opener}
+        locale={locale}
+        alt={lightboxImage?.name || (locale === 'ar' ? 'معاينة الكرت' : 'Card Preview')}
         onClose={() => setLightboxImage(null)}
       />
-    </>
+    </main>
   );
 }

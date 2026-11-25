@@ -36,7 +36,9 @@ export default function ContactForm() {
     if (!form.area) e.area = true;
     if (!form.message.trim()) e.message = true;
     setErrors(e);
-    return Object.keys(e).length === 0;
+    const firstInvalid = Object.keys(e)[0];
+    if (firstInvalid) document.getElementById('contact-' + firstInvalid)?.focus();
+    return !firstInvalid;
   }
 
   function addFiles(incoming: FileList | null) {
@@ -125,6 +127,9 @@ export default function ContactForm() {
             <label htmlFor="contact-discord"><E ns="contactPage" k="discord">{t('discord')}</E></label>
             <input
               id="contact-discord"
+              required
+              aria-invalid={errors.discord || undefined}
+              aria-describedby={errors.discord ? 'contact-discord-error' : undefined}
               type="text"
               value={form.discord}
               onChange={(e) => update('discord', e.target.value)}
@@ -132,7 +137,7 @@ export default function ContactForm() {
               disabled={isLoggedIn}
               className={isLoggedIn ? 'contact-input-locked' : ''}
             />
-            {errors.discord && <span className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
+            {errors.discord && <span id="contact-discord-error" className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
           </div>
 
           {/* Reason + Area row */}
@@ -141,6 +146,9 @@ export default function ContactForm() {
               <label htmlFor="contact-reason"><E ns="contactPage" k="reason">{t('reason')}</E></label>
               <select
                 id="contact-reason"
+                required
+                aria-invalid={errors.reason || undefined}
+                aria-describedby={errors.reason ? 'contact-reason-error' : undefined}
                 value={form.reason}
                 onChange={(e) => update('reason', e.target.value)}
               >
@@ -149,13 +157,16 @@ export default function ContactForm() {
                   <option key={r} value={r}><E ns="contactPage" k={`reasons.${r}`}>{t(`reasons.${r}`)}</E></option>
                 ))}
               </select>
-              {errors.reason && <span className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
+              {errors.reason && <span id="contact-reason-error" className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
             </div>
 
             <div className={`contact-field${errors.area ? ' has-error' : ''}`}>
               <label htmlFor="contact-area"><E ns="contactPage" k="area">{t('area')}</E></label>
               <select
                 id="contact-area"
+                required
+                aria-invalid={errors.area || undefined}
+                aria-describedby={errors.area ? 'contact-area-error' : undefined}
                 value={form.area}
                 onChange={(e) => update('area', e.target.value)}
               >
@@ -164,7 +175,7 @@ export default function ContactForm() {
                   <option key={a} value={a}><E ns="contactPage" k={`areas.${a}`}>{t(`areas.${a}`)}</E></option>
                 ))}
               </select>
-              {errors.area && <span className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
+              {errors.area && <span id="contact-area-error" className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
             </div>
           </div>
 
@@ -173,32 +184,37 @@ export default function ContactForm() {
             <label htmlFor="contact-message"><E ns="contactPage" k="message">{t('message')}</E></label>
             <textarea
               id="contact-message"
+              required
+              aria-invalid={errors.message || undefined}
+              aria-describedby={errors.message ? 'contact-message-error' : undefined}
               rows={6}
               value={form.message}
               onChange={(e) => update('message', e.target.value)}
               placeholder={t('messagePlaceholder')}
             />
-            {errors.message && <span className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
+            {errors.message && <span id="contact-message-error" className="contact-error"><E ns="contactPage" k="required">{t('required')}</E></span>}
           </div>
 
           {/* Image attachments */}
           <div className="contact-field">
-            <label><E ns="contactPage" k="attachments">{t('attachments')}</E></label>
-            <div
+            <label htmlFor="contact-attachments"><E ns="contactPage" k="attachments">{t('attachments')}</E></label>
+            <input
+              id="contact-attachments"
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }}
+            />
+            <button
+              type="button"
               className="contact-dropzone"
               onClick={() => fileRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('dragging'); }}
               onDragLeave={(e) => e.currentTarget.classList.remove('dragging')}
               onDrop={handleDrop}
             >
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                hidden
-                onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }}
-              />
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <circle cx="8.5" cy="8.5" r="1.5" />
@@ -206,7 +222,7 @@ export default function ContactForm() {
               </svg>
               <span className="contact-dropzone-text"><E ns="contactPage" k="attachHint">{t('attachHint')}</E></span>
               <span className="contact-dropzone-limit"><E ns="contactPage" k="attachLimit">{t('attachLimit')}</E></span>
-            </div>
+            </button>
 
             {previews.length > 0 && (
               <div className="contact-previews">
@@ -231,7 +247,7 @@ export default function ContactForm() {
           </div>
 
           {status === 'error' && (
-            <div className="contact-error-banner"><E ns="contactPage" k="errorMsg">{t('errorMsg')}</E></div>
+            <div className="contact-error-banner" role="alert"><E ns="contactPage" k="errorMsg">{t('errorMsg')}</E></div>
           )}
 
           <button className="contact-btn" type="submit" disabled={status === 'sending'}>

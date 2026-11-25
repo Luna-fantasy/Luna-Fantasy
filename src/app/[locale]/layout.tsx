@@ -1,3 +1,5 @@
+import '@/styles/archive-card-inspector.css';
+import { cinematicPresentationEnabled } from '@/lib/cinematic/presentation-flags';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -5,11 +7,21 @@ import { routing } from '@/i18n/routing';
 import { ReactNode } from 'react';
 
 import { Navbar } from '@/components/Navbar';
+import { lunaBrandMark } from '@/lib/luna-brand';
 import { Footer } from '@/components/Footer';
 import { EditModeProvider } from '@/lib/edit-mode/context';
 import { EditToolbar } from '@/components/edit-mode/EditToolbar';
 import { getFooterConfig } from '@/lib/admin/footer-defaults';
 import '@/styles/edit-mode.css';
+import '@/styles/luna-cinematic-shell.css';
+import '@/styles/luna-ribbon-nav.css';
+import '@/styles/luna-world-motion.css';
+import '@/styles/luna-ribbon-surfaces.css';
+import '@/styles/luna-observatory.css';
+import '@/styles/luna-night-readers.css';
+import '@/styles/luna-rose-lettering.css';
+import { ChapterIndex } from '@/components/cinematic/motion/ChapterIndex';
+import { WorldMotion } from '@/components/cinematic/motion/WorldMotion';
 
 type Props = {
   children: ReactNode;
@@ -60,13 +72,6 @@ export async function generateMetadata({ params }: Props) {
         : 'A massive integrated fantasy world on Discord with over 200 characters.',
       images: ['https://lunarian.app/images/og-image.png'],
     },
-    icons: {
-      icon: [
-        { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-        { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      ],
-      apple: '/icons/apple-touch-icon.png',
-    },
     other: {
       'geo.region': 'KW',
       'geo.placename': 'Kuwait',
@@ -95,6 +100,7 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const messages = await getMessages();
   const isRTL = locale === 'ar';
+  const cinematic = cinematicPresentationEnabled();
   const footerConfig = await getFooterConfig();
 
   const jsonLd = {
@@ -103,7 +109,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     name: 'Lunarian',
     alternateName: 'Luna Fantasy',
     url: 'https://lunarian.app',
-    logo: 'https://lunarian.app/images/logo.png',
+    logo: lunaBrandMark,
     description: 'A massive integrated fantasy universe on Discord with strategic card games, deep lore, and a living economy.',
     foundingDate: '2024',
     sameAs: [
@@ -135,7 +141,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   };
 
   return (
-    <div lang={locale} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div lang={locale} dir={isRTL ? 'rtl' : 'ltr'} data-luna-shell={cinematic ? 'cinematic' : undefined} data-luna-type="rose">
       <NextIntlClientProvider messages={messages}>
         <EditModeProvider locale={locale}>
           <script
@@ -150,6 +156,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <div className="particles-container" id="particles" />
           <EditToolbar />
           <Navbar />
+          {cinematic && <><WorldMotion /><ChapterIndex locale={locale} /></>}
           {children}
           <Footer config={footerConfig} locale={locale} />
         </EditModeProvider>

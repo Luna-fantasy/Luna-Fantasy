@@ -13,9 +13,10 @@ interface Props {
   value: string[];
   onChange: (ids: string[]) => void;
   showManaged?: boolean;
+  emptyLabel?: string;
 }
 
-export default function RoleChips({ value, onChange, showManaged }: Props) {
+export default function RoleChips({ value, onChange, showManaged, emptyLabel = 'Anyone can use this — add a role to restrict.' }: Props) {
   const { roles } = useGuild();
   const list = Array.isArray(value) ? value : [];
 
@@ -34,7 +35,7 @@ export default function RoleChips({ value, onChange, showManaged }: Props) {
   return (
     <div className="av-picker-chips-wrap">
       {list.length === 0 && (
-        <div className="av-picker-chips-empty">Anyone can use this — add a role to restrict.</div>
+        <div className="av-picker-chips-empty">{emptyLabel}</div>
       )}
       {list.length > 0 && (
         <div className="av-picker-chips">

@@ -1,5 +1,7 @@
 'use client';
 
+import { FACTION_TONES } from '../_components/factions';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { adminGet, adminPost } from '@/lib/admin/http';
 import ContextMenu from '../_components/ContextMenu';
@@ -90,21 +92,7 @@ async function postAction(body: Record<string, unknown>): Promise<any> {
   return adminPost<any>('/api/admin/cards/config', body);
 }
 
-// Deterministic accent color per faction — so each faction tab/tile has its
-// own identity without random mismatches.
-const FACTION_TONES: Record<FactionName, string> = {
-  'Beasts':            '#84cc16',
-  'Colossals':         '#a78bfa',
-  'Dragons':           '#ef4444',
-  'Knights':           '#fbbf24',
-  'Lunarians':         '#0ea5e9',
-  'Moon Creatures':    '#818cf8',
-  'Mythical Creatures':'#f472b6',
-  'Strange Beings':    '#10b981',
-  'Supernatural':      '#c084fc',
-  'Underworld':        '#f59e0b',
-  'Warriors':          '#eab308',
-};
+
 
 export default function FactionWarView() {
   const toast = useToast();

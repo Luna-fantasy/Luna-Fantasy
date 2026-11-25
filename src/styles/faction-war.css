@@ -352,6 +352,9 @@
 
 /* Card Item */
 .lp-card-item {
+  display: block;
+  width: 100%;
+  padding: 0;
   position: relative;
   border-radius: var(--radius-lg);
   cursor: pointer;
@@ -388,7 +391,13 @@
   box-shadow: 0 0 30px color-mix(in srgb, var(--faction-color) 30%, transparent);
 }
 
+.lp-card-item:focus-visible {
+  outline: 2px solid var(--faction-color);
+  outline-offset: 3px;
+}
+
 .lp-card-image-wrapper {
+  display: block;
   aspect-ratio: 2/3;
   overflow: hidden;
 }

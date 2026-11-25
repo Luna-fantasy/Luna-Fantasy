@@ -167,6 +167,21 @@ html[lang="ar"] .auth-title {
   background: rgba(0, 212, 255, 0.1);
 }
 
+.auth-discord-btn:disabled,
+.auth-discord-btn:disabled:hover {
+  background: #393843;
+  color: #eee8ea;
+  box-shadow: none;
+  transform: none;
+  cursor: default;
+}
+
+.auth-status {
+  margin: 1rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
 /* Mobile */
 @media (max-width: 480px) {
   .auth-card {

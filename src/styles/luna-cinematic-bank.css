@@ -1,0 +1,745 @@
+/* The public bank uses the type, spacing and signed-out information panels from the reviewed scene. */
+main[data-economy-route="bank"] {
+  --bank-sans: system-ui, "Noto Sans Arabic", Arial, sans-serif;
+  --bank-serif: Georgia, "Noto Naskh Arabic", "Times New Roman", serif;
+}
+main[data-economy-route="bank"] :is(.bank-hero-content, .bank-sections) {
+  font: 400 16px/1.65 var(--bank-sans);
+}
+main[data-economy-route="bank"] .bank-hero.cinematic-economy-hero {
+  display: grid;
+  justify-content: normal;
+  align-items: center;
+  padding: 6.7rem 7vw 4.8rem;
+  text-align: start;
+}
+main[data-economy-route="bank"] .bank-hero .bank-hero-content {
+  width: min(100%, 43rem);
+  max-width: min(42vw, 38rem);
+  padding: 0;
+  margin: 0;
+  text-align: start;
+}
+main[data-economy-route="bank"] .bank-hero .bank-hero-title {
+  font: 400 clamp(48px, 7.8vw, 126px)/1.14 var(--bank-serif);
+  letter-spacing: -.055em;
+  color: #f4efdf;
+  text-shadow: 0 2px 30px #10162783;
+  text-wrap: balance;
+  margin: 0;
+}
+main[data-economy-route="bank"]:dir(rtl) .bank-hero .bank-hero-title {
+  line-height: 1.52;
+}
+main[data-economy-route="bank"] .bank-hero .bank-hero-desc {
+  font: 400 clamp(15px, 1.65vw, 23px)/1.63 var(--bank-sans);
+  color: #e2e5ee;
+  text-shadow: 0 2px 13px #080b11a8;
+  max-width: 35rem;
+  margin: 1rem 0 1.5rem;
+}
+main[data-economy-route="bank"] .bank-hero .bank-hero-cta {
+  margin: 0;
+  justify-content: flex-start;
+}
+main[data-economy-route="bank"] .bank-hero .cta-discord {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 45px;
+  padding: .63rem 1.15rem;
+  border-radius: 8px;
+  border: 1px solid #a3bdd555;
+  color: #f0f3fc;
+  font: 600 .94rem/1.32 var(--bank-sans);
+  text-decoration: none;
+  background: linear-gradient(135deg, #344866, #27374f 68%, #354662);
+  box-shadow: inset 0 1px #f5faff14, 0 .4rem 1.1rem #03050c26;
+}
+main[data-economy-route="bank"] :is(.bank-hero .cta-discord, .bank-sections .section-action-btn):hover {
+  background: linear-gradient(135deg, #405775, #30445d);
+  border-color: #bad5ed93;
+}
+main[data-economy-route="bank"] .bank-hero .cta-discord svg,
+main[data-economy-route="bank"] .bank-sections .bank-section::before {
+  display: none;
+}
+main[data-economy-route="bank"] .bank-sections {
+  display: block;
+}
+main[data-economy-route="bank"] .bank-sections > .bank-section {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+}
+main[data-economy-route="bank"] .bank-sections .bank-section-header {
+  border: 0;
+  padding: 0;
+}
+main[data-economy-route="bank"] .bank-sections :is(.bank-section-title, .salary-value, .loan-stat-value, .vip-how-to-value) {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+@media (min-width: 1550px) {
+  main[data-economy-route="bank"] .bank-hero.cinematic-economy-hero {
+    padding-inline: max(7vw, calc((100vw - 80rem) / 2));
+  }
+}
+@media (max-width: 950px) {
+  main[data-economy-route="bank"] .bank-hero.cinematic-economy-hero {
+    padding-block: clamp(15rem, 46vw, 23rem) 2.9rem;
+  }
+  main[data-economy-route="bank"] .bank-hero .bank-hero-content {
+    max-width: min(85vw, 38rem);
+  }
+}
+@media (min-width: 701px) and (max-width: 950px) {
+  main[data-economy-route="bank"] .bank-hero.cinematic-economy-hero {
+    padding-block-start: 25rem;
+  }
+}
+@media (max-width: 540px) {
+  main[data-economy-route="bank"] .bank-hero.cinematic-economy-hero {
+    align-items: end;
+    min-height: clamp(540px, 84svh, 690px);
+    padding-inline: 6%;
+  }
+  main[data-economy-route="bank"] .bank-hero .bank-hero-content { max-width: 100%; }
+  main[data-economy-route="bank"] .bank-hero .bank-hero-desc {
+    font-size: .98rem;
+    line-height: 1.55;
+    max-width: 35ch;
+  }
+}
+
+/* Retain the reference spacing between the header, body and figures in the public ledger. */
+main[data-economy-route="bank"] .bank-sections :is(.salary-card-header, .service-card-header, .roles-category, .roles-category-title, .loan-image-container) {
+  margin-block-end: 0;
+}
+main[data-economy-route="bank"] .bank-sections :is(.salary-desc, .service-desc, .section-desc, .vip-note) {
+  font-size: 1rem;
+  font-style: normal;
+}
+main[data-economy-route="bank"] .bank-sections .salary-bonus {
+  background: none;
+  border-inline: 0;
+  border-radius: 0;
+  font-size: 1rem;
+  font-weight: 400;
+}
+main[data-economy-route="bank"] .bank-sections .role-description { padding-inline: 0; }
+
+/* Clear legacy bank panel decoration before applying the reviewed ledger rules. */
+main[data-economy-route="bank"] .bank-sections .eligible-roles {
+  margin-block-start: 0;
+}
+main[data-economy-route="bank"] .bank-sections .loan-overview,
+main[data-economy-route="bank"] .bank-sections .vip-how-to {
+  margin-block-end: 0;
+}
+main[data-economy-route="bank"] .bank-sections :is(.roles-tip, .loan-stat, .vip-how-to, .vip-benefit) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+main[data-economy-route="bank"] .bank-sections .role-badge {
+  display: block;
+  font-weight: 400;
+}
+main[data-economy-route="bank"] .bank-sections :is(.loan-stat-value, .vip-how-to-value) {
+  font-weight: 400;
+}
+main[data-economy-route="bank"] .bank-sections .service-detail {
+  border-block-end: 0;
+}
+
+main[data-economy-route="bank"] {
+  --vault-ink: #10131f;
+  --vault-rule: #b5bde526;
+  --vault-metal: #c9b285;
+  --vault-pale: #e4e8f3;
+  --vault-blue: #a1c3ff;
+  background: radial-gradient(ellipse at 10% 28%,#20243d65,transparent 38%),radial-gradient(ellipse at 98% 76%,#31335422,transparent 48%),#0e101a;
+  color: var(--vault-pale);
+}
+
+main[data-economy-route="bank"] .bank-sections .section-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  min-height: 45px;
+  width: fit-content;
+  max-width: 100%;
+  padding: .63rem 1.15rem;
+  border-radius: 8px;
+  border: 1px solid #a3bdd555;
+  color: #f0f3fc;
+  font-size: .94rem;
+  font-weight: 600;
+  line-height: 1.32;
+  text-decoration: none;
+  background: linear-gradient(135deg,#344866 0,#27374f 68%,#354662);
+  box-shadow: inset 0 1px #f5faff14,0 .4rem 1.1rem #03050c26;
+}
+
+main[data-economy-route="bank"] .wrap:has(>.bank-sections) {
+  width: min(89.5%,1180px);
+  max-width: 1180px;
+  margin: auto;
+  padding: 0;
+}
+
+main[data-economy-route="bank"] .bank-sections {
+  padding-block: clamp(2.7rem,6.5vw,6rem) clamp(4rem,7vw,8rem);
+}
+
+main[data-economy-route="bank"] .bank-sections .bank-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  scroll-margin-top: 105px;
+}
+
+main[data-economy-route="bank"] .bank-sections .bank-section+.bank-section {
+  margin-block-start: clamp(3.6rem,8.1vw,7.2rem);
+}
+
+main[data-economy-route="bank"] .bank-sections .bank-section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .bank-section-title {
+  margin: 0;
+  font-family: Georgia,'Times New Roman',serif;
+  font-weight: 400;
+  font-size: clamp(2.12rem,4.6vw,3.8rem);
+  line-height: 1.11;
+  letter-spacing: -.046em;
+  color: #f2eddd;
+}
+
+main[data-economy-route="bank"] .bank-sections .bank-section-header:after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  margin-inline-start: 1rem;
+  background: linear-gradient(90deg,#9faac05b,#6b7b9922 65%,transparent);
+}
+
+html[dir="rtl"] main[data-economy-route="bank"] .bank-sections .bank-section-header:after {
+  background: linear-gradient(270deg,#9faac05b,#6b7b9922 65%,transparent);
+}
+
+main[data-economy-route="bank"] .bank-sections .bank-section-icon,
+main[data-economy-route="bank"] .bank-sections .service-card-icon,
+main[data-economy-route="bank"] .bank-sections .timer-icon,
+main[data-economy-route="bank"] .bank-sections .bonus-icon:empty,
+main[data-economy-route="bank"] .bank-sections .vip-benefit-icon:empty {
+  display: none;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-grid,
+main[data-economy-route="bank"] .bank-sections .services-grid {
+  display: grid;
+  grid-template-columns: minmax(0,.92fr) minmax(0,1.08fr);
+  gap: clamp(1rem,2.2vw,1.7rem);
+  margin: 0;
+}
+
+main[data-economy-route="bank"] .bank-sections :is(.salary-card,.service-card) {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  border: 1px solid #a3b1d231;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 85% 0%,#424c6a48,transparent 56%),linear-gradient(148deg,#202536,#1a1e2e 48%,#141925);
+  box-shadow: inset 0 1px #d8e4ff0e,0 13px 34px #0608102e;
+  padding: clamp(1.35rem,3.4vw,3rem);
+  line-height: 1.55;
+}
+
+main[data-economy-route="bank"] .bank-sections :is(.salary-card,.service-card):after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  background: linear-gradient(125deg,#a3b7cf08,transparent 40%);
+  pointer-events: none;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-card-header,
+main[data-economy-route="bank"] .bank-sections .service-card-header {
+  display: flex;
+  gap: .9rem;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-card-title,
+main[data-economy-route="bank"] .bank-sections .service-card-title {
+  font-family: Georgia,'Times New Roman',serif;
+  font-size: clamp(1.55rem,2.35vw,2rem);
+  line-height: 1.25;
+  font-weight: 400;
+  letter-spacing: -.025em;
+  color: #eeeef1;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-timer,
+main[data-economy-route="bank"] .bank-sections .role-command {
+  font-size: .72rem;
+  color: #bbd3ed;
+  background: #849fc210;
+  border: 1px solid #a9c1eb35;
+  border-radius: 20px;
+  padding: .13rem .56rem;
+  white-space: nowrap;
+}
+
+main[data-economy-route="bank"] .bank-sections :is(.salary-desc,.service-desc,.section-desc) {
+  color: #c0c7d7;
+  margin: .67rem 0 1.1rem;
+  line-height: 1.6;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-amount {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin: clamp(.85rem,2.1vw,2.05rem) 0 1.45rem;
+  line-height: 1;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-value {
+  font-family: Georgia,'Times New Roman',serif;
+  font-weight: 400;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-size: clamp(3.55rem,6.3vw,5.75rem);
+  letter-spacing: -.055em;
+  color: #e1eafb;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-currency {
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .12em;
+  color: var(--vault-metal);
+  text-transform: uppercase;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-bonus {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .5rem;
+  color: #e5d5b1;
+  border-top: 1px solid #b2a17d3e;
+  border-bottom: 1px solid #b2a17d24;
+  padding: .58rem 0;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-bonus .bonus-icon {
+  font-size: 1.05em;
+  color: #d9bf87;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-note {
+  color: #c0c7d7;
+  line-height: 1.6;
+  max-width: 32ch;
+  margin: .82rem 0 1.5rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-note-link {
+  display: inline-block;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+  color: #dbe7ff;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-card>.section-action-btn,
+main[data-economy-route="bank"] .bank-sections .service-card>.section-action-btn {
+  margin-top: auto;
+}
+
+main[data-economy-route="bank"] .bank-sections .eligible-roles {
+  width: 100%;
+  border-top: 1px solid var(--vault-rule);
+  padding-top: 1rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .roles-category+.roles-category {
+  margin-top: 1.2rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .roles-category-title,
+main[data-economy-route="bank"] .bank-sections .loan-tiers-title,
+main[data-economy-route="bank"] .bank-sections .vip-benefits-title,
+main[data-economy-route="bank"] .bank-sections .vip-how-to-label {
+  color: #cbb78d;
+  font-size: .75rem;
+  font-weight: 650;
+  line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: .105em;
+}
+
+main[data-economy-route="bank"] .bank-sections .roles-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .36rem .42rem;
+  margin-top: .55rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .role-badge {
+  color: #d8deeb;
+  font-size: .77rem;
+  line-height: 1.35;
+  border: 1px solid #adbad331;
+  background: #14203180;
+  border-radius: 4px;
+  padding: .25rem .48rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .special-roles-list {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: .65rem 1rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .role-badge-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .09rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .role-badge.special {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #e1d9c8;
+  font-size: .84rem;
+  font-weight: 600;
+}
+
+main[data-economy-route="bank"] .bank-sections .role-command {
+  margin-inline-start: .22rem;
+  font-size: .69rem;
+  letter-spacing: 0;
+}
+
+main[data-economy-route="bank"] .bank-sections .role-description {
+  color: #a6b2c6;
+  font-size: .75rem;
+  line-height: 1.5;
+}
+
+main[data-economy-route="bank"] .bank-sections .roles-tip {
+  color: #aab7c9;
+  font-size: .77rem;
+  line-height: 1.56;
+  padding-top: .83rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--vault-rule);
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-section-with-image {
+  display: grid;
+  grid-template-columns: minmax(0,1.3fr) minmax(210px,.65fr);
+  gap: clamp(1.5rem,5.3vw,5.2rem);
+  align-items: center;
+  padding: clamp(1.25rem,3.5vw,3.2rem);
+  border: 1px solid #b9ae9431;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 95% 65%,#55453536,transparent 52%),linear-gradient(120deg,#202333,#171c2a 65%,#23222a);
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-section-content {
+  min-width: 0;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-section-content .bank-section-header {
+  margin-bottom: .75rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-section-content>.section-desc {
+  max-width: 57ch;
+  margin-bottom: clamp(1.1rem,2.2vw,1.8rem);
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-overview {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 0;
+  border-block: 1px solid #acbac32d;
+  padding-block: .95rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-stat {
+  display: flex;
+  flex-direction: column;
+  gap: .42rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-stat+.loan-stat {
+  border-inline-start: 1px solid #bac6d72b;
+  padding-inline-start: clamp(.55rem,1.65vw,1.6rem);
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-stat-label,
+main[data-economy-route="bank"] .bank-sections .service-detail-label {
+  color: #b4bfd1;
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-stat-value {
+  font-family: Georgia,'Times New Roman',serif;
+  font-size: clamp(1.25rem,2.4vw,2.05rem);
+  line-height: 1.1;
+  color: #e0e8ff;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-stat-value.vip {
+  color: #dfc791;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-tiers-title {
+  margin: 1.35rem 0 .65rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-tiers-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .43rem;
+  margin: 0 0 1.55rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-tier {
+  border: 1px solid #b7c2db32;
+  border-radius: 5px;
+  color: #dae1ef;
+  background: #8995ba0b;
+  padding: .33rem .6rem;
+  font-size: .83rem;
+  line-height: 1.25;
+  min-width: 2.45rem;
+  text-align: center;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-image-container {
+  width: 100%;
+  min-width: 0;
+  max-width: 320px;
+  justify-self: center;
+  align-self: center;
+  padding: .5rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-image-container img,
+main[data-economy-route="bank"] .bank-sections .loan-contract-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 430px;
+  object-fit: contain;
+  filter: drop-shadow(0 .9rem 1.1rem #070a13ad);
+}
+
+main[data-economy-route="bank"] .bank-sections .service-card .service-desc {
+  margin-bottom: 1.45rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .service-detail {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  border-top: 1px solid var(--vault-rule);
+  padding: .75rem 0;
+}
+
+main[data-economy-route="bank"] .bank-sections .service-detail-value {
+  color: #e4e4e3;
+  font-size: 1rem;
+  text-align: end;
+}
+
+main[data-economy-route="bank"] .bank-sections .service-detail-value.cost,
+main[data-economy-route="bank"] .bank-sections .vip-how-to-value {
+  color: #ebd4a5;
+  font-variant-numeric: tabular-nums;
+}
+
+main[data-economy-route="bank"] .bank-sections .service-card .section-action-btn {
+  margin-block-start: 1.5rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .service-card .service-detail+.section-action-btn {
+  margin-block-start: auto;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-card {
+  background: radial-gradient(ellipse at 91% 5%,#70604942,transparent 52%),linear-gradient(145deg,#282732,#1b2130 72%,#1c1f2d);
+  border-color: #b3a17c41;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-how-to {
+  border-top: 1px solid #c2af8c35;
+  padding-top: .95rem;
+  width: 100%;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-how-to-value {
+  font-family: Georgia,'Times New Roman',serif;
+  font-size: clamp(1.65rem,3.4vw,2.8rem);
+  letter-spacing: -.025em;
+  margin-top: .18rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-benefits-title {
+  margin: 1.1rem 0 .65rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-benefits-list {
+  display: grid;
+  gap: .45rem;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-benefit {
+  display: flex;
+  align-items: baseline;
+  gap: .62rem;
+  font-size: .93rem;
+  color: #d6dbe7;
+  line-height: 1.5;
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-benefit:before {
+  content: '';
+  flex: 0 0 auto;
+  width: 4px;
+  height: 4px;
+  transform: rotate(45deg);
+  background: #cfb77f;
+  align-self: baseline;
+}
+
+html[dir="rtl"] main[data-economy-route="bank"] .bank-sections :is(.loan-tier,.roles-category-title,.loan-tiers-title,.vip-benefits-title,.vip-how-to-label,.salary-currency) {
+  letter-spacing: normal;
+}
+
+@media (max-width:760px) {
+  main[data-economy-route="bank"] .bank-sections .salary-grid,
+  main[data-economy-route="bank"] .bank-sections .services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .loan-section-with-image {
+    grid-template-columns: minmax(0,1fr) minmax(130px,.53fr);
+    gap: 1.1rem;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .salary-card>.section-action-btn,
+  main[data-economy-route="bank"] .bank-sections .service-card .service-detail+.section-action-btn {
+    margin-block-start: 1.2rem;
+  }
+}
+
+@media (max-width:540px) {
+  main[data-economy-route="bank"] .bank-sections .bank-section-header {
+    gap: .25rem;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .loan-section-with-image {
+    grid-template-columns: minmax(0,1fr);
+  }
+
+  main[data-economy-route="bank"] .bank-sections .loan-image-container {
+    max-width: 185px;
+    order: 2;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .loan-section-with-image {
+    padding: 1.35rem;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .loan-stat-value {
+    font-size: 1.45rem;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .special-roles-list {
+    gap: .7rem;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .bank-section-header:after {
+    margin-inline-start: .65rem;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .vip-note {
+    max-width: none;
+  }
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-card:first-child {
+  overflow: hidden;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-card:first-child:before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 36% 0 0;
+  opacity: .88;
+  pointer-events: none;
+  background: linear-gradient(180deg,#1b2030 0%,#1a1e2c2b 39%,#11182347 70%,#141a27d4 100%),linear-gradient(90deg,#161c2a44,transparent 44%),url('/luna-cinematic/economy/bank-salary.webp') 56% 50%/cover no-repeat;
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-card:first-child .vip-note {
+  color: #dde1eb;
+  text-shadow: 0 1px 7px #101621;
+}
+
+@media (max-width:760px) {
+  main[data-economy-route="bank"] .bank-sections .salary-card:first-child:before {
+    inset: 36% 0 0 30%;
+    background-position: 35% 55%;
+    opacity: .45;
+  }
+
+  main[data-economy-route="bank"] .bank-sections .salary-card:first-child .vip-note {
+    max-width: 32ch;
+  }
+}
+
+main[data-economy-route="bank"] .bank-sections .salary-card:first-child:before {
+  mask-image: linear-gradient(180deg,transparent,#000 22%);
+  background-image: linear-gradient(180deg,#1b203060 0%,#1a1e2c26 39%,#11182347 70%,#141a27d4 100%),linear-gradient(90deg,#121a2d9c,transparent 72%),url('/luna-cinematic/economy/bank-salary.webp');
+}
+
+main[data-economy-route="bank"] .bank-sections .vip-note-link {
+  margin-inline-start: .19em;
+}
+
+main[data-economy-route="bank"] .bank-sections .loan-image-container[role=button] {
+  cursor: zoom-in;
+}

@@ -1,8 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState, useEffect, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
+import { mellsShopImage } from '@/lib/cinematic/mells-shop-art';
 import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
 
@@ -17,6 +18,7 @@ interface MellsItem {
 }
 
 interface VendorMellsProps {
+  night?: boolean;
   balance: number;
   hasDebt: boolean;
   hasPassport: boolean;
@@ -34,7 +36,7 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn, userAvatar, userName }: VendorMellsProps) {
+export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn, userAvatar, userName, night }: VendorMellsProps) {
   const t = useTranslations('bazaarPage');
 
   const [items, setItems] = useState<MellsItem[]>([]);
@@ -146,7 +148,9 @@ export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn,
     return { disabled: false, label: t('mells.purchase') };
   };
 
-  const filtered = items.filter((i) => i.type === activeTab);
+  const locale = useLocale();
+  const [query, setQuery] = useState('');
+  const filtered = items.filter(item => item.type === activeTab && (!night || item.name.toLocaleLowerCase(locale).includes(query.trim().toLocaleLowerCase(locale))));
   const profileCount = items.filter((i) => i.type === 'profile').length;
   const rankCount = items.filter((i) => i.type === 'rank').length;
 
@@ -160,7 +164,7 @@ export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn,
     );
   }
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !night) return null;
 
   return (
     <div className="vendor-section mells-section">
@@ -183,6 +187,9 @@ export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn,
       )}
 
       {/* Tabs */}
+      {night && <label className="mells-night-search" data-stock-guide="mells">{locale === 'ar' ? 'ابحث عن خلفية' : 'Find a backdrop'}
+        <input type="search" value={query} data-shop-backdrops onChange={e => setQuery(e.target.value)} />
+      </label>}
       <div className="mells-tabs">
         <button
           className={`mells-tab ${activeTab === 'profile' ? 'mells-tab-active' : ''}`}
@@ -211,6 +218,9 @@ export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn,
 
       {/* Background Grid */}
       <div className="mells-grid">
+        {night && filtered.length === 0 && <p role="status">{query.trim()
+          ? (locale === 'ar' ? 'لا توجد خلفية بهذا الاسم في هذا القسم.' : 'No matching backdrop in this collection.')
+          : (locale === 'ar' ? 'لا توجد خلفيات معروضة في هذا القسم حاليًا.' : 'There are no backdrops listed in this collection.')}</p>}
         {filtered.map((item) => {
           const btnState = getButtonState(item);
           const isConfirming = confirmItem === item.id;
@@ -220,9 +230,9 @@ export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn,
           return (
             <div key={item.id} className={`mells-card ${item.owned ? 'mells-card-owned' : ''} ${item.active ? 'mells-card-active' : ''}`}>
               {/* Image Preview */}
-              <div className="mells-card-preview" onClick={() => setPreviewItem(item)} role="button" tabIndex={0}>
+              <div className="mells-card-preview" onClick={() => setPreviewItem(item)} role="button" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPreviewItem(item); } }}>
                 <img
-                  src={item.imageUrl}
+                  src={mellsShopImage(item, night, 'thumb')}
                   alt={item.name}
                   className="mells-card-img"
                   loading="lazy"
@@ -282,7 +292,7 @@ export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn,
                         <p className="mells-confirm-text">
                           {t('mells.confirmPurchase', {
                             item: item.name,
-                            price: formatNumber(item.price),
+                            price: formatNumber(applyPassportDiscount(item.price, hasPassport)),
                           })}
                         </p>
                         <div className="mells-confirm-buttons">
@@ -325,7 +335,7 @@ export default function VendorMells({ balance, hasDebt, hasPassport, isLoggedIn,
             {/* Mini Profile Card */}
             <div className="mells-preview-card">
               <img
-                src={previewItem.imageUrl}
+                src={mellsShopImage(previewItem, night, 'detail')}
                 alt=""
                 className="mells-preview-card-bg"
               />

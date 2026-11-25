@@ -3,26 +3,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { adminGet, adminPut } from '@/lib/admin/http';
+import {
+  changedPassportCosmetics, DEFAULT_PASSPORT_MERCHANT as DEFAULT_MERCHANT,
+  type PassportCosmetics as CosmeticsConfig, type PassportStaffTier,
+} from '@/lib/admin/passport-cosmetics';
 import RoleChips from '../_components/RoleChips';
 import { useToast } from '../_components/Toast';
 import { usePendingAction } from '../_components/PendingActionProvider';
 import { useUndo } from '../_components/UndoProvider';
 
-interface StaffRoles {
-  mastermind: string[];
-  sentinel: string[];
-  guardian: string[];
-}
 
-interface CosmeticsConfig {
-  passport_vip_roles: string[];
-  passport_staff_roles: StaffRoles;
-  merchantPhotoUrl: string;
-}
 
 interface ApplicationsDoc {
   passport_vip_roles?: string[];
-  passport_staff_roles?: Partial<StaffRoles>;
+  passport_staff_roles?: Partial<Record<PassportStaffTier, string[]>>;
   categories?: {
     passport?: {
       title?: string;
@@ -34,7 +28,7 @@ interface ApplicationsDoc {
   [key: string]: unknown;
 }
 
-const DEFAULT_MERCHANT = 'https://assets.lunarian.app/butler/vendors/VaelorStorm.png';
+
 const DEFAULT_BACKGROUND = 'https://assets.lunarian.app/butler/backgrounds/Passport.jpeg';
 const VIP_BACKGROUND = 'https://assets.lunarian.app/butler/backgrounds/PassportVIPFinal.png';
 const STAFF_TEMPLATES = [
@@ -56,18 +50,14 @@ function normalize(apps: ApplicationsDoc | null): CosmeticsConfig {
 }
 
 async function loadConfig(): Promise<CosmeticsConfig> {
-  const data = await adminGet<any>('/api/admin/config/butler');
-  const applications: ApplicationsDoc = data?.sections?.applications_system ?? {};
-  return normalize(applications);
+  const data = await adminGet<{ sections: { applications_system?: ApplicationsDoc } }>('/api/admin/config/butler');
+  if (!data?.sections) throw new Error('Passport settings did not load');
+  return normalize(data.sections.applications_system ?? null);
 }
 
-// Three surgical sections instead of the old applications_system root write —
-// a passport save can no longer clobber the Knight/Wizard panel fields (or
-// any category's questions) from a stale tab.
-async function saveCosmetics(cfg: CosmeticsConfig): Promise<void> {
-  await adminPut('/api/admin/config/butler', { section: 'passport_vip_roles', value: cfg.passport_vip_roles });
-  await adminPut('/api/admin/config/butler', { section: 'passport_staff_roles', value: cfg.passport_staff_roles });
-  await adminPut('/api/admin/config/butler', { section: 'passport_merchant_image', value: cfg.merchantPhotoUrl.trim() || DEFAULT_MERCHANT });
+async function saveCosmetics(previous: CosmeticsConfig, next: CosmeticsConfig) {
+  const value = changedPassportCosmetics(previous, next);
+  if (Object.keys(value).length) await adminPut('/api/admin/config/butler', { section: 'passport_cosmetics', value });
 }
 
 export default function CosmeticsPanel() {
@@ -76,66 +66,75 @@ export default function CosmeticsPanel() {
   const undo = useUndo();
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState<CosmeticsConfig>(normalize(null));
   const [draft, setDraft] = useState<CosmeticsConfig>(normalize(null));
 
   const refresh = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
     try {
       const cosmetics = await loadConfig();
       setSaved(cosmetics);
       setDraft(cosmetics);
     } catch {
-      toast.show({ tone: 'error', title: 'Failed to load', message: 'Could not fetch passport cosmetics' });
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const dirty = useMemo(() => JSON.stringify(saved) !== JSON.stringify(draft), [saved, draft]);
+  const dirty = useMemo(() => Object.keys(changedPassportCosmetics(saved, draft)).length > 0, [saved, draft]);
 
   const handleSave = async () => {
-    if (!dirty) return;
-    const prev = saved;
+    if (!dirty || saving) return;
+    const previous = saved;
     const next = draft;
-
-    await pending.queue({
-      label: 'Save passport cosmetics',
-      detail: 'VIP roles, staff tiers, merchant portrait',
-      delayMs: 4000,
-      run: async () => {
-        try {
-          await saveCosmetics(next);
-          setSaved(next);
-          toast.show({ tone: 'success', title: 'Saved', message: 'Passport cosmetics · bot picks up within 60s' });
-
-          undo.push({
-            label: 'Restore passport cosmetics',
-            detail: 'Revert VIP roles / staff tiers / merchant portrait',
-            revert: async () => {
-              try {
-                await saveCosmetics(prev);
-                setSaved(prev);
-                setDraft(prev);
+    setSaving(true);
+    try {
+      await pending.queue({
+        label: 'Save passport cosmetics',
+        detail: 'Apply edited settings',
+        delayMs: 4000,
+        run: async () => {
+          try {
+            await saveCosmetics(previous, next);
+            setSaved(next);
+            toast.show({ tone: 'success', title: 'Saved', message: 'Passport cosmetics · bot picks up within 60s' });
+            undo.push({
+              label: 'Restore passport cosmetics',
+              detail: 'Revert the edited settings',
+              revert: async () => {
+                await saveCosmetics(next, previous);
+                await refresh();
                 toast.show({ tone: 'success', title: 'Reverted', message: 'Passport cosmetics' });
-              } catch (e) {
-                toast.show({ tone: 'error', title: 'Revert failed', message: (e as Error).message });
-                throw e;
-              }
-            },
-          });
-        } catch (e) {
-          toast.show({ tone: 'error', title: 'Save failed', message: (e as Error).message });
-        }
-      },
-    });
+              },
+            });
+          } catch (error) {
+            toast.show({ tone: 'error', title: 'Save failed', message: (error as Error).message });
+            throw error;
+          }
+        },
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDiscard = () => setDraft(saved);
 
   if (loading) {
     return <section className="av-surface av-passport-cos av-passport-cos--loading">Loading passport cosmetics…</section>;
+  }
+
+  if (loadError) {
+    return <section className="av-surface av-passport-cos" role="alert">
+      <p>Passport settings could not be loaded.</p>
+      <button type="button" className="av-btn av-btn-ghost" onClick={() => void refresh()}>Retry</button>
+    </section>;
   }
 
   const merchantPreview = draft.merchantPhotoUrl.trim() || DEFAULT_MERCHANT;
@@ -147,12 +146,12 @@ export default function CosmeticsPanel() {
           <h3 className="av-passport-cos-title">Passport Cosmetics</h3>
           <p className="av-passport-cos-subtitle">
             Merchant portrait, VIP cosmetic variant, and staff passport auto-assignment.
-            Canvas layouts are tuned in the <Link href="/admin/media" className="av-passport-cos-link">Canvas Editor</Link>.
+            Canvas layouts are tuned in the <Link href="/admin/media?canvas=passport_web" className="av-passport-cos-link">Canvas Editor</Link>.
           </p>
         </div>
         <div className="av-passport-cos-head-actions">
-          <button type="button" className="av-btn av-btn-ghost" onClick={handleDiscard} disabled={!dirty}>Discard</button>
-          <button type="button" className="av-btn av-btn-primary" onClick={() => void handleSave()} disabled={!dirty}>Save</button>
+          <button type="button" className="av-btn av-btn-ghost" onClick={handleDiscard} disabled={!dirty || saving}>Discard</button>
+          <button type="button" className="av-btn av-btn-primary" onClick={() => void handleSave()} disabled={!dirty || saving}>Save</button>
         </div>
       </header>
 
@@ -165,6 +164,7 @@ export default function CosmeticsPanel() {
           <div className="av-passport-cos-field">
             <input
               type="url"
+              aria-label="Merchant portrait URL"
               className="av-audit-input"
               placeholder={DEFAULT_MERCHANT}
               value={draft.merchantPhotoUrl}
@@ -186,6 +186,7 @@ export default function CosmeticsPanel() {
           <div className="av-passport-cos-field">
             <RoleChips
               value={draft.passport_vip_roles}
+              emptyLabel="No roles grant the VIP appearance."
               onChange={(ids) => setDraft((d) => ({ ...d, passport_vip_roles: ids }))}
             />
           </div>
@@ -204,6 +205,7 @@ export default function CosmeticsPanel() {
               </label>
               <RoleChips
                 value={draft.passport_staff_roles.mastermind}
+                emptyLabel="No roles assign this passport tier."
                 onChange={(ids) => setDraft((d) => ({
                   ...d,
                   passport_staff_roles: { ...d.passport_staff_roles, mastermind: ids },
@@ -217,6 +219,7 @@ export default function CosmeticsPanel() {
               </label>
               <RoleChips
                 value={draft.passport_staff_roles.sentinel}
+                emptyLabel="No roles assign this passport tier."
                 onChange={(ids) => setDraft((d) => ({
                   ...d,
                   passport_staff_roles: { ...d.passport_staff_roles, sentinel: ids },
@@ -230,6 +233,7 @@ export default function CosmeticsPanel() {
               </label>
               <RoleChips
                 value={draft.passport_staff_roles.guardian}
+                emptyLabel="No roles assign this passport tier."
                 onChange={(ids) => setDraft((d) => ({
                   ...d,
                   passport_staff_roles: { ...d.passport_staff_roles, guardian: ids },
@@ -249,13 +253,13 @@ export default function CosmeticsPanel() {
               <TemplateCard
                 label="Normal"
                 url={DEFAULT_BACKGROUND}
-                href="/admin/media"
+                href="/admin/media?canvas=passport_web"
                 tone="var(--accent-primary)"
               />
               <TemplateCard
                 label="VIP"
                 url={VIP_BACKGROUND}
-                href="/admin/media"
+                href="/admin/media?canvas=passport_vip_web"
                 tone="#FFD54F"
               />
               {STAFF_TEMPLATES.map((t) => (
@@ -263,14 +267,14 @@ export default function CosmeticsPanel() {
                   key={t.id}
                   label={t.label}
                   url={t.url}
-                  href="/admin/media"
+                  href={`/admin/media?canvas=passport_${t.id}_web`}
                   tone={t.tone}
                 />
               ))}
             </div>
             <p className="av-passport-cos-note">
               <span aria-hidden="true">◇</span>
-              <span>Each template has its own field layout. Pick the matching canvas in the editor before moving positions.</span>
+              <span>Select a template to edit its website profile layout.</span>
             </p>
           </div>
         </div>

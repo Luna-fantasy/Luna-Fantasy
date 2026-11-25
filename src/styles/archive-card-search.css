@@ -1,0 +1,8 @@
+/* Approved V18 archive toolbar; only the three card archive routes opt in. */
+.luna-archive-search.catalog-search{display:grid;grid-template-columns:minmax(9rem,auto) minmax(10rem,23rem) 1fr;align-items:center;gap:.65rem 1rem;margin-block:1rem;padding:.82rem 1rem;background:var(--luna-panel,#171413);color:var(--luna-paper,#f5ede7);border:1px solid var(--luna-rule,#594841);border-radius:.4rem}
+.luna-archive-search .catalog-search-label{font-weight:650;line-height:1.4}
+.luna-archive-search .catalog-search-input{display:block;width:100%;min-height:44px;padding:.48rem .75rem;border:1px solid #92786d;background:#100f0e;color:var(--luna-paper,#f5ede7);border-radius:.3rem;font:inherit;box-sizing:border-box}
+.luna-archive-search .catalog-search-input::placeholder{color:#baada5}
+.luna-archive-search .catalog-search-status{margin:0;color:#c4b6ad;font-size:.89rem}
+.luna-archive-search .catalog-search-input:focus-visible{outline:2px solid var(--luna-blush,#e9baaa);outline-offset:3px}
+@media(max-width:48rem){.luna-archive-search.catalog-search{padding:.7rem;grid-template-columns:minmax(0,1fr);gap:.45rem}}

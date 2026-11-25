@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { channelId, content, imageData, imageType } = body;
+  const { channelId, content = '', imageData, imageType } = body;
   const botId: BotId = isValidBot(body.botId) ? body.botId : 'oracle';
 
   const token = getBotToken(botId);
@@ -157,8 +157,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'channelId is required' }, { status: 400 });
   }
 
-  if (!content || typeof content !== 'string' || content.trim().length === 0) {
-    return NextResponse.json({ error: 'Message content is required' }, { status: 400 });
+  const hasAttachment = typeof imageData === 'string' && imageData.length > 0;
+  if (typeof content !== 'string' || (!content.trim() && !hasAttachment)) {
+    return NextResponse.json({ error: 'Message content or an image is required' }, { status: 400 });
   }
 
   if (content.length > 4000) {
@@ -173,11 +174,13 @@ export async function POST(request: NextRequest) {
   try {
     let res: Response;
 
-    if (imageData && typeof imageData === 'string') {
+    if (hasAttachment) {
       // Send with image attachment via multipart form data
       const buffer = Buffer.from(imageData, 'base64');
 
-      // Validate image size (max 8MB)
+      if (buffer.length === 0) {
+        return NextResponse.json({ error: 'The image attachment is empty' }, { status: 400 });
+      }
       if (buffer.length > 8 * 1024 * 1024) {
         return NextResponse.json({ error: 'Image too large (max 8MB)' }, { status: 400 });
       }
@@ -189,7 +192,7 @@ export async function POST(request: NextRequest) {
         : 'png';
 
       const form = new FormData();
-      form.append('payload_json', JSON.stringify({ content: content.trim() }));
+      form.append('payload_json', JSON.stringify(content.trim() ? { content: content.trim() } : {}));
       form.append(
         'files[0]',
         new Blob([buffer], { type: resolvedType }),

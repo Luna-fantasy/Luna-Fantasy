@@ -1,5 +1,6 @@
 'use client';
 
+import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
 import { useTranslations } from 'next-intl';
 import type { MarketplaceListing } from '@/types/marketplace';
 import LunariIcon from '@/components/LunariIcon';
@@ -8,7 +9,7 @@ interface ListingCardProps {
   listing: MarketplaceListing;
   onBuy: () => void;
   onBid?: () => void;
-  onViewDetail: () => void;
+  onViewDetail: (source: HTMLButtonElement) => void;
   isLoggedIn: boolean;
   isOwnListing: boolean;
 }
@@ -42,7 +43,9 @@ export default function ListingCard({
   const isAuction = listing.type === 'auction';
 
   return (
-    <div className={`listing-card ${isAuction ? 'listing-card-auction' : ''}`} onClick={onViewDetail}>
+    <div className={`listing-card ${isAuction ? 'listing-card-auction' : ''}`}>
+      <button type="button" className="listing-card-preview-trigger" aria-label={listing.card.name} aria-haspopup="dialog"
+        onClick={event => onViewDetail(event.currentTarget)} />
       {/* Auction badge */}
       {isAuction && (
         <span className="listing-card-auction-badge">{t('auction.badge')}</span>
@@ -51,7 +54,7 @@ export default function ListingCard({
       {/* Card image */}
       <div className={`listing-card-image rarity-border-${rKey}`}>
         {listing.card.imageUrl ? (
-          <img src={listing.card.imageUrl} alt={listing.card.name} />
+          <img src={collectibleDisplayImage(listing.card.imageUrl, 'thumb')} alt={listing.card.name} />
         ) : (
           <div className={`mini-card-placeholder rarity-bg-${rKey}`}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

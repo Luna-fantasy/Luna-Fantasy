@@ -1,0 +1,163 @@
+/* The collection instrument sits behind the print. Its lights never receive input. */
+.archive-inspector-dialog .luna-collector-instrument {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  --instrument-accent: #e8bdac;
+}
+.archive-inspector-dialog[data-kind="luna"] .luna-collector-instrument { --instrument-accent: #dba698; }
+.archive-inspector-dialog[data-kind="grand"] .luna-collector-instrument { --instrument-accent: #cf998c; }
+.luna-collector-instrument canvas { display: block; width: 100%; height: 100%; }
+.luna-collector-instrument[data-instrument="still"]::before,
+.luna-collector-instrument[data-instrument="still"]::after {
+  content: "";
+  position: absolute;
+  width: min(73vw, 89svh);
+  aspect-ratio: 1;
+  left: 50%; top: 48%;
+  border: 1px solid color-mix(in srgb, var(--instrument-accent) 45%, transparent);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-13deg) scaleY(.69);
+  box-shadow: 0 0 0 4px #0d0c0c99, 0 0 0 5px #c38e8229;
+}
+.luna-collector-instrument[data-instrument="still"]::after {
+  transform: translate(-50%, -50%) rotate(21deg) scaleY(.37);
+  box-shadow: none;
+}
+.archive-inspector-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: clamp(3px,.72vw,12px);
+  pointer-events: none;
+  backface-visibility: hidden;
+  transform: translateZ(1.55px);
+  background: radial-gradient(ellipse 48% 31% at var(--foil-x,50%) var(--foil-y,52%), #f8ddcd2e, transparent 80%),
+   linear-gradient(var(--foil-angle,118deg), transparent 35%, #e8bbab1a 44%, #f5d4c248 49%, #dda99a2b 53%, transparent 62%);
+  mix-blend-mode: screen;
+  opacity: var(--foil-on,0);
+  transition: opacity 180ms;
+}
+
+/* The image and its engraved mount travel at different depths. */
+.luna-portrait-depth {
+  position: relative;
+  grid-area: 1/1;
+  display: grid;
+  width: 100%; height: 100%; min-width: 0; min-height: 0;
+  overflow: hidden;
+  perspective: 850px;
+  touch-action: pan-y;
+}
+.luna-portrait-mount, .luna-portrait-image { position: relative; display: grid; grid-area: 1/1; min-width: 0; min-height: 0; }
+.luna-portrait-mount { transform-style: preserve-3d; }
+.luna-portrait-image img { display: block; height: 100%; width: 100%; object-fit: contain; }
+.luna-portrait-rim, .luna-portrait-glass, .luna-portrait-reveal {
+  pointer-events: none;
+  position: absolute;
+}
+.luna-portrait-rim {
+  inset: 5px; opacity: .75;
+  background:
+    linear-gradient(#ddaa9b,#ddaa9b) left top/15% 1px,
+    linear-gradient(#ddaa9b,#ddaa9b) left top/1px 9%,
+    linear-gradient(#d49d90,#d49d90) right bottom/15% 1px,
+    linear-gradient(#d49d90,#d49d90) right bottom/1px 9%;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 1px 2px #100f0f);
+}
+.luna-portrait-glass {
+  inset: 0 -20%;
+  background: linear-gradient(117deg,transparent 32%, #edc5b40c 45%, #f8dccc22 49%, #ecc3b30e 53%, transparent 66%);
+  opacity: 0;
+  transition: opacity 240ms;
+}
+.luna-portrait-depth:hover .luna-portrait-glass, .luna-portrait-depth:active .luna-portrait-glass { opacity: 1; }
+.luna-portrait-reveal {
+  inset: 0 -35%;
+  background: linear-gradient(106deg,transparent 42%,#0d0c0c1c 44%,#dba69775 47%,#fbe7d999 48%,#e0ae9f31 50%,transparent 56%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: luna-archive-glass 730ms cubic-bezier(.16,.7,.21,1) both;
+}
+@keyframes luna-archive-glass {
+  0% { transform: translateX(-70%); opacity: 0; }
+  19% { opacity: .82; } 58% { opacity: .53; }
+  100% { transform: translateX(65%); opacity: 0; }
+}
+[dir="rtl"] .luna-portrait-reveal { animation-direction: reverse; }
+
+/* A single reflection follows the active surface, including keyboard and touch feedback. */
+.luna-surface-light, .luna-scene-caustic {
+  position: fixed; left: 0; top: 0; pointer-events: none;
+}
+.luna-surface-light {
+  z-index: 21; opacity: 0; transition: opacity 125ms ease-out;
+  overflow: hidden;
+  background: radial-gradient(ellipse 62% 73% at var(--glass-x,50%) var(--glass-y,50%),#f7d9c914,transparent 72%);
+}
+.luna-surface-light[data-lit] { opacity: 1; }
+.luna-surface-light::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--glass-angle,118deg) at var(--glass-x,50%) var(--glass-y,50%),transparent 3%,#daa4962b 16%,#f3cfbec9 26%,#f6d5c482 32%,transparent 48%,#7c585117 65%,#dca89970 78%,transparent 90%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.luna-surface-light[data-lit="focus"] { opacity: .7; }
+.luna-scene-caustic { z-index: 3; opacity: 0; overflow: hidden; transition: opacity 260ms; }
+.luna-scene-caustic[data-cast] { opacity: .78; }
+.luna-scene-caustic::after {
+  content: "";position: absolute;inset: 0;
+  background: radial-gradient(ellipse 30% 45% at var(--cast-x,50%) var(--cast-y,50%), color-mix(in srgb,var(--cast-color,#f4d2c0) 15%, transparent),transparent 77%);
+  mix-blend-mode: screen;
+}
+.luna-scene-caustic[data-cast="market"] { --cast-color:#edc5b4; }
+.luna-scene-caustic[data-cast="vault"] { --cast-color:#ebc1b1; }
+[data-directed-light] :is(.bazaar-hero-bg>img, .bank-hero-bg>img, .hero-bg-image, .partners-hero-bg img) {
+  translate: var(--luna-scene-x,0px) var(--luna-scene-y,0px);
+  scale: 1.016;
+}
+[data-luna-shell="cinematic"] :is(.bazaar-hero-bg>img, .bank-hero-bg>img, .hero-bg-image, .partners-hero-bg img) {
+  transition-property: translate, scale;
+  transition-duration: 240ms;
+  transition-timing-function: cubic-bezier(.18,.72,.32,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .luna-surface-light, .luna-scene-caustic, .luna-portrait-reveal, .luna-portrait-glass,
+  .archive-inspector-face::after { display: none; }
+  .luna-portrait-mount, .luna-portrait-image, .luna-portrait-rim { transform: none !important; }
+}
+
+/* A short exposure line sits on the frame while a new portrait settles. */
+.c6-aperture[data-feature-stage] {
+  touch-action:pan-y pinch-zoom;
+  cursor:grab;
+}
+.c6-aperture[data-feature-stage]:active { cursor:grabbing; }
+.luna-contact-edge {
+  position:absolute;
+  z-index:3;
+  top:3%;
+  bottom:3%;
+  width:1px;
+  pointer-events:none;
+  opacity:0;
+  background:linear-gradient(transparent,#e7be9e 28%,#fee6d3 54%,#cb948182 76%,transparent);
+  box-shadow:0 0 6px #b3897355;
+}
+.luna-contact-edge[data-side="right"] { right:4%;--travel:-1; }
+.luna-contact-edge[data-side="left"] { left:4%;--travel:1; }
+@media (prefers-reduced-motion:no-preference) {
+  .luna-contact-edge { animation:luna-contact-pass 460ms cubic-bezier(.22,1,.36,1) both; }
+}
+@keyframes luna-contact-pass {
+  from { opacity:0;transform:translateX(calc(var(--travel)*21px)) scaleY(.5); }
+  28% { opacity:.8; }
+  to { opacity:0;transform:translateX(0) scaleY(1); }
+}

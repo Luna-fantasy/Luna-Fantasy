@@ -438,6 +438,8 @@
     "content": "All purchases made through Luna's Bazaar using real currency (via Stripe) are generally final. Lunari credited to your account after a successful purchase is considered delivered. If you experience a technical issue where payment was processed but Lunari was not credited, please contact our support team on Discord within 7 days of the transaction. We will investigate and resolve the issue promptly. In-game purchases made with Lunari (such as luckboxes, stone boxes, and tickets) are non-refundable as the virtual items are delivered instantly. We reserve the right to issue refunds at our discretion in exceptional circumstances."
   },
   "auth": {
+    "discordUnavailable": "Discord sign-in is currently unavailable. You can continue exploring Luna as a guest.",
+    "retrySignIn": "Sign-in could not be completed. Please try again.",
     "badge": "LUNA UNIVERSE",
     "welcomeTitle": "Welcome to Luna",
     "welcomeDesc": "Sign in with your Discord account to access your profile, track your cards, and manage your Luna Bank.",
@@ -446,8 +448,28 @@
     "guestLink": "Continue as guest"
   },
   "profilePage": {
+    "closeDetail": "Close details",
+    "passportFields": {
+      "number": "Passport ID",
+      "name": "Name",
+      "birthday": "Birthday",
+      "issued": "Date issued",
+      "faction": "Faction"
+    },
+    "loadFailure": "Your profile could not be loaded",
+    "loadFailureHelp": "Please try loading your profile again.",
+    "retryProfile": "Try again",
+    "copyFailed": "Copy the Discord ID shown above manually.",
+    "copyDone": "Discord ID copied.",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
     "title": "Profile",
     "memberSince": "Member since",
+    "websiteMemberSince": "Website member since",
+    "membershipDateUnavailable": "Join date unavailable",
+    "passportEmptyTitle": "No Luna Passport yet",
+    "passportApplyHint": "Apply via our Discord",
+    "passportJoinDiscord": "Join our Discord",
     "stats": {
       "cards": "Cards",
       "stones": "Stones",
@@ -595,6 +617,7 @@
     "ctaBtn": "Join Discord"
   },
   "bazaarPage": {
+    "loginRequired": "Login Required",
     "title": "The Bazaar",
     "subtitle": "Spend your Lunari at the finest vendors in Luna. Open mystery boxes, collect rare cards and moon stones, or buy tickets.",
     "balance": "Balance",

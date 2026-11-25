@@ -1,3 +1,4 @@
+import { cinematicPresentationEnabled } from '@/lib/cinematic/presentation-flags';
 import { Suspense } from 'react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -74,9 +75,10 @@ export async function generateMetadata({
 }
 
 export default async function MerchantPageRoute({
-  params,
+  params, searchParams,
 }: {
   params: Promise<{ locale: string; merchant: string }>;
+  searchParams?: { editMode?: string | string[] };
 }) {
   const { locale, merchant } = await params;
   setRequestLocale(locale);
@@ -87,7 +89,8 @@ export default async function MerchantPageRoute({
 
   return (
     <Suspense>
-      <MerchantPage merchant={merchant as MerchantSlug} />
+      <MerchantPage merchant={merchant as MerchantSlug}
+        cinematicPresentation={cinematicPresentationEnabled() && searchParams?.editMode !== '1'} />
     </Suspense>
   );
 }

@@ -7,6 +7,20 @@ export const PASSPORT_FACTIONS = [
   'Mythical Creatures', 'Strange Beings', 'Supernatural', 'Underworld', 'Warriors',
 ] as const;
 
+export const FACTION_TONES: Record<(typeof PASSPORT_FACTIONS)[number], string> = {
+  'Beasts':            '#84cc16',
+  'Colossals':         '#a78bfa',
+  'Dragons':           '#ef4444',
+  'Knights':           '#fbbf24',
+  'Lunarians':         '#0ea5e9',
+  'Moon Creatures':    '#818cf8',
+  'Mythical Creatures':'#f472b6',
+  'Strange Beings':    '#10b981',
+  'Supernatural':      '#c084fc',
+  'Underworld':        '#f59e0b',
+  'Warriors':          '#eab308',
+};
+
 const FACTION_GLYPH: Record<string, string> = {
   beasts: '🐾', colossals: '⛰', dragons: '🜲', knights: '⚔', lunarians: '☾',
   'moon creatures': '◐', 'mythical creatures': '✧', 'strange beings': '❖',

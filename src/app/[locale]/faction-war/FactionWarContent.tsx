@@ -1,16 +1,41 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Lightbox } from '@/components';
+import { ArchiveCardCarousel } from '@/components/archive-card-carousel/ArchiveCardCarousel';
+import { ArchiveCardThumbnail } from '@/components/archive-card-carousel/ArchiveCardThumbnail';
+import { ArchiveCardSearch } from '@/components/cinematic-games/ArchiveCardSearch';
+import { archiveCardMatcher } from '@/lib/cinematic/archive-card-search';
+import { visualFixSrc } from '@/lib/cinematic/v19-visual-fix-src';
+import { inspectorArtworkViewerSrc } from '@/lib/cinematic/native-art-inspector';
 import LunariIcon from '@/components/LunariIcon';
 import { E } from '@/components/edit-mode/EditableText';
 import { EImg } from '@/components/edit-mode/EditableImage';
-import type { FactionWarFaction } from '@/types/faction-war';
+import { useEditMode } from '@/lib/edit-mode/context';
+import { projectFactionCardArtwork, type ReleaseCardArt } from '@/lib/release-card-art';
+import { FactionCouncilScene } from '@/components/cinematic-games/CinematicGames';
+import gameStyles from '@/components/cinematic-games/cinematic-games.module.css';
+import type { FactionWarCard, FactionWarFaction } from '@/types/faction-war';
 import type { Locale } from '@/types';
 
 const R2_BASE = 'https://assets.lunarian.app/LunaPairs';
+
+function printedSpelling(art: ReleaseCardArt | undefined, locale: Locale) {
+  if (!art?.printedAs) return;
+  if (art.releaseId === 'LUNA-0548') {
+    return locale === 'ar'
+      ? `ترد تهجئة ${art.printedAs} على البطاقة وفي سجل الشخصية.`
+      : `The print and the character portrait use the spelling ${art.printedAs}.`;
+  }
+  return locale === 'ar' ? `ترد تهجئة ${art.printedAs} على البطاقة.` : `The card is printed as ${art.printedAs}.`;
+}
+
+function cardDescription(card: FactionWarCard, art: ReleaseCardArt | undefined, locale: Locale) {
+  const spelling = printedSpelling(art, locale);
+  return spelling ? [spelling, card.description].filter(Boolean).join(' ') : card.description;
+}
 
 // Build-time fallback bust. Bumped on every deploy so cards stored without
 // their own `?v=` stamp still refresh whenever the site redeploys. The admin
@@ -45,20 +70,70 @@ function getFactionWarBgUrl() {
 interface FactionWarContentProps {
   factions: FactionWarFaction[];
   locale: Locale;
+  cinematicPresentation: boolean;
 }
 
 type FilterKey = 'all' | string;
 
-export function FactionWarContent({ factions, locale }: FactionWarContentProps) {
+export function FactionWarContent({ factions, locale, cinematicPresentation }: FactionWarContentProps) {
   const t = useTranslations('factionWarPage');
   const hero = useTranslations('hero');
+  const { editMode } = useEditMode();
+  const cinematic = cinematicPresentation && !editMode;
 
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
-  const [lightboxCard, setLightboxCard] = useState<{ src: string; name: string; description?: string } | null>(null);
+  const [archiveQuery, setArchiveQuery] = useState('');
+  const [indexOpen, setIndexOpen] = useState(false);
+  const [failedOverlayThumbs, setFailedOverlayThumbs] = useState<ReadonlySet<string>>(new Set());
+  const [lightboxCard, setLightboxCard] = useState<{ src: string; native?: string; fix?: string; id: string; name: string; description?: string; opener: HTMLElement } | null>(null);
 
-  const filteredFactions = activeFilter === 'all'
-    ? factions
-    : factions.filter(f => f.id === activeFilter);
+  const matchesQuery = archiveCardMatcher('faction-war', locale, editMode ? '' : archiveQuery);
+  const releaseArt = new Map(factions.flatMap(faction => faction.cards.map(card =>
+    [card, projectFactionCardArtwork(faction.id, card, cinematic)] as const,
+  )));
+  const filteredFactions = factions
+    .filter(faction => activeFilter === 'all' || faction.id === activeFilter)
+    .map(faction => ({
+      faction,
+      visibleCards:faction.cards.filter(card => {
+        const artwork = releaseArt.get(card);
+        return matchesQuery(artwork?.releaseId, artwork?.title ?? card.name, card.name, artwork?.printedAs);
+      }),
+    }))
+    .filter(({ visibleCards }) => editMode || visibleCards.length > 0);
+  const resultCount = filteredFactions.reduce((count, { visibleCards }) => count + visibleCards.length, 0);
+
+  const archiveCards = new Map<string, FactionWarCard>();
+  const idsByCard = new Map<FactionWarCard, string>();
+  const archiveEntries = filteredFactions.flatMap(({ faction, visibleCards }) => visibleCards.flatMap(card => {
+    const art = releaseArt.get(card);
+    const id = art?.releaseId ?? faction.id + '/' + card.image;
+    if (archiveCards.has(id)) return [];
+    archiveCards.set(id, card);
+    idsByCard.set(card, id);
+    const fallback = getFactionWarImageUrl(card.image);
+    return [{
+      id, name: art?.title ?? card.name, group: faction.name[locale],
+      detail: art?.detail ?? fallback, releaseId: art?.releaseId,
+      visualFix: visualFixSrc(art?.releaseId, 'card-inspector'), description: cardDescription(card, art, locale),
+      thumb: visualFixSrc(art?.releaseId, 'card-thumb') ?? art?.thumb ?? fallback,
+    }];
+  }));
+  const showCarousel = cinematic && archiveEntries.length > 0;
+  const indexId = 'faction-archive-index';
+
+  function openCardArtwork(card: FactionWarCard, opener: HTMLElement) {
+    const artwork = releaseArt.get(card);
+    const id = idsByCard.get(card);
+    if (!id) return;
+    setLightboxCard({
+      id,
+      src: artwork?.detail ?? getFactionWarImageUrl(card.image),
+      native: inspectorArtworkViewerSrc(artwork?.releaseId),
+      fix: visualFixSrc(artwork?.releaseId, 'card-inspector'),
+      name: artwork?.title ?? card.name, description: cardDescription(card, artwork, locale), opener,
+    });
+  }
 
   const totalCards = factions.reduce((sum, f) => sum + f.cards.length, 0);
 
@@ -72,21 +147,24 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
     })),
   ];
 
-  return (
-    <>
-      {/* Hero */}
-      <section className="lp-hero">
-        <div className="lp-hero-bg">
-          <EImg
-            editId="faction-war-hero-bg"
-            source="r2"
-            src={getFactionWarBgUrl()}
-            alt="Faction War"
-            fill
-            priority
-            className="lp-hero-bg-image"
-          />
-        </div>
+  const gallery = useRef<HTMLElement>(null);
+  const [councilTarget, setCouncilTarget] = useState<string>();
+  function openFactionFromCouncil(factionId: string) {
+    setArchiveQuery('');
+    setActiveFilter(factionId);
+    setIndexOpen(true);
+    setCouncilTarget(factionId);
+  }
+  useEffect(() => {
+    if (!councilTarget || !gallery.current) return;
+    const heading = gallery.current.querySelector<HTMLElement>('h2[data-catalog-faction="' + CSS.escape(councilTarget) + '"]');
+    if (heading) {
+      heading.focus({ preventScroll:true });
+      heading.scrollIntoView({ block:'start', behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    }
+    setCouncilTarget(undefined);
+  }, [councilTarget]);
+  const heroCopy = (
         <div className="lp-hero-content">
           <span className="hero-badge"><E ns="factionWarPage" k="heroSubtitle">{t('heroSubtitle')}</E></span>
           <h1 className="lp-hero-title"><E ns="factionWarPage" k="heroTitle">{t('heroTitle')}</E></h1>
@@ -100,7 +178,27 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
             </a>
           </div>
         </div>
+  );
+
+  return (
+    <main>
+      {/* Hero */}
+      {cinematic ? <FactionCouncilScene factions={factions} locale={locale} onOpenFaction={openFactionFromCouncil}>{heroCopy}</FactionCouncilScene> : (
+      <section className="lp-hero">
+        <div className="lp-hero-bg">
+          <EImg
+            editId="faction-war-hero-bg"
+            source="r2"
+            src={getFactionWarBgUrl()}
+            alt="Faction War"
+            fill
+            priority
+            className="lp-hero-bg-image"
+          />
+        </div>
+        {heroCopy}
       </section>
+      )}
 
       {/* How to Play */}
       <section className="lp-info-section">
@@ -166,14 +264,17 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
       </section>
 
       {/* Faction Gallery */}
-      <section className="lp-gallery-section">
+      <section className={`lp-gallery-section${cinematic ? ` ${gameStyles.cinematicCatalog}` : ""}`} ref={gallery} data-cinematic-catalog={cinematic || undefined}>
         <div className="wrap">
+          {!editMode && <ArchiveCardSearch locale={locale} query={archiveQuery} count={resultCount} onQuery={setArchiveQuery} />}
           {/* Filter Bar */}
           <div className="lp-filter-bar">
             {filters.map(filter => (
               <button
                 key={filter.key}
+                type="button"
                 className={`lp-filter-btn ${activeFilter === filter.key ? 'active' : ''}`}
+                aria-pressed={activeFilter === filter.key}
                 style={
                   activeFilter === filter.key && filter.color
                     ? { background: filter.color, color: '#fff', boxShadow: `0 0 20px ${filter.color}60` }
@@ -187,13 +288,22 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
             ))}
           </div>
 
-          {/* Cards Display */}
-          <div className="lp-factions-list">
-            {filteredFactions.map(faction => (
+          {showCarousel && <ArchiveCardCarousel variant="faction" locale={locale} entries={archiveEntries}
+            onInspect={(entry, opener) => {
+              const card = archiveCards.get(entry.id);
+              if (card) openCardArtwork(card, opener);
+            }}
+            index={{ open: indexOpen, controls: indexId, onToggle: () => setIndexOpen(open => !open) }}
+          />}
+          <div id={indexId} hidden={showCarousel && !indexOpen}>
+          {(editMode || resultCount > 0) && <div className="lp-factions-list">
+            {filteredFactions.map(({ faction, visibleCards }) => (
               <div key={faction.id} className="lp-faction-section">
                 <div className="lp-faction-header">
                   <h2
                     className="lp-faction-title"
+                    data-catalog-faction={faction.id}
+                    tabIndex={-1}
                     style={{ color: faction.color }}
                   >
                     {faction.name[locale]}
@@ -210,30 +320,38 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
                   </span>
                 </div>
                 <div className="lp-cards-grid">
-                  {faction.cards.map(card => {
+                  {visibleCards.map(card => {
                     const imageUrl = getFactionWarImageUrl(card.image);
+                    const artwork = releaseArt.get(card);
+                    const displayName = artwork?.title ?? card.name;
+                    const approvedThumb = visualFixSrc(artwork?.releaseId, 'card-thumb');
+                    const overlayThumb = approvedThumb && !failedOverlayThumbs.has(approvedThumb) ? approvedThumb : undefined;
                     return (
-                      <div
+                      <button
+                        type="button" aria-haspopup="dialog" aria-label={displayName}
+                        aria-description={printedSpelling(artwork, locale)}
                         key={card.image}
                         className="lp-card-item"
-                        onClick={() => setLightboxCard({ src: imageUrl, name: card.name, description: card.description })}
+                        data-release-card={artwork?.releaseId}
+                        onClick={event => openCardArtwork(card, event.currentTarget)}
                         style={{ '--faction-color': faction.color } as React.CSSProperties}
                       >
-                        <div className="lp-card-image-wrapper">
-                          <Image
-                            src={imageUrl}
-                            alt={card.name}
-                            width={300}
-                            height={420}
+                        <span className="lp-card-image-wrapper">
+                          <ArchiveCardThumbnail
+                            src={overlayThumb || (artwork?.thumb ?? imageUrl)}
+                            highDensitySrc={overlayThumb ? undefined : artwork?.detail}
+                            onError={overlayThumb ? () => setFailedOverlayThumbs(previous => new Set(previous).add(overlayThumb)) : undefined}
+                            alt={displayName}
                             className="lp-card-image"
                           />
-                        </div>
-                      </div>
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
               </div>
             ))}
+          </div>}
           </div>
         </div>
       </section>
@@ -241,12 +359,18 @@ export function FactionWarContent({ factions, locale }: FactionWarContentProps) 
       {/* Lightbox — now includes card name + description (admin-editable) */}
       <Lightbox
         isOpen={!!lightboxCard}
+        inspection={lightboxCard ? { kind: 'faction', id: lightboxCard.id } : undefined}
+        archiveEntries={archiveEntries}
         imageSrc={lightboxCard?.src || ''}
-        alt={lightboxCard?.name || 'Card Preview'}
+        preferredImageSrc={lightboxCard?.native}
+        visualFixImageSrc={lightboxCard?.fix}
+        locale={locale}
+        openerElement={lightboxCard?.opener}
+        alt={lightboxCard?.name || (locale === 'ar' ? 'معاينة الكرت' : 'Card Preview')}
         title={lightboxCard?.name}
         description={lightboxCard?.description}
         onClose={() => setLightboxCard(null)}
       />
-    </>
+    </main>
   );
 }

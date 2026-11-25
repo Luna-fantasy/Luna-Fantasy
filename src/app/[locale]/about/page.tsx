@@ -2,7 +2,10 @@ import { useTranslations } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { E } from '@/components/edit-mode/EditableText';
+import { EditorialMotif } from '../cinematic-editorial/EditorialMotif';
+import { AboutPillars } from './AboutPillars';
 import '@/styles/about.css';
+import '@/styles/luna-editorial-public.css';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -46,18 +49,17 @@ function AboutContent() {
     { key: 'statStones', icon: 'stones' },
   ] as const;
 
-  const pillars = ['story', 'cards', 'economy', 'community'] as const;
 
   return (
-    <section className="about-page">
+    <main className="about-page" data-luna-editorial="about">
       {/* Hero */}
       <div className="about-hero">
-        <div className="about-hero-glow" />
-        <div className="wrap">
+        <div className="wrap luna-editorial-copy">
           <span className="about-badge"><E ns="aboutPage" k="badge">{t('badge')}</E></span>
           <h1><E ns="aboutPage" k="title">{t('title')}</E></h1>
           <p className="about-subtitle"><E ns="aboutPage" k="subtitle">{t('subtitle')}</E></p>
         </div>
+        <EditorialMotif motif="about" />
       </div>
 
       {/* Origin Story */}
@@ -113,14 +115,7 @@ function AboutContent() {
         </div>
 
         {/* Four Pillars */}
-        <div className="about-pillars">
-          {pillars.map((key) => (
-            <div key={key} className="about-pillar">
-              <h3><E ns="aboutPage" k={`pillars.${key}.title`}>{t(`pillars.${key}.title`)}</E></h3>
-              <p><E ns="aboutPage" k={`pillars.${key}.desc`}>{t(`pillars.${key}.desc`)}</E></p>
-            </div>
-          ))}
-        </div>
+        <AboutPillars />
 
         {/* Vision */}
         <div className="about-section about-vision">
@@ -145,6 +140,6 @@ function AboutContent() {
           </div>
         </div>
       </div>
-    </section>
+    </main>
   );
 }

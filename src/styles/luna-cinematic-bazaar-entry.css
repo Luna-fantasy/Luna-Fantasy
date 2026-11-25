@@ -1,0 +1,51 @@
+/* Align the Bazaar and shop titles over their individual photographic and motion layers. */
+main[data-economy-route^="bazaar"] .v3-bazaar-track[data-scene] > .bazaar-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: normal;
+  justify-items: stretch;
+  align-items: end;
+}
+main[data-economy-route^="bazaar"] .v3-bazaar-track:dir(rtl) {
+  --v3-bazaar-grade: to left;
+}
+main[data-economy-route^="bazaar"] .v3-bazaar-track[data-scene] .bazaar-hero-content {
+  width: min(54%, 44rem);
+  margin: 0;
+  padding: 0;
+  font: 400 1rem/1.35 system-ui, "Noto Sans Arabic", Arial, sans-serif;
+  text-shadow: 0 1px 4px #050811, 0 2px 22px #050811;
+  text-align: start;
+}
+main[data-economy-route^="bazaar"] .v3-bazaar-track[data-scene] .bazaar-hero-title {
+  margin: 0 0 .3em;
+  color: #f5efe0;
+  text-shadow: inherit;
+  font: 400 clamp(48px, 7.8vw, 126px)/1.14 Georgia, "Noto Naskh Arabic", "Times New Roman", serif;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+main[data-economy-route^="bazaar"] .v3-bazaar-track:dir(rtl)[data-scene] .bazaar-hero-title {
+  line-height: 1.52;
+  letter-spacing: normal;
+}
+main[data-economy-route^="bazaar"] .v3-bazaar-track[data-scene] .bazaar-hero-desc {
+  max-width: 56ch;
+  margin: 1rem 0 1.5rem;
+  color: #edf1f7;
+  text-shadow: inherit;
+  font: 400 clamp(15px, 1.65vw, 23px)/1.65 system-ui, "Noto Sans Arabic", Arial, sans-serif;
+}
+@media (max-width: 760px) {
+  main[data-economy-route^="bazaar"] .v3-bazaar-track[data-scene] .bazaar-hero-content { width: 100%; }
+  main[data-economy-route^="bazaar"] .v3-bazaar-track[data-scene] .bazaar-hero-title { font-size: clamp(2.08rem, 10vw, 3.7rem); }
+  main[data-economy-route^="bazaar"] .v3-bazaar-track[data-scene] .bazaar-hero-desc { font-size: .96rem; }
+}
+@media (max-height: 470px) and (orientation: landscape) {
+  main[data-economy-route^="bazaar"] .v3-bazaar-track[data-scene] .bazaar-hero-content { width: 54%; }
+}
+
+main[data-economy-route^='bazaar'] .v3-bazaar-track[data-scene]:dir(rtl) > .bazaar-hero::after {
+  background: linear-gradient(0deg, #080b15 1%, #080b164a 24%, transparent 67%),
+    linear-gradient(270deg, #090b17c9 0%, #090d1780 34%, transparent 68%);
+}

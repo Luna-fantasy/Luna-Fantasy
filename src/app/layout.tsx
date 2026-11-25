@@ -1,24 +1,28 @@
 import { ReactNode } from 'react';
-import type { Viewport } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { lunaBrandIcons } from '@/lib/luna-brand';
 import '@/styles/globals.css';
 import '@/styles/notifications.css';
 import { AuthProvider } from '@/components/AuthProvider';
+import { LocalizedDocument } from '@/components/LocalizedDocument';
 
 type Props = {
   children: ReactNode;
 };
+
+export const metadata: Metadata = { icons: lunaBrandIcons };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
   viewportFit: 'cover',
-  themeColor: '#0a0a12',
+  themeColor: '#080808',
 };
 
 export default function RootLayout({ children }: Props) {
   return (
-    <html suppressHydrationWarning>
+    <LocalizedDocument>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -32,6 +36,6 @@ export default function RootLayout({ children }: Props) {
           {children}
         </AuthProvider>
       </body>
-    </html>
+    </LocalizedDocument>
   );
 }

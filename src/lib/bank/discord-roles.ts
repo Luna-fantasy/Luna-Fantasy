@@ -67,7 +67,7 @@ export async function getUserGuildRoles(discordId: string): Promise<string[]> {
  * Fetch a guild member's display name from the Discord API.
  * Returns nick > global_name > username, or null if not found.
  */
-export async function getGuildMemberName(discordId: string): Promise<{ name: string; avatar: string | null } | null> {
+export async function getGuildMemberName(discordId: string): Promise<{ name: string; avatar: string | null; joinedAt: string | null } | null> {
   const token = process.env.DISCORD_BOT_TOKEN;
   if (!token) return null;
 
@@ -87,7 +87,8 @@ export async function getGuildMemberName(discordId: string): Promise<{ name: str
     const userId = member.user?.id;
     const avatarHash = member.user?.avatar;
     const avatar = userId ? discordAvatarUrl(userId, avatarHash, 128) : null;
-    return name ? { name, avatar } : null;
+    const joinedAt = typeof member.joined_at === 'string' ? member.joined_at : null;
+    return name ? { name, avatar, joinedAt } : null;
   } catch {
     return null;
   }

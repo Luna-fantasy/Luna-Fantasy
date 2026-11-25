@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import CanvasEditorPanel from './CanvasEditorPanel';
 import AssetsPanel from './AssetsPanel';
 import type { BrowseResult, CanvasLayouts } from './types';
@@ -16,6 +17,7 @@ interface Props {
 
 export default function MediaClient({ butlerLayouts, jesterLayouts, initialAssets, r2Ready }: Props) {
   const [tab, setTab] = useState<Tab>('canvas');
+  const canvasId = useSearchParams().get('canvas');
 
   return (
     <div className="av-media av-media-root">
@@ -37,7 +39,7 @@ export default function MediaClient({ butlerLayouts, jesterLayouts, initialAsset
       </nav>
 
       {tab === 'canvas' && (
-        <CanvasEditorPanel butlerLayouts={butlerLayouts} jesterLayouts={jesterLayouts} />
+        <CanvasEditorPanel key={canvasId} initialCanvasId={canvasId} butlerLayouts={butlerLayouts} jesterLayouts={jesterLayouts} />
       )}
 
       {tab === 'assets' && (

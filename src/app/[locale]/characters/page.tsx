@@ -1,5 +1,9 @@
+import { cinematicPresentationEnabled } from '@/lib/cinematic/presentation-flags';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/characters.css';
+import '@/styles/cinematic-people.css';
+import '@/styles/characters-aisle.css';
+import '@/styles/archive-card-search.css';
 import { CharactersContent } from './CharactersContent';
 
 import factions from '@/data/factions.json';
@@ -43,7 +47,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export default async function CharactersPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function CharactersPage({ params, searchParams }: {
+  params: Promise<{ locale: string }>;
+  searchParams?: { editMode?: string | string[] };
+}) {
   const { locale } = await params;
   setRequestLocale(locale);
 
@@ -56,6 +63,7 @@ export default async function CharactersPage({ params }: { params: Promise<{ loc
         factions={factions as Faction[]}
         cards={cards as Card[]}
         locale={locale as 'en' | 'ar'}
+        cinematicPresentation={cinematicPresentationEnabled() && searchParams?.editMode !== '1'}
       />
     </TabGuard>
   );

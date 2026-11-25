@@ -1,8 +1,10 @@
 import { Suspense } from 'react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import '@/styles/trading.css';
+import '@/styles/luna-editorial-public.css';
 import TradingContent from './TradingContent';
 import TabGuard from '@/components/TabGuard';
+import { getLiveBankConfig } from '@/lib/bank/live-bank-config';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -39,11 +41,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function TradingPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const config = await getLiveBankConfig();
 
   return (
     <TabGuard tabKey="trading">
       <Suspense>
-        <TradingContent />
+        <TradingContent terms={{ maximum: config.tradeMaxAmount, winChance: config.tradeWinChance, winRate: config.tradeWinRate, lossRate: config.tradeLossRate, cooldownMs: config.tradeCooldownMs }} />
       </Suspense>
     </TabGuard>
   );

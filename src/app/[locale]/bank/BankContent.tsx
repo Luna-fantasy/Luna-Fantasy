@@ -7,6 +7,13 @@ import Image from 'next/image';
 import { Lightbox } from '@/components/Lightbox';
 import { E } from '@/components/edit-mode/EditableText';
 import { EImg } from '@/components/edit-mode/EditableImage';
+import { BankArt } from '@/components/cinematic/economy/EconomyScenes';
+import { BankAtrium, BankLoanEstimator, BankCrossing } from '@/components/cinematic/night-economy/NightBank';
+import night from '@/components/cinematic/night-economy/NightBank.module.css';
+import { useEditMode } from '@/lib/edit-mode/context';
+import { cinematicBankHero } from '@/lib/cinematic/economy-assets';
+import '@/styles/luna-cinematic-economy.css';
+import '@/styles/luna-cinematic-bank.css';
 import { useBankData } from '@/hooks/useBankData';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
 import { BalanceSummary } from './BalanceSummary';
@@ -45,8 +52,10 @@ interface BankStaticData {
   loans: {
     interestRate: number;
     vipInterestRate: number;
+    vipExactRate?: number;
     deadline: number;
     tiers: number[];
+    tierTerms?: { amount: number; interest: number; duration: number }[];
   };
   trading: {
     maxLimit: number;
@@ -208,8 +217,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
     }
   };
 
-  // Determine VIP status: has active investment with >= 20K
-  const isVip = bankData.roles.isVip || (!!bankData.investment && bankData.investment.amount >= 20_000);
+  const activeInvestment = bankData.investment?.active ? bankData.investment.amount : 0;
 
   return (
     <div className="bank-dashboard">
@@ -223,7 +231,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
       />
 
       {/* Salary Section */}
-      <section className="bank-section">
+      <section className="bank-section" id="night-bank-salary">
         <div className="bank-section-header">
           <div className="bank-section-icon salary-icon"></div>
           <h2 className="bank-section-title"><E ns="bankPage" k="salary.title">{t('salary.title')}</E></h2>
@@ -231,7 +239,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
         <div className="salary-grid">
           <DailyClaimCard
             lastClaimed={bankData.cooldowns.daily}
-            isVip={isVip}
+            isVip={activeInvestment > 0 && activeInvestment >= (bankData.config?.investmentMinAmount ?? 20_000)}
             onClaim={handleDaily}
             disabled={bankData.debt > 0}
             dailyBase={bankData.config?.dailyBase}
@@ -247,11 +255,11 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
       </section>
 
       {/* Loan Section */}
-      <LoanManager
+      <div id="night-bank-loans"><LoanManager
         activeLoan={bankData.activeLoan}
         level={bankData.level}
         debt={bankData.debt}
-        isVip={isVip}
+        isVip={activeInvestment > 0}
         hasPassport={bankData.hasPassport}
         balance={bankData.balance}
         userName={session?.user?.globalName || session?.user?.name || session?.user?.username}
@@ -263,10 +271,11 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
         loanTiersFull={bankData.config?.loanTiersFull}
         interestRate={bankData.config?.loanInterestRate}
         vipInterestRate={bankData.config?.loanVipInterestRate}
-      />
+        loanDurationMs={bankData.config?.loanDurationMs}
+      /></div>
 
       {/* Investment Section */}
-      <InvestmentTracker
+      <div id="night-bank-investment"><InvestmentTracker
         investment={bankData.investment}
         balance={bankData.balance}
         onDeposit={handleDeposit}
@@ -276,7 +285,7 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
         earlyFee={bankData.config?.investmentEarlyFee}
         profitRate={bankData.config?.investmentProfitRate}
         depositLockMs={bankData.config?.investmentDepositLockMs}
-      />
+      /></div>
 
     </div>
   );
@@ -287,16 +296,21 @@ function BankDashboard({ bankData, locale, refetch, session }: { bankData: BankD
 function BankInfoSections({ data, locale }: { data: BankStaticData; locale: 'en' | 'ar' }) {
   const t = useTranslations('bankPage');
   const [isLoanImageOpen, setIsLoanImageOpen] = useState(false);
+  const loanSampleNote = locale === 'ar'
+    ? 'نموذج تاريخي، وليس شروط القرض الحالية.'
+    : 'Historical sample. Not current loan terms.';
+  const loanContractAlt = locale === 'ar' ? 'عقد القرض' : 'Loan Contract';
 
   return (
     <>
       <div className="bank-sections">
         {/* Salary Section */}
-        <section className="bank-section">
+        <section className="bank-section" id="night-bank-salary">
           <div className="bank-section-header">
             <div className="bank-section-icon salary-icon"></div>
             <h2 className="bank-section-title"><E ns="bankPage" k="salary.title">{t('salary.title')}</E></h2>
           </div>
+          <BankArt role="ledger" />
           <div className="salary-grid">
             <div className="salary-card">
               <div className="salary-card-header">
@@ -362,12 +376,13 @@ function BankInfoSections({ data, locale }: { data: BankStaticData; locale: 'en'
         </section>
 
         {/* Loan Section */}
-        <section className="bank-section loan-section-with-image">
+        <section className="bank-section loan-section-with-image" id="night-bank-loans">
           <div className="loan-section-content">
             <div className="bank-section-header">
               <div className="bank-section-icon loan-icon"></div>
               <h2 className="bank-section-title"><E ns="bankPage" k="loans.title">{t('loans.title')}</E></h2>
             </div>
+            <BankArt role="seal" />
             <p className="section-desc"><E ns="bankPage" k="loans.desc">{t('loans.desc')}</E></p>
             <div className="loan-overview">
               <div className="loan-stat">
@@ -393,8 +408,13 @@ function BankInfoSections({ data, locale }: { data: BankStaticData; locale: 'en'
               <E ns="bankPage" k="loans.actionBtn">{t('loans.actionBtn')}</E>
             </a>
           </div>
-          <div className="loan-image-container" onClick={() => setIsLoanImageOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setIsLoanImageOpen(true)}>
-            <EImg editId="bank-loan-contract" src="/images/loan_contract.png" alt="Loan Contract" width={300} height={400} className="loan-contract-image" />
+          <div className="loan-image-container" onClick={() => setIsLoanImageOpen(true)} role="button" tabIndex={0} aria-describedby="loan-contract-sample-note" onKeyDown={(e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            setIsLoanImageOpen(true);
+          }}>
+            <p className="cinematic-bank-contract-note" id="loan-contract-sample-note">{loanSampleNote}</p>
+            <EImg editId="bank-loan-contract" src="/images/loan_contract.png" alt={loanContractAlt} width={300} height={400} className="loan-contract-image" />
           </div>
         </section>
 
@@ -450,7 +470,7 @@ function BankInfoSections({ data, locale }: { data: BankStaticData; locale: 'en'
         </section>
       </div>
 
-      <Lightbox isOpen={isLoanImageOpen} imageSrc="/images/loan_contract.png" alt="Loan Contract" onClose={() => setIsLoanImageOpen(false)} />
+      <Lightbox isOpen={isLoanImageOpen} imageSrc="/images/loan_contract.png" alt={loanContractAlt} title={loanSampleNote} onClose={() => setIsLoanImageOpen(false)} />
     </>
   );
 }
@@ -458,18 +478,20 @@ function BankInfoSections({ data, locale }: { data: BankStaticData; locale: 'en'
 // ── Main Component ──
 
 export function BankContent({ data, locale }: BankContentProps) {
+  const { editMode } = useEditMode();
   const t = useTranslations('bankPage');
   const { data: session } = useSession();
   const { data: bankData, isLoading, error, refetch } = useBankData();
   const isLoggedIn = !!session?.user;
 
   return (
-    <main>
+    <main lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={editMode ? undefined : night.bankPage} data-economy-route={editMode ? undefined : "bank"}>
       {/* Hero Section */}
-      <section className="bank-hero">
+      {editMode ? <section className="bank-hero cinematic-economy-hero cinematic-economy-hero--bank">
         <div className="bank-hero-bg">
-          <EImg editId="bank-hero-bg" source="r2" src="https://assets.lunarian.app/backgrounds/BankHero.png" alt="Luna Bank" fill priority className="bank-hero-bg-image" />
+          <EImg editId="bank-hero-bg" source="r2" src={cinematicBankHero} alt={locale === 'ar' ? 'بنك لونا' : 'Luna Bank'} fill sizes="100vw" priority className="bank-hero-bg-image" />
         </div>
+        <BankArt role="vault" />
         <div className="bank-hero-content">
           <h1 className="bank-hero-title"><E ns="bankPage" k="title">{t('title')}</E></h1>
           <p className="bank-hero-desc"><E ns="bankPage" k="subtitle">{t('subtitle')}</E></p>
@@ -484,7 +506,7 @@ export function BankContent({ data, locale }: BankContentProps) {
             </div>
           )}
         </div>
-      </section>
+      </section> : <BankAtrium locale={locale} signedIn={isLoggedIn} />}
 
       {/* Content */}
       <div className="wrap">
@@ -511,6 +533,8 @@ export function BankContent({ data, locale }: BankContentProps) {
         {!isLoggedIn && (
           <BankInfoSections data={data} locale={locale} />
         )}
+        {!editMode && !isLoggedIn && <BankLoanEstimator terms={data.loans} locale={locale} />}
+        {!editMode && <BankCrossing locale={locale} />}
       </div>
     </main>
   );

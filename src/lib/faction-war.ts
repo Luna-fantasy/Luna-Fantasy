@@ -1,4 +1,5 @@
 import clientPromise from "./mongodb";
+import { previewCatalogIsLive } from "./cinematic/preview-catalog-cache";
 import type { FactionWarFaction } from "@/types/faction-war";
 
 const R2_BASE = "https://assets.lunarian.app/LunaPairs";
@@ -18,7 +19,8 @@ export function invalidateFactionWarCache(): void {
 }
 
 export async function getFactionWarFactions(): Promise<FactionWarFaction[]> {
-  if (cache && Date.now() - cacheTime < CACHE_TTL) return cache;
+  const livePreview = previewCatalogIsLive();
+  if (!livePreview && cache && Date.now() - cacheTime < CACHE_TTL) return cache;
 
   const client = await clientPromise;
   const db = client.db("Database");
@@ -43,8 +45,10 @@ export async function getFactionWarFactions(): Promise<FactionWarFaction[]> {
   ];
   factions.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
-  cache = factions;
-  cacheTime = Date.now();
+  if (!livePreview) {
+    cache = factions;
+    cacheTime = Date.now();
+  }
   return factions;
 }
 

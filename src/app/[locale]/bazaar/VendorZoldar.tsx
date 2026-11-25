@@ -122,6 +122,8 @@ export default function VendorZoldar({ packages, balance, tickets, hasDebt, hasP
               >
                 {buying === pkg.id ? (
                   <span className="luckbox-spinner" />
+                ) : !isLoggedIn ? (
+                  <E ns="bazaarPage" k="loginRequired">{t('loginRequired')}</E>
                 ) : hasDebt ? (
                   <E ns="bazaarPage" k="inDebt">{t('inDebt')}</E>
                 ) : !canAfford ? (

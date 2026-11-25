@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { registeredMembership } from "@/lib/profile-membership";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/bazaar/rate-limit";
 import clientPromise from "@/lib/mongodb";
 import { generateCardStats } from "@/lib/bazaar/luckbox-config";
@@ -321,10 +322,13 @@ export async function GET(request: Request) {
       }
     }
 
-    // For public profiles, look up basic user info and exclude private data
+    // Website registration is the same date used by the public member directory.
+    const userDoc = await db.collection("users").findOne({ discordId }, {
+      projection: { globalName: 1, name: 1, image: 1, createdAt: 1 },
+    });
+    let membership = registeredMembership('website', userDoc?.createdAt);
     let publicUser: { name: string; image: string | null; discordId: string } | undefined;
     if (isPublic) {
-      const userDoc = await db.collection("users").findOne({ discordId });
       if (userDoc) {
         publicUser = {
           name: userDoc.globalName || userDoc.name || discordId,
@@ -334,6 +338,7 @@ export async function GET(request: Request) {
       } else {
         // User never logged into the website — fetch from Discord API
         const member = await getGuildMemberName(discordId);
+        membership = registeredMembership('guild', member?.joinedAt);
         publicUser = {
           name: member?.name || discordId,
           image: member?.avatar || null,
@@ -356,6 +361,7 @@ export async function GET(request: Request) {
     }
 
     const response: GameDataResponse = {
+      membership,
       cardsByGame,
       totalCards: allCards.length,
       stones,

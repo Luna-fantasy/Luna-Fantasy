@@ -1,0 +1,30 @@
+{
+  "easing": [0.23, 0.61, 0.33, 1],
+  "marks": {"margin": 300, "register": 330, "underline": 285},
+  "routes": {
+    "home": {"x": -0.6, "y": 0.18, "scale": 1.017, "duration": 520, "mark": "underline", "ink": "#d79b84"},
+    "story": {"x": 0.15, "y": -0.6, "scale": 1.016, "duration": 500, "mark": "margin", "ink": "#cc9e82"},
+    "luna-fantasy": {"x": 0, "y": 0, "scale": 1, "duration": 0, "mark": "register", "ink": "#ceb097"},
+    "grand-fantasy": {"x": 0, "y": 0, "scale": 1, "duration": 0, "mark": "register", "ink": "#ad9cce"},
+    "faction-war": {"x": 0, "y": 0, "scale": 1, "duration": 0, "mark": "register", "ink": "#c5ab7e"},
+    "characters": {"x": -0.16, "y": 0.58, "scale": 1.017, "duration": 480, "mark": "register", "ink": "#ce9eaa"},
+    "members": {"x": 0.64, "y": 0.1, "scale": 1.018, "duration": 460, "mark": "margin", "ink": "#d0ac94"},
+    "partners": {"x": 0, "y": -0.48, "scale": 1.016, "duration": 500, "mark": "margin", "ink": "#ce9d90"},
+    "bank": {"x": 0, "y": 0.58, "scale": 1.018, "duration": 560, "mark": "underline", "ink": "#ceb076"},
+    "bazaar": {"x": -0.86, "y": 0.08, "scale": 1.021, "duration": 510, "mark": "underline", "ink": "#d4a273"},
+    "bazaar/kael": {"x": -0.44, "y": 0.55, "scale": 0.988, "duration": 460, "mark": "register", "ink": "#c69b76"},
+    "bazaar/meluna": {"x": 0.43, "y": -0.41, "scale": 0.991, "duration": 510, "mark": "register", "ink": "#ba9bb9"},
+    "bazaar/zoldar": {"x": 0.72, "y": 0.1, "scale": 0.984, "duration": 480, "mark": "underline", "ink": "#bbac84"},
+    "bazaar/seluna": {"x": -0.3, "y": -0.57, "scale": 0.987, "duration": 530, "mark": "margin", "ink": "#a7b8ca"},
+    "bazaar/brimor": {"x": 0, "y": 0.63, "scale": 0.986, "duration": 500, "mark": "register", "ink": "#c69678"},
+    "bazaar/mells": {"x": -0.68, "y": -0.1, "scale": 0.985, "duration": 465, "mark": "underline", "ink": "#bb9fa9"},
+    "trading": {"x": 0.86, "y": 0.07, "scale": 1.021, "duration": 480, "mark": "underline", "ink": "#92b7b3"},
+    "about": {"x": 0.35, "y": 0.3, "scale": 1.015, "duration": 460, "mark": "margin", "ink": "#caa196"},
+    "faq": {"x": 0, "y": 0.38, "scale": 1.014, "duration": 410, "mark": "margin", "ink": "#bca78f"},
+    "contact": {"x": -0.43, "y": 0.15, "scale": 1.016, "duration": 445, "mark": "margin", "ink": "#c49b92"},
+    "privacy": {"x": 0, "y": -0.26, "scale": 1.012, "duration": 390, "mark": "margin", "ink": "#bcaba1"},
+    "terms": {"x": 0.24, "y": 0, "scale": 1.012, "duration": 380, "mark": "margin", "ink": "#bba68a"},
+    "refund": {"x": -0.22, "y": 0, "scale": 1.012, "duration": 390, "mark": "margin", "ink": "#b5a697"},
+    "auth/signin": {"x": 0, "y": 0, "scale": 1, "duration": 0, "mark": "margin", "ink": "#caa397"}
+  }
+}

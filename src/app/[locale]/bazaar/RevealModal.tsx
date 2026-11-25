@@ -1,5 +1,6 @@
 'use client';
 
+import { collectibleDisplayImage } from '@/lib/cinematic/kaidan-art';
 import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { Link } from '@/i18n/routing';
@@ -8,6 +9,7 @@ import type { RevealData } from '@/types/bazaar';
 
 interface RevealModalProps {
   data: RevealData;
+  balance: number;
   onClose: () => void;
   onBuyAnother: () => void;
   onBalanceUpdate?: (newBalance: number) => void;
@@ -20,7 +22,7 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function RevealModal({ data, onClose, onBuyAnother, onBalanceUpdate }: RevealModalProps) {
+export default function RevealModal({ data, balance, onClose, onBuyAnother, onBalanceUpdate }: RevealModalProps) {
   const t = useTranslations('bazaarPage');
   const [phase, setPhase] = useState<RevealPhase>('shake');
   const [expanded, setExpanded] = useState(false);
@@ -50,7 +52,7 @@ export default function RevealModal({ data, onClose, onBuyAnother, onBalanceUpda
 
   const rarityClass = data.item.rarity ? `reveal-${data.item.rarity}` : 'reveal-common';
   const isCard = data.type === 'card';
-  const canAffordAnother = data.price != null ? data.newBalance >= data.price : true;
+  const canAffordAnother = data.price == null || balance >= data.price;
 
   const handleSellDuplicate = async () => {
     if (selling || sold) return;
@@ -158,7 +160,7 @@ export default function RevealModal({ data, onClose, onBuyAnother, onBalanceUpda
             style={{ cursor: phase === 'done' && data.item.imageUrl ? 'pointer' : 'default' }}
           >
             {data.item.imageUrl ? (
-              <img src={data.item.imageUrl} alt={data.item.name} className="reveal-item-image" />
+              <img src={isCard ? collectibleDisplayImage(data.item.imageUrl) : data.item.imageUrl} alt={data.item.name} className="reveal-item-image" />
             ) : (
               <div className="reveal-item-placeholder">
                 {isCard ? (

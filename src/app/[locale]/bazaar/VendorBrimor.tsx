@@ -5,6 +5,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { dispatchBalanceUpdate } from '@/lib/balance-events';
 import PassportPrice, { applyPassportDiscount } from '@/components/PassportPrice';
 import { E } from '@/components/edit-mode/EditableText';
+import { BrimorRoleShelf } from '@/components/cinematic/night-economy/BrimorRoleShelf';
+import { displayRoleColors, sortRoleStock } from '@/lib/bazaar/brimor-showcase';
 
 interface BrimorItem {
   id: string;
@@ -18,6 +20,7 @@ interface BrimorItem {
 }
 
 interface VendorBrimorProps {
+  night?: boolean;
   balance: number;
   hasDebt: boolean;
   hasPassport: boolean;
@@ -33,11 +36,12 @@ function getCsrfToken(): string {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn }: VendorBrimorProps) {
+export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn, night }: VendorBrimorProps) {
   const t = useTranslations('bazaarPage');
 
   const [items, setItems] = useState<BrimorItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [chosenId, setChosenId] = useState('');
+  const [stockStatus, setStockStatus] = useState<'loading'|'ready'|'unavailable'>('loading');
   const [buying, setBuying] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [confirmItem, setConfirmItem] = useState<string | null>(null);
@@ -55,15 +59,15 @@ export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn
       if (!res.ok) throw new Error('Failed to fetch shop');
       const data = await res.json();
       setItems(data.items ?? []);
+      setStockStatus('ready');
       if (data.user) {
         setCurrentBalance(data.user.balance);
       }
     } catch {
-      setError('Failed to load shop data');
-    } finally {
-      setLoading(false);
+      setStockStatus('unavailable');
+      if (!night) setError('Failed to load shop data');
     }
-  }, []);
+  }, [night]);
 
   useEffect(() => {
     fetchShop();
@@ -148,7 +152,7 @@ export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn
     return { disabled: false, label: t('brimor.purchase') };
   };
 
-  if (loading) {
+  if (stockStatus === 'loading') {
     return (
       <div className="vendor-section brimor-section">
         <div className="bazaar-loading">
@@ -158,7 +162,11 @@ export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn
     );
   }
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !night) return null;
+
+  const stock = night ? sortRoleStock(items) : items;
+  const selected = stock.find(item => item.id === chosenId) ?? stock[0];
+  const offers = night ? (selected && stockStatus==='ready' ? [selected] : []) : stock;
 
   return (
     <div className="vendor-section brimor-section">
@@ -181,8 +189,13 @@ export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn
       )}
 
       {/* Role Grid */}
-      <div className="brimor-grid">
-        {items.map((item) => {
+      {night && <BrimorRoleShelf items={stock} selectedId={selected?.id}
+        unavailable={stockStatus==='unavailable'} onRetry={()=>{setStockStatus('loading');void fetchShop();}}
+        showReference={stockStatus==='ready' && process.env.NODE_ENV === 'development'}
+        onPick={id => { setChosenId(id); setConfirmItem(null); }} />}
+      <div className="brimor-grid" data-brimor-offer={night ? selected?.id : undefined}>
+        {offers.map((item) => {
+          const colours = displayRoleColors(item.gradientColors);
           const btnState = getButtonState(item);
           const isConfirming = confirmItem === item.id;
           const isBuying = buying === item.id;
@@ -197,15 +210,14 @@ export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn
                 <div>
                   <h3
                   className="brimor-card-title"
-                  style={item.gradientColors ? {
-                    backgroundImage: `linear-gradient(90deg, ${item.gradientColors[0]}, ${item.gradientColors[1]}, ${item.gradientColors[0]})`,
+                  style={colours.length > 1 ? {
+                    backgroundImage: `linear-gradient(90deg, ${colours.join(',')})`,
                     backgroundSize: '200% auto',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
                     color: 'transparent',
-                    animation: 'gradientShift 1.5s linear infinite',
-                  } : undefined}
+                  } : colours.length ? { color: colours[0] } : undefined}
                 >{item.name}</h3>
                   <span className="brimor-type-badge">{t('brimor.roleLabel')}</span>
                 </div>
@@ -257,7 +269,7 @@ export default function VendorBrimor({ balance, hasDebt, hasPassport, isLoggedIn
                       <p className="brimor-confirm-text">
                         {t('brimor.confirmPurchase', {
                           item: item.name,
-                          price: formatNumber(item.price),
+                          price: formatNumber(applyPassportDiscount(item.price, hasPassport)),
                         })}
                       </p>
                       <div className="brimor-confirm-buttons">

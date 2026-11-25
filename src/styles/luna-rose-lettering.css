@@ -1,0 +1,268 @@
+/* Shared ink for the published, bilingual reader. Component layout, type sizes and card art remain local. */
+[data-luna-type="rose"] {
+  --type-copy: #ebccc0;
+  --type-quiet: #d3aaa3;
+  --type-label: #edb29f;
+  --type-link: #f4b7a9;
+  --type-link-hot: #ffddbc;
+  --type-number: #f2bc91;
+  --type-title: #f5c6ad;
+  --type-heading-leading: 1.24;
+  --type-heading-scheme: only dark;
+  --type-rim: #d49a8c;
+  --type-light: #ffe1c3;
+  --type-copper: #e8a697;
+  --type-line: #e9ae99;
+  --type-action-ink: #27161b;
+  --type-angle: 105deg;
+  --type-streak: 115deg;
+  --type-home-edge: left;
+  --type-reflection-start: 100%;
+  --type-reflection-end: 0%;
+  --text-primary: var(--type-copy);
+  --text-secondary: var(--type-copy);
+  --text-muted: var(--type-quiet);
+  --luna-copy: var(--type-copy);
+  --luna-paper: var(--type-title);
+  color: var(--type-copy);
+}
+[data-luna-type="rose"][dir="rtl"] {
+  --type-heading-leading: 1.62;
+  --type-angle: 255deg;
+  --type-streak: 245deg;
+  --type-home-edge: right;
+  --type-reflection-start: 0%;
+  --type-reflection-end: 100%;
+}
+
+/* The moving lanterns and windows can pass behind these four exhibition introductions. */
+[data-luna-type="rose"] [class*="night-worlds_stageCopy__"] { isolation: isolate; }
+[data-luna-type="rose"] [class*="night-worlds_stageCopy__"]::before {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  inset: -5% -10%;
+  background: radial-gradient(ellipse at center, #1b1016a8 4%, #1b101674 48%, transparent 77%);
+}
+
+/* Keep the explicitly light writing surfaces in dark, warm inks. */
+[data-luna-type="rose"] :where([class*="night-worlds_letter__"], [class*="NightBank_receipt__"], .contact-discord-cta) {
+  /* These surfaces supply their own light paper, ink and nested button colours. */
+  color-scheme: only light;
+}
+[data-luna-type="rose"] :where([class*="night-worlds_leaf__"], [class*="night-worlds_letter__"], [class*="NightBank_receipt__"], .contact-discord-cta) {
+  --type-heading-scheme: only light;
+  --type-copy: #39272a;
+  --type-quiet: #523738;
+  --type-label: #5d3230;
+  --type-link: #5c2929;
+  --type-link-hot: #32171b;
+  --type-line: #744338;
+  --type-number: #542a2a;
+  --type-title: #3d2023;
+  --type-light: #55302e;
+  --type-rim: #643a34;
+  --type-copper: #3c2026;
+}
+[data-luna-type="rose"] [class*="night-worlds_folioTabs__"] a[aria-current] {
+  --type-link: #462b2a;
+  --type-link-hot: #29191e;
+  --type-line: #784338;
+}
+[data-luna-type="rose"] [class*="night-worlds_letterBody__"] a {
+  --type-link: #f4c1ab;
+  --type-link-hot: #ffe0bb;
+}
+[data-luna-type="rose"] .about-pillar::after {
+  background: linear-gradient(0deg, #191016f5 2%, #191016e0 52%, #19101686 77%, #19101624);
+}
+[data-luna-type="rose"] .lp-hero-desc {
+  position: relative;
+  isolation: isolate;
+}
+[data-luna-type="rose"] .lp-hero-desc::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -.32em -1.35em;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #191118d1 1.25em, #191118cb calc(100% - 1.25em), transparent);
+  border-radius: .65em;
+}
+[data-luna-type="rose"] .contact-discord-cta {
+  --type-copy: #201216;
+  --type-link: #31171a;
+  --type-link-hot: #170b0e;
+}
+
+/* Named layer keeps paint above the older per-route important colors. Geometry is owned by each route. */
+@layer lunaReaderInk {
+  [data-luna-type="rose"] .contact-discord-cta {
+    background: linear-gradient(110deg, #dea694, #f0c5ac 61%, #e0ae99) !important;
+  }
+  [data-luna-type="rose"] :where(p, blockquote, figcaption, tbody td, .rules-list li, .lp-rules-list li, .legal-content li,
+    .legal-content, .vip-benefit-text, .role-description, .roles-tip, .loan-tier, .contact-dropzone-text,
+    [class*="viewerLore__"], [class*="councilBeats__"] li, .footer-bottom, .legal-content > div) {
+    color: var(--type-copy) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  [data-luna-type="rose"] :where(small, dt, label, legend, th, .footer-bottom, .footer-bottom span, .legal-header p,
+    .contact-dropzone-limit, .about-stat-label, .salary-currency, .loan-stat-label, .service-detail-label, .vip-how-to-label, .card-detail-stat-label,
+    .catalog-search-status, [class*="stripInfo__"], [class*="viewerMeta__"], [class*="reelHeading__"],
+    .luckbox-card-count, .stonebox-duplicate-info, .auth-divider span, .contact-divider span) {
+    color: var(--type-quiet) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  [data-luna-type="rose"] :where(.passage-kicker, .hero-badge, .about-badge, .about-origin-label, .auth-badge,
+    .catalog-search-label, .mkz-eyebrow, .roles-category-title, .loan-tiers-title, .vip-benefits-title,
+    .salary-card-title, .service-card-title, .role-badge, .role-command, .luckbox-rarity-badge,
+    .archive-reader-group, [class*="_specialty__"], [class*="_kicker__"], [class*="_sceneTag__"], [class*="_folioLabel__"], [class*="_group__"]) {
+    color: var(--type-label) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  [data-luna-type="rose"] :where(a, button, summary, [role="link"]) {
+    color: var(--type-link) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  [data-luna-type="rose"] :where(.luna-ribbon-nav a > span, .luna-ribbon-drawer a > span,
+    .cta-discord > span, .night-film-switch > span, .chapter-trigger > span) {
+    color: inherit !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  [data-luna-type="rose"] :where(input:not([type=range]), textarea, select) {
+    color: var(--type-copy) !important;
+    -webkit-text-fill-color: currentColor !important;
+    caret-color: var(--type-line);
+  }
+  [data-luna-type="rose"] :where(input, textarea)::placeholder {
+    color: var(--type-quiet) !important;
+    opacity: 1;
+  }
+  [data-luna-type="rose"] :where(output, dd, .about-stat-value, .salary-value, .loan-stat-value, .service-detail-value,
+    .vip-how-to-value, .luckbox-price, .stonebox-price, .my-listing-price, .listing-card-price, .lp-reward-base, .lp-reward-bonus, .lp-reward-double,
+    .archive-reader-count, .card-detail-stat-value, .card-detail-position bdi, .filter-count, .lp-filter-count, [class*="_count__"], [class*="viewerMeta__"] bdi) {
+    color: var(--type-number) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  [data-luna-type="rose"] :where(h1, h2, h3, h4, h5, h6):where(:not(.footer-word)),
+  [data-luna-type="rose"] :where(.card-name, .lp-card-name, .character-name, .member-name, .partner-name, .merchant-card-name,
+    .profile-username, .listing-card-name, .swap-offer-card-name, .swap-confirm-card-name, .create-listing-card-name, .archive-reader-record strong,
+    [class*="_resident__"] > strong, [class*="_castCaption__"] strong, [class*="_councilLabel__"] strong, [class*="_nextDoor__"] strong) {
+    /* Background-clipped ink needs room for descenders and Arabic marks inside its own paint box. */
+    line-height: var(--type-heading-leading) !important;
+    color-scheme: var(--type-heading-scheme);
+    color: var(--type-title) !important;
+    background-image: linear-gradient(var(--type-angle), var(--type-rim) 0%, var(--type-title) 21%, var(--type-light) 38%, var(--type-title) 48%, var(--type-copper) 67%, var(--type-light) 91%) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
+  }
+  [data-luna-type="rose"] :where(h3:not(.footer-word), .card-name, .lp-card-name, .character-name, .member-name, .partner-name, .merchant-card-name,
+    .profile-username, .listing-card-name, .swap-offer-card-name, .swap-confirm-card-name, .create-listing-card-name, .archive-reader-record strong,
+    [class*="_resident__"] > strong, [class*="_castCaption__"] strong, [class*="_councilLabel__"] strong, [class*="_nextDoor__"] strong) {
+    background-image: linear-gradient(169deg, var(--type-light) 8%, var(--type-title) 33%, var(--type-copper) 59%, var(--type-title) 80%) !important;
+  }
+  [data-luna-type="rose"] :where(.passage-primary, .cta-discord, .auth-discord-btn, .btn-discord-login, .btn-primary,
+    .contact-btn, .about-btn-primary, .trading-sign-in-btn, .trading-action-btn, .section-action-btn,
+    [class*="night-worlds_primary__"], [class*="night-journey_action__"], [class*="NightBank_discord__"], [class*="_viewerOpen__"],
+    [class*="archive-card-carousel_inspect__"], .filter-btn.active, .lp-filter-btn.active,
+    [class*="night-worlds_camera__"] button[aria-pressed=true], [class*="night-worlds_factions__"] button[aria-pressed=true],
+    [class*="night-worlds_switcher__"] button[aria-pressed=true], [class*="night-worlds_castFooter__"] a,
+    [class*="night-worlds_storyFooter__"] a, [class*="night-worlds_partnerFoot__"] a,
+    [class*="NightBank_settings__"] button[aria-pressed=true], .archive-reader-tools button[aria-pressed=true],
+    .archive-reader-nav button:hover:not([aria-disabled=true]),
+    .archive-view-switch button[aria-pressed=true], [class*="NightTrading_presets__"] button[aria-pressed=true],
+    [class*="NightTrading_outcomes__"] button[aria-pressed=true], .trading-preset-btn.selected) {
+    --type-link: var(--type-action-ink);
+    --type-link-hot: var(--type-action-ink);
+    --type-number: var(--type-action-ink);
+    color: var(--type-action-ink) !important;
+    -webkit-text-fill-color: currentColor !important;
+    background: linear-gradient(115deg, #e7ad9c, #f3c8aa 54%, #e8af9b) !important;
+    border-color: #edb69b !important;
+    text-shadow: none !important;
+  }
+  [data-luna-type="rose"] :where(.filter-btn.active, .lp-filter-btn.active) :where(.filter-count, .lp-filter-count) {
+    color: #f7c4ab !important;
+    background: #4d3032 !important;
+  }
+  [data-luna-type="rose"] :where([data-open-linked-card], [class*="cast-viewer_noCard__"] button) {
+    --type-link: var(--type-action-ink);
+    --type-link-hot: var(--type-action-ink);
+    color-scheme: only light;
+    color: var(--type-action-ink) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  [data-luna-type="rose"] :where([class*="NightTrading_outcomes__"] button[aria-pressed=true] strong,
+    [class*="NightTrading_outcomes__"] button[aria-pressed=true] span) { color: var(--type-action-ink) !important; }
+  [data-luna-type="rose"] :where(a, button, input, textarea, select, [tabindex="0"], summary):focus-visible {
+    outline: 2px solid var(--type-line) !important;
+    outline-offset: 3px !important;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    [data-luna-type="rose"] :where(a:hover, button:not(:disabled):hover, summary:hover) { color: var(--type-link-hot) !important; }
+  }
+  [data-luna-type="rose"] :where(a:active, button:not(:disabled):active) { color: var(--type-link-hot) !important; }
+}
+
+/* Both home links share one optical surface. The separate face keeps the official emblem intact. */
+.luna-wordmark-link { display: inline-flex; align-items: center; text-decoration: none; touch-action: manipulation; }
+.luna-ribbon-nav .luna-wordmark-link, .luna-ribbon-drawer .luna-wordmark-link { gap: 12px; }
+@media (max-width: 700px) {
+  footer.luna-night-footer { scroll-margin-block-start: 5.3rem; }
+}
+[data-luna-wordmark] { display: inline-block; position: relative; vertical-align: baseline; }
+[data-luna-wordmark]::after {
+  content: ""; position: absolute; inset-inline: 0; bottom: .015em; height: 1px; pointer-events: none;
+  background: linear-gradient(var(--type-angle), transparent, #ad6a5b 12%, #f0b39b 45%, #ffdbb7 59%, transparent 94%);
+  transform: scaleX(.57); transform-origin: var(--type-home-edge) center; opacity: .52;
+}
+@layer lunaReaderInk {
+  [data-luna-type="rose"] .luna-wordmark-link .luna-wordmark-face {
+    color-scheme: var(--type-heading-scheme);
+    display: inline-block;
+    color: #f5c2a5 !important;
+    background-image: linear-gradient(var(--type-streak), transparent 0% 42%, #ffe2bd 48%, #fff0d6 50%, #efb395 53%, transparent 58%),
+      linear-gradient(174deg, #ebbaa1 12%, #ffe0bb 32%, #f6cab0 48%, #cb8576 57%, #f0b09a 76%, #f5c9a2 93%) !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-size: 280% 100%, 100% 100% !important;
+    background-position: var(--type-reflection-start) 50%, 50% 50%;
+    background-repeat: no-repeat !important;
+    text-shadow: none !important;
+  }
+}
+@keyframes luna-wordmark-reflection {
+  0% { background-position: var(--type-reflection-start) 50%, 50% 50%; transform: translateY(0); }
+  48% { transform: translateY(-.045em); }
+  100% { background-position: var(--type-reflection-end) 50%, 50% 50%; transform: translateY(0); }
+}
+@keyframes luna-wordmark-rule {
+  0% { transform: scaleX(.57); opacity: .52; }
+  53% { transform: scaleX(1); opacity: .95; }
+  100% { transform: scaleX(.78); opacity: .73; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-wordmark-motion="on"][data-wordmark-pressed] .luna-wordmark-face,
+  .luna-wordmark-link:is(:active, :focus-visible) [data-wordmark-motion="on"] .luna-wordmark-face {
+    animation: luna-wordmark-reflection .74s cubic-bezier(.22,.66,.25,1) both;
+  }
+  [data-wordmark-motion="on"][data-wordmark-pressed]::after,
+  .luna-wordmark-link:is(:active, :focus-visible) [data-wordmark-motion="on"]::after { animation: luna-wordmark-rule .74s ease-out both; }
+  @media (hover: hover) and (pointer: fine) {
+    .luna-wordmark-link:hover [data-wordmark-motion="on"] .luna-wordmark-face { animation: luna-wordmark-reflection .74s cubic-bezier(.22,.66,.25,1) both; }
+    .luna-wordmark-link:hover [data-wordmark-motion="on"]::after { animation: luna-wordmark-rule .74s ease-out both; }
+  }
+}
+@media (forced-colors: active) {
+  @layer lunaReaderInk {
+    [data-luna-type="rose"] :where(h1,h2,h3,h4,h5,h6,.card-name,.lp-card-name,.character-name,.member-name,.partner-name,.merchant-card-name,
+      .profile-username,.listing-card-name,.swap-offer-card-name,.swap-confirm-card-name,.create-listing-card-name,.archive-reader-record strong,
+      [class*="_resident__"] > strong,[class*="_castCaption__"] strong,[class*="_councilLabel__"] strong,[class*="_nextDoor__"] strong),
+    [data-luna-type="rose"] .luna-wordmark-link .luna-wordmark-face {
+      background-image: none !important; color: CanvasText !important; -webkit-text-fill-color: currentColor !important;
+    }
+    [data-luna-type="rose"] .luna-wordmark-link .luna-wordmark-face { color: LinkText !important; }
+    [data-luna-type="rose"] :focus-visible { outline-color: Highlight !important; }
+  }
+}

@@ -1,0 +1,67 @@
+.window {
+  position:absolute; inset:0; overflow:hidden; isolation:isolate; pointer-events:none;
+  background:#1a1416; --effect-x:70%; --effect-y:55%; --travel:12px; --period:17s;
+}
+.plate { width:100%; height:100%; display:block; object-fit:cover; object-position:var(--effect-x) var(--effect-y); }
+.filmFrame, .filmFrame picture, .filmFrame img, .filmFrame video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.filmFrame img, .filmFrame video {
+  object-fit: cover;
+  object-position: var(--effect-x) var(--effect-y);
+}
+.filmFrame video { opacity: 0; }
+.filmFrame[data-decoded=true] video { opacity: 1; }
+@media (max-width:767px) {
+  .filmFrame[data-harbour-film=quayside] :is(img,video) { object-position: 42% 63%; }
+  .filmFrame[data-harbour-film=night-market] :is(img,video) { object-position: 78% 46%; }
+  .filmFrame[data-harbour-film=treasury] :is(img,video) { object-position: 68% 43%; }
+}
+.effect {
+  position:absolute; left:var(--effect-x); top:var(--effect-y); width:48%; height:50%;
+  transform:translate(-50%,-50%); opacity:0; mix-blend-mode:screen; pointer-events:none;
+}
+.window[data-running=true] .plate { animation:camera var(--period) ease-in-out infinite alternate; }
+.window[data-running=true] .effect { animation:passing var(--period) ease-in-out infinite; }
+.window[data-material=tide] .effect,.window[data-material=waterlight] .effect {
+  background:repeating-linear-gradient(176deg,transparent 0 9px,#f4b07845 10px,transparent 12px 22px);
+  mask-image:radial-gradient(ellipse 50% 20%,#000,transparent);
+}
+.window[data-material=waterlight] .effect { background:repeating-radial-gradient(ellipse at 10% 35%,transparent 0 12px,#eacfb526 13px,transparent 16px); }
+.window[data-material=lamp] .effect,.window[data-material=signal] .effect,.window[data-material=lamps] .effect {
+  width:22%;height:46%;background:radial-gradient(ellipse,#ffc89777, #de904c28 15%,transparent 63%);
+}
+.window[data-material=lamps] .effect { width:45%;background:radial-gradient(circle at 21% 62%,#ffb48564,transparent 18%),radial-gradient(circle at 77% 43%,#ffdc9560,transparent 16%); }
+.window[data-material=signal] .effect { width:12%; height:22%; }
+.window[data-running=true]:is([data-material=lamp],[data-material=lamps],[data-material=signal]) .effect { animation-name:lantern; }
+.window[data-material=ember] .effect {
+  width:10%;height:21%;background:radial-gradient(2px 3px at 30% 74%,#ffa251,transparent),radial-gradient(2px 3px at 69% 53%,#ffc493,transparent),radial-gradient(1px 2px at 47% 29%,#e18a61,transparent),radial-gradient(ellipse at 50% 99%,#fe85382e,transparent 60%);
+}
+.window[data-running=true][data-material=ember] .effect { animation-name:updraft; }
+.window:is([data-material=foil],[data-material=glass],[data-material=specular],[data-material=slit]) .effect {
+  background:linear-gradient(104deg,transparent 43%,#ffdbba1a 46%,#fff4d66b 49.7%,transparent 51%);
+  mask-image:radial-gradient(ellipse,#000 5%,transparent 64%);height:50%;width:39%;
+}
+.window[data-material=glass] .effect { background:conic-gradient(from 26deg at 53% 57%,transparent 20%,#8ab4b343,transparent 35%,#fbd7ba53 41%,transparent 53%); }
+.window[data-material=slit] .effect { width:15%;height:77%; }
+.window[data-material=shaft] .effect { width:69%;height:118%;background:conic-gradient(from 148deg at 63% 0%,transparent,#ffe5bb31 7deg,transparent 20deg); }
+.window:is([data-material=canopy],[data-material=shutter],[data-material=petals]) .effect {
+  mix-blend-mode:multiply;background:repeating-linear-gradient(128deg,transparent 3% 19%,#291f2d56 23%,transparent 28%);mask-image:radial-gradient(ellipse,#000,transparent 70%);width:68%;height:100%;
+}
+.window[data-material=petals] .effect {mix-blend-mode:screen;background:radial-gradient(3px 2px at 25% 70%,#f2bba671,transparent),radial-gradient(2px 2px at 46% 46%,#e6adbe55,transparent),radial-gradient(2px 3px at 61% 22%,#c773916e,transparent); }
+.window[data-running=true][data-material=petals] .effect {animation-name:fall;}
+.window[data-material=aperture] .effect { background:conic-gradient(from 14deg,transparent 5deg,#f8dfb21c 13deg,transparent 24deg 180deg,#aaa6d738 188deg,transparent 205deg);mask-image:radial-gradient(ellipse,transparent 3%,#000 36%,transparent 70%); }
+.window[data-running=true][data-material=aperture] .effect {animation-name:turn;}
+.window[data-material=warp] .effect { background:repeating-linear-gradient(87deg,transparent 0 7px,#f7c39a2c 8px,transparent 9px 15px); mask-image:radial-gradient(ellipse 28% 52%,#000,transparent); }
+@keyframes camera { from { transform:scale(1.04) translateX(0); } to { transform:scale(1.065) translateX(calc(var(--travel) * -.48)); } }
+@keyframes passing { 0%,100%{opacity:0;transform:translate(-61%,-52%)} 48%{opacity:.8;transform:translate(-48%,-50%)} 76%{opacity:.12;transform:translate(-38%,-49%)} }
+@keyframes lantern {0%,100%{opacity:.12}24%,62%{opacity:.66}40%,78%{opacity:.28}52%{opacity:.8}}
+@keyframes updraft {0%,100%{opacity:0;transform:translate(-50%,-27%)} 25%{opacity:.9} 79%{opacity:0;transform:translate(calc(-50% + var(--travel)),-89%)}}
+@keyframes turn {0%,100%{opacity:.08;transform:translate(-50%,-50%) rotate(-9deg)}54%{opacity:.68;transform:translate(-50%,-50%) rotate(13deg)}}
+@keyframes fall {0%,100%{opacity:0;transform:translate(-52%,-57%)} 35%{opacity:.8} 87%{opacity:0;transform:translate(-46%,-41%)}}
+@media(prefers-reduced-motion:reduce) { .window .plate,.window .effect{animation:none!important;} }
+@media(forced-colors:active) { .effect{display:none;} }
