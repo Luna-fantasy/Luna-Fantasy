@@ -28,7 +28,7 @@ async function hydrate(root, id) {
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
-  const url = cdn + row.sha256 + '.' + ext;
+  const url = cdn + row.sha256 + '.' + ext + '?release=v19';
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(90000) });
